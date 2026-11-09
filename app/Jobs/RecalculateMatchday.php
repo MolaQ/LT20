@@ -51,7 +51,7 @@ class RecalculateMatchday implements ShouldBeUnique, ShouldQueue
         }
 
         $message = __('Matchday recalculated. Matches settled: :count.', ['count' => $stats['fixtures']]);
-        if (($stats['swiss'] ?? 0) > 0) {
+        if ($stats['swiss'] > 0) {
             $message .= ' '.__('Liga podwórkowa: the next round has been drawn (:count matches).', ['count' => $stats['swiss']]);
         }
 
