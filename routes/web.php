@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Przelewy24Controller;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,11 @@ Route::livewire('faq', 'pages::faq')->name('faq');
 Route::livewire('system', 'pages::system-feed')->name('system');
 Route::livewire('news/{news}', 'pages::news-show')->name('news.show');
 Route::livewire('office', 'pages::office')->name('office');
+// Przełącznik języka (pl, en) z menu „Więcej”.
+Route::post('locale/{locale}', LocaleController::class)->name('locale.switch');
+
+// Podgląd nowego wyglądu (przebudowa 2.0): skorupa aplikacji i komponenty bez Flux.
+Route::livewire('preview', 'pages::app-preview')->name('preview');
 Route::post('payments/przelewy24/status', [Przelewy24Controller::class, 'status'])->name('przelewy24.status');
 
 // Panel: wejście tylko z uprawnieniem dashboard-access (Admin ma je zawsze)
