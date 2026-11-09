@@ -1877,5 +1877,14 @@
     "New yes/no question, e.g. Will Lech score first?": "Nowe pytanie tak/nie, np. Czy Lech strzeli pierwszy?",
     "Turn questions in the bank on or off": "Włącz lub wyłącz pytania w banku",
     "Matchday questions set": "Ustawiono pytania kolejki",
-    "Question answer set": "Wpisano odpowiedź na pytanie"
+    "Question answer set": "Wpisano odpowiedź na pytanie",
+    "Starting": "Start",
+    "Stopped": "Przerwano",
+    "Done": "Gotowe",
+    "Recalculation failed. Details are in the logs.": "Przeliczenie się nie udało. Szczegóły są w logach.",
+    "Scoring teams and matches": "Liczenie zespołów i meczów",
+    "Drawing next rounds": "Losowanie kolejnych rund",
+    "Updating Hall of Fame": "Aktualizacja Hall of Fame",
+    "Waiting in the queue": "Czeka w kolejce",
+    "The recalculation starts within a minute (queue worker or cron).": "Przeliczenie ruszy w ciągu minuty (worker kolejki albo cron)."
 }

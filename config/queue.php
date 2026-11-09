@@ -15,6 +15,9 @@ return [
 
     'default' => env('QUEUE_CONNECTION', 'database'),
 
+    // Worker kolejki z harmonogramu (cron co minutę) zamiast stałego procesu: hosting współdzielony (routes/console.php).
+    'via_scheduler' => (bool) env('QUEUE_VIA_SCHEDULER', true),
+
     /*
     |--------------------------------------------------------------------------
     | Queue Connections

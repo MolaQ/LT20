@@ -51,3 +51,13 @@ test('public pages use the new shell with the bottom menu', function () {
         ->assertSee('ui-shell', false)
         ->assertSee(route('manifest'), false);
 });
+
+test('recalculation progress is stored and cleared', function () {
+    \App\Support\RecalcProgress::set(99, 40, 'Scoring');
+
+    expect(\App\Support\RecalcProgress::get(99))->toMatchArray(['percent' => 40, 'label' => 'Scoring', 'status' => 'running']);
+
+    \App\Support\RecalcProgress::forget(99);
+
+    expect(\App\Support\RecalcProgress::get(99))->toBeNull();
+});

@@ -41,6 +41,9 @@ new class extends Component {
     /** Wyjściowa jedenastka. */
     public const STARTERS = 11;
 
+    /** Przeliczenie kolejki w tle trwa (pasek postępu, wire:poll). */
+    public bool $recalcRunning = false;
+
     /** Nowy wpis protokołu: rodzaj (MatchReport::EVENTS), zawodnik, drugi zawodnik (asysta, wchodzący), kartka, czas. */
     public string $eventType = MatchReport::EVENT_GOAL;
 
@@ -203,8 +206,9 @@ new class extends Component {
             $action->saveScore($this->matchday, $lech, $opponent);
 
             if ($this->matchday->fresh()->status === MatchdayStatus::Played) {
-                $stats = $action->recalculate($this->matchday->fresh());
-                Flux::toast(variant: 'success', text: __('Saved and the matchday recalculated. Matches settled: :count.', ['count' => $stats['fixtures']]));
+                // Przeliczona kolejka przelicza się od razu, w tle z paskiem postępu.
+                unset($this->matchday);
+                $this->startRecalc();
             }
         } catch (DomainException $e) {
             Flux::toast(variant: 'danger', text: $e->getMessage());
@@ -245,31 +249,59 @@ new class extends Component {
         $this->afterReport();
     }
 
-    /** Przycisk „Przelicz wyniki” / „Przelicz ponownie” (tylko kolejka). */
-    public function recalculate(SaveMatchdayResult $action): void
+    /** Przycisk „Przelicz wyniki” / „Przelicz ponownie” (tylko kolejka): przeliczenie w tle z paskiem postępu. */
+    public function recalculate(): void
     {
         if (!$this->guard() || !$this->matchday) {
             return;
         }
 
         try {
-            $stats = $action->recalculate($this->matchday);
+            SaveMatchdayResult::ensureEditable($this->matchday);
         } catch (DomainException $e) {
             Flux::toast(variant: 'danger', text: $e->getMessage());
 
             return;
         }
 
-        $text = __('Matchday recalculated. Matches settled: :count.', ['count' => $stats['fixtures']]);
+        $this->startRecalc();
+    }
 
-        // Liga podwórkowa losuje się sama po przeliczeniu (SaveMatchdayResult::recalculate).
-        if (($stats['swiss'] ?? 0) > 0) {
-            $text .= ' ' . __('Liga podwórkowa: the next round has been drawn (:count matches).', ['count' => $stats['swiss']]);
+    /** Wysyła przeliczenie do kolejki zadań (Jobs\RecalculateMatchday). Przy QUEUE_CONNECTION=sync kończy się od razu. */
+    private function startRecalc(): void
+    {
+        \App\Support\RecalcProgress::set($this->matchday->id, 2, __('Waiting in the queue'), 'queued');
+        $this->recalcRunning = true;
+
+        \Illuminate\Support\Facades\Bus::batch([new \App\Jobs\RecalculateMatchday($this->matchday->id)])
+            ->name('recalculate-matchday-'.$this->matchday->id)
+            ->allowFailures()
+            ->dispatch();
+
+        $this->checkRecalc();
+    }
+
+    /** Odpytywane co chwilę (wire:poll), dopóki przeliczenie trwa. */
+    public function checkRecalc(): void
+    {
+        $progress = $this->matchday ? \App\Support\RecalcProgress::get($this->matchday->id) : null;
+
+        if (!$this->recalcRunning || !$progress || !in_array($progress['status'], ['done', 'failed'], true)) {
+            return;
         }
 
+        $this->recalcRunning = false;
+        \App\Support\RecalcProgress::forget($this->matchday->id);
         $this->refresh();
         $this->dispatch('match-report-saved');
-        Flux::toast(variant: 'success', text: $text);
+        $this->dispatch('recalc-finished');
+        Flux::toast(variant: $progress['status'] === 'done' ? 'success' : 'danger', text: $progress['message']);
+    }
+
+    #[Computed]
+    public function recalcProgress(): ?array
+    {
+        return $this->matchday ? \App\Support\RecalcProgress::get($this->matchday->id) : null;
     }
 
     /* ==================================================================
@@ -540,11 +572,26 @@ new class extends Component {
                                     {{ __('Score changes recalculate the matchday at once. After line-up changes, recalculate again.') }}
                                 @endif
                             </flux:text>
-                            <flux:button class="w-full" :variant="$played ? 'filled' : 'primary'" icon="calculator" wire:click="recalculate" wire:loading.attr="disabled"
-                                :disabled="$md->lech_goals === null || ! $editable">
-                                <span wire:loading.remove wire:target="recalculate">{{ $played ? __('Recalculate again') : __('Recalculate results') }}</span>
-                                <span wire:loading wire:target="recalculate">{{ __('Recalculating...') }}</span>
-                            </flux:button>
+                            @if ($recalcRunning)
+                                {{-- Pasek postępu przeliczenia w tle (Jobs\RecalculateMatchday) --}}
+                                @php($progress = $this->recalcProgress ?? ['percent' => 2, 'label' => __('Waiting in the queue')])
+                                <div wire:poll.750ms="checkRecalc" class="space-y-1.5" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progress['percent'] }}">
+                                    <div class="flex justify-between text-xs font-semibold">
+                                        <span>{{ $progress['label'] }}</span><span class="tabular-nums">{{ $progress['percent'] }}%</span>
+                                    </div>
+                                    <div class="h-2.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                                        <div class="h-full rounded-full bg-lech-600 transition-[width] duration-700" style="width: {{ $progress['percent'] }}%"></div>
+                                    </div>
+                                    @if (($progress['status'] ?? '') === 'queued')
+                                        <flux:text class="text-xs">{{ __('The recalculation starts within a minute (queue worker or cron).') }}</flux:text>
+                                    @endif
+                                </div>
+                            @else
+                                <flux:button class="w-full" :variant="$played ? 'filled' : 'primary'" icon="calculator" wire:click="recalculate" wire:loading.attr="disabled"
+                                    :disabled="$md->lech_goals === null || ! $editable">
+                                    {{ $played ? __('Recalculate again') : __('Recalculate results') }}
+                                </flux:button>
+                            @endif
                         </div>
                     @endif
                 </div>
