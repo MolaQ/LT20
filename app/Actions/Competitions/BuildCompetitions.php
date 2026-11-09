@@ -4,12 +4,16 @@ namespace App\Actions\Competitions;
 
 use App\Enums\CompetitionType;
 use App\Enums\League;
+use App\Enums\SeasonStatus;
 use App\Models\Competition;
 use App\Models\CompetitionEntry;
 use App\Models\Season;
 use App\Models\SeasonTeam;
 use App\Support\CupBracket;
+use App\Support\EuropeanCup;
+use App\Support\EuropeanQualification;
 use App\Support\LeagueSchedule;
+use App\Support\LegendsLeague;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -17,11 +21,13 @@ use Illuminate\Support\Facades\DB;
  * Tworzy rozgrywki automatyczne sezonu na podstawie listy przedsezonowej:
  *  - 10 lig (po 10 zespołów, terminarz z LeagueSchedule, 9 kolejek),
  *  - Puchar Polski (pierwsze 512 miejsc listy, cała drabinka 511 meczów z CupBracket),
- *  - Ligę podwórkową (miejsca od 101, system szwajcarski: pary losuje się rundami).
+ *  - Ligę podwórkową (miejsca od 101, system szwajcarski: pary losuje się rundami),
+ *  - Ligę Legend (wszystkie zespoły ludzi),
+ *  - puchary europejskie (LM, LE, LK) po 24 zespoły z listy kwalifikacji (EuropeanQualification),
  * Można wywołać wielokrotnie: rozgrywki, które już istnieją, są pomijane (przycisk
  * "Wygeneruj brakujące rozgrywki" na stronie Terminarz).
  *
- * @return array{leagues: int, league_fixtures: int, cup_fixtures: int, swiss_entries: int}
+ * @return array{leagues: int, league_fixtures: int, cup_fixtures: int, swiss_entries: int, legends_entries: int, european: int}
  */
 class BuildCompetitions
 {
@@ -34,7 +40,7 @@ class BuildCompetitions
                 throw new DomainException(__('Not enough bots. Run: php artisan db:seed --class=BotsSeeder'));
             }
 
-            $stats = ['leagues' => 0, 'league_fixtures' => 0, 'cup_fixtures' => 0, 'swiss_entries' => 0];
+            $stats = ['leagues' => 0, 'league_fixtures' => 0, 'cup_fixtures' => 0, 'swiss_entries' => 0, 'legends_entries' => 0, 'european' => 0];
 
             // --- 10 lig ---
             foreach (League::cases() as $league) {
@@ -113,10 +119,165 @@ class BuildCompetitions
 
                 $this->createEntries($competition, $seatTeams);
                 $stats['swiss_entries'] = count($seatTeams);
+
+                // Runda 1 z listy (1-2, 3-4...) losuje się od razu, kolejne po każdej przeliczonej kolejce.
+                if (count($seatTeams) >= 2) {
+                    app(DrawSwissRound::class)->handle($competition, 1);
+                }
             }
+
+            // --- Liga Legend: wszystkie zespoły ludzi (bez botów), dwa pojedynki w kolejce, eliminacja po dwóch porażkach ---
+            if (! $this->exists($season, CompetitionType::Legends)) {
+                $competition = Competition::create([
+                    'season_id' => $season->id,
+                    'type' => CompetitionType::Legends,
+                    'tier' => null,
+                    'name' => CompetitionType::Legends->label(),
+                ]);
+
+                $humans = SeasonTeam::where('season_id', $season->id)->whereNotNull('user_id')->orderBy('position')->pluck('id');
+                $seatTeams = [];
+                foreach ($humans->values() as $index => $teamId) {
+                    $seatTeams[$index + 1] = $teamId;
+                }
+
+                $this->createEntries($competition, $seatTeams);
+                $stats['legends_entries'] = count($seatTeams);
+
+                // Kolejka 1 z listy (1-2, 2-3 … i 1-N), kolejne po każdej przeliczonej kolejce według tabeli.
+                LegendsLeague::draw($competition, 1);
+            }
+
+            // --- Ligi europejskie z tabel końcowych poprzedniego sezonu ---
+            $stats['european'] = $this->buildEuropean($season);
 
             return $stats;
         });
+    }
+
+    /**
+     * Liga Mistrzów, Europy i Konferencji po 24 zespoły z listy kwalifikacji (EuropeanQualification:
+     * w sezonie 1 kolejno z listy, potem tytuły i tabele poprzedniego sezonu, najpierw ludzie). Terminarz fazy grupowej
+     * powstaje od razu przy komplecie. Rozgrywki, które już istnieją, są pomijane.
+     * Wywoływane też ze strony Rozgrywki (przycisk „Utwórz z historii”).
+     */
+    public function buildEuropean(Season $season): int
+    {
+        $created = 0;
+        $allocation = null;
+
+        foreach ([CompetitionType::Champions, CompetitionType::Europa, CompetitionType::Conference] as $type) {
+            if ($this->exists($season, $type)) {
+                continue;
+            }
+
+            $allocation ??= EuropeanQualification::allocate($season);
+            $seatTeams = $allocation[$type->value] ?? [];
+
+            if ($seatTeams === []) {
+                continue;
+            }
+
+            $competition = Competition::create([
+                'season_id' => $season->id,
+                'type' => $type,
+                'tier' => null,
+                'name' => $type->label(),
+            ]);
+
+            $this->fillRoundRobin($competition, $seatTeams);
+            $created++;
+        }
+
+        return $created;
+    }
+
+    /** Brakujące rozgrywki z podstawą w historii: ligi europejskie (strona Rozgrywki). */
+    public function buildFromHistory(Season $season): int
+    {
+        return DB::transaction(fn (): int => $this->buildEuropean($season));
+    }
+
+    /**
+     * Skład z historii dla rozgrywek ręcznych: ligi europejskie z tabel poprzedniego sezonu.
+     *
+     * @return array<int, int> seed => id zespołu z listy
+     */
+    public function historySeats(Season $season, CompetitionType $type): array
+    {
+        return $this->europeanSeats($season, $type);
+    }
+
+    /**
+     * Uzupełnia puste rozgrywki ręczne składem z historii (np. utworzone, zanim był poprzedni sezon).
+     * Zwraca liczbę dodanych zespołów.
+     */
+    public function fillFromHistory(Competition $competition): int
+    {
+        if (! $competition->type->isManual() || $competition->entries()->exists()) {
+            return 0;
+        }
+
+        return DB::transaction(fn (): int => $this->fillRoundRobin($competition, $this->historySeats($competition->season, $competition->type)));
+    }
+
+    /**
+     * Skład pucharu europejskiego (seed => id zespołu z listy sezonu) z listy kwalifikacji (EuropeanQualification).
+     *
+     * @return array<int, int>
+     */
+    public function europeanSeats(Season $season, CompetitionType $type): array
+    {
+        return $type->isEuropean() ? (EuropeanQualification::allocate($season)[$type->value] ?? []) : [];
+    }
+
+    /** Ostatni zakończony sezon przed danym (podstawa składów z historii). */
+    public function previousSeason(Season $season): ?Season
+    {
+        return Season::where('status', SeasonStatus::Finished->value)
+            ->where('number', '<', $season->number)
+            ->orderByDesc('number')
+            ->first();
+    }
+
+    /**
+     * Dodaje uczestników; terminarz tylko przy komplecie (24 w pucharach europejskich),
+     * inaczej admin uzupełnia skład na stronie Rozgrywki.
+     *
+     * @param  array<int, int>  $seatTeams
+     */
+    private function fillRoundRobin(Competition $competition, array $seatTeams): int
+    {
+        if ($seatTeams === []) {
+            return 0;
+        }
+
+        $entries = $this->createEntries($competition, $seatTeams);
+
+        if (count($entries) === $competition->type->size()) {
+            $this->createSchedule($competition, $entries);
+        }
+
+        return count($entries);
+    }
+
+    /**
+     * Terminarz rozgrywek ze stałym składem: ligi każdy z każdym (LeagueSchedule),
+     * puchary europejskie faza grupowa (EuropeanCup; drabinka 1/8 finału powstaje po kolejce 5).
+     *
+     * @param  array<int, int>  $entries  seed => id wpisu
+     */
+    public function createSchedule(Competition $competition, array $entries): int
+    {
+        $schedule = $competition->type->isEuropean() ? EuropeanCup::groupFixtures() : LeagueSchedule::fixtures();
+
+        $rows = [];
+        foreach ($schedule as $match) {
+            $rows[] = $this->fixtureRow($competition, $match['round'], $match['home'], $match['away'], $entries);
+        }
+        $this->insertFixtures($rows);
+
+        return count($rows);
     }
 
     private function exists(Season $season, CompetitionType $type, ?int $tier = null): bool

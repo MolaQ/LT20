@@ -11,14 +11,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $competition_id
  * @property int $season_team_id
  * @property int $seed
+ * @property int|null $eliminated_round puchary i Liga Legend: kolejka, po której zespół odpadł
  */
 class CompetitionEntry extends Model
 {
-    protected $fillable = ['competition_id', 'season_team_id', 'seed'];
+    protected $fillable = ['competition_id', 'season_team_id', 'seed', 'eliminated_round'];
 
     protected function casts(): array
     {
-        return ['seed' => 'integer'];
+        return ['seed' => 'integer', 'eliminated_round' => 'integer'];
     }
 
     public function competition(): BelongsTo

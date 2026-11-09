@@ -4,7 +4,6 @@ use App\Models\Matchday;
 use App\Models\Season;
 use App\Models\SeasonTeam;
 use App\Models\Tip;
-use App\Models\TipAnswer;
 use App\Support\Players;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
@@ -118,7 +117,7 @@ new class extends Component {
         return $query->paginate(25);
     }
 
-    /** Typy i liczba odpowiedzi graczy z bieżącej strony: user_id => [Tip, liczba odpowiedzi]. */
+    /** Typy graczy z bieżącej strony: user_id => [Tip]. */
     #[Computed]
     public function details(): array
     {
@@ -128,12 +127,10 @@ new class extends Component {
 
         $ids = $this->players->getCollection()->pluck('user_id')->all();
         $tips = Tip::where('matchday_id', $this->matchday->id)->whereIn('user_id', $ids)->get()->keyBy('user_id');
-        $counts = TipAnswer::where('matchday_id', $this->matchday->id)->whereIn('user_id', $ids)
-            ->selectRaw('user_id, count(*) as c')->groupBy('user_id')->pluck('c', 'user_id');
 
         $out = [];
         foreach ($ids as $id) {
-            $out[$id] = ['tip' => $tips->get($id), 'answers' => (int) ($counts[$id] ?? 0)];
+            $out[$id] = ['tip' => $tips->get($id)];
         }
 
         return $out;
@@ -198,13 +195,14 @@ new class extends Component {
             <flux:table.column>{{ __('Place') }}</flux:table.column>
             <flux:table.column>{{ __('Team') }}</flux:table.column>
             <flux:table.column>{{ __('Tip') }}</flux:table.column>
-            <flux:table.column>{{ __('Answers') }}</flux:table.column>
             <flux:table.column>{{ __('Saved') }}</flux:table.column>
         </flux:table.columns>
 
         <flux:table.rows>
             @forelse ($this->players as $team)
-            @php($detail = $this->details[$team->user_id] ?? ['tip' => null, 'answers' => 0])
+            @php
+                $detail = $this->details[$team->user_id] ?? ['tip' => null];
+            @endphp
             <flux:table.row :key="$team->id">
                 <flux:table.cell>{{ $team->position }}</flux:table.cell>
                 <flux:table.cell>{{ $team->name }}</flux:table.cell>
@@ -215,13 +213,12 @@ new class extends Component {
                         <flux:badge color="zinc">—</flux:badge>
                     @endif
                 </flux:table.cell>
-                <flux:table.cell>{{ $detail['answers'] }}</flux:table.cell>
                 <flux:table.cell>{{ $detail['tip']?->saved_at->translatedFormat('j F, H:i:s') ?? '—' }}
                 </flux:table.cell>
             </flux:table.row>
             @empty
             <flux:table.row>
-                <flux:table.cell colspan="5">{{ __('No players match your filters.') }}</flux:table.cell>
+                <flux:table.cell colspan="4">{{ __('No players match your filters.') }}</flux:table.cell>
             </flux:table.row>
             @endforelse
         </flux:table.rows>

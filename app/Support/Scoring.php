@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Support;
+
+/**
+ * Punktacja (regulamin, punkt 3). Czyste funkcje bez bazy, łatwe do przetestowania.
+ *
+ *  - Typ: 1 pkt za rozstrzygnięcie, 1 za różnicę goli, 1 za dokładny wynik (0-3).
+ *  - Wynik zespołu w meczu = max(0, własny wynik ofensywny − defensywa rywala).
+ *  - Mecz ligowy: wygrana 3, remis 1, porażka 0.
+ */
+final class Scoring
+{
+    public const WIN_POINTS = 3;
+
+    public const DRAW_POINTS = 1;
+
+    /**
+     * Punkty za typ.
+     *
+     * @return array{points: int, outcome: bool, diff: bool, exact: bool}
+     */
+    public static function tip(int $tipLech, int $tipOpponent, int $realLech, int $realOpponent): array
+    {
+        $outcome = self::sign($tipLech - $tipOpponent) === self::sign($realLech - $realOpponent);
+        $diff = ($tipLech - $tipOpponent) === ($realLech - $realOpponent);
+        $exact = $tipLech === $realLech && $tipOpponent === $realOpponent;
+
+        return [
+            'points' => (int) $outcome + (int) $diff + (int) $exact,
+            'outcome' => $outcome,
+            'diff' => $diff,
+            'exact' => $exact,
+        ];
+    }
+
+    /** Bramki zespołu w meczu. */
+    public static function goals(int $offense, int $opponentDefense): int
+    {
+        return max(0, $offense - $opponentDefense);
+    }
+
+    /** Punkty meczowe w lidze za wynik $for : $against. */
+    public static function matchPoints(int $for, int $against): int
+    {
+        return match (true) {
+            $for > $against => self::WIN_POINTS,
+            $for === $against => self::DRAW_POINTS,
+            default => 0,
+        };
+    }
+
+    /**
+     * Kto awansuje przy remisie w meczu pucharowym? Wcześniej zapisany typ, czyli mniejszy numer zapisu
+     * (Tip::save_order, każdy zapis ma inny). Bot i brak typu (null) są za wszystkimi
+     * typami ludzi; gdy obaj go nie mają, wygrywa gospodarz (wyższe rozstawienie).
+     */
+    public static function homeWinsOnTime(?int $homeOrder, ?int $awayOrder): bool
+    {
+        if ($homeOrder === null || $awayOrder === null) {
+            return $awayOrder === null;
+        }
+
+        return $homeOrder < $awayOrder;
+    }
+
+    private static function sign(int $value): int
+    {
+        return $value <=> 0;
+    }
+}

@@ -13,8 +13,8 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'LechTYPER'),
-    'version' => env('APP_VERSION', '0.4.0'),
+    'name' => env('APP_NAME', '#LechTYPER'),
+    'version' => env('APP_VERSION', '0.9.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -66,7 +66,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Godziny meczów Lecha wpisujemy czasem polskim (zamknięcie typowania o pierwszym gwizdku).
+    'timezone' => env('APP_TIMEZONE', 'Europe/Warsaw'),
 
     /*
     |--------------------------------------------------------------------------
