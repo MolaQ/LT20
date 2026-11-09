@@ -22,7 +22,7 @@ class SetLocale
 
     public static function resolve(Request $request): string
     {
-        $supported = array_keys(config('club.locales', []));
+        $supported = array_map(strval(...), array_keys(config('club.locales', [])));
 
         $candidates = [
             $request->user()?->locale,
