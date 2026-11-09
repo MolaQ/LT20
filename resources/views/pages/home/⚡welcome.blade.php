@@ -151,7 +151,7 @@ new #[Layout('layouts::public')] class extends Component {
                 {{-- Belka: rodzaj kolejki, numer i rozgrywki, stan --}}
                 <div class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                     <div class="flex items-center gap-2">
-                        <flux:icon :name="$played ? 'flag' : 'clock'" variant="mini" class="text-lech-200" />
+                        <x-ui.icon :name="$played ? 'flag' : 'clock'" variant="mini" class="text-lech-200" />
                         <span class="text-sm font-bold uppercase tracking-[0.15em]">{{ $played ? __('Last matchday') : __('Next matchday') }}</span>
                     </div>
                     <div class="flex items-center gap-2 text-xs">
@@ -199,7 +199,7 @@ new #[Layout('layouts::public')] class extends Component {
 
                     @if ($matchday->kickoff_at)
                         <div class="flex items-center justify-center gap-1.5 text-sm text-zinc-500">
-                            <flux:icon.calendar-days variant="mini" />
+                            <x-ui.icon name="calendar-days" variant="mini" />
                             <span>{{ $matchday->kickoff_at->translatedFormat('l, j F Y, H:i') }}</span>
                         </div>
                     @endif
@@ -229,22 +229,22 @@ new #[Layout('layouts::public')] class extends Component {
                     {{-- Akcje: typowanie albo wyniki --}}
                     <div class="flex flex-wrap items-center justify-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
                         @if ($played)
-                            <flux:button :href="route('results')" wire:navigate icon="trophy">{{ __('Results and tables') }}</flux:button>
+                            <x-ui.btn :href="route('results')" wire:navigate icon="trophy">{{ __('Results and tables') }}</x-ui.btn>
                         @elseif (!auth()->check())
-                            <flux:button variant="primary" :href="route('login')" wire:navigate>{{ __('Log in to tip') }}</flux:button>
+                            <x-ui.btn variant="primary" :href="route('login')" wire:navigate>{{ __('Log in to tip') }}</x-ui.btn>
                         @elseif ($matchday->isOpenForTips())
                             @if ($this->myTip)
-                                <flux:badge color="green">{{ __('Your tip: :score', ['score' => $this->myTip->score()]) }}</flux:badge>
+                                <x-ui.badge color="green">{{ __('Your tip: :score', ['score' => $this->myTip->score()]) }}</x-ui.badge>
                             @endif
-                            <flux:button variant="primary" icon="pencil-square"
+                            <x-ui.btn variant="primary" icon="pencil-square"
                                 :href="route('tips', ['matchday_slug' => 'kolejka-' . $matchday->number])" wire:navigate>
                                 {{ $this->myTip ? __('Change tip') : __('Tip now') }}
-                            </flux:button>
+                            </x-ui.btn>
                         @else
                             @if ($this->myTip)
-                                <flux:badge color="zinc">{{ __('Your tip: :score', ['score' => $this->myTip->score()]) }}</flux:badge>
+                                <x-ui.badge color="zinc">{{ __('Your tip: :score', ['score' => $this->myTip->score()]) }}</x-ui.badge>
                             @endif
-                            <flux:button :href="route('results')" wire:navigate icon="trophy">{{ __('Results and tables') }}</flux:button>
+                            <x-ui.btn :href="route('results')" wire:navigate icon="trophy">{{ __('Results and tables') }}</x-ui.btn>
                         @endif
                     </div>
                 </div>
@@ -308,7 +308,7 @@ new #[Layout('layouts::public')] class extends Component {
         @foreach ($this->numbers as $number)
             <div class="group flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900">
                 <span class="lech-banner grid size-11 shrink-0 place-items-center rounded-xl shadow">
-                    <flux:icon :icon="$number['icon']" class="size-5 text-white" />
+                    <x-ui.icon :icon="$number['icon']" class="size-5 text-white" />
                 </span>
                 <div class="min-w-0">
                     <div class="text-2xl font-black leading-none tabular-nums text-lech-800 dark:text-lech-200">{{ number_format($number['value'], 0, ',', ' ') }}</div>
@@ -328,7 +328,7 @@ new #[Layout('layouts::public')] class extends Component {
             ] as $index => [$icon, $title, $text])
                 <div class="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="pointer-events-none absolute -right-2 -top-6 select-none text-8xl font-black text-lech-700/5 dark:text-white/5">{{ $index + 1 }}</span>
-                    <flux:icon :icon="$icon" class="size-7 text-lech-700 dark:text-lech-300" />
+                    <x-ui.icon :icon="$icon" class="size-7 text-lech-700 dark:text-lech-300" />
                     <h3 class="mt-3 text-lg font-black">{{ $title }}</h3>
                     <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $text }}</p>
                 </div>
@@ -348,7 +348,7 @@ new #[Layout('layouts::public')] class extends Component {
                     <h2 class="text-2xl font-black">{{ __('Latest champions') }}</h2>
                 </div>
                 <a href="{{ route('history') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-lech-700 hover:underline dark:text-lech-300">
-                    {{ __('Full history') }} <flux:icon.arrow-right variant="micro" />
+                    {{ __('Full history') }} <x-ui.icon name="arrow-right" variant="micro" />
                 </a>
             </div>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -362,7 +362,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @if (isset($trophyIcons[$row['key']]))
                                 <img src="{{ $trophyIcons[$row['key']] }}" alt="" class="size-10 object-contain">
                             @else
-                                <flux:icon.trophy class="size-7" />
+                                <x-ui.icon name="trophy" class="size-7" />
                             @endif
                         </span>
                         <span class="relative z-10 min-w-0">
@@ -381,7 +381,7 @@ new #[Layout('layouts::public')] class extends Component {
         $voting = \App\Models\OfficeRequest::where('status', \App\Models\OfficeRequest::VOTING)->count();
     @endphp
     <section class="lech-banner relative overflow-hidden rounded-2xl p-5 text-white shadow-lg sm:p-6">
-        <flux:icon.inbox class="pointer-events-none absolute -right-6 -top-6 size-40 text-white/5" />
+        <x-ui.icon name="inbox" class="pointer-events-none absolute -right-6 -top-6 size-40 text-white/5" />
         <div class="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <div class="space-y-3">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-lech-200">{{ __('Contact the administrator') }}</p>
@@ -389,13 +389,13 @@ new #[Layout('layouts::public')] class extends Component {
                 <div class="grid gap-2 sm:grid-cols-3">
                     @foreach ([['no-symbol', __('Ban appeal')], ['moon', __('Inactive status appeal')], ['cpu-chip', __('New bot name (premium, players vote)')]] as [$icon, $label])
                         <div class="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm">
-                            <flux:icon :name="$icon" variant="mini" class="shrink-0 text-lech-200" />{{ $label }}
+                            <x-ui.icon :name="$icon" variant="mini" class="shrink-0 text-lech-200" />{{ $label }}
                         </div>
                     @endforeach
                 </div>
             </div>
             <div class="flex flex-col items-start gap-2 lg:items-end">
-                <flux:button variant="primary" icon="inbox" :href="route('office')" wire:navigate>{{ __('Go to the office') }}</flux:button>
+                <x-ui.btn variant="primary" icon="inbox" :href="route('office')" wire:navigate>{{ __('Go to the office') }}</x-ui.btn>
                 @if ($voting > 0)
                     <span class="text-xs text-lech-100">{{ trans_choice(':count bot name is being voted on|:count bot names are being voted on', $voting, ['count' => $voting]) }}</span>
                 @endif

@@ -13,7 +13,6 @@ use App\Support\PlayerStats;
 use App\Support\Premium;
 use App\Support\Rivals;
 use App\Support\Standings;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -621,8 +620,8 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->teamId = $id;
         unset($this->teamCard);
-        Flux::modal('duel-details')->close();
-        Flux::modal('team-details')->show();
+        $this->dispatch('ui-sheet', name: 'duel-details', open: false);
+        $this->dispatch('ui-sheet', name: 'team-details');
     }
 
     /** Szczegóły pojedynku w uniwersalnym oknie (pages::home.duel-modal w layoucie publicznym). */
@@ -705,7 +704,7 @@ new #[Layout('layouts::public')] class extends Component {
                         @if (isset($bannerIcons[$colorKey]))
                             <img src="{{ $bannerIcons[$colorKey] }}" alt="" class="size-14 object-contain">
                         @else
-                            <flux:icon.trophy class="size-9" />
+                            <x-ui.icon name="trophy" class="size-9" />
                         @endif
                     </div>
                     <div class="min-w-0 space-y-1">
@@ -735,12 +734,12 @@ new #[Layout('layouts::public')] class extends Component {
                         <div class="flex items-center gap-1.5 rounded-full bg-black/15 px-1.5 py-1">
                             <button type="button" wire:click="{{ $navMethod }}(-1)" @disabled(!$canBack) class="{{ $arrowClass }}"
                                 aria-label="{{ $navLabel }}: {{ __('Previous') }}" title="{{ __('Previous') }}">
-                                <flux:icon.chevron-left variant="mini" />
+                                <x-ui.icon name="chevron-left" variant="mini" />
                             </button>
                             <span class="min-w-16 text-center text-[11px] font-bold uppercase tracking-wider">{{ $navLabel }}</span>
                             <button type="button" wire:click="{{ $navMethod }}(1)" @disabled(!$canForward) class="{{ $arrowClass }}"
                                 aria-label="{{ $navLabel }}: {{ __('Next') }}" title="{{ __('Next') }}">
-                                <flux:icon.chevron-right variant="mini" />
+                                <x-ui.icon name="chevron-right" variant="mini" />
                             </button>
                         </div>
                     @endforeach
@@ -757,12 +756,12 @@ new #[Layout('layouts::public')] class extends Component {
                         <button type="button" wire:click="shiftSeason(-1)" @disabled(!$older)
                             title="{{ __('Previous season') }}" aria-label="{{ __('Previous season') }}"
                             class="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-white/10">
-                            <flux:icon.chevron-left variant="mini" />
+                            <x-ui.icon name="chevron-left" variant="mini" />
                         </button>
                         <button type="button" wire:click="shiftSeason(1)" @disabled(!$newer)
                             title="{{ __('Next season') }}" aria-label="{{ __('Next season') }}"
                             class="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-white/10">
-                            <flux:icon.chevron-right variant="mini" />
+                            <x-ui.icon name="chevron-right" variant="mini" />
                         </button>
                     </div>
                 </x-slot:aside>
@@ -771,9 +770,9 @@ new #[Layout('layouts::public')] class extends Component {
     @endif
 
     @if (!$this->season || count($this->options) === 0)
-        <flux:card>
-            <flux:text>{{ __('There is no season to show yet.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('There is no season to show yet.') }}</x-ui.text>
+        </x-ui.card>
     @else
         {{--
             Wybór rozgrywek: jeden wąski pasek w kolorach strony. Ligi (Ekstraklasa … podwórkowa) zwinięte w menu,
@@ -799,27 +798,30 @@ new #[Layout('layouts::public')] class extends Component {
         @endphp
         <nav class="-mt-2 flex flex-wrap items-center gap-1 rounded-3xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-zinc-700 dark:bg-zinc-900" aria-label="{{ __('Competition') }}">
             @if (count($leagueOptions) > 0)
-                <flux:dropdown position="bottom" align="start">
-                    <button type="button" class="{{ $pill }} {{ $leagueActive ? $pillOn : $pillOff }}">
+                {{-- Lista lig (z ligami podwórkowymi jest ich kilkadziesiąt): rozwijana, przewijana. --}}
+                <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
+                    <button type="button" @click="open = !open" :aria-expanded="open" class="{{ $pill }} {{ $leagueActive ? $pillOn : $pillOff }}">
                         @if ($leagueActive)
                             <span class="size-3 shrink-0 rounded-full" style="{{ \App\Support\CompetitionColors::dotStyle($leagueOptions[$this->key][1]) }}"></span>
                             {{ $leagueOptions[$this->key][0] }}
                         @else
                             {{ __('Leagues') }}
                         @endif
-                        <flux:icon.chevron-down variant="micro" />
+                        <x-ui.icon name="chevron-down" variant="micro" />
                     </button>
-                    <flux:menu>
+                    <div x-show="open" x-cloak x-transition.origin.top.left
+                        class="absolute start-0 top-full z-30 mt-1 max-h-[60dvh] w-64 overflow-y-auto rounded-2xl border border-ui-line bg-ui-surface p-1 shadow-xl">
                         @foreach ($leagueOptions as $optionKey => [$optionName, $optionColor])
-                            <flux:menu.item wire:click="$set('key', '{{ $optionKey }}')" wire:key="lg-opt-{{ $optionKey }}">
+                            <button type="button" @click="open = false" wire:click="$set('key', '{{ $optionKey }}')" wire:key="lg-opt-{{ $optionKey }}"
+                                class="flex w-full items-center rounded-xl px-3 py-2 text-start text-sm hover:bg-ui-raised">
                                 <span class="flex items-center gap-2">
                                     <span class="size-3 shrink-0 rounded-full" style="{{ \App\Support\CompetitionColors::dotStyle($optionColor) }}"></span>
                                     <span class="{{ $optionKey === $this->key ? 'font-bold' : '' }}">{{ $optionName }}</span>
                                 </span>
-                            </flux:menu.item>
+                            </button>
                         @endforeach
-                    </flux:menu>
-                </flux:dropdown>
+                    </div>
+                </div>
                 <span class="mx-1 h-5 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700"></span>
             @endif
             @foreach ($otherOptions as $optionKey => [$optionName, $optionColor])
@@ -891,7 +893,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @if (isset($bannerIcons[$colorKey]))
                                 <img src="{{ $bannerIcons[$colorKey] }}" alt="" class="size-6 object-contain">
                             @else
-                                <flux:icon.trophy variant="micro" />
+                                <x-ui.icon name="trophy" variant="micro" />
                             @endif
                         </span>
                     </header>
@@ -961,7 +963,7 @@ new #[Layout('layouts::public')] class extends Component {
                                             <span class="inline-flex items-center justify-end gap-1">
                                                 <span>{{ $index + 1 }}.</span>
                                                 @if ($outRound !== null)
-                                                    <span title="{{ __('Knocked out after matchday :number', ['number' => $outRound]) }}" class="flex w-5 text-zinc-400"><flux:icon.arrow-right-start-on-rectangle variant="micro" class="size-3.5" /></span>
+                                                    <span title="{{ __('Knocked out after matchday :number', ['number' => $outRound]) }}" class="flex w-5 text-zinc-400"><x-ui.icon name="arrow-right-start-on-rectangle" variant="micro" class="size-3.5" /></span>
                                                 @elseif ($move > 0)
                                                     <span title="{{ __('Up :count places', ['count' => $move]) }}" class="flex w-5 items-center text-[10px] font-semibold text-green-600 dark:text-green-400"><svg class="size-2.5" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9.5 9h-9z" fill="currentColor" /></svg>{{ $move }}</span>
                                                 @elseif ($move < 0)
@@ -999,14 +1001,14 @@ new #[Layout('layouts::public')] class extends Component {
                         <div class="flex items-center justify-between gap-2 px-1 pt-2">
                             <button type="button" wire:click="shiftTablePage(-1)" @disabled($tablePageNow <= 1)
                                 class="flex size-8 items-center justify-center rounded-full bg-black/20 transition hover:bg-black/30 disabled:opacity-30" aria-label="{{ __('Previous') }}">
-                                <flux:icon.chevron-left variant="micro" />
+                                <x-ui.icon name="chevron-left" variant="micro" />
                             </button>
                             <span class="text-xs tabular-nums opacity-85">
                                 {{ __('Page :current of :last', ['current' => $tablePageNow, 'last' => $tablePageCount]) }} &middot; {{ trans_choice(':count team|:count teams', $tableFound, ['count' => $tableFound]) }}
                             </span>
                             <button type="button" wire:click="shiftTablePage(1)" @disabled($tablePageNow >= $tablePageCount)
                                 class="flex size-8 items-center justify-center rounded-full bg-black/20 transition hover:bg-black/30 disabled:opacity-30" aria-label="{{ __('Next') }}">
-                                <flux:icon.chevron-right variant="micro" />
+                                <x-ui.icon name="chevron-right" variant="micro" />
                             </button>
                         </div>
                     @endif
@@ -1019,7 +1021,7 @@ new #[Layout('layouts::public')] class extends Component {
                                     $outCount = count($this->legendsOut);
                                 @endphp
                                 <p class="flex flex-wrap items-center gap-x-4 gap-y-1 opacity-95">
-                                    <span class="flex items-center gap-1"><flux:icon.arrow-right-start-on-rectangle variant="micro" class="size-3.5" />{{ __('Knocked out (two losses in one matchday)') }}</span>
+                                    <span class="flex items-center gap-1"><x-ui.icon name="arrow-right-start-on-rectangle" variant="micro" class="size-3.5" />{{ __('Knocked out (two losses in one matchday)') }}</span>
                                     <span class="font-semibold">{{ __('Still playing: :left of :count', ['left' => $this->table->count() - $outCount, 'count' => $this->table->count()]) }}</span>
                                 </p>
                                 <p class="italic opacity-85">
@@ -1078,7 +1080,7 @@ new #[Layout('layouts::public')] class extends Component {
                             <a href="{{ $this->pageUrl($stage) }}" wire:navigate title="{{ \App\Support\CupBracket::roundName($stage) }}"
                                 class="{{ $stageClass }} rounded-full px-2.5 py-1 tabular-nums transition">{{ $stageLabel($stage) }}</a>
                             @if ($stage < $rounds)
-                                <flux:icon.chevron-right variant="micro" class="text-zinc-400" />
+                                <x-ui.icon name="chevron-right" variant="micro" class="text-zinc-400" />
                             @endif
                         @endforeach
                     </nav>
@@ -1089,7 +1091,7 @@ new #[Layout('layouts::public')] class extends Component {
                             $champion = $final->winner_entry_id === $final->home_entry_id ? $final->home : $final->away;
                         @endphp
                         <div class="lech-banner lech-bar-shadow flex items-center gap-3 rounded-xl px-4 py-3">
-                            <flux:icon.trophy class="size-8 shrink-0 text-amber-300" />
+                            <x-ui.icon name="trophy" class="size-8 shrink-0 text-amber-300" />
                             <div class="min-w-0">
                                 <div class="text-xs uppercase tracking-wide opacity-80">{{ __('Cup winner') }}</div>
                                 <button type="button" wire:click="showTeam({{ $champion?->season_team_id ?? 0 }})" class="truncate text-lg font-bold hover:underline {{ $champion?->seasonTeam?->is_bot ? 'italic' : '' }}">{{ $champion?->seasonTeam->name }}</button>
@@ -1117,7 +1119,7 @@ new #[Layout('layouts::public')] class extends Component {
                         <section class="lech-bar-shadow overflow-hidden rounded-2xl border border-lech-950/20 bg-white dark:border-lech-900 dark:bg-zinc-900">
                             <header class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                                 <h3 class="flex items-center gap-2 font-bold">
-                                    <flux:icon.trophy class="size-5 text-lech-200" />
+                                    <x-ui.icon name="trophy" class="size-5 text-lech-200" />
                                     {{ __('Your cup path') }}
                                 </h3>
                                 <span class="text-sm font-semibold text-lech-200">{{ $pathStatus }}</span>
@@ -1159,12 +1161,12 @@ new #[Layout('layouts::public')] class extends Component {
                             </div>
                         </section>
                     @endif
-                    <flux:card class="space-y-3">
+                    <x-ui.card class="space-y-3">
                         <div class="flex flex-wrap items-baseline justify-between gap-2">
-                            <flux:heading>{{ \App\Support\CupBracket::roundName($round) }}</flux:heading>
-                            <flux:text class="text-xs tabular-nums">
+                            <x-ui.heading>{{ \App\Support\CupBracket::roundName($round) }}</x-ui.heading>
+                            <x-ui.text class="text-xs tabular-nums">
                                 {{ __(':played of :total matches played', ['played' => $this->cupPlayed, 'total' => $total]) }}
-                            </flux:text>
+                            </x-ui.text>
                         </div>
                         {{-- Pasek postępu rundy --}}
                         <div class="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
@@ -1185,19 +1187,19 @@ new #[Layout('layouts::public')] class extends Component {
 
                             @if ($this->matches->hasPages())
                                 <div class="flex items-center justify-between gap-2 pt-1">
-                                    <flux:button size="sm" variant="ghost" icon="chevron-left"
+                                    <x-ui.btn size="sm" variant="ghost" icon="chevron-left"
                                         wire:click="previousPage('matchesPage')" :disabled="$this->matches->onFirstPage()" />
-                                    <flux:text class="text-xs tabular-nums">
+                                    <x-ui.text class="text-xs tabular-nums">
                                         {{ __('Page :current of :last', ['current' => $this->matches->currentPage(), 'last' => $this->matches->lastPage()]) }}
-                                    </flux:text>
-                                    <flux:button size="sm" variant="ghost" icon="chevron-right"
+                                    </x-ui.text>
+                                    <x-ui.btn size="sm" variant="ghost" icon="chevron-right"
                                         wire:click="nextPage('matchesPage')" :disabled="!$this->matches->hasMorePages()" />
                                 </div>
                             @endif
                         @else
-                            <flux:text>{{ __('No matches yet.') }}</flux:text>
+                            <x-ui.text>{{ __('No matches yet.') }}</x-ui.text>
                         @endif
-                    </flux:card>
+                    </x-ui.card>
 
                     {{-- Objaśnienia kursywą pod drabinką i legenda kolorów --}}
                     <div class="space-y-1 px-1 text-xs italic text-zinc-500">
@@ -1264,14 +1266,14 @@ new #[Layout('layouts::public')] class extends Component {
                             <div class="flex items-center justify-between gap-2 px-1 pt-1">
                                 <button type="button" wire:click="previousPage('matchesPage')" @disabled($this->matches->onFirstPage())
                                     class="flex size-8 items-center justify-center rounded-full bg-black/20 transition hover:bg-black/30 disabled:opacity-30" aria-label="{{ __('Previous') }}">
-                                    <flux:icon.chevron-left variant="micro" />
+                                    <x-ui.icon name="chevron-left" variant="micro" />
                                 </button>
                                 <span class="text-xs tabular-nums opacity-85">
                                     {{ __('Page :current of :last', ['current' => $this->matches->currentPage(), 'last' => $this->matches->lastPage()]) }}
                                 </span>
                                 <button type="button" wire:click="nextPage('matchesPage')" @disabled(!$this->matches->hasMorePages())
                                     class="flex size-8 items-center justify-center rounded-full bg-black/20 transition hover:bg-black/30 disabled:opacity-30" aria-label="{{ __('Next') }}">
-                                    <flux:icon.chevron-right variant="micro" />
+                                    <x-ui.icon name="chevron-right" variant="micro" />
                                 </button>
                             </div>
                         @endif

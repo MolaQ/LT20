@@ -8,7 +8,6 @@ use App\Models\TeamScore;
 use App\Models\Tip;
 use App\Support\Players;
 use App\Support\TipRules;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -434,7 +433,7 @@ new #[Layout('layouts::public')] class extends Component {
                 default => null,
             });
         } catch (DomainException $e) {
-            Flux::toast(variant: 'danger', text: $e->getMessage());
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
         unset($this->myAnswers);
@@ -452,7 +451,7 @@ new #[Layout('layouts::public')] class extends Component {
         try {
             \App\Support\Questions::side(auth()->user(), $question, $side);
         } catch (DomainException $e) {
-            Flux::toast(variant: 'danger', text: $e->getMessage());
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
         unset($this->myAnswers);
@@ -528,7 +527,7 @@ new #[Layout('layouts::public')] class extends Component {
         try {
             app(SaveTip::class)->handle(auth()->user(), $matchday, $this->lech, $this->opponent);
         } catch (DomainException $e) {
-            Flux::toast(variant: 'danger', text: $e->getMessage());
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
 
             return;
         }
@@ -544,23 +543,23 @@ new #[Layout('layouts::public')] class extends Component {
         :subtitle="__('Tip the score of the Lech match. You can change your tip until kickoff.')" />
 
     @if (!$this->season)
-        <flux:card>
-            <flux:text>{{ __('There is no active season right now.') }}</flux:text>
+        <x-ui.card>
+            <x-ui.text>{{ __('There is no active season right now.') }}</x-ui.text>
             @if ($this->statsSeason)
-                <flux:text class="text-xs">{{ __('Tipping starts with the next season. Below: your numbers from :season.', ['season' => $this->statsSeason->title]) }}</flux:text>
+                <x-ui.text class="text-xs">{{ __('Tipping starts with the next season. Below: your numbers from :season.', ['season' => $this->statsSeason->title]) }}</x-ui.text>
             @endif
-        </flux:card>
+        </x-ui.card>
     @elseif (!$this->canPlay)
-        <flux:card class="space-y-1">
-            <flux:heading>{{ __('You are not taking part in this season') }}</flux:heading>
-            <flux:text>
+        <x-ui.card class="space-y-1">
+            <x-ui.heading>{{ __('You are not taking part in this season') }}</x-ui.heading>
+            <x-ui.text>
                 {{ __('Your account needs a role (without a ban) and a place on the team list. Contact the administrator.') }}
-            </flux:text>
-        </flux:card>
+            </x-ui.text>
+        </x-ui.card>
     @elseif ($this->matchdays->isEmpty() || !$this->matchday)
-        <flux:card>
-            <flux:text>{{ __('No matchdays yet.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('No matchdays yet.') }}</x-ui.text>
+        </x-ui.card>
     @endif
 
     @php
@@ -593,10 +592,10 @@ new #[Layout('layouts::public')] class extends Component {
         @foreach ($tabs as $key => [$icon, $label])
             <button type="button" wire:click="$set('tab', '{{ $key }}')"
                 class="{{ $tab === $key ? 'bg-ui-surface text-ui-ink shadow' : 'text-ui-muted hover:text-ui-ink' }} flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-bold transition">
-                <flux:icon :name="$icon" variant="micro" />
+                <x-ui.icon :name="$icon" variant="micro" />
                 {{ $label }}
                 @if (in_array($key, ['scalps', 'blacklist'], true))
-                    <flux:icon.sparkles variant="micro" class="text-purple-500" />
+                    <x-ui.icon name="sparkles" variant="micro" class="text-purple-500" />
                 @endif
             </button>
         @endforeach
@@ -783,7 +782,7 @@ new #[Layout('layouts::public')] class extends Component {
             @endphp
             <div class="space-y-2 rounded-xl border border-purple-200 bg-purple-50/60 p-3 dark:border-purple-500/30 dark:bg-purple-500/10">
                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">
-                    <span class="flex items-center gap-1"><flux:icon.sparkles variant="micro" />{{ __('How the others tip') }}</span>
+                    <span class="flex items-center gap-1"><x-ui.icon name="sparkles" variant="micro" />{{ __('How the others tip') }}</span>
                     <span class="tabular-nums">{{ trans_choice(':count tip|:count tips', $crowd['count'], ['count' => $crowd['count']]) }}</span>
                 </div>
                 @if ($crowd['count'] > 0)

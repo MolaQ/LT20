@@ -126,8 +126,9 @@ document.addEventListener('alpine:init', () => {
         startY: null,
         init() {
             window.addEventListener('ui-sheet', (e) => {
+                // { name } otwiera, { name, open: false } zamyka (też z serwera: $this->dispatch('ui-sheet', name: …, open: false)).
                 if (e.detail?.name === name) {
-                    this.open = true;
+                    e.detail.open === false ? this.close() : (this.open = true);
                 }
             });
         },

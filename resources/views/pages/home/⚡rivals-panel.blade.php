@@ -79,12 +79,12 @@ new class extends Component {
         <section class="space-y-3">
             <div class="space-y-1">
                 <div class="flex items-center justify-between gap-2">
-                    <flux:heading>{{ __('Your rivals') }}</flux:heading>
-                    <flux:badge size="sm" :color="$phaseBadge[0]">{{ $phaseBadge[1] }}</flux:badge>
+                    <x-ui.heading>{{ __('Your rivals') }}</x-ui.heading>
+                    <x-ui.badge size="sm" :color="$phaseBadge[0]">{{ $phaseBadge[1] }}</x-ui.badge>
                 </div>
-                <flux:text size="sm">
+                <x-ui.text size="sm">
                     {{ __('Matchday :number', ['number' => $this->matchday->number]) }}: {{ $this->matchday->fixture }}
-                </flux:text>
+                </x-ui.text>
             </div>
 
             <div class="space-y-2">
@@ -96,7 +96,7 @@ new class extends Component {
                                 @if (isset($trophyIcons[$rival['trophy']]))
                                     <img src="{{ $trophyIcons[$rival['trophy']] }}" alt="" class="size-6 object-contain">
                                 @else
-                                    <flux:icon.trophy variant="micro" class="text-amber-500" />
+                                    <x-ui.icon name="trophy" variant="micro" class="text-amber-500" />
                                 @endif
                             </span>
                             <span class="min-w-0 flex-1">
@@ -105,25 +105,25 @@ new class extends Component {
                             </span>
                             <span class="shrink-0">
                                 @if ($rival['virtual'])
-                                    <flux:badge size="sm" color="zinc">{{ __('Lech') }}</flux:badge>
+                                    <x-ui.badge size="sm" color="zinc">{{ __('Lech') }}</x-ui.badge>
                                 @elseif ($rival['bot'] && $phase !== \App\Support\Rivals::PLAYED)
-                                    <flux:badge size="sm" color="zinc">{{ __('Bot') }}</flux:badge>
+                                    <x-ui.badge size="sm" color="zinc">{{ __('Bot') }}</x-ui.badge>
                                 @elseif ($rival['tip'])
-                                    <flux:badge size="sm">{{ $rival['tip'] }}</flux:badge>
+                                    <x-ui.badge size="sm">{{ $rival['tip'] }}</x-ui.badge>
                                 @elseif ($rival['tipped'])
-                                    <flux:badge size="sm" color="green">{{ __('Tipped') }}</flux:badge>
+                                    <x-ui.badge size="sm" color="green">{{ __('Tipped') }}</x-ui.badge>
                                 @else
-                                    <flux:badge size="sm" color="zinc">{{ __('No tip') }}</flux:badge>
+                                    <x-ui.badge size="sm" color="zinc">{{ __('No tip') }}</x-ui.badge>
                                 @endif
                             </span>
-                            <flux:icon.chevron-down variant="micro" class="shrink-0 text-zinc-400 transition group-open:rotate-180" />
+                            <x-ui.icon name="chevron-down" variant="micro" class="shrink-0 text-zinc-400 transition group-open:rotate-180" />
                         </summary>
 
                         <div class="space-y-3 border-t border-zinc-100 bg-zinc-50/60 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-800/40">
                             @if ($rival['virtual'])
-                                <flux:text size="sm">{{ __('Scores as many as Lech in the real match.') }}</flux:text>
+                                <x-ui.text size="sm">{{ __('Scores as many as Lech in the real match.') }}</x-ui.text>
                             @elseif ($rival['bot'] && $phase !== \App\Support\Rivals::PLAYED)
-                                <flux:text size="sm">{{ __('Bot: random tip at the kick-off.') }}</flux:text>
+                                <x-ui.text size="sm">{{ __('Bot: random tip at the kick-off.') }}</x-ui.text>
                             @else
                                 {{-- Typ --}}
                                 <div class="flex items-center justify-between gap-2">
@@ -198,9 +198,9 @@ new class extends Component {
             </div>
 
             @if (!$onTips)
-                <flux:link :href="route('tips')" wire:navigate class="text-sm">{{ __('Go to tipping') }}</flux:link>
+                <a href="{{ route('tips') }}" wire:navigate class="text-sm font-semibold text-club underline-offset-2 hover:underline">{{ __('Go to tipping') }}</a>
             @endif
         </section>
-        <flux:separator class="mt-4" />
+        <hr class="border-ui-line mt-4">
     @endif
 </div>

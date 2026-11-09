@@ -3,7 +3,6 @@
 use App\Models\Matchday;
 use App\Support\MatchdayInsights;
 use App\Support\Premium;
-use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -21,7 +20,7 @@ new class extends Component {
     {
         $this->matchdayId = $id;
         unset($this->matchday, $this->tips);
-        Flux::modal('lech-match')->show();
+        $this->dispatch('ui-sheet', name: 'lech-match');
     }
 
     #[Computed]
@@ -44,7 +43,7 @@ new class extends Component {
 }; ?>
 
 <div>
-    <flux:modal name="lech-match" class="w-full max-w-2xl">
+    <x-ui.sheet name="lech-match" wide>
         @if ($matchday = $this->matchday)
             @php
                 $played = $matchday->lech_goals !== null && $matchday->opponent_goals !== null;
@@ -91,7 +90,7 @@ new class extends Component {
                         <x-premium-lock :title="__('Match details')"
                             :text="__('The number of tips, how the players split between a Lech win, a draw and a win for the opponent, the share of exact tips and the most popular scores.')" />
                     @elseif ($tips['count'] === 0)
-                        <flux:text>{{ __('Nobody has tipped this match yet.') }}</flux:text>
+                        <x-ui.text>{{ __('Nobody has tipped this match yet.') }}</x-ui.text>
                     @else
                         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                             <div class="rounded-xl border border-zinc-200 p-3 text-center dark:border-zinc-700">
@@ -143,14 +142,14 @@ new class extends Component {
                                         </span>
                                     @endforeach
                                 </div>
-                                <flux:text class="text-xs">{{ __('Correct goal difference: :percent%', ['percent' => $tips['diff']]) }}</flux:text>
+                                <x-ui.text class="text-xs">{{ __('Correct goal difference: :percent%', ['percent' => $tips['diff']]) }}</x-ui.text>
                             </div>
                         @else
-                            <flux:text class="text-xs italic">{{ __('Exact tips and the most popular scores appear after the result.') }}</flux:text>
+                            <x-ui.text class="text-xs italic">{{ __('Exact tips and the most popular scores appear after the result.') }}</x-ui.text>
                         @endif
                     @endif
                 </div>
             </div>
         @endif
-    </flux:modal>
+    </x-ui.sheet>
 </div>

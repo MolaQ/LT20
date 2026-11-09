@@ -1,7 +1,7 @@
 {{--
     Skorupa aplikacji 2.0 (przebudowa): górny pasek, treść i dolny pasek nawigacji jak w aplikacji na telefon.
     Na komputerze (lg) dolny pasek zamienia się w menu w nagłówku, a treść dostaje szerszą kolumnę.
-    legacy = strona jeszcze używa komponentów Flux (okna, toasty), więc ładujemy ich skrypty. Znika, gdy strony przejdą na x-ui.*.
+    legacy = stara strona publiczna: wyszukiwarka w nagłówku i wspólne okna (pojedynek, mecz Lecha). Strony nie używają już Flux (etap J).
 --}}
 @props(['title' => null, 'legacy' => false, 'aside' => null])
 
@@ -75,9 +75,6 @@
             x-data="uiSwipeNav(@js($swipe->pluck('href')), @js($current === false ? -1 : $current))"
             @touchstart.passive="start($event)" @touchend="end($event)">
             <x-ui.toast />
-            @if ($legacy)
-                <flux:toast position="top end" class="pt-20" />
-            @endif
             {{ $slot }}
         </main>
 
@@ -91,13 +88,12 @@
         <x-ui.bottom-nav :items="$items" />
     </div>
     <x-ui.more-sheet :extra="$aside" />
+    <x-ui.confirm />
 
     @if ($legacy)
-        {{-- Wspólne okna starych stron: pojedynek, mecz Lecha i potwierdzenia. --}}
+        {{-- Wspólne okna stron publicznych: pojedynek i mecz Lecha. --}}
         <livewire:pages::home.duel-modal />
         <livewire:pages::home.lech-match-modal />
-        <x-confirm-dialog />
-        @fluxScripts
     @endif
 </body>
 

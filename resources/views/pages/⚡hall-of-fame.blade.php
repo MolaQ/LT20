@@ -225,21 +225,21 @@ new #[Layout('layouts::public')] class extends Component {
             @foreach (['users' => [__('Players'), 'user-group'], 'bots' => [__('Bots'), 'cpu-chip']] as $value => [$label, $icon])
                 <button type="button" wire:click="$set('kind', '{{ $value }}')"
                     class="{{ $kind === $value ? 'bg-lech-700 text-white shadow' : 'text-zinc-600 hover:text-lech-700 dark:text-zinc-300' }} inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition">
-                    <flux:icon :name="$icon" variant="micro" />{{ $label }}
+                    <x-ui.icon :name="$icon" variant="micro" />{{ $label }}
                 </button>
             @endforeach
         </div>
         @auth
             @if ($kind === 'users' && $this->ranking->contains('id', $me))
-                <flux:button size="sm" icon="map-pin" wire:click="jumpToMe">{{ __('My place') }}</flux:button>
+                <x-ui.btn size="sm" icon="map-pin" wire:click="jumpToMe">{{ __('My place') }}</x-ui.btn>
             @endif
         @endauth
     </div>
 
     @if ($this->ranking->isEmpty())
-        <flux:card>
-            <flux:text>{{ __('The Hall of Fame fills up after the first finished season.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('The Hall of Fame fills up after the first finished season.') }}</x-ui.text>
+        </x-ui.card>
     @else
         {{-- Podium --}}
         @unless ($this->isFiltered())
@@ -263,7 +263,7 @@ new #[Layout('layouts::public')] class extends Component {
                                         @if (isset($this->icons[$key]))
                                             <img src="{{ $this->icons[$key] }}" alt="" class="size-7 object-contain drop-shadow">
                                         @else
-                                            <flux:icon.trophy variant="mini" class="text-amber-300" />
+                                            <x-ui.icon name="trophy" variant="mini" class="text-amber-300" />
                                         @endif
                                         @if ($count > 1)<span class="text-[10px] font-bold text-white/80">×{{ $count }}</span>@endif
                                     </span>
@@ -281,28 +281,28 @@ new #[Layout('layouts::public')] class extends Component {
 
         {{-- Filtry --}}
         <div class="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto] dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable :placeholder="__('Search team (min. 2 letters)')" />
-            <flux:select wire:model.live="trophy">
-                <flux:select.option value="">{{ __('All teams') }}</flux:select.option>
-                <flux:select.option value="any">{{ __('With any trophy') }}</flux:select.option>
+            <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable :placeholder="__('Search team (min. 2 letters)')" />
+            <x-ui.select wire:model.live="trophy">
+                <x-ui.select.option value="">{{ __('All teams') }}</x-ui.select.option>
+                <x-ui.select.option value="any">{{ __('With any trophy') }}</x-ui.select.option>
                 @foreach ($this->trophyOptions as $key => $label)
-                    <flux:select.option :value="$key">{{ $label }}</flux:select.option>
+                    <x-ui.select.option :value="$key">{{ $label }}</x-ui.select.option>
                 @endforeach
-            </flux:select>
-            <flux:select wire:model.live="sort">
-                <flux:select.option value="points">{{ __('Sort: points') }}</flux:select.option>
-                <flux:select.option value="trophies">{{ __('Sort: trophies') }}</flux:select.option>
-                <flux:select.option value="seasons">{{ __('Sort: seasons') }}</flux:select.option>
-            </flux:select>
-            <flux:select wire:model.live="perPage" class="lg:w-24">
+            </x-ui.select>
+            <x-ui.select wire:model.live="sort">
+                <x-ui.select.option value="points">{{ __('Sort: points') }}</x-ui.select.option>
+                <x-ui.select.option value="trophies">{{ __('Sort: trophies') }}</x-ui.select.option>
+                <x-ui.select.option value="seasons">{{ __('Sort: seasons') }}</x-ui.select.option>
+            </x-ui.select>
+            <x-ui.select wire:model.live="perPage" class="lg:w-24">
                 @foreach ([25, 50, 100] as $option)
-                    <flux:select.option :value="$option">{{ $option }}</flux:select.option>
+                    <x-ui.select.option :value="$option">{{ $option }}</x-ui.select.option>
                 @endforeach
-            </flux:select>
+            </x-ui.select>
             @if ($this->isFiltered())
                 <div class="flex items-center justify-between gap-2 text-sm sm:col-span-2 lg:col-span-4">
                     <span class="text-zinc-500">{{ trans_choice(':count team found|:count teams found', $this->filtered->count(), ['count' => $this->filtered->count()]) }}</span>
-                    <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="clearFilters">{{ __('Clear filters') }}</flux:button>
+                    <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="clearFilters">{{ __('Clear filters') }}</x-ui.btn>
                 </div>
             @endif
         </div>
@@ -338,7 +338,7 @@ new #[Layout('layouts::public')] class extends Component {
                                     @if (isset($this->icons[$key]))
                                         <img src="{{ $this->icons[$key] }}" alt="{{ $trophyNames[$key] ?? $key }}" class="size-6 object-contain">
                                     @else
-                                        <flux:icon.trophy variant="micro" class="text-amber-500" />
+                                        <x-ui.icon name="trophy" variant="micro" class="text-amber-500" />
                                     @endif
                                     @if ($count > 1)<span class="text-xs text-zinc-500">×{{ $count }}</span>@endif
                                 </span>
@@ -355,6 +355,6 @@ new #[Layout('layouts::public')] class extends Component {
             </ol>
         </div>
 
-        <flux:pagination :paginator="$this->pageItems" />
+        {{ $this->pageItems->links() }}
     @endif
 </div>

@@ -303,9 +303,9 @@ new #[Layout('layouts::public')] class extends Component {
     </x-page-banner>
 
     @if ($this->summary['count'] === 0 && ! $season)
-        <flux:card>
-            <flux:text>{{ __('The stars appear after the first settled matchday with fielded players.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('The stars appear after the first settled matchday with fielded players.') }}</x-ui.text>
+        </x-ui.card>
     @else
         {{-- Liderzy sezonu --}}
         @if (count($this->leaders) > 0)
@@ -317,7 +317,7 @@ new #[Layout('layouts::public')] class extends Component {
                     <div wire:key="leader-{{ $loop->index }}" class="lech-banner relative overflow-hidden rounded-2xl p-4 text-white shadow-md {{ $loop->last ? 'col-span-2 md:col-span-1' : '' }}">
                         <span class="pointer-events-none absolute -bottom-3 -right-1 select-none text-7xl font-black leading-none text-white/10 tabular-nums">{{ $row['number'] }}</span>
                         <div class="relative flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-lech-200">
-                            <flux:icon :name="$leader['icon']" variant="micro" />{{ $leader['label'] }}
+                            <x-ui.icon :name="$leader['icon']" variant="micro" />{{ $leader['label'] }}
                         </div>
                         <div class="relative mt-2 text-3xl font-black tabular-nums">{{ $leader['value'] }}</div>
                         <div class="relative mt-1 truncate font-bold">{{ $row['name'] }}</div>
@@ -330,23 +330,23 @@ new #[Layout('layouts::public')] class extends Component {
         {{-- Filtry --}}
         <div class="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
-                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable :placeholder="__('Search player or club (min. 2 letters)')" />
-                <flux:select wire:model.live="season">
-                    <flux:select.option value="0">{{ __('All seasons') }}</flux:select.option>
+                <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable :placeholder="__('Search player or club (min. 2 letters)')" />
+                <x-ui.select wire:model.live="season">
+                    <x-ui.select.option value="0">{{ __('All seasons') }}</x-ui.select.option>
                     @foreach ($this->seasons as $s)
-                        <flux:select.option :value="$s->id">{{ $s->title }}</flux:select.option>
+                        <x-ui.select.option :value="$s->id">{{ $s->title }}</x-ui.select.option>
                     @endforeach
-                </flux:select>
-                <flux:select wire:model.live="minGames">
+                </x-ui.select>
+                <x-ui.select wire:model.live="minGames">
                     @foreach ([1, 3, 5, 10, 20] as $option)
-                        <flux:select.option :value="$option">{{ $option === 1 ? __('Any number of appearances') : __('At least :count appearances', ['count' => $option]) }}</flux:select.option>
+                        <x-ui.select.option :value="$option">{{ $option === 1 ? __('Any number of appearances') : __('At least :count appearances', ['count' => $option]) }}</x-ui.select.option>
                     @endforeach
-                </flux:select>
-                <flux:select wire:model.live="perPage" class="lg:w-24">
+                </x-ui.select>
+                <x-ui.select wire:model.live="perPage" class="lg:w-24">
                     @foreach ([25, 50, 100] as $option)
-                        <flux:select.option :value="$option">{{ $option }}</flux:select.option>
+                        <x-ui.select.option :value="$option">{{ $option }}</x-ui.select.option>
                     @endforeach
-                </flux:select>
+                </x-ui.select>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
@@ -372,7 +372,7 @@ new #[Layout('layouts::public')] class extends Component {
                 </div>
                 {{-- Porównanie z drużyną: wpisywana nazwa i podpowiedzi --}}
                 <div class="relative w-full sm:w-64">
-                    <flux:input size="sm" wire:model.live.debounce.300ms="compareSearch" icon="arrows-right-left" clearable :placeholder="__('Compare with a team…')" />
+                    <x-ui.input size="sm" wire:model.live.debounce.300ms="compareSearch" icon="arrows-right-left" clearable :placeholder="__('Compare with a team…')" />
                     @if ($this->compareOptions->isNotEmpty())
                         <div class="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
                             @foreach ($this->compareOptions as $option)
@@ -387,14 +387,14 @@ new #[Layout('layouts::public')] class extends Component {
                 </div>
                 <span class="ms-auto text-sm text-zinc-500">{{ trans_choice(':count player found|:count players found', $this->pageItems->total(), ['count' => $this->pageItems->total()]) }}</span>
                 @if ($this->isFiltered())
-                    <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="clearFilters">{{ __('Clear filters') }}</flux:button>
+                    <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="clearFilters">{{ __('Clear filters') }}</x-ui.btn>
                 @endif
             </div>
 
             {{-- Zawodnicy: przyciski, można wybrać kilku --}}
             <div x-data="{ show: {{ $picked !== [] ? 'true' : 'false' }} }" class="border-t border-zinc-100 pt-3 dark:border-white/5">
                 <button type="button" x-on:click="show = ! show" class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:text-lech-700">
-                    <flux:icon.chevron-right variant="micro" class="transition" x-bind:class="show && 'rotate-90'" />
+                    <x-ui.icon name="chevron-right" variant="micro" class="transition" x-bind:class="show && 'rotate-90'" />
                     {{ __('Players') }}
                     @if ($picked !== [])
                         <span class="rounded-full bg-lech-700 px-1.5 text-[10px] text-white">{{ count($picked) }}</span>
@@ -458,7 +458,7 @@ new #[Layout('layouts::public')] class extends Component {
                                     <div class="flex items-center gap-1.5 whitespace-nowrap font-semibold text-zinc-900 dark:text-white">
                                         {{ $row['name'] }}
                                         @if ($row['academy'])
-                                            <flux:icon.academic-cap variant="micro" class="shrink-0 text-lech-600 dark:text-lech-300" title="{{ __('Academy') }}" />
+                                            <x-ui.icon name="academic-cap" variant="micro" class="shrink-0 text-lech-600 dark:text-lech-300" title="{{ __('Academy') }}" />
                                         @endif
                                     </div>
                                     <a href="{{ $row['url'] }}" wire:navigate class="block max-w-48 truncate text-xs text-zinc-500 hover:text-lech-700 hover:underline dark:hover:text-lech-300">{{ $row['club'] }}</a>
@@ -494,7 +494,7 @@ new #[Layout('layouts::public')] class extends Component {
                 @foreach (PlayerPosition::cases() as $pos)
                     <span class="inline-flex items-center gap-1.5"><span class="{{ $posTone[$pos->value] }} size-3 rounded"></span>{{ $pos->label() }}</span>
                 @endforeach
-                <span class="inline-flex items-center gap-1.5"><flux:icon.academic-cap variant="micro" class="text-lech-600 dark:text-lech-300" />{{ __('Academy') }}</span>
+                <span class="inline-flex items-center gap-1.5"><x-ui.icon name="academic-cap" variant="micro" class="text-lech-600 dark:text-lech-300" />{{ __('Academy') }}</span>
                 <span class="inline-flex items-center gap-1.5"><span class="text-zinc-300">·</span>{{ __('Clean sheets and defence points count only for goalkeepers and defenders') }}</span>
                 @if ($clubs === 'compare')
                     <span class="inline-flex items-center gap-1.5"><span class="size-3 rounded bg-amber-100"></span>{{ __('My team') }}</span>
@@ -503,7 +503,7 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
         </x-lech-panel>
 
-        <flux:pagination :paginator="$this->pageItems" />
-        <flux:text class="text-xs">{{ __('Only players\' teams are listed (no bots). Appearances count matches that took place (Legends League: each duel). Win % = won matches of the team in the competition type in which the player was fielded; a cup draw decided by tip time counts as a win or a loss.') }}</flux:text>
+        {{ $this->pageItems->links() }}
+        <x-ui.text class="text-xs">{{ __('Only players\' teams are listed (no bots). Appearances count matches that took place (Legends League: each duel). Win % = won matches of the team in the competition type in which the player was fielded; a cup draw decided by tip time counts as a win or a loss.') }}</x-ui.text>
     @endif
 </div>

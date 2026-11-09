@@ -144,7 +144,7 @@
                                 <span class="flex items-center gap-1.5 whitespace-nowrap font-semibold {{ $idle ? '' : 'text-zinc-900 dark:text-white' }}">
                                     {{ $p->name }}
                                     @if ($p->is_academy)
-                                        <flux:icon.academic-cap variant="micro" class="shrink-0 text-lech-600 dark:text-lech-300" title="{{ __('Academy') }}" />
+                                        <x-ui.icon name="academic-cap" variant="micro" class="shrink-0 text-lech-600 dark:text-lech-300" title="{{ __('Academy') }}" />
                                     @endif
                                 </span>
                             </td>
@@ -192,11 +192,11 @@
             @foreach (\App\Enums\PlayerPosition::cases() as $pos)
                 <span class="inline-flex items-center gap-1.5"><span class="{{ $posTone[$pos->value] }} size-3 rounded"></span>{{ $pos->label() }}</span>
             @endforeach
-            <span class="inline-flex items-center gap-1.5"><flux:icon.academic-cap variant="micro" class="text-lech-600 dark:text-lech-300" />{{ __('Academy') }}</span>
+            <span class="inline-flex items-center gap-1.5"><x-ui.icon name="academic-cap" variant="micro" class="text-lech-600 dark:text-lech-300" />{{ __('Academy') }}</span>
             <span class="inline-flex items-center gap-1.5"><span class="text-zinc-300">·</span>{{ __('Clean sheets and defence points count only for goalkeepers and defenders') }}</span>
         </div>
     </x-lech-panel>
-    <flux:text class="text-xs">{{ __('Each club has its own Lech players: the numbers come only from matches that took place in matchdays in which this club fielded the player. Click a player to see all seasons, then a season to see its matches.') }}</flux:text>
+    <x-ui.text class="text-xs">{{ __('Each club has its own Lech players: the numbers come only from matches that took place in matchdays in which this club fielded the player. Click a player to see all seasons, then a season to see its matches.') }}</x-ui.text>
 
     {{-- Okno zawodnika: wszystkie sezony i mecze --}}
     @foreach ($clubPlayers as $club)
@@ -217,7 +217,7 @@
                                 <div class="truncate text-2xl font-extrabold text-white">{{ $p->name }}</div>
                             </div>
                             <button type="button" x-on:click="open = null" class="rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white" aria-label="{{ __('Close') }}">
-                                <flux:icon.x-mark class="size-5" />
+                                <x-ui.icon name="x-mark" class="size-5" />
                             </button>
                         </div>
                         {{-- Suma wszystkich sezonów --}}
@@ -244,7 +244,7 @@
                             <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
                                 <button type="button" class="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-white/5"
                                     x-on:click="season = season === '{{ $seasonKey }}' ? null : '{{ $seasonKey }}'">
-                                    <flux:icon.chevron-right variant="micro" class="shrink-0 text-zinc-400 transition" x-bind:class="season === '{{ $seasonKey }}' && 'rotate-90'" />
+                                    <x-ui.icon name="chevron-right" variant="micro" class="shrink-0 text-zinc-400 transition" x-bind:class="season === '{{ $seasonKey }}' && 'rotate-90'" />
                                     <span class="whitespace-nowrap font-bold">{{ $seasonBlock['title'] }}</span>
                                     @if ($seasonBlock['current'])
                                         <span class="hidden whitespace-nowrap rounded-full bg-lech-100 px-2 py-0.5 text-[10px] font-semibold text-lech-800 sm:inline dark:bg-lech-900/60 dark:text-lech-100">{{ __('this season') }}</span>
@@ -287,7 +287,7 @@
                             </div>
                         @empty
                             <div class="py-8 text-center">
-                                <flux:text>{{ __('Not fielded yet.') }}</flux:text>
+                                <x-ui.text>{{ __('Not fielded yet.') }}</x-ui.text>
                             </div>
                         @endforelse
                     </div>

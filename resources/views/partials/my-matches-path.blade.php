@@ -12,7 +12,7 @@
 <section class="lech-bar-shadow overflow-hidden rounded-2xl border border-lech-950/20 bg-white dark:border-lech-900 dark:bg-zinc-900">
     <header class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
         <h3 class="flex items-center gap-2 font-bold">
-            <flux:icon.trophy class="size-5 text-lech-200" />
+            <x-ui.icon name="trophy" class="size-5 text-lech-200" />
             {{ $title }}
         </h3>
         <span class="text-sm font-semibold text-lech-200">{{ $status }}</span>

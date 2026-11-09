@@ -22,7 +22,7 @@
                 class="{{ $side['winner'] ? 'font-black' : 'font-semibold' }} {{ $side['mine'] ? 'text-lech-800 dark:text-lech-200' : '' }} {{ $side['virtual'] ? 'cursor-default' : 'hover:bg-zinc-50 dark:hover:bg-white/5' }} -mx-1 flex w-[calc(100%+0.5rem)] items-center gap-1.5 rounded px-1 text-left text-sm"
                 title="{{ $side['virtual'] ? '' : __('Show the line-up') }}">
                 @if (!$side['virtual'])
-                    <flux:icon.chevron-right variant="micro" class="shrink-0 text-zinc-400 transition" x-bind:class="open === {{ $sideIndex }} && 'rotate-90'" />
+                    <x-ui.icon name="chevron-right" variant="micro" class="shrink-0 text-zinc-400 transition" x-bind:class="open === {{ $sideIndex }} && 'rotate-90'" />
                 @endif
                 <span class="flex min-w-0 flex-1 items-baseline gap-1">
                     <span class="min-w-0 truncate {{ $side['bot'] ? 'italic' : '' }}">{{ $side['name'] }}</span>

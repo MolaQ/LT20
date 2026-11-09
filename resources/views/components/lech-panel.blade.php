@@ -9,7 +9,7 @@
     <div class="lech-bar flex flex-wrap items-center gap-3 px-4 py-3">
         @if ($icon)
             <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-white/10 text-white">
-                <flux:icon :name="$icon" variant="mini" />
+                <x-ui.icon :name="$icon" variant="mini" />
             </span>
         @endif
         <div class="min-w-0 flex-1">

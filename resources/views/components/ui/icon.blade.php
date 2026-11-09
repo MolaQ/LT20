@@ -1,7 +1,19 @@
-{{-- Ikony 2.0 (własne SVG, bez Flux). --}}
-@props(['name'])
+{{--
+    Ikony 2.0 bez Flux. Własne ikony skorupy (start, results, tip, club, more, chevron) albo Heroicons
+    (resources/icons/heroicons.php) pod tymi samymi nazwami co we Flux. variant: outline (domyślnie), solid, mini, micro.
+--}}
+@props(['name', 'variant' => 'outline'])
 
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" {{ $attributes }}>
+@php
+    $custom = in_array($name, ['start', 'results', 'tip', 'club', 'more', 'chevron'], true);
+    $solid = in_array($variant, ['solid', 'mini', 'micro'], true);
+    $hero = $custom ? null : (once(fn () => require resource_path('icons/heroicons.php'))[$solid ? 'solid' : 'outline'][$name] ?? null);
+    $sized = str_contains((string) $attributes->get('class'), 'size-');
+    $default = $sized ? '' : match ($variant) { 'micro' => 'size-4', 'mini' => 'size-5', default => 'size-6' };
+@endphp
+
+@if ($custom)
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" {{ $attributes->class(['shrink-0', $default]) }}>
     @switch($name)
         @case('start')
             <path d="M3 11 12 4l9 7" /><path d="M5 10v10h14V10" />
@@ -23,3 +35,8 @@
             @break
     @endswitch
 </svg>
+@elseif ($solid)
+<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" data-slot="icon" {{ $attributes->class(['shrink-0', $default]) }}>{!! $hero !!}</svg>
+@else
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" data-slot="icon" {{ $attributes->class(['shrink-0', $default]) }}>{!! $hero !!}</svg>
+@endif

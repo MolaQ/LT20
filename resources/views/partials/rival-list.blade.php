@@ -24,10 +24,10 @@
 <div class="flex flex-col gap-6" x-data="{ q: '', all: false, match(name) { return this.q.length < 2 || name.toLowerCase().includes(this.q.toLowerCase()) } }">
     {{-- Podsumowanie --}}
     <div class="lech-banner relative overflow-hidden rounded-2xl p-5 text-white shadow-lg">
-        <flux:icon :name="$icon" class="pointer-events-none absolute -right-4 -top-4 size-36 text-white/5" />
+        <x-ui.icon :name="$icon" class="pointer-events-none absolute -right-4 -top-4 size-36 text-white/5" />
         <div class="relative flex flex-wrap items-center justify-between gap-4">
             <div class="min-w-0 max-w-xl">
-                <div class="flex items-center gap-2 text-lg font-bold"><flux:icon :name="$icon" variant="mini" />{{ $title }}</div>
+                <div class="flex items-center gap-2 text-lg font-bold"><x-ui.icon :name="$icon" variant="mini" />{{ $title }}</div>
                 <p class="mt-1 text-sm text-white/75">{{ $subtitle }}</p>
             </div>
             <div class="grid grid-cols-3 gap-2 text-center">
@@ -55,7 +55,7 @@
     {{-- Wyszukiwarka: od 2 liter przeszukuje wszystkich (także podium, które wtedy się chowa) --}}
     @if (count($rivals) > 3)
         <div class="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:input x-model="q" icon="magnifying-glass" :placeholder="__('Search team or player (min. 2 letters)')" />
+            <x-ui.input x-model="q" icon="magnifying-glass" :placeholder="__('Search team or player (min. 2 letters)')" />
         </div>
     @endif
 
@@ -129,10 +129,10 @@
             </div>
             @if (count($rest) > $limit)
                 <div class="mt-4 text-center" x-show="q.length < 2">
-                    <flux:button size="sm" variant="ghost" x-on:click="all = ! all">
+                    <x-ui.btn size="sm" variant="ghost" x-on:click="all = ! all">
                         <span x-show="! all">{{ __('Show all (:count)', ['count' => count($rivals)]) }}</span>
                         <span x-show="all" x-cloak>{{ __('Show less') }}</span>
-                    </flux:button>
+                    </x-ui.btn>
                 </div>
             @endif
         </x-lech-panel>

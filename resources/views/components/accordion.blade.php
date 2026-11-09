@@ -11,7 +11,7 @@
                 class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-medium text-zinc-800 transition hover:bg-lech-50 group-open:lech-bar group-open:text-white dark:text-zinc-100 dark:hover:bg-lech-950 [&::-webkit-details-marker]:hidden">
                 <span>{{ $title }}</span>
                 <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-100 transition duration-200 group-open:rotate-180 group-open:bg-white/15 group-open:text-white dark:bg-zinc-800">
-                    <flux:icon.chevron-down variant="micro" />
+                    <x-ui.icon name="chevron-down" variant="micro" />
                 </span>
             </summary>
             <div class="border-l-4 border-lech-700 bg-lech-50/40 px-5 pb-5 pt-4 text-sm leading-relaxed text-zinc-700 dark:bg-lech-950/30 dark:text-zinc-300">

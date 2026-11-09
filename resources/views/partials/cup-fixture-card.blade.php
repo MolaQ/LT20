@@ -29,7 +29,7 @@
                 <x-champion-trophies :team="$side['entry']?->seasonTeam" :size="14" />
             </span>
             @if ($won)
-                <flux:icon.chevron-double-right variant="micro" class="shrink-0 text-green-600 dark:text-green-400" />
+                <x-ui.icon name="chevron-double-right" variant="micro" class="shrink-0 text-green-600 dark:text-green-400" />
             @endif
             <span class="w-5 shrink-0 text-right font-bold tabular-nums {{ $played ? '' : 'text-zinc-300 dark:text-zinc-600' }}">{{ $side['goals'] ?? '–' }}</span>
         </div>

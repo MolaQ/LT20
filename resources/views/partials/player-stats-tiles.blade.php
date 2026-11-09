@@ -84,4 +84,4 @@
     @endforeach
 </div>
 
-<flux:text size="sm" class="text-xs">{{ __('Bars: red below 35%, yellow from 35% to 65%, green above 65%. The percentage is a share (e.g. 3 of 4 tips = 75%) or the result compared with the best player in the game (e.g. 1 Koziołek when the best has 3 = 33%).') }}</flux:text>
+<x-ui.text size="sm" class="text-xs">{{ __('Bars: red below 35%, yellow from 35% to 65%, green above 65%. The percentage is a share (e.g. 3 of 4 tips = 75%) or the result compared with the best player in the game (e.g. 1 Koziołek when the best has 3 = 33%).') }}</x-ui.text>

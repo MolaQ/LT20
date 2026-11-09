@@ -211,7 +211,7 @@ new class extends Component {
 }; ?>
 
 <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
-    <flux:input wire:model.live.debounce.250ms="q" size="sm" icon="magnifying-glass" clearable
+    <x-ui.input wire:model.live.debounce.250ms="q" size="sm" icon="magnifying-glass" clearable
         :placeholder="__('Search…')" class="w-36 sm:w-56 lg:w-72" x-on:focus="open = true" x-on:input="open = true"
         :aria-label="__('Search')" />
 
@@ -221,7 +221,7 @@ new class extends Component {
             @forelse ($this->groups as $group)
                 <div class="py-1" wire:key="gs-{{ $loop->index }}">
                     <div class="flex items-center gap-1.5 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-lech-700 dark:text-lech-300">
-                        <flux:icon :name="$group['icon']" variant="micro" />
+                        <x-ui.icon :name="$group['icon']" variant="micro" />
                         {{ $group['label'] }}
                     </div>
                     @foreach ($group['items'] as $item)

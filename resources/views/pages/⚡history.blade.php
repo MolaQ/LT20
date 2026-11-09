@@ -78,7 +78,7 @@ new #[Layout('layouts::public')] class extends Component {
                 @if (isset($icons[$this->key]))
                     <img src="{{ $icons[$this->key] }}" alt="" class="size-14 object-contain">
                 @else
-                    <flux:icon.trophy class="size-9" />
+                    <x-ui.icon name="trophy" class="size-9" />
                 @endif
             </div>
             <div class="min-w-0">
@@ -92,7 +92,7 @@ new #[Layout('layouts::public')] class extends Component {
     <div class="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         {{-- Triumfatorzy sezon po sezonie --}}
         <section class="space-y-3">
-            <flux:heading size="lg">{{ CompetitionHistory::isAward($this->key) ? __('Winners season by season') : __('Champions season by season') }}</flux:heading>
+            <x-ui.heading size="lg">{{ CompetitionHistory::isAward($this->key) ? __('Winners season by season') : __('Champions season by season') }}</x-ui.heading>
             @forelse ($this->honours as $honour)
                 <article class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900" wire:key="honour-{{ $honour['season']->id }}">
                     <div class="flex flex-col sm:flex-row">
@@ -119,17 +119,17 @@ new #[Layout('layouts::public')] class extends Component {
                     </div>
                 </article>
             @empty
-                <flux:card><flux:text>{{ __('No finished seasons yet.') }}</flux:text></flux:card>
+                <x-ui.card><x-ui.text>{{ __('No finished seasons yet.') }}</x-ui.text></x-ui.card>
             @endforelse
         </section>
 
         {{-- Rekordy wszech czasów --}}
         <aside class="space-y-3">
-            <flux:heading size="lg">{{ __('All-time records') }}</flux:heading>
+            <x-ui.heading size="lg">{{ __('All-time records') }}</x-ui.heading>
             @forelse ($this->records as $record)
                 <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
                     <div class="flex items-center gap-2 border-b border-zinc-100 px-4 py-2 dark:border-white/5">
-                        <flux:icon :icon="$record['icon']" variant="micro" class="text-lech-700 dark:text-lech-300" />
+                        <x-ui.icon :icon="$record['icon']" variant="micro" class="text-lech-700 dark:text-lech-300" />
                         <span class="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">{{ $record['title'] }}</span>
                     </div>
                     <ol>
@@ -146,7 +146,7 @@ new #[Layout('layouts::public')] class extends Component {
                     </ol>
                 </div>
             @empty
-                <flux:card><flux:text>{{ __('No records yet.') }}</flux:text></flux:card>
+                <x-ui.card><x-ui.text>{{ __('No records yet.') }}</x-ui.text></x-ui.card>
             @endforelse
         </aside>
     </div>

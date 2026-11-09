@@ -26,10 +26,10 @@
 <div class="space-y-5">
     <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
-            <flux:heading size="lg">{{ $competitionName }}</flux:heading>
-            <flux:text size="sm">{{ $roundLabel }}</flux:text>
+            <x-ui.heading size="lg">{{ $competitionName }}</x-ui.heading>
+            <x-ui.text size="sm">{{ $roundLabel }}</x-ui.text>
         </div>
-        <flux:badge :color="$phaseBadge[0]">{{ $phaseBadge[1] }}</flux:badge>
+        <x-ui.badge :color="$phaseBadge[0]">{{ $phaseBadge[1] }}</x-ui.badge>
     </div>
 
     {{-- Tablica wyników: nazwy zespołów to przyciski do profili --}}
@@ -71,10 +71,10 @@
                 <span class="font-semibold uppercase tracking-wide text-lech-700 dark:text-lech-300">{{ __('Lech match') }} &middot; {{ __('Matchday :number', ['number' => $lech->number]) }}</span>
                 <span class="flex items-center gap-1.5">
                     @if ($lech->competitionLabel())
-                        <flux:badge size="sm" color="zinc">{{ $lech->competitionLabel() }}</flux:badge>
+                        <x-ui.badge size="sm" color="zinc">{{ $lech->competitionLabel() }}</x-ui.badge>
                     @endif
                     @if (filled($lech->opponent))
-                        <flux:badge size="sm" :color="$lech->is_home ? 'blue' : 'zinc'">{{ $lech->is_home ? __('HOME') : __('AWAY') }}</flux:badge>
+                        <x-ui.badge size="sm" :color="$lech->is_home ? 'blue' : 'zinc'">{{ $lech->is_home ? __('HOME') : __('AWAY') }}</x-ui.badge>
                     @endif
                 </span>
             </div>
@@ -132,9 +132,9 @@
                 </div>
 
                 @if ($side['virtual'])
-                    <flux:text size="sm" class="{{ $left ? 'text-right' : '' }}">{{ __('Scores as many as Lech in the real match, minus the player\'s defence.') }}</flux:text>
+                    <x-ui.text size="sm" class="{{ $left ? 'text-right' : '' }}">{{ __('Scores as many as Lech in the real match, minus the player\'s defence.') }}</x-ui.text>
                 @elseif ($side['bot'] && !$side['score'])
-                    <flux:text size="sm" class="{{ $left ? 'text-right' : '' }}">{{ __('Bot: random tip at the kick-off.') }}</flux:text>
+                    <x-ui.text size="sm" class="{{ $left ? 'text-right' : '' }}">{{ __('Bot: random tip at the kick-off.') }}</x-ui.text>
                 @elseif ($side['score'])
                     {{-- ============ Po wynikach: pełne rozliczenie ============ --}}
                     @php
@@ -159,7 +159,7 @@
                     <div class="grid grid-cols-3 gap-1.5">
                         @foreach ($hits as [$hitLabel, $hit])
                             <div class="{{ $hit ? 'border-lech-600 bg-lech-600 text-white shadow-sm dark:border-lech-500 dark:bg-lech-600' : 'border-dashed border-lech-200 bg-white/60 text-lech-300 dark:border-lech-800 dark:bg-transparent dark:text-lech-700' }} flex flex-col items-center gap-0.5 rounded-lg border px-1 py-1.5 text-center">
-                                <flux:icon :name="$hit ? 'check-circle' : 'x-circle'" variant="mini" class="size-4" />
+                                <x-ui.icon :name="$hit ? 'check-circle' : 'x-circle'" variant="mini" class="size-4" />
                                 <span class="w-full truncate text-[10px] font-semibold leading-tight">{{ $hitLabel }}</span>
                             </div>
                         @endforeach
@@ -300,7 +300,7 @@
     @if (!$card['premium'] && $phase !== \App\Support\Rivals::PLAYED)
         <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-purple-50 px-3 py-2 text-sm dark:bg-purple-500/10">
             <span class="flex items-center gap-2"><x-premium-badge /> {{ __('Premium shows the rival\'s tip before the results.') }}</span>
-            <flux:link :href="route('support')" wire:navigate>{{ __('From 5 zł a week') }}</flux:link>
+            <a href="{{ route('support') }}" wire:navigate class="font-semibold text-club underline-offset-2 hover:underline">{{ __('From 5 zł a week') }}</a>
         </div>
     @endif
 

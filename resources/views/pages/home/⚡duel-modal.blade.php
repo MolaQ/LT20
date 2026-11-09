@@ -3,7 +3,6 @@
 use App\Models\Fixture;
 use App\Models\Matchday;
 use App\Support\Rivals;
-use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -21,7 +20,7 @@ new class extends Component {
     {
         $this->fixtureId = $id;
         unset($this->card);
-        Flux::modal('duel-details')->show();
+        $this->dispatch('ui-sheet', name: 'duel-details');
     }
 
     /** Dane pojedynku (App\Support\Rivals::fixture) z rozgrywkami, rundą i meczem Lecha tej kolejki. */
@@ -50,7 +49,7 @@ new class extends Component {
 }; ?>
 
 <div>
-    <flux:modal name="duel-details" class="w-full max-w-2xl">
+    <x-ui.sheet name="duel-details" wide>
         @if ($card = $this->card)
             @include('partials.duel-card', [
                 'card' => $card,
@@ -59,5 +58,5 @@ new class extends Component {
                 'isCup' => $card['is_cup'],
             ])
         @endif
-    </flux:modal>
+    </x-ui.sheet>
 </div>

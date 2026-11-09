@@ -4,7 +4,6 @@ use App\Models\Bot;
 use App\Models\OfficeRequest;
 use App\Support\BotNames;
 use App\Support\Office;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -117,7 +116,7 @@ new #[Layout('layouts::public')] class extends Component {
         $this->resetPage();
         unset($this->requests);
 
-        Flux::toast(variant: 'success', text: $rename
+        $this->dispatch('ui-toast', variant: 'success', text: $rename
             ? __('Your request is now open to the players\' vote.')
             : __('Your request was sent to the administrator.'));
     }
@@ -132,7 +131,7 @@ new #[Layout('layouts::public')] class extends Component {
         unset($this->requests, $this->myVotes);
 
         if ($request->fresh()?->status !== OfficeRequest::VOTING) {
-            Flux::toast(variant: 'success', text: __('Voting closed: :status.', ['status' => $request->fresh()?->statusLabel()]));
+            $this->dispatch('ui-toast', variant: 'success', text: __('Voting closed: :status.', ['status' => $request->fresh()?->statusLabel()]));
         }
     }
 
@@ -185,29 +184,43 @@ new #[Layout('layouts::public')] class extends Component {
     <div class="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
         {{-- Nowa sprawa --}}
         <section class="h-fit space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:heading size="lg" class="flex items-center gap-2"><flux:icon.pencil-square variant="mini" class="text-lech-700" />{{ __('New request') }}</flux:heading>
+            <x-ui.heading size="lg" class="flex items-center gap-2"><x-ui.icon name="pencil-square" variant="mini" class="text-lech-700" />{{ __('New request') }}</x-ui.heading>
 
             @guest
-                <flux:text>{{ __('Log in to send a request or vote.') }}</flux:text>
-                <flux:button size="sm" variant="primary" :href="route('login')">{{ __('Log in') }}</flux:button>
+                <x-ui.text>{{ __('Log in to send a request or vote.') }}</x-ui.text>
+                <x-ui.btn size="sm" variant="primary" :href="route('login')">{{ __('Log in') }}</x-ui.btn>
             @else
                 <form wire:submit="send" class="space-y-4">
-                    <flux:radio.group wire:model.live="type" :label="__('What is it about?')">
-                        @foreach ($this->types as $value => $label)
-                            <flux:radio :value="$value" :label="$label" />
-                        @endforeach
-                    </flux:radio.group>
-                    <flux:error name="type" />
+                    {{-- Rodzaj sprawy: kafelki do kliknięcia zamiast przycisków radiowych. --}}
+                    <fieldset class="space-y-2">
+                        <legend class="text-sm font-semibold">{{ __('What is it about?') }}</legend>
+                        <div class="flex flex-col gap-1.5" role="radiogroup">
+                            @foreach ($this->types as $value => $label)
+                                <button type="button" role="radio" aria-checked="{{ $type === $value ? 'true' : 'false' }}" wire:click="$set('type', @js($value))" wire:key="type-{{ $value }}"
+                                    @class([
+                                        'flex items-center gap-2 rounded-xl border px-3 py-2.5 text-start text-sm font-semibold transition',
+                                        'border-club bg-club/10' => $type === $value,
+                                        'border-ui-line hover:bg-ui-raised' => $type !== $value,
+                                    ])>
+                                    <span @class(['grid size-4 place-items-center rounded-full border-2', 'border-club' => $type === $value, 'border-ui-line' => $type !== $value])>
+                                        @if ($type === $value)<span class="size-2 rounded-full bg-club"></span>@endif
+                                    </span>
+                                    {{ $label }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </fieldset>
+                    <x-ui.error name="type" />
 
                     @if (! array_key_exists(\App\Models\OfficeRequest::BOT_RENAME, $this->types))
                         <p class="flex items-start gap-2 rounded-lg bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:bg-violet-500/10 dark:text-violet-200">
-                            <flux:icon.sparkles variant="micro" class="mt-0.5 shrink-0" />
+                            <x-ui.icon name="sparkles" variant="micro" class="mt-0.5 shrink-0" />
                             <span>{{ __('Bot rename requests are available with premium.') }} <a href="{{ route('support') }}" wire:navigate class="font-semibold underline">{{ __('See premium') }}</a></span>
                         </p>
                     @endif
 
                     @if (isset($hints[$type]))
-                        <flux:text class="text-xs">{{ $hints[$type] }}</flux:text>
+                        <x-ui.text class="text-xs">{{ $hints[$type] }}</x-ui.text>
                     @endif
 
                     @if ($type === \App\Models\OfficeRequest::BOT_RENAME)
@@ -215,10 +228,10 @@ new #[Layout('layouts::public')] class extends Component {
                             @if ($this->selectedBot)
                                 <div class="flex items-center justify-between gap-2 rounded-lg border border-lech-200 bg-lech-50 px-3 py-2 text-sm dark:border-lech-800 dark:bg-lech-900/40">
                                     <span class="min-w-0"><span class="text-xs text-zinc-500">{{ __('Bot') }}:</span> <span class="font-semibold italic">{{ $this->selectedBot->name }}</span></span>
-                                    <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="$set('botId', null)" />
+                                    <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="$set('botId', null)" />
                                 </div>
                             @else
-                                <flux:input wire:model.live.debounce.300ms="botSearch" icon="magnifying-glass" :label="__('Bot')" :placeholder="__('Search bot (min. 2 letters)')" />
+                                <x-ui.input wire:model.live.debounce.300ms="botSearch" icon="magnifying-glass" :label="__('Bot')" :placeholder="__('Search bot (min. 2 letters)')" />
                                 @if ($this->botOptions->isNotEmpty())
                                     <div class="divide-y divide-zinc-100 overflow-hidden rounded-lg border border-zinc-200 dark:divide-white/5 dark:border-zinc-700">
                                         @foreach ($this->botOptions as $bot)
@@ -231,14 +244,19 @@ new #[Layout('layouts::public')] class extends Component {
                                     </div>
                                 @endif
                             @endif
-                            <flux:error name="botId" />
-                            <flux:input wire:model="botName" :label="__('New bot name')" maxlength="40" />
+                            <x-ui.error name="botId" />
+                            <x-ui.input wire:model="botName" :label="__('New bot name')" maxlength="40" />
                         </div>
                     @endif
 
-                    <flux:textarea wire:model="body" :label="__('Justification')" rows="5" maxlength="{{ \App\Support\Office::BODY_MAX }}" />
+                    <label class="flex flex-col gap-1">
+                        <span class="text-sm font-semibold">{{ __('Justification') }}</span>
+                        <textarea wire:model="body" rows="5" maxlength="{{ \App\Support\Office::BODY_MAX }}"
+                            class="w-full rounded-xl border border-ui-line bg-ui-surface px-3 py-2 text-base text-ui-ink focus:border-club focus:outline-none focus:ring-2 focus:ring-club/30"></textarea>
+                        <x-ui.error name="body" />
+                    </label>
 
-                    <flux:button type="submit" variant="primary" icon="paper-airplane" class="w-full">{{ __('Send') }}</flux:button>
+                    <x-ui.btn type="submit" variant="primary" icon="paper-airplane" class="w-full">{{ __('Send') }}</x-ui.btn>
                 </form>
             @endguest
         </section>
@@ -250,7 +268,7 @@ new #[Layout('layouts::public')] class extends Component {
                     @if ($value !== 'mine' || $me)
                         <button type="button" wire:click="$set('tab', '{{ $value }}')"
                             class="{{ $tab === $value ? 'border-lech-700 bg-lech-700 text-white shadow' : 'border-zinc-200 bg-white text-zinc-700 hover:border-lech-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200' }} inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition">
-                            <flux:icon :name="$icon" variant="micro" />{{ $label }}
+                            <x-ui.icon :name="$icon" variant="micro" />{{ $label }}
                             @if (($this->counts[$value] ?? 0) > 0)
                                 <span class="rounded-full bg-white/20 px-1.5 text-xs tabular-nums {{ $tab === $value ? '' : 'bg-zinc-100 dark:bg-white/10' }}">{{ $this->counts[$value] }}</span>
                             @endif
@@ -269,13 +287,13 @@ new #[Layout('layouts::public')] class extends Component {
                 <article wire:key="office-{{ $request->id }}" class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                     <header class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-4 py-2 dark:border-white/5">
                         <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">{{ $request->typeLabel() }} · {{ $request->created_at?->format('d.m.Y') }}</span>
-                        <flux:badge size="sm" :color="$request->statusColor()">{{ $request->statusLabel() }}</flux:badge>
+                        <x-ui.badge size="sm" :color="$request->statusColor()">{{ $request->statusLabel() }}</x-ui.badge>
                     </header>
                     <div class="space-y-3 p-4">
                         @if ($rename)
                             <div class="flex flex-wrap items-center gap-2 text-lg">
                                 <span class="italic text-zinc-500 line-through decoration-zinc-400">{{ $request->old_bot_name ?? $request->bot?->name }}</span>
-                                <flux:icon.arrow-long-right class="size-5 text-lech-600" />
+                                <x-ui.icon name="arrow-long-right" class="size-5 text-lech-600" />
                                 <span class="font-bold italic text-lech-800 dark:text-lech-200">{{ $request->bot_name }}</span>
                             </div>
                         @endif
@@ -291,7 +309,7 @@ new #[Layout('layouts::public')] class extends Component {
                                         <button type="button" wire:click="vote({{ $request->id }}, {{ $value }})" @disabled(! $canVote || $own)
                                             title="{{ $own ? __('You cannot vote on your own request') : ($canVote ? '' : __('Log in to vote')) }}"
                                             class="{{ $myVote === $value ? ($color === 'green' ? 'border-green-600 bg-green-600 text-white' : 'border-red-600 bg-red-600 text-white') : 'border-zinc-200 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-300' }} inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold tabular-nums transition disabled:cursor-not-allowed disabled:opacity-50">
-                                            <flux:icon :name="$icon" variant="micro" />{{ $count }}
+                                            <x-ui.icon :name="$icon" variant="micro" />{{ $count }}
                                         </button>
                                     @endforeach
                                 </div>
@@ -323,7 +341,7 @@ new #[Layout('layouts::public')] class extends Component {
                 </div>
             @endforelse
 
-            <flux:pagination :paginator="$this->requests" />
+            {{ $this->requests->links() }}
         </section>
     </div>
 </div>

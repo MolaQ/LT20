@@ -20,7 +20,7 @@
 @endphp
 <section class="space-y-4" x-data="{ hg: 'all' }">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <flux:heading size="lg">{{ __('Season history') }}</flux:heading>
+        <x-ui.heading size="lg">{{ __('Season history') }}</x-ui.heading>
         <div class="inline-flex flex-wrap gap-1 rounded-full bg-zinc-100 p-1 dark:bg-white/10">
             @foreach ($groupLabels as $groupKey => $groupLabel)
                 <button type="button" x-on:click="hg = '{{ $groupKey }}'"
@@ -50,7 +50,7 @@
                         <span class="min-w-0 flex-1 font-medium sm:flex-none sm:basis-48">{{ $row['name'] }}</span>
                         <span class="{{ $row['winner'] ? 'text-amber-600 dark:text-amber-400' : '' }} flex items-center gap-1 font-bold">
                             @if ($row['winner'])
-                                <flux:icon.trophy variant="micro" />
+                                <x-ui.icon name="trophy" variant="micro" />
                             @endif
                             {{ $row['result'] }}
                         </span>
@@ -67,6 +67,6 @@
             </ul>
         </article>
     @empty
-        <flux:text>{{ __('No finished seasons yet.') }}</flux:text>
+        <x-ui.text>{{ __('No finished seasons yet.') }}</x-ui.text>
     @endforelse
 </section>

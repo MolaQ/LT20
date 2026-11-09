@@ -50,18 +50,18 @@
             @auth
                 <button type="button" wire:click="vote({{ $news->id }}, 1)" class="{{ $base }} {{ $upClass }} cursor-pointer hover:scale-110"
                     aria-label="{{ __('Thumbs up') }}" aria-pressed="{{ $mine === 1 ? 'true' : 'false' }}">
-                    <flux:icon.hand-thumb-up :variant="$mine === 1 ? 'solid' : 'outline'" class="size-4" />
+                    <x-ui.icon name="hand-thumb-up" :variant="$mine === 1 ? 'solid' : 'outline'" class="size-4" />
                 </button>
                 <button type="button" wire:click="vote({{ $news->id }}, -1)" class="{{ $base }} {{ $downClass }} cursor-pointer hover:scale-110"
                     aria-label="{{ __('Thumbs down') }}" aria-pressed="{{ $mine === -1 ? 'true' : 'false' }}">
-                    <flux:icon.hand-thumb-down :variant="$mine === -1 ? 'solid' : 'outline'" class="size-4" />
+                    <x-ui.icon name="hand-thumb-down" :variant="$mine === -1 ? 'solid' : 'outline'" class="size-4" />
                 </button>
             @else
                 <a href="{{ route('login') }}" class="{{ $base }} {{ $white }}" title="{{ __('Log in to rate') }}" aria-label="{{ __('Log in to rate') }}">
-                    <flux:icon.hand-thumb-up class="size-4" />
+                    <x-ui.icon name="hand-thumb-up" class="size-4" />
                 </a>
                 <a href="{{ route('login') }}" class="{{ $base }} {{ $white }}" title="{{ __('Log in to rate') }}" aria-label="{{ __('Log in to rate') }}">
-                    <flux:icon.hand-thumb-down class="size-4" />
+                    <x-ui.icon name="hand-thumb-down" class="size-4" />
                 </a>
             @endauth
         </div>

@@ -29,7 +29,7 @@
                         @endif
                         @break
                     @default
-                        <flux:icon.arrows-right-left variant="micro" class="text-lech-700 dark:text-lech-300" />
+                        <x-ui.icon name="arrows-right-left" variant="micro" class="text-lech-700 dark:text-lech-300" />
                 @endswitch
             </span>
             <span class="min-w-0 flex-1 truncate">
@@ -51,7 +51,7 @@
                 @endif
             </span>
             @if ($deletable)
-                <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="deleteEvent({{ $event->id }})" :aria-label="__('Remove')" />
+                <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="deleteEvent({{ $event->id }})" :aria-label="__('Remove')" />
             @endif
         </li>
     @endforeach

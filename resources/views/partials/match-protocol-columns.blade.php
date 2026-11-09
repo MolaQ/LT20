@@ -43,7 +43,7 @@
                                     @endif
                                     @break
                                 @default
-                                    <flux:icon.arrows-right-left variant="micro" class="size-3.5 text-lech-700 dark:text-lech-300" />
+                                    <x-ui.icon name="arrows-right-left" variant="micro" class="size-3.5 text-lech-700 dark:text-lech-300" />
                             @endswitch
                         </span>
                         @if ($type === \App\Support\MatchReport::EVENT_SUB)

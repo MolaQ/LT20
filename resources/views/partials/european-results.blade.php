@@ -30,7 +30,7 @@
             </a>
             @if ($stage < $euroRounds)
                 @if ($stage >= \App\Support\EuropeanCup::GROUP_ROUNDS)
-                    <flux:icon.chevron-right variant="micro" class="text-zinc-400" />
+                    <x-ui.icon name="chevron-right" variant="micro" class="text-zinc-400" />
                 @endif
             @endif
         @endforeach
@@ -42,7 +42,7 @@
             $champion = $final->winner_entry_id === $final->home_entry_id ? $final->home : $final->away;
         @endphp
         <div class="flex items-center gap-3 rounded-xl border-2 px-4 py-3" style="{{ $colorStyle }} border-color: var(--c-accent); background-image: linear-gradient(120deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink);">
-            <flux:icon.trophy class="comp-accent size-8 shrink-0" />
+            <x-ui.icon name="trophy" class="comp-accent size-8 shrink-0" />
             <div class="min-w-0">
                 <div class="text-xs uppercase tracking-wide opacity-80">{{ __('Winner') }}</div>
                 <button type="button" wire:click="showTeam({{ $champion?->season_team_id ?? 0 }})" class="truncate text-lg font-bold hover:underline {{ $champion?->seasonTeam?->is_bot ? 'italic' : '' }}">{{ $champion?->seasonTeam->name }}</button>
@@ -138,8 +138,8 @@
         </div>
     @else
         {{-- Faza pucharowa: karty meczów (zwycięzca przejmuje lepsze miejsce pary) --}}
-        <flux:card class="space-y-3">
-            <flux:heading>{{ \App\Support\EuropeanCup::stageLabel($round) }}</flux:heading>
+        <x-ui.card class="space-y-3">
+            <x-ui.heading>{{ \App\Support\EuropeanCup::stageLabel($round) }}</x-ui.heading>
             @if ($fixtures->isNotEmpty())
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     @foreach ($fixtures as $fixture)
@@ -157,9 +157,9 @@
                     @endforeach
                 </div>
             @else
-                <flux:text>{{ __('The round of 16 is drawn after the last group matchday.') }}</flux:text>
+                <x-ui.text>{{ __('The round of 16 is drawn after the last group matchday.') }}</x-ui.text>
             @endif
-        </flux:card>
+        </x-ui.card>
 
         <div class="space-y-1 px-1 text-xs italic text-zinc-500">
             <p>

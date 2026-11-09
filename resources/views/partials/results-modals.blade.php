@@ -4,7 +4,7 @@
     $formClasses = ['W' => 'bg-green-600', 'D' => 'bg-zinc-400', 'L' => 'bg-red-600'];
 @endphp
 
-<flux:modal name="team-details" class="w-full max-w-xl">
+<x-ui.sheet name="team-details" wide>
     @if ($card = $this->teamCard)
         @php
             $team = $card['team'];
@@ -44,7 +44,7 @@
 
             {{-- Podstawowe statystyki (dla wszystkich) --}}
             <div class="space-y-2">
-                <flux:heading size="sm">{{ __('Season statistics') }}</flux:heading>
+                <x-ui.heading size="sm">{{ __('Season statistics') }}</x-ui.heading>
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     @php
                         $basic = [
@@ -77,14 +77,14 @@
                 @endif
 
                 @if (!$team->user)
-                    <flux:text size="sm">{{ __('Bot: random tips.') }}</flux:text>
+                    <x-ui.text size="sm">{{ __('Bot: random tips.') }}</x-ui.text>
                 @endif
             </div>
 
             {{-- Statystyki premium --}}
             <div class="space-y-2">
                 <div class="flex items-center gap-2">
-                    <flux:heading size="sm">{{ __('Premium statistics') }}</flux:heading>
+                    <x-ui.heading size="sm">{{ __('Premium statistics') }}</x-ui.heading>
                     <x-premium-badge />
                 </div>
 
@@ -138,8 +138,8 @@
                             @endforeach
                         </div>
                         <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 p-4 text-center dark:bg-zinc-900/60">
-                            <flux:text size="sm">{{ __('Favourite tip, head to head and more with premium.') }}</flux:text>
-                            <flux:button size="sm" variant="primary" :href="route('support')" wire:navigate>{{ __('From 5 zł a week') }}</flux:button>
+                            <x-ui.text size="sm">{{ __('Favourite tip, head to head and more with premium.') }}</x-ui.text>
+                            <x-ui.btn size="sm" variant="primary" :href="route('support')" wire:navigate>{{ __('From 5 zł a week') }}</x-ui.btn>
                         </div>
                     </div>
                 @endif
@@ -147,12 +147,12 @@
 
             @if ($team->profileUrl())
                 <div class="flex justify-end">
-                    <flux:button size="sm" variant="ghost" icon-trailing="arrow-right" :href="$team->profileUrl()" wire:navigate>
+                    <x-ui.btn size="sm" variant="ghost" icon-trailing="arrow-right" :href="$team->profileUrl()" wire:navigate>
                         {{ __('Team profile') }}
-                    </flux:button>
+                    </x-ui.btn>
                 </div>
             @endif
         </div>
     @endif
-</flux:modal>
+</x-ui.sheet>
 

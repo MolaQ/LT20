@@ -174,7 +174,7 @@ new #[Layout('layouts::public')] class extends Component {
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <x-page-banner :eyebrow="__('Hall of Fame')" :title="$user->team_name ?: $user->name">
         <a href="{{ route('hall-of-fame') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-lech-100 hover:text-white hover:underline">
-            <flux:icon.arrow-left variant="micro" /> {{ __('Full ranking') }}
+            <x-ui.icon name="arrow-left" variant="micro" /> {{ __('Full ranking') }}
         </a>
 
         <x-slot:aside>
@@ -206,10 +206,10 @@ new #[Layout('layouts::public')] class extends Component {
 
     {{-- Rozgrywki w bieżącym sezonie: miejsce albo odpadnięcie, kliknięcie otwiera wyniki z wyróżnionym zespołem --}}
     @if (count($this->seasonCompetitions) > 0)
-        <flux:card class="space-y-4">
+        <x-ui.card class="space-y-4">
             <div class="flex items-center justify-between gap-2">
-                <flux:heading size="lg">{{ __('Competitions this season') }}</flux:heading>
-                <flux:badge color="zinc">{{ $this->currentSeason->title }}</flux:badge>
+                <x-ui.heading size="lg">{{ __('Competitions this season') }}</x-ui.heading>
+                <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
             </div>
             <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($this->seasonCompetitions as $row)
@@ -218,13 +218,13 @@ new #[Layout('layouts::public')] class extends Component {
                         @if (isset($this->icons[$row['trophy']]))
                             <img src="{{ $this->icons[$row['trophy']] }}" alt="" class="{{ $row['out'] ? 'opacity-40 grayscale' : '' }} size-10 shrink-0 object-contain">
                         @else
-                            <flux:icon.trophy class="size-10 shrink-0 text-amber-500" />
+                            <x-ui.icon name="trophy" class="size-10 shrink-0 text-amber-500" />
                         @endif
                         <div class="min-w-0 flex-1">
                             <div class="truncate font-semibold">{{ $row['name'] }}</div>
                             <div class="{{ $row['out'] ? 'text-zinc-600 dark:text-zinc-300' : 'text-lech-700 dark:text-lech-300' }} flex items-center gap-1 text-xs font-medium">
                                 @if ($row['out'])
-                                    <flux:icon.x-circle variant="micro" />
+                                    <x-ui.icon name="x-circle" variant="micro" />
                                 @endif
                                 <span class="truncate">{{ $row['status'] }}</span>
                             </div>
@@ -232,34 +232,34 @@ new #[Layout('layouts::public')] class extends Component {
                         @if ($row['points'] !== null)
                             <span class="shrink-0 font-bold tabular-nums">{{ __(':points pts', ['points' => $row['points']]) }}</span>
                         @endif
-                        <flux:icon.chevron-right variant="micro" class="shrink-0 text-zinc-400" />
+                        <x-ui.icon name="chevron-right" variant="micro" class="shrink-0 text-zinc-400" />
                     </a>
                 @endforeach
             </div>
-        </flux:card>
+        </x-ui.card>
     @endif
 
     {{-- Statystyki sezonu (jak zakładka Statystyki na /tips): swoje dla każdego, cudze w premium --}}
     @if ($this->currentSeason)
-        <flux:card class="space-y-4">
+        <x-ui.card class="space-y-4">
             <div class="flex items-center justify-between gap-2">
-                <flux:heading size="lg">{{ __('Statistics') }}</flux:heading>
-                <flux:badge color="zinc">{{ $this->currentSeason->title }}</flux:badge>
+                <x-ui.heading size="lg">{{ __('Statistics') }}</x-ui.heading>
+                <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
             </div>
             @if ($this->seasonStats)
                 @include('partials.player-stats-tiles', ['data' => $this->seasonStats, 'user' => $user])
             @else
                 <x-premium-lock :title="__('Statistics')" :text="__('Your own statistics are free in My tips. With premium you also see the statistics of other players.')" />
             @endif
-        </flux:card>
+        </x-ui.card>
     @endif
 
     {{-- Gablota --}}
-    <flux:card class="space-y-4">
-        <flux:heading size="lg">{{ __('Trophy cabinet') }}</flux:heading>
+    <x-ui.card class="space-y-4">
+        <x-ui.heading size="lg">{{ __('Trophy cabinet') }}</x-ui.heading>
 
         @if (count($this->cabinet) === 0)
-            <flux:text>{{ __('No trophies yet.') }}</flux:text>
+            <x-ui.text>{{ __('No trophies yet.') }}</x-ui.text>
         @else
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 @foreach ($this->cabinet as $item)
@@ -269,7 +269,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @if (isset($this->icons[$item['key']]))
                                 <img src="{{ $this->icons[$item['key']] }}" alt="" class="size-16 object-contain">
                             @else
-                                <flux:icon.trophy class="size-16 text-amber-500" />
+                                <x-ui.icon name="trophy" class="size-16 text-amber-500" />
                             @endif
                             @if ($item['count'] > 1)
                                 <span class="absolute -right-2 -top-1 rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">×{{ $item['count'] }}</span>
@@ -281,7 +281,7 @@ new #[Layout('layouts::public')] class extends Component {
                 @endforeach
             </div>
         @endif
-    </flux:card>
+    </x-ui.card>
 
     {{-- Historia sezonów --}}
     @include('partials.team-history', ['history' => $this->history])

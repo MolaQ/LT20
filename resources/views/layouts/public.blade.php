@@ -1,6 +1,6 @@
 {{--
-    Strony publiczne w nowej skorupie aplikacji (wygląd 2.0). Treść stron wciąż korzysta z Flux,
-    więc skorupa działa w trybie legacy, dopóki strony nie przejdą na komponenty x-ui.*.
+    Strony publiczne w nowej skorupie aplikacji (wygląd 2.0), bez Flux (komponenty x-ui.*). Tryb legacy dokłada
+    wyszukiwarkę w nagłówku, okna pojedynku i meczu Lecha oraz prawą kolumnę z rywalami i newsami.
 --}}
 @props(['title' => null])
 

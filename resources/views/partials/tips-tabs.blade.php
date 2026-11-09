@@ -34,7 +34,7 @@
                     @if (isset($trophyIcons[$row['trophy']]))
                         <img src="{{ $trophyIcons[$row['trophy']] }}" alt="" class="size-7 object-contain" title="{{ __('Trophy to win') }}">
                     @else
-                        <flux:icon.trophy class="text-amber-500" />
+                        <x-ui.icon name="trophy" class="text-amber-500" />
                     @endif
                 </span>
                 <div class="min-w-0 flex-1">
@@ -87,7 +87,7 @@
                             @elseif ($gone)
                                 {{-- Zespół już odpadł z rozgrywek (puchary, Liga Legend) --}}
                                 <div class="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border border-zinc-400 bg-zinc-100 px-1.5 py-2 text-center text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
-                                    <flux:icon.x-circle variant="micro" />
+                                    <x-ui.icon name="x-circle" variant="micro" />
                                     <span class="w-full truncate text-[11px] font-medium">{{ __('Team eliminated') }}</span>
                                 </div>
                             @else
@@ -102,11 +102,11 @@
             </div>
         </section>
     @empty
-        <flux:card>
-            <flux:text>{{ __('No competitions yet.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('No competitions yet.') }}</x-ui.text>
+        </x-ui.card>
     @endforelse
-    <flux:link :href="route('results')" wire:navigate class="text-sm">{{ __('Results and tables') }}</flux:link>
+    <a href="{{ route('results') }}" wire:navigate class="text-sm font-semibold text-club underline-offset-2 hover:underline">{{ __('Results and tables') }}</a>
 @elseif ($tab === 'stats')
     @php
         $data = $this->myStats;
@@ -122,17 +122,17 @@
         <x-slot:actions><x-premium-badge /></x-slot:actions>
         <div class="flex flex-wrap items-center justify-between gap-4">
             @if (!$data['rank'])
-                <flux:text>{{ __('Available after the first settled matchday.') }}</flux:text>
+                <x-ui.text>{{ __('Available after the first settled matchday.') }}</x-ui.text>
             @elseif ($isPremium)
                 <div class="flex items-baseline gap-2">
                     <span class="text-4xl font-black tabular-nums text-lech-700 dark:text-lech-300">{{ $data['rank']['place'] }}.</span>
                     <span class="text-sm text-zinc-500">{{ __('of :count', ['count' => $data['rank']['count']]) }}</span>
                 </div>
             @else
-                <flux:text size="sm">
+                <x-ui.text size="sm">
                     {{ __('Your exact place among the players is a premium feature.') }}
-                    <flux:link :href="route('support')" wire:navigate>{{ __('Premium') }}</flux:link>
-                </flux:text>
+                    <a href="{{ route('support') }}" wire:navigate class="font-semibold text-club underline-offset-2 hover:underline">{{ __('Premium') }}</a>
+                </x-ui.text>
             @endif
 
             @if (count($stats['form']) > 0)
@@ -173,9 +173,9 @@
         <x-lech-panel :title="__('Best season')" icon="star">
             @if ($extras['best_season'])
                 <p class="text-3xl font-black text-lech-700 dark:text-lech-300">{{ $extras['best_season']['season']?->title }}</p>
-                <flux:text size="sm">{{ __(':points pts for tips', ['points' => $extras['best_season']['points']]) }}</flux:text>
+                <x-ui.text size="sm">{{ __(':points pts for tips', ['points' => $extras['best_season']['points']]) }}</x-ui.text>
             @else
-                <flux:text>{{ __('Available after the first settled matchday.') }}</flux:text>
+                <x-ui.text>{{ __('Available after the first settled matchday.') }}</x-ui.text>
             @endif
         </x-lech-panel>
 
@@ -183,10 +183,10 @@
         <x-lech-panel :title="__('Favourite tip in each competition')" icon="sparkles">
             <x-slot:actions><x-premium-badge /></x-slot:actions>
             @if (!$isPremium)
-                <flux:text size="sm">
+                <x-ui.text size="sm">
                     {{ __('Premium shows the most popular tip in every competition of the season.') }}
-                    <flux:link :href="route('support')" wire:navigate>{{ __('See premium') }}</flux:link>
-                </flux:text>
+                    <a href="{{ route('support') }}" wire:navigate class="font-semibold text-club underline-offset-2 hover:underline">{{ __('See premium') }}</a>
+                </x-ui.text>
             @else
                 <div class="space-y-2">
                     @forelse ($extras['competitions'] as $row)
@@ -194,14 +194,14 @@
                             @if (isset($trophyIcons[$row['trophy']]))
                                 <img src="{{ $trophyIcons[$row['trophy']] }}" alt="" class="size-5 object-contain">
                             @else
-                                <flux:icon.trophy variant="micro" class="text-amber-500" />
+                                <x-ui.icon name="trophy" variant="micro" class="text-amber-500" />
                             @endif
                             <span class="min-w-0 flex-1 truncate" title="{{ $row['name'] }}">{{ $row['name'] }}</span>
                             <span class="rounded-md bg-lech-700 px-1.5 py-0.5 text-xs font-black tabular-nums text-white">{{ $row['score'] }}</span>
                             <span class="w-20 text-right text-xs text-zinc-500">{{ __(':count of :total tips', ['count' => $row['count'], 'total' => $row['total']]) }}</span>
                         </div>
                     @empty
-                        <flux:text>{{ __('No tips yet.') }}</flux:text>
+                        <x-ui.text>{{ __('No tips yet.') }}</x-ui.text>
                     @endforelse
                 </div>
             @endif
@@ -228,7 +228,7 @@
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             @foreach ($recordTiles as [$label, $value, $tileIcon])
                 <div class="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-white/5">
-                    <flux:icon :name="$tileIcon" variant="mini" class="text-lech-600 dark:text-lech-300" />
+                    <x-ui.icon :name="$tileIcon" variant="mini" class="text-lech-600 dark:text-lech-300" />
                     <div class="text-2xl font-black leading-tight tabular-nums">{{ $value }}</div>
                     <div class="text-[11px] font-semibold uppercase leading-snug tracking-wide text-zinc-500">{{ $label }}</div>
                 </div>
@@ -239,10 +239,10 @@
     {{-- Starty w rozgrywkach (tabele końcowe zakończonych sezonów) w barwach rozgrywek --}}
     <x-lech-panel :title="__('History in competitions')" icon="building-library" flush>
         <x-slot:actions>
-            <flux:button size="xs" icon="archive-box" :href="route('team.show', auth()->user())" wire:navigate>{{ __('Trophy cabinet') }}</flux:button>
+            <x-ui.btn size="xs" icon="archive-box" :href="route('team.show', auth()->user())" wire:navigate>{{ __('Trophy cabinet') }}</x-ui.btn>
         </x-slot:actions>
         @if (count($history['competitions']) === 0)
-            <div class="p-4"><flux:text>{{ __('History appears after the first finished season.') }}</flux:text></div>
+            <div class="p-4"><x-ui.text>{{ __('History appears after the first finished season.') }}</x-ui.text></div>
         @else
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[34rem] text-sm">
@@ -291,7 +291,7 @@
         <x-premium-lock :title="__('My scalps')" :text="__('With premium you see the rivals you beat more often than they beat you, all seasons and competitions together.')" />
     @elseif (count($this->myScalps) === 0)
         <x-lech-panel :title="__('My scalps')" icon="fire">
-            <flux:text>{{ __('No scalps yet. Win more matches than you lose against a player and they will appear here.') }}</flux:text>
+            <x-ui.text>{{ __('No scalps yet. Win more matches than you lose against a player and they will appear here.') }}</x-ui.text>
         </x-lech-panel>
     @else
         @include('partials.rival-list', [
@@ -308,7 +308,7 @@
         <x-premium-lock :title="__('Blacklist')" :text="__('With premium you see the rivals you lose to more often than you beat them, all seasons and competitions together.')" />
     @elseif (count($this->myBlacklist) === 0)
         <x-lech-panel :title="__('Blacklist')" icon="no-symbol">
-            <flux:text>{{ __('Your blacklist is empty. Nobody has a better head-to-head record against you.') }}</flux:text>
+            <x-ui.text>{{ __('Your blacklist is empty. Nobody has a better head-to-head record against you.') }}</x-ui.text>
         </x-lech-panel>
     @else
         @include('partials.rival-list', [
