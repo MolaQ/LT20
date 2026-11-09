@@ -129,7 +129,7 @@ new #[Layout('layouts::public')] class extends Component {
             @forelse ($this->records as $record)
                 <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
                     <div class="flex items-center gap-2 border-b border-zinc-100 px-4 py-2 dark:border-white/5">
-                        <x-ui.icon :icon="$record['icon']" variant="micro" class="text-lech-700 dark:text-lech-300" />
+                        <x-ui.icon :name="$record['icon']" variant="micro" class="text-lech-700 dark:text-lech-300" />
                         <span class="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">{{ $record['title'] }}</span>
                     </div>
                     <ol>

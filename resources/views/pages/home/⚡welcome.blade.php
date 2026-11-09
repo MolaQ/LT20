@@ -308,7 +308,7 @@ new #[Layout('layouts::public')] class extends Component {
         @foreach ($this->numbers as $number)
             <div class="group flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900">
                 <span class="lech-banner grid size-11 shrink-0 place-items-center rounded-xl shadow">
-                    <x-ui.icon :icon="$number['icon']" class="size-5 text-white" />
+                    <x-ui.icon :name="$number['icon']" class="size-5 text-white" />
                 </span>
                 <div class="min-w-0">
                     <div class="text-2xl font-black leading-none tabular-nums text-lech-800 dark:text-lech-200">{{ number_format($number['value'], 0, ',', ' ') }}</div>
@@ -328,7 +328,7 @@ new #[Layout('layouts::public')] class extends Component {
             ] as $index => [$icon, $title, $text])
                 <div class="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="pointer-events-none absolute -right-2 -top-6 select-none text-8xl font-black text-lech-700/5 dark:text-white/5">{{ $index + 1 }}</span>
-                    <x-ui.icon :icon="$icon" class="size-7 text-lech-700 dark:text-lech-300" />
+                    <x-ui.icon :name="$icon" class="size-7 text-lech-700 dark:text-lech-300" />
                     <h3 class="mt-3 text-lg font-black">{{ $title }}</h3>
                     <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $text }}</p>
                 </div>
