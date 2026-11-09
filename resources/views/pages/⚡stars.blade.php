@@ -328,7 +328,7 @@ new #[Layout('layouts::public')] class extends Component {
         @endif
 
         {{-- Filtry --}}
-        <div class="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="space-y-3 rounded-2xl border border-ui-line bg-ui-surface p-4">
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
                 <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable :placeholder="__('Search player or club (min. 2 letters)')" />
                 <x-ui.select wire:model.live="season">
@@ -351,53 +351,53 @@ new #[Layout('layouts::public')] class extends Component {
 
             <div class="flex flex-wrap items-center gap-3">
                 {{-- Pozycja --}}
-                <div class="inline-flex rounded-full bg-zinc-100 p-1 dark:bg-white/10">
+                <div class="inline-flex rounded-full bg-ui-raised p-1">
                     @foreach (['' => __('Everyone')] + collect(PlayerPosition::cases())->mapWithKeys(fn ($pos) => [$pos->value => $pos->short()])->all() as $posKey => $posLabel)
                         <button type="button" wire:click="$set('position', '{{ $posKey }}')" title="{{ $posKey === '' ? $posLabel : PlayerPosition::from($posKey)->label() }}"
-                            class="{{ $position === $posKey ? 'bg-lech-700 text-white shadow' : 'text-zinc-600 hover:text-lech-700 dark:text-zinc-300' }} min-w-9 rounded-full px-3 py-1 text-xs font-bold transition">{{ $posLabel }}</button>
+                            class="{{ $position === $posKey ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-lech-700' }} min-w-9 rounded-full px-3 py-1 text-xs font-bold transition">{{ $posLabel }}</button>
                     @endforeach
                 </div>
                 {{-- Drużyny: wszystkie, moja, porównanie --}}
-                <div class="inline-flex rounded-full bg-zinc-100 p-1 dark:bg-white/10">
+                <div class="inline-flex rounded-full bg-ui-raised p-1">
                     <button type="button" wire:click="$set('clubs', 'all')"
-                        class="{{ $clubs === 'all' ? 'bg-lech-700 text-white shadow' : 'text-zinc-600 hover:text-lech-700 dark:text-zinc-300' }} rounded-full px-3 py-1 text-xs font-bold transition">{{ __('All teams') }}</button>
+                        class="{{ $clubs === 'all' ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-lech-700' }} rounded-full px-3 py-1 text-xs font-bold transition">{{ __('All teams') }}</button>
                     @auth
                         <button type="button" wire:click="$set('clubs', 'mine')"
-                            class="{{ $clubs === 'mine' ? 'bg-lech-700 text-white shadow' : 'text-zinc-600 hover:text-lech-700 dark:text-zinc-300' }} rounded-full px-3 py-1 text-xs font-bold transition">{{ __('My team') }}</button>
+                            class="{{ $clubs === 'mine' ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-lech-700' }} rounded-full px-3 py-1 text-xs font-bold transition">{{ __('My team') }}</button>
                     @endauth
                     @if ($compareName)
                         <button type="button" wire:click="$set('clubs', 'compare')"
-                            class="{{ $clubs === 'compare' ? 'bg-lech-700 text-white shadow' : 'text-zinc-600 hover:text-lech-700 dark:text-zinc-300' }} max-w-48 truncate rounded-full px-3 py-1 text-xs font-bold transition">{{ auth()->check() ? __('Me vs :team', ['team' => $compareName]) : $compareName }}</button>
+                            class="{{ $clubs === 'compare' ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-lech-700' }} max-w-48 truncate rounded-full px-3 py-1 text-xs font-bold transition">{{ auth()->check() ? __('Me vs :team', ['team' => $compareName]) : $compareName }}</button>
                     @endif
                 </div>
                 {{-- Porównanie z drużyną: wpisywana nazwa i podpowiedzi --}}
                 <div class="relative w-full sm:w-64">
                     <x-ui.input size="sm" wire:model.live.debounce.300ms="compareSearch" icon="arrows-right-left" clearable :placeholder="__('Compare with a team…')" />
                     @if ($this->compareOptions->isNotEmpty())
-                        <div class="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                        <div class="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-ui-line bg-ui-surface shadow-lg">
                             @foreach ($this->compareOptions as $option)
                                 <button type="button" wire:click="compareWith({{ $option->id }})" wire:key="cmp-{{ $option->id }}"
                                     class="block w-full truncate px-3 py-2 text-left text-sm hover:bg-lech-50 dark:hover:bg-white/5">
                                     <span class="font-semibold">{{ $option->team_name ?: $option->name }}</span>
-                                    <span class="text-xs text-zinc-500">{{ $option->name }}</span>
+                                    <span class="text-xs text-ui-muted">{{ $option->name }}</span>
                                 </button>
                             @endforeach
                         </div>
                     @endif
                 </div>
-                <span class="ms-auto text-sm text-zinc-500">{{ trans_choice(':count player found|:count players found', $this->pageItems->total(), ['count' => $this->pageItems->total()]) }}</span>
+                <span class="ms-auto text-sm text-ui-muted">{{ trans_choice(':count player found|:count players found', $this->pageItems->total(), ['count' => $this->pageItems->total()]) }}</span>
                 @if ($this->isFiltered())
                     <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="clearFilters">{{ __('Clear filters') }}</x-ui.btn>
                 @endif
             </div>
 
             {{-- Zawodnicy: przyciski, można wybrać kilku --}}
-            <div x-data="{ show: {{ $picked !== [] ? 'true' : 'false' }} }" class="border-t border-zinc-100 pt-3 dark:border-white/5">
-                <button type="button" x-on:click="show = ! show" class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:text-lech-700">
+            <div x-data="{ show: {{ $picked !== [] ? 'true' : 'false' }} }" class="border-t border-ui-line pt-3">
+                <button type="button" x-on:click="show = ! show" class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ui-muted hover:text-lech-700">
                     <x-ui.icon name="chevron-right" variant="micro" class="transition" x-bind:class="show && 'rotate-90'" />
                     {{ __('Players') }}
                     @if ($picked !== [])
-                        <span class="rounded-full bg-lech-700 px-1.5 text-[10px] text-white">{{ count($picked) }}</span>
+                        <span class="rounded-full bg-club text-club-ink px-1.5 text-[10px]">{{ count($picked) }}</span>
                     @endif
                 </button>
                 <div x-show="show" x-collapse x-cloak class="mt-2 flex flex-wrap gap-1.5">
@@ -406,7 +406,7 @@ new #[Layout('layouts::public')] class extends Component {
                             $on = in_array($player->id, $picked, true);
                         @endphp
                         <button type="button" wire:click="togglePlayer({{ $player->id }})" wire:key="pick-{{ $player->id }}" title="{{ $player->position->label() }}"
-                            class="{{ $on ? 'border-lech-700 bg-lech-700 text-white shadow' : 'border-zinc-200 bg-white text-zinc-700 hover:border-lech-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200' }} inline-flex items-center gap-1.5 rounded-full border py-0.5 pe-2.5 ps-0.5 text-xs font-semibold transition">
+                            class="{{ $on ? 'border-lech-700 bg-club text-club-ink shadow' : 'border-ui-line bg-ui-surface text-ui-ink hover:border-lech-400' }} inline-flex items-center gap-1.5 rounded-full border py-0.5 pe-2.5 ps-0.5 text-xs font-semibold transition">
                             <span class="{{ $posTone[$player->position->value] }} grid size-5 place-items-center rounded-full text-[10px] font-black tabular-nums">{{ $player->number ?? '–' }}</span>
                             {{ $player->name }}
                         </button>
@@ -419,26 +419,26 @@ new #[Layout('layouts::public')] class extends Component {
         <x-lech-panel :title="__('Game stars') . ' – ' . $seasonTitle" :subtitle="__('Click a column to sort.')" icon="star" flush>
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[46rem] text-sm">
-                    <thead class="bg-zinc-50 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:bg-white/5">
+                    <thead class="bg-zinc-50 text-[11px] font-bold uppercase tracking-wider text-ui-muted dark:bg-white/5">
                         <tr>
                             <th class="w-12 ps-4 pe-2 py-2 text-left">#</th>
                             @foreach (['number' => ['Nr', __('Number'), 'text-center w-10'], 'name' => [__('Footballer'), __('Player and club'), 'text-left']] as $sortKey => [$short, $long, $align])
                                 <th class="{{ $align }} px-1.5 py-2" title="{{ $long }}">
-                                    <button type="button" wire:click="sortBy('{{ $sortKey }}')" class="{{ $sort === $sortKey ? 'text-lech-700 dark:text-lech-300' : '' }} inline-flex items-center gap-1 uppercase hover:text-lech-700 dark:hover:text-lech-300">
+                                    <button type="button" wire:click="sortBy('{{ $sortKey }}')" class="{{ $sort === $sortKey ? 'text-club' : '' }} inline-flex items-center gap-1 uppercase hover:text-club">
                                         {{ $short }}@if ($sort === $sortKey)<span class="text-[9px]">{{ $dir === 'asc' ? '▲' : '▼' }}</span>@endif
                                     </button>
                                 </th>
                             @endforeach
                             @foreach ($cols as $col => [$short, $long])
                                 <th class="px-1.5 py-2 text-right last:pe-4" title="{{ $long }}">
-                                    <button type="button" wire:click="sortBy('{{ $col }}')" class="{{ $sort === $col ? 'text-lech-700 dark:text-lech-300' : '' }} inline-flex items-center gap-1 uppercase hover:text-lech-700 dark:hover:text-lech-300">
+                                    <button type="button" wire:click="sortBy('{{ $col }}')" class="{{ $sort === $col ? 'text-club' : '' }} inline-flex items-center gap-1 uppercase hover:text-club">
                                         @if ($sort === $col)<span class="text-[9px]">{{ $dir === 'asc' ? '▲' : '▼' }}</span>@endif{{ $short }}
                                     </button>
                                 </th>
                             @endforeach
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-100 dark:divide-white/5">
+                    <tbody class="divide-y divide-ui-line">
                         @forelse ($this->pageItems as $row)
                             @php
                                 $mine = $me && $row['user_id'] === (int) $me;
@@ -449,25 +449,25 @@ new #[Layout('layouts::public')] class extends Component {
                             @endphp
                             <tr wire:key="star-{{ $row['user_id'] }}-{{ $row['player_id'] }}" class="{{ $mine ? 'bg-amber-50 dark:bg-amber-500/10' : ($rival ? 'bg-sky-50 dark:bg-sky-500/10' : '') }} transition hover:bg-lech-50/70 dark:hover:bg-white/5">
                                 <td class="ps-4 pe-2 py-2">
-                                    <span class="{{ $row['rank'] <= 3 ? 'bg-amber-400 text-amber-950' : 'bg-zinc-100 text-zinc-600 dark:bg-white/10 dark:text-zinc-300' }} grid size-7 place-items-center rounded-full text-[11px] font-black tabular-nums">{{ $row['rank'] }}</span>
+                                    <span class="{{ $row['rank'] <= 3 ? 'bg-amber-400 text-amber-950' : 'bg-ui-raised text-ui-muted' }} grid size-7 place-items-center rounded-full text-[11px] font-black tabular-nums">{{ $row['rank'] }}</span>
                                 </td>
                                 <td class="px-1.5 py-2 text-center">
                                     <span class="{{ $posTone[$row['position']->value] }} mx-auto grid size-8 place-items-center rounded-lg text-xs font-black tabular-nums" title="{{ $row['position']->label() }}">{{ $row['number'] ?? '–' }}</span>
                                 </td>
                                 <td class="px-1.5 py-2">
-                                    <div class="flex items-center gap-1.5 whitespace-nowrap font-semibold text-zinc-900 dark:text-white">
+                                    <div class="flex items-center gap-1.5 whitespace-nowrap font-semibold text-ui-ink">
                                         {{ $row['name'] }}
                                         @if ($row['academy'])
                                             <x-ui.icon name="academic-cap" variant="micro" class="shrink-0 text-lech-600 dark:text-lech-300" title="{{ __('Academy') }}" />
                                         @endif
                                     </div>
-                                    <a href="{{ $row['url'] }}" wire:navigate class="block max-w-48 truncate text-xs text-zinc-500 hover:text-lech-700 hover:underline dark:hover:text-lech-300">{{ $row['club'] }}</a>
+                                    <a href="{{ $row['url'] }}" wire:navigate class="block max-w-48 truncate text-xs text-ui-muted hover:text-club hover:underline">{{ $row['club'] }}</a>
                                 </td>
                                 @foreach ($cols as $col => $label)
                                     @php
                                         $value = $row[$col];
                                     @endphp
-                                    <td class="{{ $col === 'contribution' ? 'font-bold text-lech-800 dark:text-lech-200' : '' }} px-1.5 py-2 text-right tabular-nums last:pe-4">
+                                    <td class="{{ $col === 'contribution' ? 'font-bold text-club' : '' }} px-1.5 py-2 text-right tabular-nums last:pe-4">
                                         @if (in_array($col, ['clean_sheets', 'defense'], true) && ! $sheets)
                                             <span class="text-zinc-300 dark:text-zinc-600">·</span>
                                         @elseif ($col === 'win_pct')
@@ -482,7 +482,7 @@ new #[Layout('layouts::public')] class extends Component {
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="12" class="px-4 py-8 text-center text-sm text-zinc-500">{{ __('No players match the filters.') }}</td>
+                                <td colspan="12" class="px-4 py-8 text-center text-sm text-ui-muted">{{ __('No players match the filters.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -490,7 +490,7 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
 
             {{-- Legenda: kolor numeru = pozycja, biret = wychowanek --}}
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-zinc-200 px-4 py-2.5 text-xs text-zinc-500 dark:border-zinc-700">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ui-line px-4 py-2.5 text-xs text-ui-muted">
                 @foreach (PlayerPosition::cases() as $pos)
                     <span class="inline-flex items-center gap-1.5"><span class="{{ $posTone[$pos->value] }} size-3 rounded"></span>{{ $pos->label() }}</span>
                 @endforeach

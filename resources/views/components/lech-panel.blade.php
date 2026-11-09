@@ -5,7 +5,7 @@
 --}}
 @props(['title', 'subtitle' => null, 'icon' => null, 'flush' => false])
 
-<section {{ $attributes->class('overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900') }}>
+<section {{ $attributes->class('overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm') }}>
     <div class="lech-bar flex flex-wrap items-center gap-3 px-4 py-3">
         @if ($icon)
             <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-white/10 text-white">

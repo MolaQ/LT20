@@ -18,9 +18,9 @@
         default => __('Full settlement: tip, points for the tip and bonuses.'),
     };
     // Etykiety wierszy rozliczenia: jednolite tło.
-    $labelClass = 'rounded-md bg-lech-50 px-2 py-0.5 text-xs font-medium text-lech-800 dark:bg-lech-900/40 dark:text-lech-200';
+    $labelClass = 'rounded-md bg-ui-raised px-2 py-0.5 text-xs font-medium text-club';
     // Wartości w rozliczeniu: barwy strony (granat Lecha), zero i brak przygaszone.
-    $siteTile = 'inline-flex h-8 items-center justify-center rounded-lg bg-lech-700 px-2 font-bold tabular-nums text-white shadow-sm dark:bg-lech-600';
+    $siteTile = 'inline-flex h-8 items-center justify-center rounded-lg bg-club text-club-ink px-2 font-bold tabular-nums shadow-sm';
     $mutedTile = 'inline-flex h-8 items-center justify-center rounded-lg bg-lech-100 px-2 font-bold tabular-nums text-lech-400 dark:bg-lech-900/50 dark:text-lech-500';
 @endphp
 <div class="space-y-5">
@@ -67,8 +67,8 @@
             $lechPlayed = $lech->lech_goals !== null && $lech->opponent_goals !== null;
         @endphp
         <div class="rounded-xl border border-lech-200 bg-lech-50/60 px-4 py-3 dark:border-lech-800 dark:bg-lech-950/40">
-            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
-                <span class="font-semibold uppercase tracking-wide text-lech-700 dark:text-lech-300">{{ __('Lech match') }} &middot; {{ __('Matchday :number', ['number' => $lech->number]) }}</span>
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-ui-muted">
+                <span class="font-semibold uppercase tracking-wide text-club">{{ __('Lech match') }} &middot; {{ __('Matchday :number', ['number' => $lech->number]) }}</span>
                 <span class="flex items-center gap-1.5">
                     @if ($lech->competitionLabel())
                         <x-ui.badge size="sm" color="zinc">{{ $lech->competitionLabel() }}</x-ui.badge>
@@ -80,17 +80,17 @@
             </div>
             @if (filled($lech->opponent))
                 <div class="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                    <div class="truncate text-right font-bold text-lech-800 dark:text-lech-200">Lech Poznań</div>
-                    <div class="rounded-lg bg-white px-3 py-1 text-center text-2xl font-black tabular-nums text-lech-900 shadow-xs dark:bg-zinc-900 dark:text-white">
+                    <div class="truncate text-right font-bold text-club">Lech Poznań</div>
+                    <div class="rounded-lg bg-ui-surface px-3 py-1 text-center text-2xl font-black tabular-nums text-lech-900 shadow-xs dark:text-white">
                         {{ $lechPlayed ? $lech->lech_goals . ':' . $lech->opponent_goals : '–:–' }}
                     </div>
                     <div class="truncate font-semibold">{{ $lech->opponent }}</div>
                 </div>
             @else
-                <div class="mt-2 text-sm text-zinc-500">{{ __('Opponent not set yet.') }}</div>
+                <div class="mt-2 text-sm text-ui-muted">{{ __('Opponent not set yet.') }}</div>
             @endif
             @if ($lech->kickoff_at)
-                <div class="mt-2 text-center text-xs text-zinc-500">
+                <div class="mt-2 text-center text-xs text-ui-muted">
                     {{ $lechPlayed ? __('Played on :date', ['date' => $lech->kickoff_at->translatedFormat('l, j F Y, H:i')]) : __('Kick-off: :date', ['date' => $lech->kickoff_at->translatedFormat('l, j F Y, H:i')]) }}
                 </div>
             @endif
@@ -127,7 +127,7 @@
                         <a href="{{ $side['profile'] }}" wire:navigate
                             class="lech-bar max-w-full truncate rounded-md px-2.5 py-1 font-semibold transition hover:opacity-90 {{ $side['bot'] ? 'italic' : '' }}">{{ $side['name'] }}</a>
                     @else
-                        <span class="max-w-full truncate rounded-md bg-zinc-200 px-2.5 py-1 font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200 {{ $side['virtual'] || $side['bot'] ? 'italic' : '' }}">{{ $side['name'] }}</span>
+                        <span class="max-w-full truncate rounded-md bg-ui-line px-2.5 py-1 font-semibold text-ui-ink {{ $side['virtual'] || $side['bot'] ? 'italic' : '' }}">{{ $side['name'] }}</span>
                     @endif
                 </div>
 
@@ -204,12 +204,12 @@
                                 @elseif ($term[2] === 'goals')
                                     <div class="flex w-12 flex-col items-center gap-1 text-center">
                                         <span class="lech-bar flex h-8 w-full items-center justify-center rounded-lg text-base font-black tabular-nums shadow-sm">{{ $term[1] ?? '—' }}</span>
-                                        <span class="text-[10px] font-bold leading-tight text-lech-800 dark:text-lech-200">{{ $term[0] }}</span>
+                                        <span class="text-[10px] font-bold leading-tight text-club">{{ $term[0] }}</span>
                                     </div>
                                 @else
                                     <div class="flex w-12 flex-col items-center gap-1 text-center">
                                         <span class="flex h-8 w-full items-center justify-center rounded-lg bg-lech-100 font-bold tabular-nums text-lech-900 ring-1 ring-lech-200 dark:bg-lech-900/60 dark:text-lech-100 dark:ring-lech-800">{{ $term[1] ?? '—' }}</span>
-                                        <span class="text-[10px] leading-tight text-zinc-500">{{ $term[0] }}</span>
+                                        <span class="text-[10px] leading-tight text-ui-muted">{{ $term[0] }}</span>
                                     </div>
                                 @endif
                             @endforeach
@@ -220,7 +220,7 @@
                         <div class="{{ $mirror }} flex items-center justify-between gap-2 border-t border-lech-200/70 pt-2 text-xs dark:border-lech-800">
                             <span class="{{ $labelClass }}">{{ __('Tip saved') }}</span>
                             {{-- Remis w meczu pucharowym rozstrzyga kolejność zapisu typu (numer), nie same milisekundy --}}
-                            <span class="tabular-nums text-zinc-500">
+                            <span class="tabular-nums text-ui-muted">
                                 {{ $side['tipped_at']->translatedFormat('j M, H:i:s') }}@if ($side['tip_order']) · {{ __('save no. :number', ['number' => $side['tip_order']]) }}@endif
                             </span>
                         </div>
@@ -249,7 +249,7 @@
                         @if ($side['tip'] && $side['tipped_at'])
                             <div class="{{ $mirror }} flex items-center justify-between gap-2 text-xs">
                                 <dt class="{{ $labelClass }}">{{ __('Tip saved') }}</dt>
-                                <dd class="tabular-nums text-zinc-500">{{ $side['tipped_at']->translatedFormat('j M, H:i:s') }}</dd>
+                                <dd class="tabular-nums text-ui-muted">{{ $side['tipped_at']->translatedFormat('j M, H:i:s') }}</dd>
                             </div>
                         @endif
                     </dl>
@@ -282,9 +282,9 @@
                                     @php
                                         // Niebieski: punkty ataku dla nas (gol, asysta), jasnoniebieski: punkty obrony (czyste konto).
                                         $chipTone = match ($lineupName['tone']) {
-                                            'attack' => 'bg-lech-700 text-white ring-lech-700',
+                                            'attack' => 'bg-club text-club-ink ring-lech-700',
                                             'defense' => 'bg-sky-100 text-sky-900 ring-sky-300 dark:bg-sky-500/20 dark:text-sky-100 dark:ring-sky-700',
-                                            default => 'bg-white text-zinc-700 ring-lech-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-lech-800',
+                                            default => 'bg-ui-surface text-ui-ink ring-lech-200 dark:ring-lech-800',
                                         };
                                     @endphp
                                     <span class="{{ $chipTone }} rounded-full px-2 py-0.5 text-[11px] font-medium ring-1">{{ $lineupName['label'] }}</span>
@@ -305,5 +305,5 @@
     @endif
 
     {{-- Szczegóły widoczności rozliczenia: na samym dole, kursywą --}}
-    <p class="text-xs italic text-zinc-500">{{ $phaseInfo }}</p>
+    <p class="text-xs italic text-ui-muted">{{ $phaseInfo }}</p>
 </div>

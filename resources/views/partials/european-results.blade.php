@@ -17,12 +17,12 @@
 <div class="space-y-4">
     {{-- Pasek etapów: Faza grupowa 1-5 → 1/8 finału → Ćwierćfinał → Półfinał → Finał --}}
     <nav class="flex flex-wrap items-center gap-1 text-xs" aria-label="{{ __('Rounds') }}">
-        <span class="me-1 font-semibold uppercase tracking-wide text-zinc-500">{{ __('Group stage') }}</span>
+        <span class="me-1 font-semibold uppercase tracking-wide text-ui-muted">{{ __('Group stage') }}</span>
         @foreach (range(1, $euroRounds) as $stage)
             @php
                 $stageClass = $stage === $round
                     ? 'lech-bar font-semibold'
-                    : ($stage < $round ? 'bg-lech-100 text-lech-800 hover:bg-lech-200 dark:bg-lech-900/40 dark:text-lech-200' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800');
+                    : ($stage < $round ? 'bg-lech-100 text-club hover:bg-lech-200 dark:bg-lech-900/40' : 'bg-ui-raised text-ui-muted hover:bg-zinc-200');
             @endphp
             <a href="{{ $this->pageUrl($stage) }}" wire:navigate title="{{ \App\Support\EuropeanCup::stageLabel($stage) }}"
                 class="{{ $stageClass }} rounded-full px-2.5 py-1 tabular-nums transition">
@@ -78,16 +78,16 @@
                                 <th class="px-3 py-1.5 text-right">{{ __('Pts') }}</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                        <tbody class="bg-ui-surface text-ui-ink">
                             @foreach ($table->values() as $index => $row)
                                 @php
-                                    $zoneClass = $index < $advance ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-zinc-400 text-zinc-500 dark:text-zinc-400';
+                                    $zoneClass = $index < $advance ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-zinc-400 text-ui-muted';
                                 @endphp
                                 <tr wire:key="group-{{ $group }}-{{ $row['entry_id'] }}"
                                     class="{{ $zoneClass }} border-b border-zinc-100 last:border-b-0 dark:border-zinc-700/50 {{ $this->highlighted($row['team']->id) ? 'bg-amber-50 font-semibold dark:bg-amber-900/20' : '' }}">
-                                    <td class="px-3 py-1.5 text-right tabular-nums text-zinc-500">{{ $index + 1 }}.</td>
+                                    <td class="px-3 py-1.5 text-right tabular-nums text-ui-muted">{{ $index + 1 }}.</td>
                                     <td class="max-w-44 truncate px-2 py-1.5">
-                                        <button type="button" wire:click="showTeam({{ $row['team']->id }})" class="truncate hover:text-lech-700 hover:underline dark:hover:text-lech-300 {{ $row['team']->is_bot ? 'italic' : '' }}">{{ $row['team']->name }}</button>
+                                        <button type="button" wire:click="showTeam({{ $row['team']->id }})" class="truncate hover:text-club hover:underline {{ $row['team']->is_bot ? 'italic' : '' }}">{{ $row['team']->name }}</button>
                                         <x-champion-trophies :team="$row['team']" class="ms-1" />
                                     </td>
                                     <td class="px-1.5 py-1.5 text-right tabular-nums">{{ $row['played'] }}</td>
@@ -128,7 +128,7 @@
             @endforeach
         </div>
 
-        <div class="space-y-1 px-1 text-xs italic text-zinc-500">
+        <div class="space-y-1 px-1 text-xs italic text-ui-muted">
             <p>{{ __('Four groups of six teams, everyone plays everyone once. Points and tie-breakers as in the leagues.') }}</p>
             <p>{{ __('The top four of each group go through to the round of 16, the fifth and sixth places are eliminated. Teams from the same group place are ranked against each other (the best group winner, the second best group winner …) and that decides the seeding in the round of 16.') }}</p>
             <p class="flex flex-wrap gap-4 not-italic">
@@ -149,7 +149,7 @@
                                 'mine' => $this->highlighted($fixture->home?->season_team_id) || $this->highlighted($fixture->away?->season_team_id),
                             ])
                             @if ($round === \App\Support\EuropeanCup::GROUP_ROUNDS + 1)
-                                <div class="mt-1 px-1 text-[11px] text-zinc-500">
+                                <div class="mt-1 px-1 text-[11px] text-ui-muted">
                                     {{ \App\Support\EuropeanCup::seatLabel((int) $fixture->home_seat) }} – {{ \App\Support\EuropeanCup::seatLabel((int) $fixture->away_seat) }}
                                 </div>
                             @endif
@@ -161,7 +161,7 @@
             @endif
         </x-ui.card>
 
-        <div class="space-y-1 px-1 text-xs italic text-zinc-500">
+        <div class="space-y-1 px-1 text-xs italic text-ui-muted">
             <p>
                 {{ __('Seeds 1-4 are the group winners, 5-8 the runners-up, 9-12 the third places and 13-16 the fourth places, each ranked against each other. The best group winner can meet the second best only in the final.') }}
             </p>

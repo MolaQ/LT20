@@ -28,9 +28,9 @@
             $perRound = $row['type'] === \App\Enums\CompetitionType::Legends ? 2 : 1;
             $byRound = collect($row['matches'])->groupBy('round');
         @endphp
-        <section class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900" wire:key="comp-{{ $loop->index }}">
+        <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm" wire:key="comp-{{ $loop->index }}">
             <div class="lech-bar flex flex-wrap items-center gap-3 px-4 py-3">
-                <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-xs dark:bg-zinc-800">
+                <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ui-surface shadow-xs">
                     @if (isset($trophyIcons[$row['trophy']]))
                         <img src="{{ $trophyIcons[$row['trophy']] }}" alt="" class="size-7 object-contain" title="{{ __('Trophy to win') }}">
                     @else
@@ -64,7 +64,7 @@
                         $gone = $row['eliminated_round'] && $round > $row['eliminated_round'];
                     @endphp
                     <div class="flex min-w-0 flex-col gap-1.5" wire:key="cr-{{ $loop->parent->index }}-{{ $round }}">
-                        <div class="truncate text-center text-[11px] font-semibold uppercase tracking-wide text-zinc-500" title="{{ $row['type']->stageLabel($round) }}">{{ $row['type']->stageLabel($round) }}</div>
+                        <div class="truncate text-center text-[11px] font-semibold uppercase tracking-wide text-ui-muted" title="{{ $row['type']->stageLabel($round) }}">{{ $row['type']->stageLabel($round) }}</div>
                         @foreach (range(0, $perRound - 1) as $slot)
                             @php
                                 $match = $roundMatches[$slot] ?? null;
@@ -72,7 +72,7 @@
                             @if ($match)
                                 {{-- Kliknięcie otwiera uniwersalne okno pojedynku (pages::home.duel-modal) --}}
                                 <button type="button" wire:click="$dispatch('show-duel', { id: {{ $match['fixture_id'] }} })" title="{{ __('Match details') }}"
-                                    class="{{ $match['tip_points'] !== null ? $tipClasses[$match['tip_points']] : 'border-zinc-200 dark:border-zinc-700' }} flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl border px-1.5 py-2 text-center text-sm transition hover:shadow-md">
+                                    class="{{ $match['tip_points'] !== null ? $tipClasses[$match['tip_points']] : 'border-ui-line' }} flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl border px-1.5 py-2 text-center text-sm transition hover:shadow-md">
                                     <span class="w-full truncate text-xs font-medium">{{ $match['rival'] }}</span>
                                     <span class="flex items-center gap-1">
                                         @if ($match['outcome'])
@@ -81,12 +81,12 @@
                                         <span class="font-bold tabular-nums">{{ $match['score'] ?? '–:–' }}</span>
                                     </span>
                                     @if ($match['tip_points'] !== null)
-                                        <span class="text-[11px] text-zinc-500">{{ __(':points pts', ['points' => $match['tip_points']]) }}</span>
+                                        <span class="text-[11px] text-ui-muted">{{ __(':points pts', ['points' => $match['tip_points']]) }}</span>
                                     @endif
                                 </button>
                             @elseif ($gone)
                                 {{-- Zespół już odpadł z rozgrywek (puchary, Liga Legend) --}}
-                                <div class="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border border-zinc-400 bg-zinc-100 px-1.5 py-2 text-center text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                                <div class="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border border-zinc-400 bg-ui-raised px-1.5 py-2 text-center text-ui-muted dark:border-zinc-600">
                                     <x-ui.icon name="x-circle" variant="micro" />
                                     <span class="w-full truncate text-[11px] font-medium">{{ __('Team eliminated') }}</span>
                                 </div>
@@ -125,8 +125,8 @@
                 <x-ui.text>{{ __('Available after the first settled matchday.') }}</x-ui.text>
             @elseif ($isPremium)
                 <div class="flex items-baseline gap-2">
-                    <span class="text-4xl font-black tabular-nums text-lech-700 dark:text-lech-300">{{ $data['rank']['place'] }}.</span>
-                    <span class="text-sm text-zinc-500">{{ __('of :count', ['count' => $data['rank']['count']]) }}</span>
+                    <span class="text-4xl font-black tabular-nums text-club">{{ $data['rank']['place'] }}.</span>
+                    <span class="text-sm text-ui-muted">{{ __('of :count', ['count' => $data['rank']['count']]) }}</span>
                 </div>
             @else
                 <x-ui.text size="sm">
@@ -137,7 +137,7 @@
 
             @if (count($stats['form']) > 0)
                 <div class="flex items-center gap-1">
-                    <span class="me-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{{ __('Form') }}</span>
+                    <span class="me-2 text-[11px] font-semibold uppercase tracking-wide text-ui-muted">{{ __('Form') }}</span>
                     @foreach ($stats['form'] as $result)
                         <span class="{{ $formClasses[$result] }} flex size-6 items-center justify-center rounded text-xs font-black">{{ $formLetters[$result] }}</span>
                     @endforeach
@@ -159,11 +159,11 @@
                         <span class="font-medium">{{ $label }}</span>
                         @if ($fav)
                             <span class="flex items-center gap-2">
-                                <span class="rounded-md bg-lech-700 px-2 py-0.5 font-black tabular-nums text-white">{{ $fav['score'] }}</span>
-                                <span class="text-xs text-zinc-500">{{ __(':count of :total tips', ['count' => $fav['count'], 'total' => $fav['total']]) }}</span>
+                                <span class="rounded-md bg-club text-club-ink px-2 py-0.5 font-black tabular-nums">{{ $fav['score'] }}</span>
+                                <span class="text-xs text-ui-muted">{{ __(':count of :total tips', ['count' => $fav['count'], 'total' => $fav['total']]) }}</span>
                             </span>
                         @else
-                            <span class="text-zinc-500">—</span>
+                            <span class="text-ui-muted">—</span>
                         @endif
                     </div>
                 @endforeach
@@ -172,7 +172,7 @@
 
         <x-lech-panel :title="__('Best season')" icon="star">
             @if ($extras['best_season'])
-                <p class="text-3xl font-black text-lech-700 dark:text-lech-300">{{ $extras['best_season']['season']?->title }}</p>
+                <p class="text-3xl font-black text-club">{{ $extras['best_season']['season']?->title }}</p>
                 <x-ui.text size="sm">{{ __(':points pts for tips', ['points' => $extras['best_season']['points']]) }}</x-ui.text>
             @else
                 <x-ui.text>{{ __('Available after the first settled matchday.') }}</x-ui.text>
@@ -197,8 +197,8 @@
                                 <x-ui.icon name="trophy" variant="micro" class="text-amber-500" />
                             @endif
                             <span class="min-w-0 flex-1 truncate" title="{{ $row['name'] }}">{{ $row['name'] }}</span>
-                            <span class="rounded-md bg-lech-700 px-1.5 py-0.5 text-xs font-black tabular-nums text-white">{{ $row['score'] }}</span>
-                            <span class="w-20 text-right text-xs text-zinc-500">{{ __(':count of :total tips', ['count' => $row['count'], 'total' => $row['total']]) }}</span>
+                            <span class="rounded-md bg-club text-club-ink px-1.5 py-0.5 text-xs font-black tabular-nums">{{ $row['score'] }}</span>
+                            <span class="w-20 text-right text-xs text-ui-muted">{{ __(':count of :total tips', ['count' => $row['count'], 'total' => $row['total']]) }}</span>
                         </div>
                     @empty
                         <x-ui.text>{{ __('No tips yet.') }}</x-ui.text>
@@ -227,10 +227,10 @@
     <x-lech-panel :title="__('Personal records (all seasons)')" icon="trophy">
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             @foreach ($recordTiles as [$label, $value, $tileIcon])
-                <div class="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-white/5">
+                <div class="flex flex-col gap-1 rounded-xl border border-ui-line bg-zinc-50/60 p-3 dark:bg-white/5">
                     <x-ui.icon :name="$tileIcon" variant="mini" class="text-lech-600 dark:text-lech-300" />
                     <div class="text-2xl font-black leading-tight tabular-nums">{{ $value }}</div>
-                    <div class="text-[11px] font-semibold uppercase leading-snug tracking-wide text-zinc-500">{{ $label }}</div>
+                    <div class="text-[11px] font-semibold uppercase leading-snug tracking-wide text-ui-muted">{{ $label }}</div>
                 </div>
             @endforeach
         </div>
@@ -246,7 +246,7 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[34rem] text-sm">
-                    <thead class="bg-zinc-50 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:bg-white/5">
+                    <thead class="bg-zinc-50 text-[11px] font-bold uppercase tracking-wider text-ui-muted dark:bg-white/5">
                         <tr>
                             <th class="px-4 py-2 text-left">{{ __('Competition') }}</th>
                             <th class="px-2 py-2 text-right">{{ __('Seasons') }}</th>
@@ -257,7 +257,7 @@
                             <th class="px-4 py-2 text-right">{{ __('Points') }}</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-100 dark:divide-white/5">
+                    <tbody class="divide-y divide-ui-line">
                         @foreach ($history['competitions'] as $row)
                             <tr wire:key="hist-{{ $loop->index }}">
                                 <td class="px-4 py-2.5">

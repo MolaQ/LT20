@@ -9,7 +9,7 @@
     opcjonalnie $stageExtra (fn(int): string, tekst pod etykietą), $current (wybrana kolejka).
     Używany na /results (ligi, podwórkowa, Liga Legend, puchary europejskie) i na /tips („Twoje mecze ligowe”).
 --}}
-<section class="lech-bar-shadow overflow-hidden rounded-2xl border border-lech-950/20 bg-white dark:border-lech-900 dark:bg-zinc-900">
+<section class="lech-bar-shadow overflow-hidden rounded-2xl border border-lech-950/20 bg-ui-surface dark:border-lech-900">
     <header class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
         <h3 class="flex items-center gap-2 font-bold">
             <x-ui.icon name="trophy" class="size-5 text-lech-200" />
@@ -26,7 +26,7 @@
                 @endphp
                 <li class="flex flex-col gap-1.5" wire:key="path-{{ $stage }}">
                     @php
-                        $stageClass = ($stage === $current ? 'text-lech-700 dark:text-lech-300' : 'text-zinc-500 hover:text-lech-700') . ' truncate text-center text-xs font-semibold uppercase tracking-wide';
+                        $stageClass = ($stage === $current ? 'text-club' : 'text-ui-muted hover:text-lech-700') . ' truncate text-center text-xs font-semibold uppercase tracking-wide';
                     @endphp
                     @if (isset($stageAction))
                         {{-- /tips: etykieta wybiera kolejkę do typowania (zamiast kafelków kolejek) --}}
@@ -36,7 +36,7 @@
                     @endif
                     @if (isset($stageExtra))
                         {{-- Dodatkowa linia pod etykietą, np. mecz Lecha w tej kolejce --}}
-                        <span class="truncate text-center text-[11px] text-zinc-500">{{ $stageExtra($stage) }}</span>
+                        <span class="truncate text-center text-[11px] text-ui-muted">{{ $stageExtra($stage) }}</span>
                     @endif
                     @foreach (range(0, $perRound - 1) as $slot)
                         @php
@@ -47,32 +47,32 @@
                             $myGoals = $fx ? ($isHome ? $fx->home_goals : $fx->away_goals) : null;
                             $theirGoals = $fx ? ($isHome ? $fx->away_goals : $fx->home_goals) : null;
                             [$strip, $stateClass, $stateText] = match (true) {
-                                $fx === null && $gone => ['bg-zinc-400 dark:bg-zinc-600', 'text-zinc-500', __('Team eliminated')],
-                                $fx === null => ['bg-zinc-200 dark:bg-zinc-700', 'text-zinc-400', '—'],
+                                $fx === null && $gone => ['bg-zinc-400 dark:bg-zinc-600', 'text-ui-muted', __('Team eliminated')],
+                                $fx === null => ['bg-ui-line', 'text-zinc-400', '—'],
                                 !$fx->isPlayed() => ['bg-amber-400', 'text-amber-700 dark:text-amber-300', __('Not played yet')],
                                 // Rzuty karne (puchary): decyduje zwycięzca pary, inaczej bramki (także z wirtualnym rywalem).
                                 $fx->decided_by_time => $fx->winner_entry_id === $entryId
                                     ? ['bg-green-500', 'text-green-700 dark:text-green-400', __('Through on penalties')]
                                     : ['bg-red-500', 'text-red-600 dark:text-red-400', __('Out on penalties')],
                                 $myGoals > $theirGoals => ['bg-green-500', 'text-green-700 dark:text-green-400', __('Victory')],
-                                $myGoals === $theirGoals => ['bg-zinc-400', 'text-zinc-600 dark:text-zinc-300', __('Tie')],
+                                $myGoals === $theirGoals => ['bg-zinc-400', 'text-ui-muted', __('Tie')],
                                 default => ['bg-red-500', 'text-red-600 dark:text-red-400', __('Defeat')],
                             };
                         @endphp
                         @if ($fx)
                             <button type="button" wire:click="$dispatch('show-duel', { id: {{ $fx->id }} })" title="{{ __('Match details') }}"
-                                class="{{ $stage === $current ? 'ring-2 ring-lech-600 dark:ring-lech-400' : '' }} flex flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white text-center transition hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900">
+                                class="{{ $stage === $current ? 'ring-2 ring-lech-600 dark:ring-lech-400' : '' }} flex flex-1 flex-col overflow-hidden rounded-xl border border-ui-line bg-ui-surface text-center transition hover:shadow-md">
                                 <span class="{{ $strip }} block h-1.5 w-full"></span>
                                 <span class="flex w-full flex-1 flex-col items-center gap-0.5 px-2 py-2">
                                     <span class="text-2xl font-black tabular-nums text-lech-900 dark:text-white">
                                         {{ $fx->isPlayed() ? $myGoals . ':' . $theirGoals : '–' }}
                                     </span>
-                                    <span class="w-full truncate text-xs text-zinc-600 dark:text-zinc-300 {{ $opponent?->seasonTeam?->is_bot || ($fx && $fx->isBye()) ? 'italic' : '' }}">{{ $opponentName ?? __('Opponent not known yet') }}</span>
+                                    <span class="w-full truncate text-xs text-ui-muted {{ $opponent?->seasonTeam?->is_bot || ($fx && $fx->isBye()) ? 'italic' : '' }}">{{ $opponentName ?? __('Opponent not known yet') }}</span>
                                     <span class="{{ $stateClass }} text-xs font-semibold">{{ $stateText }}</span>
                                 </span>
                             </button>
                         @else
-                            <div class="{{ $gone ? 'bg-zinc-100 dark:bg-zinc-800' : 'opacity-60' }} flex flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 text-center dark:border-zinc-700">
+                            <div class="{{ $gone ? 'bg-ui-raised' : 'opacity-60' }} flex flex-1 flex-col overflow-hidden rounded-xl border border-ui-line text-center">
                                 <span class="{{ $strip }} block h-1.5"></span>
                                 <span class="flex flex-1 flex-col items-center justify-center gap-0.5 px-2 py-2">
                                     <span class="text-2xl font-black text-zinc-300 dark:text-zinc-600">–</span>

@@ -147,7 +147,7 @@ new #[Layout('layouts::public')] class extends Component {
                 $lechWon = $played && $matchday->lech_goals > $matchday->opponent_goals;
                 $lechLost = $played && $matchday->lech_goals < $matchday->opponent_goals;
             @endphp
-            <section class="lech-bar-shadow overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <section class="lech-bar-shadow overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
                 {{-- Belka: rodzaj kolejki, numer i rozgrywki, stan --}}
                 <div class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                     <div class="flex items-center gap-2">
@@ -181,8 +181,8 @@ new #[Layout('layouts::public')] class extends Component {
                                 </div>
                             @endif
                             <div class="{{ $index === 0 ? 'items-end text-right' : 'items-start text-left' }} flex min-w-0 flex-col gap-1">
-                                <span class="{{ $side['lech'] ? 'text-lech-700 dark:text-lech-300' : 'text-zinc-800 dark:text-zinc-100' }} truncate text-lg font-black sm:text-2xl">{{ $side['name'] }}</span>
-                                <span class="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:bg-zinc-800">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
+                                <span class="{{ $side['lech'] ? 'text-club' : 'text-ui-ink' }} truncate text-lg font-black sm:text-2xl">{{ $side['name'] }}</span>
+                                <span class="rounded bg-ui-raised px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ui-muted">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -192,13 +192,13 @@ new #[Layout('layouts::public')] class extends Component {
                         $protocol = $this->protocolOf($played ? $matchday : null);
                     @endphp
                     @if ($protocol->isNotEmpty())
-                        <div class="mx-auto w-full max-w-md rounded-xl border border-zinc-100 px-3 py-1 dark:border-zinc-800">
+                        <div class="mx-auto w-full max-w-md rounded-xl border border-ui-line px-3 py-1">
                             @include('partials.match-protocol', ['events' => $protocol])
                         </div>
                     @endif
 
                     @if ($matchday->kickoff_at)
-                        <div class="flex items-center justify-center gap-1.5 text-sm text-zinc-500">
+                        <div class="flex items-center justify-center gap-1.5 text-sm text-ui-muted">
                             <x-ui.icon name="calendar-days" variant="mini" />
                             <span>{{ $matchday->kickoff_at->translatedFormat('l, j F Y, H:i') }}</span>
                         </div>
@@ -214,7 +214,7 @@ new #[Layout('layouts::public')] class extends Component {
                                     this.parts = [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60];
                                 },
                             }" x-init="tick(); setInterval(() => tick(), 1000)" class="space-y-2 text-center">
-                            <div class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">{{ __('Tipping closes in') }}</div>
+                            <div class="text-xs font-semibold uppercase tracking-[0.2em] text-ui-muted">{{ __('Tipping closes in') }}</div>
                             <div class="flex justify-center gap-2 sm:gap-3">
                                 @foreach ([__('days'), __('hours'), __('min'), __('sec')] as $unit)
                                     <div class="lech-bar w-16 rounded-xl py-2 sm:w-20">
@@ -227,7 +227,7 @@ new #[Layout('layouts::public')] class extends Component {
                     @endif
 
                     {{-- Akcje: typowanie albo wyniki --}}
-                    <div class="flex flex-wrap items-center justify-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                    <div class="flex flex-wrap items-center justify-center gap-2 border-t border-ui-line pt-4">
                         @if ($played)
                             <x-ui.btn :href="route('results')" wire:navigate icon="trophy">{{ __('Results and tables') }}</x-ui.btn>
                         @elseif (!auth()->check())
@@ -256,9 +256,9 @@ new #[Layout('layouts::public')] class extends Component {
                     $lastProtocol = $this->protocolOf($last);
                     $lastScore = $last->is_home ? $last->lech_goals . ':' . $last->opponent_goals : $last->opponent_goals . ':' . $last->lech_goals;
                 @endphp
-                <section class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-5 py-3 dark:border-zinc-800">
-                        <span class="text-xs font-bold uppercase tracking-[0.15em] text-zinc-500">{{ __('Last matchday') }} · {{ __('Matchday :number', ['number' => $last->number]) }}</span>
+                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-ui-line px-5 py-3">
+                        <span class="text-xs font-bold uppercase tracking-[0.15em] text-ui-muted">{{ __('Last matchday') }} · {{ __('Matchday :number', ['number' => $last->number]) }}</span>
                         <span class="text-sm font-bold">
                             {{ $last->is_home ? 'Lech Poznań' : $last->opponent }}
                             <span class="lech-bar mx-1.5 rounded-md px-2 py-0.5 tabular-nums">{{ $lastScore }}</span>
@@ -306,13 +306,13 @@ new #[Layout('layouts::public')] class extends Component {
     {{-- Liczby serwisu --}}
     <section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
         @foreach ($this->numbers as $number)
-            <div class="group flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="group flex items-center gap-3 rounded-2xl border border-ui-line bg-ui-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="lech-banner grid size-11 shrink-0 place-items-center rounded-xl shadow">
                     <x-ui.icon :name="$number['icon']" class="size-5 text-white" />
                 </span>
                 <div class="min-w-0">
-                    <div class="text-2xl font-black leading-none tabular-nums text-lech-800 dark:text-lech-200">{{ number_format($number['value'], 0, ',', ' ') }}</div>
-                    <div class="text-[11px] font-semibold uppercase leading-tight tracking-wide text-zinc-500">{{ $number['label'] }}</div>
+                    <div class="text-2xl font-black leading-none tabular-nums text-club">{{ number_format($number['value'], 0, ',', ' ') }}</div>
+                    <div class="text-[11px] font-semibold uppercase leading-tight tracking-wide text-ui-muted">{{ $number['label'] }}</div>
                 </div>
             </div>
         @endforeach
@@ -326,11 +326,11 @@ new #[Layout('layouts::public')] class extends Component {
                 ['user-group', __('Pick Lech players'), __('Field Lech players for each competition: goals and assists add attack, clean sheets stop the rival.')],
                 ['trophy', __('Win trophies'), __('Climb the leagues, go deep in the cups and collect Hall of Fame points season after season.')],
             ] as $index => [$icon, $title, $text])
-                <div class="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+                <div class="relative overflow-hidden rounded-2xl border border-ui-line bg-ui-surface p-5">
                     <span class="pointer-events-none absolute -right-2 -top-6 select-none text-8xl font-black text-lech-700/5 dark:text-white/5">{{ $index + 1 }}</span>
-                    <x-ui.icon :name="$icon" class="size-7 text-lech-700 dark:text-lech-300" />
+                    <x-ui.icon :name="$icon" class="size-7 text-club" />
                     <h3 class="mt-3 text-lg font-black">{{ $title }}</h3>
-                    <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $text }}</p>
+                    <p class="mt-1 text-sm text-ui-muted">{{ $text }}</p>
                 </div>
             @endforeach
         </section>
@@ -344,10 +344,10 @@ new #[Layout('layouts::public')] class extends Component {
         <section class="space-y-3">
             <div class="flex flex-wrap items-end justify-between gap-2">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-lech-700 dark:text-lech-300">{{ $this->champions['season']->title }}</p>
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-club">{{ $this->champions['season']->title }}</p>
                     <h2 class="text-2xl font-black">{{ __('Latest champions') }}</h2>
                 </div>
-                <a href="{{ route('history') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-lech-700 hover:underline dark:text-lech-300">
+                <a href="{{ route('history') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">
                     {{ __('Full history') }} <x-ui.icon name="arrow-right" variant="micro" />
                 </a>
             </div>

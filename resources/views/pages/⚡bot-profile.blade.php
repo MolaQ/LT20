@@ -205,16 +205,16 @@ new #[Layout('layouts::public')] class extends Component {
             @else
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     @foreach ($tiles as [$label, $value, $hint])
-                        <div class="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700" wire:key="bs-{{ $loop->index }}">
-                            <p class="text-xs uppercase tracking-wide text-zinc-500">{{ $label }}</p>
+                        <div class="rounded-xl border border-ui-line p-3" wire:key="bs-{{ $loop->index }}">
+                            <p class="text-xs uppercase tracking-wide text-ui-muted">{{ $label }}</p>
                             <p class="text-2xl font-bold tabular-nums">{{ $value }}</p>
-                            <p class="text-xs text-zinc-500">{{ $hint }}</p>
+                            <p class="text-xs text-ui-muted">{{ $hint }}</p>
                         </div>
                     @endforeach
                 </div>
                 @if ($s['form'] !== [])
                     <div class="flex items-center gap-1 text-xs">
-                        <span class="mr-1 text-zinc-500">{{ __('Form') }}</span>
+                        <span class="mr-1 text-ui-muted">{{ __('Form') }}</span>
                         @foreach ($s['form'] as $result)
                             @php
                                 $formClass = match ($result) { 'W' => 'bg-green-500', 'D' => 'bg-amber-400', default => 'bg-red-500' };
@@ -241,7 +241,7 @@ new #[Layout('layouts::public')] class extends Component {
         @else
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 @foreach ($this->cabinet as $item)
-                    <div class="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 p-4 text-center dark:border-zinc-700" wire:key="cab-{{ $item['key'] }}">
+                    <div class="flex flex-col items-center gap-2 rounded-xl border border-ui-line p-4 text-center" wire:key="cab-{{ $item['key'] }}">
                         <div class="relative">
                             @if (isset($this->icons[$item['key']]))
                                 <img src="{{ $this->icons[$item['key']] }}" alt="" class="size-16 object-contain">
@@ -253,7 +253,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @endif
                         </div>
                         <span class="text-sm font-medium">{{ $item['label'] }}</span>
-                        <span class="text-xs text-zinc-500">{{ implode(', ', $item['seasons']) }}</span>
+                        <span class="text-xs text-ui-muted">{{ implode(', ', $item['seasons']) }}</span>
                     </div>
                 @endforeach
             </div>

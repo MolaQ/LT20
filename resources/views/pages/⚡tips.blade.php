@@ -788,12 +788,12 @@ new #[Layout('layouts::public')] class extends Component {
                             @endif
                         @endforeach
                     </div>
-                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-ui-muted">
                         <span>Lech {{ $crowdPct($crowd['lech']) }}% · {{ __('Draw result') }} {{ $crowdPct($crowd['draw']) }}% · {{ $this->matchday->opponent }} {{ $crowdPct($crowd['opponent']) }}%</span>
                         <span class="flex flex-wrap gap-1">
                             {{ __('Most popular') }}:
                             @foreach ($crowd['popular'] as $popular)
-                                <span class="rounded bg-white px-1.5 font-bold tabular-nums dark:bg-zinc-800">{{ $popular['score'] }} ×{{ $popular['count'] }}</span>
+                                <span class="rounded bg-ui-surface px-1.5 font-bold tabular-nums">{{ $popular['score'] }} ×{{ $popular['count'] }}</span>
                             @endforeach
                         </span>
                     </div>

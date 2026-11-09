@@ -56,13 +56,13 @@ new #[Layout('layouts::public')] class extends Component {
         :subtitle="__('Champions season by season and all-time records of every competition.')" />
 
     {{-- Wybór rozgrywek --}}
-    <nav class="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+    <nav class="space-y-2 rounded-2xl border border-ui-line bg-ui-surface p-4">
         @foreach ($sections as $sectionLabel => $keys)
             <div class="flex flex-wrap items-center gap-1.5">
-                <span class="w-28 shrink-0 text-xs font-semibold uppercase tracking-wider text-zinc-500">{{ $sectionLabel }}</span>
+                <span class="w-28 shrink-0 text-xs font-semibold uppercase tracking-wider text-ui-muted">{{ $sectionLabel }}</span>
                 @foreach ($keys as $k)
                     <a href="{{ route('history', CompetitionHistory::slug($k)) }}" wire:navigate
-                        class="{{ $k === $this->key ? 'border-lech-700 bg-lech-700 text-white shadow' : 'border-zinc-200 text-zinc-700 hover:border-lech-400 dark:border-zinc-700 dark:text-zinc-200' }} inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition">
+                        class="{{ $k === $this->key ? 'border-lech-700 bg-club text-club-ink shadow' : 'border-ui-line text-ui-ink hover:border-lech-400' }} inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition">
                         <span class="size-2.5 rounded-full" style="{{ CompetitionColors::dotStyle(CompetitionHistory::colorKey($k)) }}"></span>
                         {{ $labels[$k] }}
                     </a>
@@ -94,25 +94,25 @@ new #[Layout('layouts::public')] class extends Component {
         <section class="space-y-3">
             <x-ui.heading size="lg">{{ CompetitionHistory::isAward($this->key) ? __('Winners season by season') : __('Champions season by season') }}</x-ui.heading>
             @forelse ($this->honours as $honour)
-                <article class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900" wire:key="honour-{{ $honour['season']->id }}">
+                <article class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm" wire:key="honour-{{ $honour['season']->id }}">
                     <div class="flex flex-col sm:flex-row">
                         <div class="comp-banner {{ $dashed }} flex shrink-0 items-center justify-center px-4 py-3 sm:w-28" style="{{ CompetitionColors::style($colorKey) }}">
                             <span class="relative z-10 text-center text-sm font-black uppercase tracking-wide">{{ $honour['season']->title }}</span>
                         </div>
-                        <ol class="flex-1 divide-y divide-zinc-100 dark:divide-white/5">
+                        <ol class="flex-1 divide-y divide-ui-line">
                             @foreach ($honour['podium'] as $row)
                                 <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm">
                                     <span class="{{ $medal[$row['place']] ?? 'bg-zinc-100' }} grid size-6 shrink-0 place-items-center rounded-full text-xs font-black">{{ $row['place'] }}</span>
                                     @include('partials.history-team', ['team' => $row['team'], 'strong' => $row['place'] === 1])
-                                    <span class="ms-auto text-xs tabular-nums text-zinc-500">{{ $row['line'] }}</span>
+                                    <span class="ms-auto text-xs tabular-nums text-ui-muted">{{ $row['line'] }}</span>
                                 </li>
                             @endforeach
                             @foreach ($honour['extra'] as $row)
                                 <li class="flex flex-wrap items-center gap-x-3 gap-y-1 bg-zinc-50/70 px-4 py-2 text-sm dark:bg-white/5">
                                     <span class="grid size-6 shrink-0 place-items-center"><x-ball class="size-4" /></span>
-                                    <span class="text-xs font-semibold uppercase text-zinc-500">{{ $row['label'] }}</span>
+                                    <span class="text-xs font-semibold uppercase text-ui-muted">{{ $row['label'] }}</span>
                                     @include('partials.history-team', ['team' => $row['team'], 'strong' => false])
-                                    <span class="ms-auto text-xs tabular-nums text-zinc-500">{{ $row['line'] }}</span>
+                                    <span class="ms-auto text-xs tabular-nums text-ui-muted">{{ $row['line'] }}</span>
                                 </li>
                             @endforeach
                         </ol>
@@ -127,10 +127,10 @@ new #[Layout('layouts::public')] class extends Component {
         <aside class="space-y-3">
             <x-ui.heading size="lg">{{ __('All-time records') }}</x-ui.heading>
             @forelse ($this->records as $record)
-                <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-                    <div class="flex items-center gap-2 border-b border-zinc-100 px-4 py-2 dark:border-white/5">
-                        <x-ui.icon :name="$record['icon']" variant="micro" class="text-lech-700 dark:text-lech-300" />
-                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">{{ $record['title'] }}</span>
+                <div class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                    <div class="flex items-center gap-2 border-b border-ui-line px-4 py-2">
+                        <x-ui.icon :name="$record['icon']" variant="micro" class="text-club" />
+                        <span class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ $record['title'] }}</span>
                     </div>
                     <ol>
                         @foreach ($record['rows'] as $i => $row)
@@ -138,9 +138,9 @@ new #[Layout('layouts::public')] class extends Component {
                                 <span class="w-4 text-xs font-bold tabular-nums text-zinc-400">{{ $i + 1 }}</span>
                                 <span class="min-w-0 flex-1 truncate">@include('partials.history-team', ['team' => $row['team'], 'strong' => $i === 0])</span>
                                 @if ($row['season'])
-                                    <span class="text-[10px] text-zinc-500">{{ $row['season'] }}</span>
+                                    <span class="text-[10px] text-ui-muted">{{ $row['season'] }}</span>
                                 @endif
-                                <span class="{{ $i === 0 ? 'text-lg text-lech-700 dark:text-lech-300' : '' }} font-black tabular-nums">{{ $row['value'] }}</span>
+                                <span class="{{ $i === 0 ? 'text-lg text-club' : '' }} font-black tabular-nums">{{ $row['value'] }}</span>
                             </li>
                         @endforeach
                     </ol>

@@ -183,7 +183,7 @@ new #[Layout('layouts::public')] class extends Component {
 
     <div class="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
         {{-- Nowa sprawa --}}
-        <section class="h-fit space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section class="h-fit space-y-4 rounded-2xl border border-ui-line bg-ui-surface p-5 shadow-sm">
             <x-ui.heading size="lg" class="flex items-center gap-2"><x-ui.icon name="pencil-square" variant="mini" class="text-lech-700" />{{ __('New request') }}</x-ui.heading>
 
             @guest
@@ -226,14 +226,14 @@ new #[Layout('layouts::public')] class extends Component {
                     @if ($type === \App\Models\OfficeRequest::BOT_RENAME)
                         <div class="space-y-2">
                             @if ($this->selectedBot)
-                                <div class="flex items-center justify-between gap-2 rounded-lg border border-lech-200 bg-lech-50 px-3 py-2 text-sm dark:border-lech-800 dark:bg-lech-900/40">
-                                    <span class="min-w-0"><span class="text-xs text-zinc-500">{{ __('Bot') }}:</span> <span class="font-semibold italic">{{ $this->selectedBot->name }}</span></span>
+                                <div class="flex items-center justify-between gap-2 rounded-lg border border-lech-200 bg-ui-raised px-3 py-2 text-sm dark:border-lech-800">
+                                    <span class="min-w-0"><span class="text-xs text-ui-muted">{{ __('Bot') }}:</span> <span class="font-semibold italic">{{ $this->selectedBot->name }}</span></span>
                                     <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="$set('botId', null)" />
                                 </div>
                             @else
                                 <x-ui.input wire:model.live.debounce.300ms="botSearch" icon="magnifying-glass" :label="__('Bot')" :placeholder="__('Search bot (min. 2 letters)')" />
                                 @if ($this->botOptions->isNotEmpty())
-                                    <div class="divide-y divide-zinc-100 overflow-hidden rounded-lg border border-zinc-200 dark:divide-white/5 dark:border-zinc-700">
+                                    <div class="divide-y divide-ui-line overflow-hidden rounded-lg border border-ui-line">
                                         @foreach ($this->botOptions as $bot)
                                             <button type="button" wire:click="pickBot({{ $bot->id }})" wire:key="bot-option-{{ $bot->id }}"
                                                 class="flex w-full items-center justify-between px-3 py-1.5 text-left text-sm italic hover:bg-lech-50 dark:hover:bg-white/5">
@@ -267,10 +267,10 @@ new #[Layout('layouts::public')] class extends Component {
                 @foreach ($tabs as $value => [$label, $icon])
                     @if ($value !== 'mine' || $me)
                         <button type="button" wire:click="$set('tab', '{{ $value }}')"
-                            class="{{ $tab === $value ? 'border-lech-700 bg-lech-700 text-white shadow' : 'border-zinc-200 bg-white text-zinc-700 hover:border-lech-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200' }} inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition">
+                            class="{{ $tab === $value ? 'border-lech-700 bg-club text-club-ink shadow' : 'border-ui-line bg-ui-surface text-ui-ink hover:border-lech-400' }} inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition">
                             <x-ui.icon :name="$icon" variant="micro" />{{ $label }}
                             @if (($this->counts[$value] ?? 0) > 0)
-                                <span class="rounded-full bg-white/20 px-1.5 text-xs tabular-nums {{ $tab === $value ? '' : 'bg-zinc-100 dark:bg-white/10' }}">{{ $this->counts[$value] }}</span>
+                                <span class="rounded-full bg-white/20 px-1.5 text-xs tabular-nums {{ $tab === $value ? '' : 'bg-ui-raised' }}">{{ $this->counts[$value] }}</span>
                             @endif
                         </button>
                     @endif
@@ -284,22 +284,22 @@ new #[Layout('layouts::public')] class extends Component {
                     $progress = min(100, round($request->votes() / \App\Support\Office::VOTES_NEEDED * 100));
                     $own = $request->user_id === $me;
                 @endphp
-                <article wire:key="office-{{ $request->id }}" class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                    <header class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-4 py-2 dark:border-white/5">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">{{ $request->typeLabel() }} · {{ $request->created_at?->format('d.m.Y') }}</span>
+                <article wire:key="office-{{ $request->id }}" class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm">
+                    <header class="flex flex-wrap items-center justify-between gap-2 border-b border-ui-line px-4 py-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-ui-muted">{{ $request->typeLabel() }} · {{ $request->created_at?->format('d.m.Y') }}</span>
                         <x-ui.badge size="sm" :color="$request->statusColor()">{{ $request->statusLabel() }}</x-ui.badge>
                     </header>
                     <div class="space-y-3 p-4">
                         @if ($rename)
                             <div class="flex flex-wrap items-center gap-2 text-lg">
-                                <span class="italic text-zinc-500 line-through decoration-zinc-400">{{ $request->old_bot_name ?? $request->bot?->name }}</span>
+                                <span class="italic text-ui-muted line-through decoration-zinc-400">{{ $request->old_bot_name ?? $request->bot?->name }}</span>
                                 <x-ui.icon name="arrow-long-right" class="size-5 text-lech-600" />
-                                <span class="font-bold italic text-lech-800 dark:text-lech-200">{{ $request->bot_name }}</span>
+                                <span class="font-bold italic text-club">{{ $request->bot_name }}</span>
                             </div>
                         @endif
-                        <p class="whitespace-pre-line text-sm text-zinc-700 dark:text-zinc-300">{{ $request->body }}</p>
+                        <p class="whitespace-pre-line text-sm text-ui-ink">{{ $request->body }}</p>
                         @if ($rename)
-                            <p class="text-xs text-zinc-500">{{ __('Proposed by :team', ['team' => $request->user?->team_name ?: $request->user?->name]) }}</p>
+                            <p class="text-xs text-ui-muted">{{ __('Proposed by :team', ['team' => $request->user?->team_name ?: $request->user?->name]) }}</p>
                         @endif
 
                         @if ($rename && $request->status === \App\Models\OfficeRequest::VOTING)
@@ -308,35 +308,35 @@ new #[Layout('layouts::public')] class extends Component {
                                     @foreach ([1 => ['hand-thumb-up', 'green', $request->votes_up], -1 => ['hand-thumb-down', 'red', $request->votes_down]] as $value => [$icon, $color, $count])
                                         <button type="button" wire:click="vote({{ $request->id }}, {{ $value }})" @disabled(! $canVote || $own)
                                             title="{{ $own ? __('You cannot vote on your own request') : ($canVote ? '' : __('Log in to vote')) }}"
-                                            class="{{ $myVote === $value ? ($color === 'green' ? 'border-green-600 bg-green-600 text-white' : 'border-red-600 bg-red-600 text-white') : 'border-zinc-200 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-300' }} inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold tabular-nums transition disabled:cursor-not-allowed disabled:opacity-50">
+                                            class="{{ $myVote === $value ? ($color === 'green' ? 'border-green-600 bg-green-600 text-white' : 'border-red-600 bg-red-600 text-white') : 'border-ui-line text-ui-muted hover:border-zinc-400' }} inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold tabular-nums transition disabled:cursor-not-allowed disabled:opacity-50">
                                             <x-ui.icon :name="$icon" variant="micro" />{{ $count }}
                                         </button>
                                     @endforeach
                                 </div>
                                 <div class="min-w-40 flex-1">
-                                    <div class="flex justify-between text-[11px] text-zinc-500">
+                                    <div class="flex justify-between text-[11px] text-ui-muted">
                                         <span>{{ __(':votes of :needed votes', ['votes' => $request->votes(), 'needed' => \App\Support\Office::VOTES_NEEDED]) }}</span>
                                         <span>{{ __(':percent% for', ['percent' => $request->approval()]) }}</span>
                                     </div>
-                                    <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10">
+                                    <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-ui-raised">
                                         <div class="h-full rounded-full bg-gradient-to-r from-lech-400 to-lech-700" style="width: {{ $progress }}%"></div>
                                     </div>
                                 </div>
                             </div>
                         @elseif ($rename && $request->votes() > 0)
-                            <p class="text-xs text-zinc-500">{{ __('Vote: :up for, :down against (:percent%)', ['up' => $request->votes_up, 'down' => $request->votes_down, 'percent' => $request->approval()]) }}</p>
+                            <p class="text-xs text-ui-muted">{{ __('Vote: :up for, :down against (:percent%)', ['up' => $request->votes_up, 'down' => $request->votes_down, 'percent' => $request->approval()]) }}</p>
                         @endif
 
                         @if ($request->admin_reply && ($own || $rename))
-                            <div class="rounded-lg border-l-4 border-lech-600 bg-lech-50 px-3 py-2 text-sm dark:bg-lech-900/40">
-                                <span class="block text-[11px] font-semibold uppercase tracking-wider text-lech-700 dark:text-lech-300">{{ __('Administrator reply') }}</span>
+                            <div class="rounded-lg border-l-4 border-lech-600 bg-ui-raised px-3 py-2 text-sm">
+                                <span class="block text-[11px] font-semibold uppercase tracking-wider text-club">{{ __('Administrator reply') }}</span>
                                 {{ $request->admin_reply }}
                             </div>
                         @endif
                     </div>
                 </article>
             @empty
-                <div class="rounded-2xl border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-500 dark:border-zinc-700">
+                <div class="rounded-2xl border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-ui-muted dark:border-zinc-700">
                     {{ match ($tab) { 'voting' => __('No bot names are being voted on right now.'), 'mine' => __('You have not sent any requests yet.'), default => __('No decided bot name requests yet.') } }}
                 </div>
             @endforelse

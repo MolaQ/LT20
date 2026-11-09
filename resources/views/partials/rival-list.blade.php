@@ -54,7 +54,7 @@
 
     {{-- Wyszukiwarka: od 2 liter przeszukuje wszystkich (także podium, które wtedy się chowa) --}}
     @if (count($rivals) > 3)
-        <div class="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="rounded-2xl border border-ui-line bg-ui-surface p-3">
             <x-ui.input x-model="q" icon="magnifying-glass" :placeholder="__('Search team or player (min. 2 letters)')" />
         </div>
     @endif
@@ -105,20 +105,20 @@
                     @endphp
                     <a href="{{ $rival['url'] }}" wire:navigate wire:key="{{ $tone }}-{{ $i }}"
                         x-show="q.length >= 2 ? match(@js($rival['name'].' '.$rival['owner'])) : {{ $i < 3 ? 'false' : ($i < $limit ? 'true' : 'all') }}" @if ($i < 3 || $i >= $limit) x-cloak @endif
-                        class="group flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition hover:-translate-y-0.5 hover:border-lech-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-lech-500">
-                        <span class="grid size-9 shrink-0 place-items-center rounded-full bg-lech-50 text-xs font-black tabular-nums text-lech-800 dark:bg-white/10 dark:text-lech-200">{{ $i + 1 }}</span>
+                        class="group flex items-center gap-3 rounded-xl border border-ui-line bg-ui-surface p-3 transition hover:-translate-y-0.5 hover:border-lech-300 hover:shadow-md dark:hover:border-lech-500">
+                        <span class="grid size-9 shrink-0 place-items-center rounded-full bg-lech-50 text-xs font-black tabular-nums text-club dark:bg-white/10">{{ $i + 1 }}</span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-baseline justify-between gap-2">
                                 <span class="truncate font-semibold group-hover:text-lech-700 group-hover:underline dark:group-hover:text-lech-300">{{ $rival['name'] }}</span>
                                 <span class="whitespace-nowrap text-sm font-bold tabular-nums">
-                                    <span class="{{ $key === 'won' ? 'text-green-600' : 'text-zinc-500' }}">{{ $rival['won'] }}</span>–<span class="text-zinc-500">{{ $rival['drawn'] }}</span>–<span class="{{ $key === 'lost' ? 'text-red-600' : 'text-zinc-500' }}">{{ $rival['lost'] }}</span>
+                                    <span class="{{ $key === 'won' ? 'text-green-600' : 'text-ui-muted' }}">{{ $rival['won'] }}</span>–<span class="text-ui-muted">{{ $rival['drawn'] }}</span>–<span class="{{ $key === 'lost' ? 'text-red-600' : 'text-ui-muted' }}">{{ $rival['lost'] }}</span>
                                 </span>
                             </div>
-                            <div class="flex items-baseline justify-between gap-2 text-xs text-zinc-500">
+                            <div class="flex items-baseline justify-between gap-2 text-xs text-ui-muted">
                                 <span class="truncate">{{ $rival['owner'] }}</span>
                                 <span class="whitespace-nowrap tabular-nums">{{ __('HoF :points', ['points' => \App\Support\HallOfFame::format($rival['hof'])]) }}</span>
                             </div>
-                            <div class="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/10">
+                            <div class="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-ui-raised">
                                 <span class="bg-green-500" style="width: {{ $rival['won'] / $g * 100 }}%"></span>
                                 <span class="bg-zinc-300 dark:bg-zinc-500" style="width: {{ $rival['drawn'] / $g * 100 }}%"></span>
                                 <span class="bg-red-500" style="width: {{ $rival['lost'] / $g * 100 }}%"></span>

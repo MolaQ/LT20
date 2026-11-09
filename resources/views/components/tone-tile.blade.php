@@ -11,8 +11,8 @@
         'green' => 'bg-green-500 text-white ring-green-600 dark:bg-green-600 dark:ring-green-500',
         'yellow' => 'bg-yellow-300 text-yellow-950 ring-yellow-400 dark:bg-yellow-400 dark:ring-yellow-300',
         'red' => 'bg-red-500 text-white ring-red-600 dark:bg-red-600 dark:ring-red-500',
-        'neutral' => 'bg-white text-zinc-800 ring-zinc-300 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-600',
-        'zinc' => 'bg-zinc-200 text-zinc-500 ring-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:ring-zinc-600',
+        'neutral' => 'bg-ui-surface text-ui-ink ring-zinc-300 dark:ring-zinc-600',
+        'zinc' => 'bg-ui-line text-ui-muted ring-zinc-300 dark:text-zinc-300 dark:ring-zinc-600',
     ];
 @endphp
 

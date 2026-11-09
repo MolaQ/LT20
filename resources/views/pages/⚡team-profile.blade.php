@@ -214,7 +214,7 @@ new #[Layout('layouts::public')] class extends Component {
             <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($this->seasonCompetitions as $row)
                     <a href="{{ $row['url'] }}" wire:navigate wire:key="sc-{{ $loop->index }}"
-                        class="{{ $row['out'] ? 'border-zinc-500 bg-zinc-100 dark:bg-zinc-800' : 'border-lech-200 bg-lech-50/60 hover:border-lech-400 dark:border-lech-800 dark:bg-lech-950/40' }} flex items-center gap-3 rounded-xl border p-3 text-sm transition hover:shadow-md">
+                        class="{{ $row['out'] ? 'border-zinc-500 bg-ui-raised' : 'border-lech-200 bg-lech-50/60 hover:border-lech-400 dark:border-lech-800 dark:bg-lech-950/40' }} flex items-center gap-3 rounded-xl border p-3 text-sm transition hover:shadow-md">
                         @if (isset($this->icons[$row['trophy']]))
                             <img src="{{ $this->icons[$row['trophy']] }}" alt="" class="{{ $row['out'] ? 'opacity-40 grayscale' : '' }} size-10 shrink-0 object-contain">
                         @else
@@ -222,7 +222,7 @@ new #[Layout('layouts::public')] class extends Component {
                         @endif
                         <div class="min-w-0 flex-1">
                             <div class="truncate font-semibold">{{ $row['name'] }}</div>
-                            <div class="{{ $row['out'] ? 'text-zinc-600 dark:text-zinc-300' : 'text-lech-700 dark:text-lech-300' }} flex items-center gap-1 text-xs font-medium">
+                            <div class="{{ $row['out'] ? 'text-ui-muted' : 'text-club' }} flex items-center gap-1 text-xs font-medium">
                                 @if ($row['out'])
                                     <x-ui.icon name="x-circle" variant="micro" />
                                 @endif
@@ -263,7 +263,7 @@ new #[Layout('layouts::public')] class extends Component {
         @else
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 @foreach ($this->cabinet as $item)
-                    <div class="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 p-4 text-center dark:border-zinc-700"
+                    <div class="flex flex-col items-center gap-2 rounded-xl border border-ui-line p-4 text-center"
                         wire:key="cab-{{ $item['key'] }}">
                         <div class="relative">
                             @if (isset($this->icons[$item['key']]))
@@ -276,7 +276,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @endif
                         </div>
                         <span class="text-sm font-medium">{{ $item['label'] }}</span>
-                        <span class="text-xs text-zinc-500">{{ implode(', ', $item['seasons']) }}</span>
+                        <span class="text-xs text-ui-muted">{{ implode(', ', $item['seasons']) }}</span>
                     </div>
                 @endforeach
             </div>

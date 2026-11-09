@@ -3,7 +3,6 @@
 use App\Models\TeamNameChangeRequest;
 use App\Support\Audit;
 use App\Support\TeamRules;
-use Flux\Flux;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -117,13 +116,13 @@ new class extends Component {
             }
 
             Audit::log('team_name.changed', $user, $before, $after, __('Changed by the user.'));
-            Flux::toast(text: __('Team details saved.'), variant: 'success');
+            $this->dispatch('ui-toast', text: __('Team details saved.'), variant: 'success');
 
             return;
         }
 
         if ($this->pendingRequest) {
-            Flux::toast(text: __('You already have a request awaiting approval.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('You already have a request awaiting approval.'), variant: 'warning');
 
             return;
         }
@@ -139,7 +138,7 @@ new class extends Component {
         unset($this->pendingRequest);
         $this->fillFromUser();
 
-        Flux::toast(text: __('Request sent. An administrator will review it.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Request sent. An administrator will review it.'), variant: 'success');
     }
 
     public function cancelRequest(): void
@@ -163,7 +162,7 @@ new class extends Component {
         $request->delete();
 
         unset($this->pendingRequest);
-        Flux::toast(text: __('Request cancelled.'));
+        $this->dispatch('ui-toast', text: __('Request cancelled.'));
     }
 
     /* ------------------------------------------------------------------
@@ -203,65 +202,56 @@ new class extends Component {
 };
 ?>
 
-<section class="w-full space-y-6">
-    <div>
-        <flux:heading size="lg">{{ __('Team') }}</flux:heading>
-        <flux:text class="mt-1">
-            @if ($this->canRenameDirectly)
-                {{ __('You can change your team details at any time.') }}
-            @else
-                {{ __('Changes to your team details must be approved by an administrator.') }}
-            @endif
-        </flux:text>
-    </div>
+<section class="w-full space-y-5">
+    <x-ui.text>
+        @if ($this->canRenameDirectly)
+            {{ __('You can change your team details at any time.') }}
+        @else
+            {{ __('Changes to your team details must be approved by an administrator.') }}
+        @endif
+    </x-ui.text>
 
     {{-- Oczekująca prośba --}}
     @if ($this->pendingRequest)
-    @php
-        $pending = $this->pendingRequest;
-    @endphp
+        @php
+            $pending = $this->pendingRequest;
+        @endphp
 
-    <flux:card class="space-y-3">
-        <div class="flex items-center justify-between gap-4">
-            <flux:heading>{{ __('Request awaiting approval') }}</flux:heading>
-            <flux:badge color="amber" size="sm">{{ __('Pending') }}</flux:badge>
-        </div>
-
-        <dl class="grid gap-2 text-sm">
-            <div>
-                <dt class="text-zinc-500">{{ __('Team name') }}</dt>
-                <dd class="font-medium">{{ $pending->requested_team_name }}</dd>
+        <div class="space-y-3 rounded-2xl border border-ui-line bg-ui-raised p-4">
+            <div class="flex items-center justify-between gap-4">
+                <x-ui.heading>{{ __('Request awaiting approval') }}</x-ui.heading>
+                <x-ui.chip variant="gold">{{ __('Pending') }}</x-ui.chip>
             </div>
-        </dl>
 
-        <flux:text class="text-sm">{{ __('Sent') }}: {{ $pending->created_at->format('Y-m-d H:i') }}</flux:text>
+            <dl class="text-sm">
+                <dt class="text-ui-muted">{{ __('Team name') }}</dt>
+                <dd class="font-semibold">{{ $pending->requested_team_name }}</dd>
+            </dl>
 
-        <div>
-            <flux:button size="sm" variant="ghost" x-on:click="$dispatch('confirm-action', { message: @js(__('Cancel this request?')), run: () => $wire.cancelRequest() })">
+            <x-ui.text>{{ __('Sent') }}: {{ $pending->created_at->format('Y-m-d H:i') }}</x-ui.text>
+
+            <x-ui.btn size="sm" variant="ghost" x-on:click="$dispatch('confirm-action', { message: @js(__('Cancel this request?')), run: () => $wire.cancelRequest() })">
                 {{ __('Cancel request') }}
-            </flux:button>
+            </x-ui.btn>
         </div>
-    </flux:card>
     @endif
 
     {{-- Formularz --}}
-    <form wire:submit="save" class="space-y-6">
+    <form wire:submit="save" class="space-y-5">
         <div class="space-y-1">
-            <flux:input wire:model.live.blur="teamName" :label="__('Team name')" type="text" maxlength="40"
-                :disabled="$this->pendingRequest !== null" />
+            <x-ui.input wire:model.live.blur="teamName" :label="__('Team name')" type="text" maxlength="40" :disabled="$this->pendingRequest !== null" />
             @if ($this->changed('teamName') && !$errors->has('teamName'))
-                <p class="text-sm text-green-600 dark:text-green-400">{{ __('Available') }}</p>
+                <p class="text-sm font-medium text-good">{{ __('Available') }}</p>
             @endif
         </div>
 
+        <x-ui.error name="form" />
 
-        <flux:error name="form" />
-
-        <flux:button variant="primary" type="submit" :disabled="$this->pendingRequest !== null">
+        <x-ui.btn variant="primary" type="submit" :disabled="$this->pendingRequest !== null">
             <span wire:loading.remove wire:target="save">
                 {{ $this->canRenameDirectly ? __('Save changes') : __('Send change request') }}
             </span>
             <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
-        </flux:button>
+        </x-ui.btn>
     </form>
 </section>

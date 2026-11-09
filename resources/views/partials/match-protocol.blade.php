@@ -29,7 +29,7 @@
                         @endif
                         @break
                     @default
-                        <x-ui.icon name="arrows-right-left" variant="micro" class="text-lech-700 dark:text-lech-300" />
+                        <x-ui.icon name="arrows-right-left" variant="micro" class="text-club" />
                 @endswitch
             </span>
             <span class="min-w-0 flex-1 truncate">
@@ -39,14 +39,14 @@
                     @endif
                     <span class="text-red-700 dark:text-red-400" title="{{ $event->player?->name }}">↓ {{ $surname($event->player) }}</span>
                     @if (!$event->other)
-                        <span class="text-xs text-zinc-500">({{ __('no substitute') }})</span>
+                        <span class="text-xs text-ui-muted">({{ __('no substitute') }})</span>
                     @endif
                 @else
                     <span class="font-semibold" title="{{ $event->player?->name }}">{{ $surname($event->player) }}</span>
                     @if ($event->type === \App\Support\MatchReport::EVENT_GOAL && $event->other)
-                        <span class="text-xs text-zinc-500" title="{{ $event->other->name }}">({{ $surname($event->other) }})</span>
+                        <span class="text-xs text-ui-muted" title="{{ $event->other->name }}">({{ $surname($event->other) }})</span>
                     @elseif ($event->type === \App\Support\MatchReport::EVENT_OWN_GOAL)
-                        <span class="text-xs text-zinc-500">({{ __('own goal') }})</span>
+                        <span class="text-xs text-ui-muted">({{ __('own goal') }})</span>
                     @endif
                 @endif
             </span>

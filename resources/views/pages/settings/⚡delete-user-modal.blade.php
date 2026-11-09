@@ -28,26 +28,19 @@ new class extends Component {
     }
 }; ?>
 
-<flux:modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable class="max-w-lg">
-    <form method="POST" wire:submit="deleteUser" class="space-y-6">
-        <div>
-            <flux:heading size="lg">{{ __('Are you sure you want to delete your account?') }}</flux:heading>
-
-            <flux:subheading>
+<div>
+    <x-ui.sheet name="confirm-user-deletion" :title="__('Are you sure you want to delete your account?')">
+        <form method="POST" wire:submit="deleteUser" class="space-y-5">
+            <x-ui.text>
                 {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
-            </flux:subheading>
-        </div>
+            </x-ui.text>
 
-        <flux:input wire:model="password" :label="__('Password')" type="password" viewable />
+            <x-ui.input wire:model="password" :label="__('Password')" type="password" viewable />
 
-        <div class="flex justify-end space-x-2 rtl:space-x-reverse">
-            <flux:modal.close>
-                <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
-            </flux:modal.close>
-
-            <flux:button variant="danger" type="submit" data-test="confirm-delete-user-button">
-                {{ __('Delete account') }}
-            </flux:button>
-        </div>
-    </form>
-</flux:modal>
+            <div class="grid grid-cols-2 gap-2">
+                <x-ui.btn variant="filled" x-on:click="$dispatch('ui-sheet', { name: 'confirm-user-deletion', open: false })">{{ __('Cancel') }}</x-ui.btn>
+                <x-ui.btn variant="danger" type="submit" data-test="confirm-delete-user-button">{{ __('Delete account') }}</x-ui.btn>
+            </div>
+        </form>
+    </x-ui.sheet>
+</div>

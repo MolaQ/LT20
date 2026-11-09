@@ -15,16 +15,16 @@
     $moveTone = [
         'up' => 'bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-300',
         'down' => 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-300',
-        'stay' => 'bg-zinc-100 text-zinc-600 dark:bg-white/10 dark:text-zinc-300',
+        'stay' => 'bg-ui-raised text-ui-muted',
     ];
 @endphp
 <section class="space-y-4" x-data="{ hg: 'all' }">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <x-ui.heading size="lg">{{ __('Season history') }}</x-ui.heading>
-        <div class="inline-flex flex-wrap gap-1 rounded-full bg-zinc-100 p-1 dark:bg-white/10">
+        <div class="inline-flex flex-wrap gap-1 rounded-full bg-ui-raised p-1">
             @foreach ($groupLabels as $groupKey => $groupLabel)
                 <button type="button" x-on:click="hg = '{{ $groupKey }}'"
-                    x-bind:class="hg === '{{ $groupKey }}' ? 'bg-lech-700 text-white shadow' : 'text-zinc-600 hover:text-lech-700 dark:text-zinc-300'"
+                    x-bind:class="hg === '{{ $groupKey }}' ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-lech-700 '"
                     class="rounded-full px-3 py-1 text-xs font-bold transition">{{ $groupLabel }}</button>
             @endforeach
         </div>
@@ -34,7 +34,7 @@
         @php
             $groups = collect($item['rows'])->pluck('group')->unique()->values()->all();
         @endphp
-        <article class="lech-bar-shadow overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"
+        <article class="lech-bar-shadow overflow-hidden rounded-2xl border border-ui-line bg-ui-surface"
             wire:key="history-{{ $item['season']->id }}" x-show="hg === 'all' || @js($groups).includes(hg)">
             <header class="lech-bar flex flex-wrap items-center gap-3 px-5 py-3">
                 <h3 class="text-lg font-black tracking-wide">{{ $item['season']->title }}</h3>
@@ -43,7 +43,7 @@
                 @endif
                 <span class="ms-auto rounded-full bg-white/15 px-3 py-0.5 text-sm font-bold tabular-nums">{{ __(':points pts', ['points' => \App\Support\HallOfFame::format($item['points'])]) }}</span>
             </header>
-            <ul class="divide-y divide-zinc-100 dark:divide-white/5">
+            <ul class="divide-y divide-ui-line">
                 @forelse ($item['rows'] as $row)
                     <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5 text-sm" x-show="hg === 'all' || hg === '{{ $row['group'] }}'">
                         <span class="comp-badge {{ \App\Support\CompetitionColors::dashed($row['key']) ? 'comp-dashed' : '' }} size-3 shrink-0 rounded-full" style="{{ \App\Support\CompetitionColors::style($row['key']) }}"></span>
@@ -59,10 +59,10 @@
                                 {{ $row['move_tone'] === 'up' ? '▲' : ($row['move_tone'] === 'down' ? '▼' : '•') }} {{ $row['move'] }}
                             </span>
                         @endif
-                        <span class="ms-auto w-16 text-right text-xs tabular-nums text-zinc-500" title="{{ __('Hall of Fame points') }}">{{ $row['points'] ? '+' . \App\Support\HallOfFame::format($row['points']) : '' }}</span>
+                        <span class="ms-auto w-16 text-right text-xs tabular-nums text-ui-muted" title="{{ __('Hall of Fame points') }}">{{ $row['points'] ? '+' . \App\Support\HallOfFame::format($row['points']) : '' }}</span>
                     </li>
                 @empty
-                    <li class="px-5 py-3 text-sm text-zinc-500">{{ __('Did not play this season.') }}</li>
+                    <li class="px-5 py-3 text-sm text-ui-muted">{{ __('Did not play this season.') }}</li>
                 @endforelse
             </ul>
         </article>

@@ -90,7 +90,7 @@ new class extends Component {
             <div class="space-y-2">
                 @foreach ($this->rivals as $rival)
                     <details wire:key="rp-{{ $this->matchday->id }}-{{ $loop->index }}"
-                        class="group overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs transition open:shadow-md dark:border-zinc-700 dark:bg-zinc-900">
+                        class="group overflow-hidden rounded-xl border border-ui-line bg-ui-surface shadow-xs transition open:shadow-md">
                         <summary class="flex cursor-pointer list-none items-center gap-3 p-3 [&::-webkit-details-marker]:hidden">
                             <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-lech-50 dark:bg-lech-500/15">
                                 @if (isset($trophyIcons[$rival['trophy']]))
@@ -100,7 +100,7 @@ new class extends Component {
                                 @endif
                             </span>
                             <span class="min-w-0 flex-1">
-                                <span class="block truncate text-[11px] font-semibold uppercase tracking-wide text-lech-700 dark:text-lech-300">{{ $rival['competition'] }}</span>
+                                <span class="block truncate text-[11px] font-semibold uppercase tracking-wide text-club">{{ $rival['competition'] }}</span>
                                 <span class="block truncate text-sm font-medium {{ $rival['bot'] ? 'italic' : '' }}">{{ $rival['rival'] }}</span>
                             </span>
                             <span class="shrink-0">
@@ -127,7 +127,7 @@ new class extends Component {
                             @else
                                 {{-- Typ --}}
                                 <div class="flex items-center justify-between gap-2">
-                                    <span class="text-zinc-500">{{ __('Tip') }}</span>
+                                    <span class="text-ui-muted">{{ __('Tip') }}</span>
                                     <span class="font-semibold">
                                         @if ($rival['tip'])
                                             {{ $rival['tip'] }}
@@ -142,19 +142,19 @@ new class extends Component {
                                 </div>
 
                                 @if (!$isPremium && $phase === \App\Support\Rivals::OPEN)
-                                    <div class="flex items-center gap-2 text-xs text-zinc-500">
+                                    <div class="flex items-center gap-2 text-xs text-ui-muted">
                                         <x-premium-badge />
                                         {{ __('Outcome of the tip while tipping is open') }}
                                     </div>
                                 @endif
 
                                 @if ($rival['bonus'])
-                                    <div class="text-xs text-zinc-500">{{ $rival['bonus'] }}</div>
+                                    <div class="text-xs text-ui-muted">{{ $rival['bonus'] }}</div>
                                 @endif
                             @endif
 
                             @if ($rival['score'])
-                                <div class="flex items-center justify-between gap-2 rounded-lg bg-lech-50 px-3 py-1.5 text-lech-800 ring-1 ring-lech-200 dark:bg-lech-500/10 dark:text-lech-200 dark:ring-lech-500/30">
+                                <div class="flex items-center justify-between gap-2 rounded-lg bg-lech-50 px-3 py-1.5 text-club ring-1 ring-lech-200 dark:bg-lech-500/10 dark:ring-lech-500/30">
                                     <span class="text-xs">{{ __('Match') }}</span>
                                     <span class="font-bold tabular-nums">{{ $rival['score'] }}</span>
                                 </div>
@@ -166,9 +166,9 @@ new class extends Component {
                                     @php
                                         $h2h = $rival['h2h'];
                                     @endphp
-                                    <div class="space-y-1.5 border-t border-zinc-200 pt-2 dark:border-zinc-700">
+                                    <div class="space-y-1.5 border-t border-ui-line pt-2">
                                         <div class="flex items-center justify-between gap-2">
-                                            <span class="text-zinc-500">{{ __('Head to head') }}</span>
+                                            <span class="text-ui-muted">{{ __('Head to head') }}</span>
                                             <span class="text-xs font-semibold tabular-nums">
                                                 <span class="text-green-600">{{ $h2h['won'] }}</span> –
                                                 <span>{{ $h2h['drawn'] }}</span> –
@@ -179,14 +179,14 @@ new class extends Component {
                                             <div class="flex items-center gap-2 text-xs">
                                                 <span class="{{ $formClasses[$meeting['outcome']] }} flex size-5 shrink-0 items-center justify-center rounded text-[10px] font-bold text-white">{{ __($meeting['outcome']) }}</span>
                                                 <span class="w-9 shrink-0 font-semibold tabular-nums">{{ $meeting['score'] }}</span>
-                                                <span class="truncate text-zinc-500">{{ $meeting['season'] }} · {{ $meeting['competition'] }}</span>
+                                                <span class="truncate text-ui-muted">{{ $meeting['season'] }} · {{ $meeting['competition'] }}</span>
                                             </div>
                                         @empty
-                                            <div class="text-xs text-zinc-500">{{ __('First meeting') }}</div>
+                                            <div class="text-xs text-ui-muted">{{ __('First meeting') }}</div>
                                         @endforelse
                                     </div>
                                 @elseif (!$isPremium)
-                                    <div class="flex items-center gap-2 border-t border-zinc-200 pt-2 text-xs text-zinc-500 dark:border-zinc-700">
+                                    <div class="flex items-center gap-2 border-t border-ui-line pt-2 text-xs text-ui-muted">
                                         <x-premium-badge />
                                         {{ __('Head to head and meeting history') }}
                                     </div>

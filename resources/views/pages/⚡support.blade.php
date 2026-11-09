@@ -239,7 +239,7 @@ new #[Layout('layouts::public')] class extends Component {
             <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @foreach ($this->payments as $payment)
                     <div class="flex items-center justify-between gap-3 py-2 text-sm" wire:key="pay-{{ $payment->id }}">
-                        <span class="w-32 text-zinc-500">{{ ($payment->paid_at ?? $payment->created_at)->format('d.m.Y H:i') }}</span>
+                        <span class="w-32 text-ui-muted">{{ ($payment->paid_at ?? $payment->created_at)->format('d.m.Y H:i') }}</span>
                         <span class="min-w-0 flex-1">{{ $payment->kindLabel() }}</span>
                         <span class="tabular-nums">{{ $payment->amountLabel() }}</span>
                         <x-ui.badge size="sm" :color="$payment->statusColor()">{{ $payment->statusLabel() }}</x-ui.badge>

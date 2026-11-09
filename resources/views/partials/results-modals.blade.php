@@ -59,16 +59,16 @@
                         }
                     @endphp
                     @foreach ($basic as [$label, $value, $hint])
-                        <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
-                            <div class="text-xs text-zinc-500">{{ $label }}</div>
+                        <div class="rounded-lg border border-ui-line p-3">
+                            <div class="text-xs text-ui-muted">{{ $label }}</div>
                             <div class="text-lg font-semibold tabular-nums">{{ $value }}</div>
-                            <div class="text-xs text-zinc-500">{{ $hint }}</div>
+                            <div class="text-xs text-ui-muted">{{ $hint }}</div>
                         </div>
                     @endforeach
                 </div>
 
                 @if (count($stats['form']) > 0)
-                    <div class="flex items-center gap-2 text-xs text-zinc-500">
+                    <div class="flex items-center gap-2 text-xs text-ui-muted">
                         {{ __('Form') }}:
                         @foreach ($stats['form'] as $outcome)
                             <span class="{{ $formClasses[$outcome] }} flex size-5 items-center justify-center rounded text-[10px] font-bold text-white">{{ __($outcome) }}</span>
@@ -102,9 +102,9 @@
                     <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         @foreach ($extra as [$label, $value, $hint])
                             <div class="rounded-lg border border-purple-200 bg-purple-50/60 p-3 dark:border-purple-500/30 dark:bg-purple-500/10">
-                                <div class="text-xs text-zinc-500">{{ $label }}</div>
+                                <div class="text-xs text-ui-muted">{{ $label }}</div>
                                 <div class="text-lg font-semibold tabular-nums">{{ $value }}</div>
-                                <div class="text-xs text-zinc-500">{{ $hint }}</div>
+                                <div class="text-xs text-ui-muted">{{ $hint }}</div>
                             </div>
                         @endforeach
                     </div>
@@ -113,7 +113,7 @@
                         @php
                             $h2h = $card['h2h'];
                         @endphp
-                        <div class="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-700">
+                        <div class="rounded-lg border border-ui-line p-3 text-sm">
                             <div class="font-medium">
                                 @if (count($h2h['meetings']) === 0)
                                     {{ __('You have not met this team yet.') }}
@@ -125,7 +125,7 @@
                                 <div class="mt-1 flex items-center gap-2 text-xs">
                                     <span class="{{ $formClasses[$meeting['outcome']] }} flex size-5 items-center justify-center rounded text-[10px] font-bold text-white">{{ __($meeting['outcome']) }}</span>
                                     <span class="w-10 font-semibold tabular-nums">{{ $meeting['score'] }}</span>
-                                    <span class="text-zinc-500">{{ $meeting['season'] }} &middot; {{ $meeting['competition'] }} &middot; {{ __('Matchday :number', ['number' => $meeting['round']]) }}</span>
+                                    <span class="text-ui-muted">{{ $meeting['season'] }} &middot; {{ $meeting['competition'] }} &middot; {{ __('Matchday :number', ['number' => $meeting['round']]) }}</span>
                                 </div>
                             @endforeach
                         </div>

@@ -1,7 +1,7 @@
 {{--
     Pięść w protokole meczu: czyste konto bramkarza albo obrońcy, które zabiera rywalowi punkt ataku. Props: class.
 --}}
-<svg viewBox="0 0 24 24" aria-hidden="true" {{ $attributes->class(['inline-block size-3.5 shrink-0 text-lech-700 dark:text-lech-300']) }}>
+<svg viewBox="0 0 24 24" aria-hidden="true" {{ $attributes->class(['inline-block size-3.5 shrink-0 text-club']) }}>
     <g fill="currentColor" class="stroke-white dark:stroke-zinc-900" stroke-width="1">
         <rect x="8" y="17.5" width="9" height="5" rx="1"/>
         <rect x="4.5" y="8.5" width="15.5" height="11" rx="3.5"/>

@@ -70,13 +70,13 @@
                         $color = $stats['scored'] > 0 ? \App\Support\PlayerStats::percentColor($percent === null ? null : (float) $percent) : 'zinc';
                         $width = $percent === null ? 0 : max(3, min(100, (int) round((float) $percent)));
                     @endphp
-                    <div class="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-white/5" wire:key="tile-{{ $loop->parent->index }}-{{ $loop->index }}">
-                        <div class="truncate text-[11px] font-semibold uppercase tracking-wide text-zinc-500" title="{{ $label }}">{{ $label }}</div>
+                    <div class="flex flex-col gap-1 rounded-xl border border-ui-line bg-zinc-50/60 p-3 dark:bg-white/5" wire:key="tile-{{ $loop->parent->index }}-{{ $loop->index }}">
+                        <div class="truncate text-[11px] font-semibold uppercase tracking-wide text-ui-muted" title="{{ $label }}">{{ $label }}</div>
                         <div class="{{ $valueClasses[$color] }} text-2xl font-black leading-tight tabular-nums">{{ $value }}</div>
                         <div class="h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10" title="{{ $percent === null ? '' : (int) round((float) $percent) . '%' }}">
                             <div class="{{ $barClasses[$color] }} h-full rounded-full" style="width: {{ $width }}%"></div>
                         </div>
-                        <div class="text-xs leading-snug text-zinc-500">{{ $hint }}</div>
+                        <div class="text-xs leading-snug text-ui-muted">{{ $hint }}</div>
                     </div>
                 @endforeach
             </div>
