@@ -722,14 +722,9 @@ new #[Layout('layouts::public')] class extends Component {
                 {{ mb_strtoupper(config('club.short_name')) }} {{ $this->tip ? $this->tip->score() : '–:–' }} {{ mb_strtoupper((string) $md->opponent) }}
             </div>
             @if ($this->questions->isNotEmpty())
-                @php
-                    $qa = $this->myAnswers;
-                    $qAttack = $qa->where('side', 'attack')->count();
-                    $qDefense = $qa->where('side', 'defense')->count();
-                @endphp
                 <div class="flex justify-between gap-3 border-t border-dashed border-ui-line pt-2 text-sm">
                     <span class="text-ui-muted">{{ __('Questions') }}</span>
-                    <span class="text-end font-semibold">{{ __(':answered of :total', ['answered' => $qa->count(), 'total' => $this->questions->count()]) }} · ⚔ {{ $qAttack }} · 🛡 {{ $qDefense }}</span>
+                    <span class="text-end font-semibold">{{ __(':answered of :total', ['answered' => (string) $this->myAnswers->count(), 'total' => (string) $this->questions->count()]) }} · ⚔ {{ $this->myAnswers->where('side', 'attack')->count() }} · 🛡 {{ $this->myAnswers->where('side', 'defense')->count() }}</span>
                 </div>
             @endif
             @forelse ($ticket as $line)
