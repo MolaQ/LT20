@@ -63,6 +63,7 @@ class BuildListFromPrevious
         $eligible = Players::eligible()->pluck('id')->flip();
         $leagues = self::leagueTree($competitions->all());
         $old = [];
+        /** @var array<array-key, list<array{id: int, human: bool}>> $teams klucz ligi (treeKey) => tabela końcowa */
         $teams = [];
 
         foreach ($standings as $row) {

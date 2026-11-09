@@ -36,6 +36,7 @@
 
     @php
         $links = [
+            [route('my-stats'), '★ '.__('My stats')],
             [route('hall-of-fame'), __('Hall of Fame')],
             [route('history'), __('History')],
             [route('stars'), __('Stars')],

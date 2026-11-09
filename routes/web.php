@@ -20,6 +20,8 @@ Route::livewire('tips/{matchday_slug?}/{tab_slug?}', 'pages::tips')
 Route::livewire('results/{season_slug?}/{competition_slug?}/{round_slug?}', 'pages::results')
     ->where(['season_slug' => 'sezon-[0-9]+', 'competition_slug' => '[a-z0-9-]+', 'round_slug' => 'kolejka-[0-9]+'])
     ->name('results');
+// Statystyki premium (przebudowa 2.0): forma, serie, odznaki, „co jeśli” i mapa typów.
+Route::livewire('my-stats', 'pages::my-stats')->middleware(['auth', 'verified'])->name('my-stats');
 Route::livewire('hall-of-fame', 'pages::hall-of-fame')->name('hall-of-fame');
 Route::livewire('history/{key_slug?}', 'pages::history')->name('history');
 Route::livewire('stars', 'pages::stars')->name('stars');
