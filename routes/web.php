@@ -2,6 +2,7 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\Przelewy24Controller;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,10 @@ Route::livewire('news/{news}', 'pages::news-show')->name('news.show');
 Route::livewire('office', 'pages::office')->name('office');
 // Przełącznik języka (pl, en) z menu „Więcej”.
 Route::post('locale/{locale}', LocaleController::class)->name('locale.switch');
+
+// PWA: manifest z konfiguracji klubu i strona bez internetu (service worker: public/sw.js).
+Route::get('manifest.webmanifest', ManifestController::class)->name('manifest');
+Route::view('offline', 'offline')->name('offline');
 
 // Podgląd nowego wyglądu (przebudowa 2.0): skorupa aplikacji i komponenty bez Flux.
 Route::livewire('preview', 'pages::app-preview')->name('preview');

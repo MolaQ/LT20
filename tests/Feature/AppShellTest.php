@@ -32,3 +32,22 @@ test('an unsupported language is rejected', function () {
 test('the browser language is used when nothing was chosen', function () {
     $this->get(route('preview'), ['Accept-Language' => 'en-GB,en;q=0.9'])->assertSee('lang="en"', false);
 });
+
+test('the web app manifest uses the club configuration', function () {
+    $this->get(route('manifest'))
+        ->assertOk()
+        ->assertJsonPath('display', 'standalone')
+        ->assertJsonPath('name', config('club.brand.prefix').config('club.brand.suffix'))
+        ->assertJsonPath('theme_color', config('club.colors.deep'));
+});
+
+test('the offline page renders', function () {
+    $this->get(route('offline'))->assertOk()->assertSee(__('No connection'));
+});
+
+test('public pages use the new shell with the bottom menu', function () {
+    $this->get(route('rules'))
+        ->assertOk()
+        ->assertSee('ui-shell', false)
+        ->assertSee(route('manifest'), false);
+});

@@ -86,6 +86,19 @@ const confetti = (count = 120) => {
 
 window.ui = { confetti, vibrate, applyTheme, reducedMotion };
 
+// PWA: rejestracja service workera (tryb offline i instalacja na ekranie). Tylko https albo localhost.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+// Zdarzenie instalacji przychodzi raz, zanim Alpine zbuduje menu, więc trzymamy je globalnie.
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    window.dispatchEvent(new CustomEvent('ui-installable'));
+});
+
 document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
 
@@ -168,6 +181,24 @@ document.addEventListener('alpine:init', () => {
                 }
             });
             io.observe(this.$el);
+        },
+    }));
+
+    // Przycisk „Zainstaluj aplikację”. Na iPhonie zamiast przycisku podpowiedź z „Udostępnij”.
+    Alpine.data('uiInstall', () => ({
+        canInstall: !!installPrompt,
+        ios: /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches && !navigator.standalone,
+        init() {
+            window.addEventListener('ui-installable', () => (this.canInstall = true));
+        },
+        async install() {
+            if (!installPrompt) {
+                return;
+            }
+            installPrompt.prompt();
+            await installPrompt.userChoice;
+            installPrompt = null;
+            this.canInstall = false;
         },
     }));
 
