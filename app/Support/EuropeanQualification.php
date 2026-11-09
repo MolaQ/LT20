@@ -206,13 +206,14 @@ final class EuropeanQualification
         // Reszta: ligi od Ekstraklasy według miejsca, potem Liga podwórkowa.
         $tiers = [];
         foreach ($competitions as $competition) {
-            if ($competition->type === CompetitionType::League || $competition->type === CompetitionType::Swiss) {
-                $tiers[$competition->id] = $competition->type === CompetitionType::Swiss ? 11 : (int) $competition->tier;
+            if ($competition->leagueTier() !== null) {
+                $tiers[$competition->id] = [(int) $competition->leagueTier(), $competition->division];
             }
         }
 
+        // Ligi podwórkowe po kolei (1.1, 1.2 …), w każdej według miejsca.
         $fill = $standings->filter(fn (FinalStanding $s) => isset($tiers[$s->competition_id]))
-            ->sortBy(fn (FinalStanding $s) => [$tiers[$s->competition_id], $s->place]);
+            ->sortBy(fn (FinalStanding $s) => [...$tiers[$s->competition_id], $s->place]);
 
         foreach ($fill as $row) {
             $rows[] = ['fill', $row];

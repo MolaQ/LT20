@@ -24,6 +24,18 @@ class SeasonTeam extends Model
     /** Rozmiar Pucharu Polski: tylu zespołów z początku listy bierze w nim udział. */
     public const CUP_SIZE = 512;
 
+    /**
+     * Najmniejsza lista sezonu (przebudowa 2.0): 512 do pucharu zaokrąglone w górę do pełnej ligi podwórkowej (po 10).
+     * Tyle botów ma też pula (BotNames).
+     */
+    public const LIST_MIN = 520;
+
+    /** Rozmiar listy dla $teams zespołów: co najmniej LIST_MIN, zawsze pełne ligi po 10 (bez niepełnej ligi podwórkowej). */
+    public static function listSize(int $teams): int
+    {
+        return max(self::LIST_MIN, (int) ceil($teams / League::SIZE) * League::SIZE);
+    }
+
     protected $fillable = ['season_id', 'position', 'user_id', 'bot_id', 'previous_id'];
 
     protected function casts(): array

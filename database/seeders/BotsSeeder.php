@@ -7,7 +7,7 @@ use App\Support\BotNames;
 use Illuminate\Database\Seeder;
 
 /**
- * Tworzy pulę 512 botów z listy App\Support\BotNames.
+ * Tworzy pulę 520 botów z listy App\Support\BotNames.
  *
  * Bezpieczny do wielokrotnego uruchamiania:
  *  - tworzy tylko brakujące sloty,

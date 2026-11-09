@@ -9,6 +9,7 @@ use App\Models\Competition;
 use App\Models\CompetitionEntry;
 use App\Models\Season;
 use App\Models\SeasonTeam;
+use App\Support\Backyard;
 use App\Support\CupBracket;
 use App\Support\EuropeanCup;
 use App\Support\EuropeanQualification;
@@ -21,13 +22,13 @@ use Illuminate\Support\Facades\DB;
  * Tworzy rozgrywki automatyczne sezonu na podstawie listy przedsezonowej:
  *  - 10 lig (po 10 zespołów, terminarz z LeagueSchedule, 9 kolejek),
  *  - Puchar Polski (pierwsze 512 miejsc listy, cała drabinka 511 meczów z CupBracket),
- *  - Ligę podwórkową (miejsca od 101, system szwajcarski: pary losuje się rundami),
+ *  - Ligę podwórkową (miejsca od 101): ligi po 10 zespołów 1.1–1.4, 2.1–2.16 … (App\Support\Backyard, przebudowa 2.0),
  *  - Ligę Legend (wszystkie zespoły ludzi),
  *  - puchary europejskie (LM, LE, LK) po 24 zespoły z listy kwalifikacji (EuropeanQualification),
  * Można wywołać wielokrotnie: rozgrywki, które już istnieją, są pomijane (przycisk
  * "Wygeneruj brakujące rozgrywki" na stronie Terminarz).
  *
- * @return array{leagues: int, league_fixtures: int, cup_fixtures: int, swiss_entries: int, legends_entries: int, european: int}
+ * @return array{leagues: int, backyard_leagues: int, league_fixtures: int, cup_fixtures: int, swiss_entries: int, legends_entries: int, european: int}
  */
 class BuildCompetitions
 {
@@ -40,7 +41,7 @@ class BuildCompetitions
                 throw new DomainException(__('Not enough bots. Run: php artisan db:seed --class=BotsSeeder'));
             }
 
-            $stats = ['leagues' => 0, 'league_fixtures' => 0, 'cup_fixtures' => 0, 'swiss_entries' => 0, 'legends_entries' => 0, 'european' => 0];
+            $stats = ['leagues' => 0, 'backyard_leagues' => 0, 'league_fixtures' => 0, 'cup_fixtures' => 0, 'swiss_entries' => 0, 'legends_entries' => 0, 'european' => 0];
 
             // --- 10 lig ---
             foreach (League::cases() as $league) {
@@ -101,29 +102,48 @@ class BuildCompetitions
                 $stats['cup_fixtures'] = count($rows);
             }
 
-            // --- Liga podwórkowa (bez terminarza, pary losuje DrawSwissRound) ---
-            if (! $this->exists($season, CompetitionType::Swiss, League::Podworkowa->value)) {
-                $competition = Competition::create([
-                    'season_id' => $season->id,
-                    'type' => CompetitionType::Swiss,
-                    'tier' => League::Podworkowa->value,
-                    'name' => CompetitionType::Swiss->label(),
-                ]);
+            // --- Liga podwórkowa: ligi po 10 (1.1–1.4, 2.1–2.16 …, App\Support\Backyard), terminarz jak w ligach 1-10 ---
+            // Sezony sprzed przebudowy mają starą podwórkową (system szwajcarski) i zostają przy niej.
+            $legacy = $this->exists($season, CompetitionType::Swiss, League::Podworkowa->value);
+            $lastPosition = $legacy ? 0 : (int) $teams->keys()->max();
+            for ($division = 1; $division <= Backyard::count($lastPosition); $division++) {
+                if ($this->exists($season, CompetitionType::League, League::Podworkowa->value, $division)) {
+                    continue;
+                }
 
                 $seatTeams = [];
-                foreach ($teams as $position => $team) {
-                    if ($position > League::TOP_TEAMS) {
-                        $seatTeams[$position - League::TOP_TEAMS] = $team->id;
+                for ($seed = 1; $seed <= League::SIZE; $seed++) {
+                    $team = $teams->get(Backyard::firstPosition($division) + $seed - 1);
+                    if ($team) {
+                        $seatTeams[$seed] = $team->id;
                     }
                 }
 
-                $this->createEntries($competition, $seatTeams);
-                $stats['swiss_entries'] = count($seatTeams);
-
-                // Runda 1 z listy (1-2, 3-4...) losuje się od razu, kolejne po każdej przeliczonej kolejce.
-                if (count($seatTeams) >= 2) {
-                    app(DrawSwissRound::class)->handle($competition, 1);
+                // Lista ma pełne ligi (SeasonTeam::listSize), więc niepełna liga oznacza dziurę w numeracji.
+                if (count($seatTeams) !== League::SIZE) {
+                    throw new DomainException(__(':league is not full. Fill the list with bots first.', ['league' => Backyard::name($division)]));
                 }
+
+                $competition = Competition::create([
+                    'season_id' => $season->id,
+                    'type' => CompetitionType::League,
+                    'tier' => League::Podworkowa->value,
+                    'division' => $division,
+                    'name' => Backyard::name($division),
+                ]);
+
+                $entries = $this->createEntries($competition, $seatTeams);
+
+                $rows = [];
+                foreach (LeagueSchedule::fixtures() as $match) {
+                    $rows[] = $this->fixtureRow($competition, $match['round'], $match['home'], $match['away'], $entries);
+                }
+
+                $this->insertFixtures($rows);
+
+                $stats['backyard_leagues']++;
+                $stats['swiss_entries'] += League::SIZE;
+                $stats['league_fixtures'] += count($rows);
             }
 
             // --- Liga Legend: wszystkie zespoły ludzi (bez botów), dwa pojedynki w kolejce, eliminacja po dwóch porażkach ---
@@ -280,11 +300,11 @@ class BuildCompetitions
         return count($rows);
     }
 
-    private function exists(Season $season, CompetitionType $type, ?int $tier = null): bool
+    private function exists(Season $season, CompetitionType $type, ?int $tier = null, int $division = 0): bool
     {
         return Competition::where('season_id', $season->id)
             ->where('type', $type->value)
-            ->when($tier !== null, fn ($q) => $q->where('tier', $tier))
+            ->when($tier !== null, fn ($q) => $q->where('tier', $tier)->where('division', $division))
             ->exists();
     }
 

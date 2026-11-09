@@ -67,7 +67,7 @@ class Season extends Model
     /** $season->competitions  ->  rozgrywki sezonu (po zatwierdzeniu: 10 lig). */
     public function competitions(): HasMany
     {
-        return $this->hasMany(Competition::class)->orderBy('tier')->orderBy('id');
+        return $this->hasMany(Competition::class)->orderBy('tier')->orderBy('division')->orderBy('id');
     }
 
     /**

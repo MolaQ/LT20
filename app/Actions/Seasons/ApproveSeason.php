@@ -63,8 +63,8 @@ class ApproveSeason
                 ->orderBy('position')
                 ->get(['id', 'position']);
 
-            // Bez 512 zespołów nie ułożymy pucharu, bez 100 pierwszych miejsc lig.
-            if ($total < SeasonTeam::CUP_SIZE || $top->count() < League::TOP_TEAMS) {
+            // Bez 512 zespołów nie ułożymy pucharu, bez 100 pierwszych miejsc lig, a Liga podwórkowa gra w pełnych ligach po 10.
+            if ($total < SeasonTeam::CUP_SIZE || $total !== SeasonTeam::listSize($total) || $top->count() < League::TOP_TEAMS) {
                 throw new DomainException(__('Not enough bots. Run: php artisan db:seed --class=BotsSeeder'));
             }
 

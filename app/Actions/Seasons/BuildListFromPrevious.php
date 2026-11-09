@@ -11,6 +11,7 @@ use App\Models\FinalStanding;
 use App\Models\Season;
 use App\Models\SeasonTeam;
 use App\Support\Audit;
+use App\Support\Backyard;
 use App\Support\Players;
 use App\Support\Promotion;
 use DomainException;
@@ -18,8 +19,9 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Lista przedsezonowa nowego sezonu z tabel końcowych poprzedniego (regulamin, punkt 9):
- * boty na koniec tabel, awanse i spadki po 4, wypychanie botów pod ludzi (App\Support\Promotion), Liga podwórkowa według
- * klasyfikacji końcowej. Boty spoza 512 miejsc (SeasonTeam::CUP_SIZE) nie wchodzą na listę i pauzują (bots.is_active = false),
+ * boty na koniec tabel, awanse i spadki po 4 w ligach 1-10, w Lidze podwórkowej zwycięzca w górę i po jednym spadkowiczu
+ * do każdej ligi pod spodem (App\Support\Backyard), wypychanie botów pod ludzi (App\Support\Promotion::applyTree).
+ * Boty za pełnymi ligami (SeasonTeam::listSize, co najmniej 520) nie wchodzą na listę i pauzują (bots.is_active = false),
  * ale zostają w puli dla miejsc zbanowanych graczy. Zespół gracza, który nie może już grać (ban, nieaktywny), zostaje na swoim
  * miejscu jako bot. Nowi gracze dochodzą potem przyciskiem "Dodaj nowych graczy" (na koniec podwórkowej).
  * Każde miejsce pamięta, z którego miejsca poprzedniego sezonu powstało (previous_id).
@@ -59,26 +61,37 @@ class BuildListFromPrevious
             ->get();
 
         $eligible = Players::eligible()->pluck('id')->flip();
-        $tiers = [];
+        $leagues = self::leagueTree($competitions->all());
         $old = [];
 
         foreach ($standings as $row) {
-            $level = $competitions[$row->competition_id]->tier ?? League::Podworkowa->value;
             $team = $row->seasonTeam;
             $old[$team->id] = $team;
-            $tiers[$level][] = ['id' => $team->id, 'human' => $team->user_id !== null && isset($eligible[$team->user_id])];
+            $leagues[self::treeKey($competitions[$row->competition_id])]['teams'][] = ['id' => $team->id, 'human' => $team->user_id !== null && isset($eligible[$team->user_id])];
         }
 
         foreach (League::cases() as $league) {
-            if ($league->isTop() && count($tiers[$league->value] ?? []) !== League::SIZE) {
+            if ($league->isTop() && count($leagues[(string) $league->value]['teams'] ?? []) !== League::SIZE) {
                 throw new DomainException(__('The final standings of :league are incomplete.', ['league' => $league->label()]));
             }
         }
 
-        $tiers[League::Podworkowa->value] ??= [];
-        $order = Promotion::apply($tiers);
+        $order = Promotion::applyTree($leagues);
 
-        return DB::transaction(function () use ($season, $previous, $order, $old, $eligible): array {
+        // Przejście ze starej podwórkowej (jedna tabela) na ligi po 10: spadkowicze z C klasy po jednym do lig 1.1–1.4.
+        $legacy = (string) League::Podworkowa->value;
+        if (isset($order[$legacy])) {
+            $order[$legacy] = self::spreadRelegated($order[$legacy], count($leagues[(string) League::CKlasa->value]['teams'] ?? []) > 0 ? Promotion::MOVES : 0);
+        }
+
+        // Lista w pełnych ligach po 10 (SeasonTeam::listSize): boty za tą granicą pauzują.
+        $humans = 0;
+        foreach ($old as $team) {
+            $humans += (int) ($team->user_id !== null && isset($eligible[$team->user_id]));
+        }
+        $size = SeasonTeam::listSize($humans);
+
+        return DB::transaction(function () use ($season, $previous, $order, $old, $eligible, $size): array {
             // Wolne boty z puli dla miejsc graczy, którzy już nie grają.
             $usedBots = collect($old)->pluck('bot_id')->filter()->all();
             $freeBots = Bot::whereNotIn('id', $usedBots)->bestFirst()->pluck('id')->all();
@@ -88,14 +101,13 @@ class BuildListFromPrevious
             $position = 0;
             $players = 0;
 
-            ksort($order);
             foreach ($order as $ids) {
                 foreach ($ids as $id) {
                     $team = $old[$id];
                     $human = $team->user_id !== null && isset($eligible[$team->user_id]);
 
                     // Boty są na końcu listy (Promotion), więc odcięcie dotyczy tylko botów.
-                    if (! $human && $position >= SeasonTeam::CUP_SIZE) {
+                    if (! $human && $position >= $size) {
                         continue;
                     }
 
@@ -129,6 +141,62 @@ class BuildListFromPrevious
 
             return ['teams' => count($rows), 'players' => $players, 'bots' => count($rows) - $players];
         });
+    }
+
+    /**
+     * Drzewo lig poprzedniego sezonu do awansów (Promotion::applyTree), w kolejności listy: ligi 1-10 (po 4 w górę i w dół),
+     * stara podwórkowa w jednej tabeli (4 w górę) albo nowe ligi podwórkowe (zwycięzca w górę, Backyard::parent).
+     *
+     * @param  array<int, Competition>  $competitions
+     * @return array<string, array{parent: string|null, up: int, teams: array<int, array{id: int, human: bool}>}>
+     */
+    public static function leagueTree(array $competitions): array
+    {
+        usort($competitions, fn (Competition $a, Competition $b) => [$a->leagueTier(), $a->division] <=> [$b->leagueTier(), $b->division]);
+
+        $leagues = [];
+        foreach ($competitions as $competition) {
+            $tier = (int) $competition->leagueTier();
+
+            if ($competition->isBackyard()) {
+                $parent = Backyard::parent($competition->division);
+                $leagues[self::treeKey($competition)] = [
+                    'parent' => $parent !== null ? 'p'.$parent : (string) League::CKlasa->value,
+                    'up' => Backyard::PROMOTED,
+                    'teams' => [],
+                ];
+            } else {
+                $leagues[self::treeKey($competition)] = ['parent' => $tier > 1 ? (string) ($tier - 1) : null, 'up' => Promotion::MOVES, 'teams' => []];
+            }
+        }
+
+        return $leagues;
+    }
+
+    /**
+     * Pierwsze $count zespołów (spadkowicze z C klasy) na początek kolejnych lig po 10, reszta w kolejności.
+     *
+     * @param  array<int, int>  $ids
+     * @return array<int, int>
+     */
+    public static function spreadRelegated(array $ids, int $count): array
+    {
+        $relegated = array_slice($ids, 0, $count);
+        $rest = array_slice($ids, $count);
+        $result = [];
+
+        foreach ($relegated as $id) {
+            $result[] = $id;
+            array_push($result, ...array_splice($rest, 0, League::SIZE - 1));
+        }
+
+        return array_merge($result, $rest);
+    }
+
+    /** Klucz ligi w drzewie: '1'..'10' (ligi), '11' (stara podwórkowa), 'p1', 'p2' … (nowe ligi podwórkowe). */
+    public static function treeKey(Competition $competition): string
+    {
+        return $competition->isBackyard() ? 'p'.$competition->division : (string) $competition->leagueTier();
     }
 
     /** Ostatni zakończony sezon przed tym, który ma tabele końcowe. */

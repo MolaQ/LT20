@@ -1028,9 +1028,9 @@ new #[Layout('layouts::public')] class extends Component {
                             @else
                                 {{-- Legenda tylko dla stref, które są w tej lidze: z Ekstraklasy nie ma awansu, z podwórkowej spadku --}}
                                 @php
-                                    $isSwiss = $this->competition->type === \App\Enums\CompetitionType::Swiss;
-                                    $hasPromotion = $isSwiss || (int) $this->competition->tier > 1;
-                                    $hasRelegation = !$isSwiss;
+                                    $zoneSizes = \App\Support\Standings::zoneSizes($this->competition);
+                                    $hasPromotion = $zoneSizes['up'] > 0;
+                                    $hasRelegation = $zoneSizes['down'] > 0;
                                 @endphp
                                 <p class="flex flex-wrap gap-4 opacity-90">
                                     @if ($hasPromotion)

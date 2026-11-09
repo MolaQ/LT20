@@ -90,7 +90,7 @@ new class extends Component {
     {
         $options = [];
 
-        foreach (Competition::where('season_id', $this->seasonId)->orderBy('tier')->orderBy('id')->get() as $competition) {
+        foreach (Competition::where('season_id', $this->seasonId)->orderBy('tier')->orderBy('division')->orderBy('id')->get() as $competition) {
             $options[$this->keyOf($competition)] = $competition->name;
         }
 
@@ -263,7 +263,7 @@ new class extends Component {
     private function keyOf(Competition $competition): string
     {
         return match ($competition->type) {
-            CompetitionType::League => 'league-' . $competition->tier,
+            CompetitionType::League => 'league-' . $competition->tier . ($competition->division ? '-' . $competition->division : ''),
             CompetitionType::Cup => 'cup',
             CompetitionType::Swiss => 'swiss',
             default => 'c-' . $competition->id,

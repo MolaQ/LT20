@@ -40,12 +40,12 @@ class SeasonChecklist
         );
 
         $bots = Bot::count();
-        $botsOk = $bots >= SeasonTeam::CUP_SIZE;
+        $botsOk = $bots >= SeasonTeam::LIST_MIN;
         $items[] = self::item(
             __('General'),
-            __('The pool has :count bots', ['count' => SeasonTeam::CUP_SIZE]),
+            __('The pool has :count bots', ['count' => SeasonTeam::LIST_MIN]),
             $botsOk,
-            $bots.' / '.SeasonTeam::CUP_SIZE,
+            $bots.' / '.SeasonTeam::LIST_MIN,
             'dashboard.bots',
             'php artisan db:seed --class=BotsSeeder'
         );
@@ -116,9 +116,9 @@ class SeasonChecklist
 
         $items[] = self::item(
             __('Team list'),
-            __('The list has at least :count teams (bots included)', ['count' => SeasonTeam::CUP_SIZE]),
-            $total >= SeasonTeam::CUP_SIZE,
-            $total.' / '.SeasonTeam::CUP_SIZE,
+            __('The list has at least :count teams (bots included)', ['count' => SeasonTeam::LIST_MIN]),
+            $total >= SeasonTeam::LIST_MIN && $total === SeasonTeam::listSize($total),
+            $total.' / '.SeasonTeam::listSize($total),
             'dashboard.season-teams',
             null
         );
@@ -150,13 +150,14 @@ class SeasonChecklist
             null
         );
 
-        $swiss = $competitions->firstWhere('type', CompetitionType::Swiss);
-        $swissEntries = $swiss ? CompetitionEntry::where('competition_id', $swiss->id)->count() : 0;
+        // Liga podwórkowa: ligi po 10 (od przebudowy 2.0) albo stara tabela w systemie szwajcarskim.
+        $backyard = $competitions->filter(fn (Competition $c) => $c->isBackyard() || $c->type === CompetitionType::Swiss);
+        $backyardEntries = $backyard->isEmpty() ? 0 : CompetitionEntry::whereIn('competition_id', $backyard->pluck('id'))->count();
         $items[] = self::item(
             __('Launch'),
             __('Liga podwórkowa has its teams'),
-            $swissEntries > 0,
-            (string) $swissEntries,
+            $backyardEntries > 0,
+            trans_choice(':count league|:count leagues', $backyard->count(), ['count' => $backyard->count()]).' · '.$backyardEntries,
             'dashboard.fixtures',
             null
         );

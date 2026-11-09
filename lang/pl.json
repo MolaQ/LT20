@@ -1913,5 +1913,8 @@
     "Counts points, league tables and the next rounds.": "Liczy punkty, tabele lig i kolejne rundy.",
     "optional": "opcjonalnie",
     "Recalculate now": "Przelicz teraz",
-    "Matchday :number is complete.": "Kolejka :number jest gotowa."
+    "Matchday :number is complete.": "Kolejka :number jest gotowa.",
+    "10 leagues of 10 teams (Ekstraklasa to C klasa), Liga podwórkowa in leagues of 10 (1.1–1.4, 2.1–2.16 …: the winner goes up, one team drops to each league below), Puchar Polski (512 teams, a fixed bracket of 9 rounds), Liga Mistrzów, Europy and Konferencji and Liga Legend.": "10 lig po 10 zespołów (od Ekstraklasy do C klasy), Liga podwórkowa w ligach po 10 (1.1–1.4, 2.1–2.16 …: zwycięzca awansuje, do każdej ligi niżej spada jeden zespół), Puchar Polski (512 zespołów, stała drabinka 9 rund), Liga Mistrzów, Europy i Konferencji oraz Liga Legend.",
+    ":league is not full. Fill the list with bots first.": ":league nie jest pełna. Najpierw uzupełnij listę botami.",
+    ":count league|:count leagues": "{1} :count liga|[2,4] :count ligi|[5,*] :count lig"
 }

@@ -824,7 +824,10 @@ final class PlayerStats
     {
         $standings = FinalStanding::with('competition', 'season:id,number')->where('user_id', $user->id)->get();
 
-        $groups = $standings->groupBy(fn ($s) => $s->competition->type->value.'-'.($s->competition->tier ?? 0));
+        // Ligi podwórkowe (1.1, 2.7 …) razem jako jedna Liga podwórkowa, tak jak stara tabela w systemie szwajcarskim.
+        $groups = $standings->groupBy(fn ($s) => $s->competition->leagueTier() !== null
+            ? 'league-'.$s->competition->leagueTier()
+            : $s->competition->type->value.'-'.($s->competition->tier ?? 0));
         $competitions = [];
 
         foreach ($groups as $rows) {
