@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use App\Support\PremiumStats;
 
 // Statystyki premium: forma, serie, odznaki, „co jeśli” i mapa typów liczone z tablic (bez bazy).
@@ -45,7 +46,7 @@ test('the tip map caps goals at 4+', function () {
 test('a player without premium sees the premium teaser', function () {
     $this->get(route('my-stats'))->assertRedirect(route('login'));
 
-    $this->actingAs(\App\Models\User::factory()->create())
+    $this->actingAs(User::factory()->create())
         ->get(route('my-stats'))
         ->assertOk()
         ->assertSee(__('The joy of numbers'));
