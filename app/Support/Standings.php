@@ -202,9 +202,14 @@ final class Standings
         $eligible = Players::eligible()->pluck('id')->flip();
         $leagues = BuildListFromPrevious::leagueTree($competitions->all());
         foreach ($competitions as $competition) {
+            $teams = [];
             foreach (self::for($competition) as $row) {
                 $userId = $row['team']->user_id;
-                $leagues[BuildListFromPrevious::treeKey($competition)]['teams'][] = ['id' => $row['team']->id, 'human' => $userId !== null && isset($eligible[$userId])];
+                $teams[] = ['id' => (int) $row['team']->id, 'human' => $userId !== null && isset($eligible[$userId])];
+            }
+            $key = BuildListFromPrevious::treeKey($competition);
+            if (isset($leagues[$key])) {
+                $leagues[$key]['teams'] = $teams;
             }
         }
 

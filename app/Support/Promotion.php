@@ -51,8 +51,8 @@ final class Promotion
      * a spada tyle, ile awansuje z lig pod nią razem; spadkowicze w kolejności tabeli trafiają kolejno do lig pod nią
      * (każda dostaje tylu, ilu oddała). Potem wypychanie botów jak w apply() (ligi zachowują rozmiary).
      *
-     * @param  array<string, array{parent: string|null, up: int, teams: array<int, array{id: int, human: bool}>}>  $leagues
-     * @return array<string, array<int, int>>
+     * @param  array<array-key, array{parent: string|null, up: int, teams: array<int, array{id: int, human: bool}>}>  $leagues
+     * @return array<array-key, array<int, int>>
      */
     public static function applyTree(array $leagues): array
     {
@@ -158,7 +158,7 @@ final class Promotion
     /**
      * To samo dla drzewa lig (applyTree). Kierunek wynika z kolejności lig na liście: wyżej = awans.
      *
-     * @param  array<string, array{parent: string|null, up: int, teams: array<int, array{id: int, human: bool}>}>  $leagues
+     * @param  array<array-key, array{parent: string|null, up: int, teams: array<int, array{id: int, human: bool}>}>  $leagues
      * @return array<int, string>
      */
     public static function movesTree(array $leagues): array
