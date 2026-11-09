@@ -122,7 +122,7 @@ new #[Layout('layouts::shell')] class extends Component {
             @if ($rows === [])
                 <p class="text-sm text-ui-muted">{{ __('Charts appear after the first settled matchday.') }}</p>
             @else
-                @php($peak = max(1, ...array_map(fn ($r) => $r['points'] + $r['bonus'], $rows)))
+                @php $peak = max(1, ...array_map(fn ($r) => $r['points'] + $r['bonus'], $rows)); @endphp
                 <div class="flex h-40 items-end gap-1.5" x-data="{ on: false }" x-intersect.once="on = true">
                     @foreach ($rows as $i => $row)
                         <div class="flex h-full flex-1 flex-col items-center justify-end gap-1" wire:key="bar-{{ $row['number'] }}">
@@ -223,7 +223,7 @@ new #[Layout('layouts::shell')] class extends Component {
                     <p class="text-sm text-ui-muted">{{ __('The map shows everyone\'s tips after kick-off.') }}</p>
                 @else
                     <x-ui.segmented wire:model.live="mapScope" :options="['all' => __('Everyone'), 'league' => __('My league')]" />
-                    @php($map = $this->tipMap)
+                    @php $map = $this->tipMap; @endphp
                     <div class="grid gap-1" style="grid-template-columns: auto repeat({{ \App\Support\PremiumStats::GRID + 1 }}, minmax(0, 1fr))">
                         <span></span>
                         @foreach (range(0, \App\Support\PremiumStats::GRID) as $opponent)
@@ -232,7 +232,7 @@ new #[Layout('layouts::shell')] class extends Component {
                         @foreach ($map['grid'] as $lech => $cells)
                             <span class="pe-1 text-end text-xs text-ui-muted">{{ $lech }}{{ $lech === \App\Support\PremiumStats::GRID ? '+' : '' }}</span>
                             @foreach ($cells as $opponent => $count)
-                                @php($share = $count / $map['max'])
+                                @php $share = $count / $map['max']; @endphp
                                 <span class="grid aspect-square place-items-center rounded-lg text-xs font-bold ui-num"
                                     style="background: color-mix(in oklab, var(--club-primary) {{ round($share * 85) }}%, var(--ui-raised)); color: {{ $share > .5 ? 'white' : 'inherit' }}">
                                     {{ $count ?: '' }}

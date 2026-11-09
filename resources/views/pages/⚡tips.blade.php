@@ -696,7 +696,7 @@ new #[Layout('layouts::public')] class extends Component {
         </p>
 
         @if ($md->isFilled())
-            @php($nextStep = isset($steps['questions']) ? 'questions' : 'players')
+            @php $nextStep = isset($steps['questions']) ? 'questions' : 'players'; @endphp
             <x-ui.button wire:click="$set('step', '{{ $nextStep }}')">{{ __('Next: :step', ['step' => $steps[$nextStep]]) }}</x-ui.button>
         @endif
     @elseif ($step === 'questions')
@@ -710,7 +710,7 @@ new #[Layout('layouts::public')] class extends Component {
         @endif
     @else
         {{-- Bilet: podsumowanie typu i składu. Typ zapisuje się sam przy każdej zmianie, „Skasuj bilet” tylko to potwierdza. --}}
-        @php($ticket = $this->ticket)
+        @php $ticket = $this->ticket; @endphp
         <section x-data="{ punched: false }" x-on:ticket-punched.window="punched = true"
             class="relative flex flex-col gap-2.5 rounded-[20px] border border-ui-line bg-ui-surface p-4 [mask:radial-gradient(circle_12px_at_0_62%,transparent_98%,#000)_left/51%_100%_no-repeat,radial-gradient(circle_12px_at_100%_62%,transparent_98%,#000)_right/51%_100%_no-repeat]">
             <div class="flex items-center gap-2">
@@ -744,7 +744,7 @@ new #[Layout('layouts::public')] class extends Component {
         @endif
 
         @if ($league = $this->myLeague)
-            @php($matchdaysByNumber = $this->matchdays->keyBy('number'))
+            @php $matchdaysByNumber = $this->matchdays->keyBy('number'); @endphp
             @include('partials.my-matches-path', [
                 'title' => __('Your league matches') . ' · ' . ($league['competition']->name ?: $league['competition']->type->label()),
                 'status' => $league['status'],

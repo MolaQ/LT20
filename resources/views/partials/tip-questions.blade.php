@@ -61,7 +61,7 @@
         </div>
         <div @class(['mt-2 flex gap-1.5 text-xs', 'pointer-events-none opacity-35' => !$mine])>
             @foreach (['attack' => '⚔ '.__('Attack'), 'defense' => '🛡 '.__('Defence')] as $side => $label)
-                @php($on = $mine && $mine->side === $side)
+                @php $on = $mine && $mine->side === $side; @endphp
                 <button type="button" wire:click="questionSide({{ $question->id }}, '{{ $side }}')" @disabled(!$open || !$mine)
                     @class([
                         'flex-1 rounded-lg border py-1.5 font-display font-bold uppercase tracking-wider',

@@ -568,7 +568,7 @@ new class extends Component {
                             </flux:text>
                             @if ($recalcRunning)
                                 {{-- Pasek postępu przeliczenia w tle (Jobs\RecalculateMatchday) --}}
-                                @php($progress = $this->recalcProgress ?? ['percent' => 2, 'label' => __('Waiting in the queue')])
+                                @php $progress = $this->recalcProgress ?? ['percent' => 2, 'label' => __('Waiting in the queue')]; @endphp
                                 <div wire:poll.750ms="checkRecalc" class="space-y-1.5" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progress['percent'] }}">
                                     <div class="flex justify-between text-xs font-semibold">
                                         <span>{{ $progress['label'] }}</span><span class="tabular-nums">{{ $progress['percent'] }}%</span>
