@@ -42,6 +42,8 @@ class Audit
     {
         return [
             'user.registered' => __('Account created'),
+            'questions.set' => __('Matchday questions set'),
+            'questions.settled' => __('Question answer set'),
             'team_name.requested' => __('Team change requested'),
             'team_name.cancelled' => __('Team change request cancelled'),
             'team_name.approved' => __('Team change approved'),

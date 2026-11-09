@@ -106,7 +106,7 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->syncUrl();
 
-        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket);
+        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket, $this->questions, $this->myAnswers);
         $this->loadTip();
         $this->ensureTip();
 
@@ -383,6 +383,20 @@ new #[Layout('layouts::public')] class extends Component {
         ])->values()->all();
     }
 
+    /** Pytania kolejki (Support\Questions). */
+    #[Computed]
+    public function questions()
+    {
+        return $this->matchday ? \App\Support\Questions::for($this->matchday) : collect();
+    }
+
+    /** Odpowiedzi gracza: id pytania => QuestionAnswer. */
+    #[Computed]
+    public function myAnswers()
+    {
+        return $this->matchday ? \App\Support\Questions::answers(auth()->id(), $this->matchday) : collect();
+    }
+
     /* ==================================================================
      | AKCJE
      * ================================================================*/
@@ -402,6 +416,46 @@ new #[Layout('layouts::public')] class extends Component {
     public function updatedOpponent(): void
     {
         $this->autosave();
+    }
+
+    /** Odpowiedź na pytanie: 'yes', 'no' albo '' (pominięcie). */
+    public function answerQuestion(int $questionId, string $value): void
+    {
+        $question = $this->questions->firstWhere('id', $questionId);
+
+        if (!$question || !$this->canPlay) {
+            return;
+        }
+
+        try {
+            \App\Support\Questions::answer(auth()->user(), $question, match ($value) {
+                'yes' => true,
+                'no' => false,
+                default => null,
+            });
+        } catch (DomainException $e) {
+            Flux::toast(variant: 'danger', text: $e->getMessage());
+        }
+
+        unset($this->myAnswers);
+    }
+
+    /** Strona bonusu pytania: 'attack' albo 'defense'. */
+    public function questionSide(int $questionId, string $side): void
+    {
+        $question = $this->questions->firstWhere('id', $questionId);
+
+        if (!$question || !$this->canPlay) {
+            return;
+        }
+
+        try {
+            \App\Support\Questions::side(auth()->user(), $question, $side);
+        } catch (DomainException $e) {
+            Flux::toast(variant: 'danger', text: $e->getMessage());
+        }
+
+        unset($this->myAnswers);
     }
 
     /** „Skasuj bilet”: typ i skład zapisują się na bieżąco, tu tylko potwierdzenie z pieczątką i konfetti. */
@@ -556,7 +610,12 @@ new #[Layout('layouts::public')] class extends Component {
     @php
         $md = $this->matchday;
         $statusChip = $this->isOpen ? ['good', __('Open')] : ($played ? ['club', __('Settled')] : ['default', __('Closed')]);
-        $steps = ['score' => __('Score'), 'players' => __('Squad picks'), 'ticket' => __('Ticket')];
+        $steps = ['score' => __('Score')]
+            + ($this->questions->isNotEmpty() ? ['questions' => __('Questions')] : [])
+            + ['players' => __('Squad picks'), 'ticket' => __('Ticket')];
+        if (!isset($steps[$step])) {
+            $step = 'score';
+        }
     @endphp
 
     <div class="-mx-3.5 flex snap-x gap-2 overflow-x-auto px-3.5 pb-1 [scrollbar-width:none]" data-no-swipe
@@ -638,8 +697,12 @@ new #[Layout('layouts::public')] class extends Component {
         </p>
 
         @if ($md->isFilled())
-            <x-ui.button wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => __('Squad picks')]) }}</x-ui.button>
+            @php($nextStep = isset($steps['questions']) ? 'questions' : 'players')
+            <x-ui.button wire:click="$set('step', '{{ $nextStep }}')">{{ __('Next: :step', ['step' => $steps[$nextStep]]) }}</x-ui.button>
         @endif
+    @elseif ($step === 'questions')
+        @include('partials.tip-questions')
+        <x-ui.button wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => __('Squad picks')]) }}</x-ui.button>
     @elseif ($step === 'players')
         @if ($md->isFilled())
             <livewire:pages::home.designation-panels part="select" :matchday-id="$md->id" :key="'designation-select-' . $md->id" />
@@ -659,6 +722,17 @@ new #[Layout('layouts::public')] class extends Component {
             <div class="ui-num text-center text-[40px] font-extrabold leading-none">
                 {{ mb_strtoupper(config('club.short_name')) }} {{ $this->tip ? $this->tip->score() : '–:–' }} {{ mb_strtoupper((string) $md->opponent) }}
             </div>
+            @if ($this->questions->isNotEmpty())
+                @php
+                    $qa = $this->myAnswers;
+                    $qAttack = $qa->where('side', 'attack')->count();
+                    $qDefense = $qa->where('side', 'defense')->count();
+                @endphp
+                <div class="flex justify-between gap-3 border-t border-dashed border-ui-line pt-2 text-sm">
+                    <span class="text-ui-muted">{{ __('Questions') }}</span>
+                    <span class="text-end font-semibold">{{ __(':answered of :total', ['answered' => $qa->count(), 'total' => $this->questions->count()]) }} · ⚔ {{ $qAttack }} · 🛡 {{ $qDefense }}</span>
+                </div>
+            @endif
             @forelse ($ticket as $line)
                 <div class="flex justify-between gap-3 border-t border-dashed border-ui-line pt-2 text-sm">
                     <span class="text-ui-muted">{{ $line['label'] }}</span>

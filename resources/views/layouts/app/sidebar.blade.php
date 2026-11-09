@@ -57,6 +57,10 @@
                         :current="request()->routeIs('dashboard.tips')" wire:navigate>
                         {{ __('Tips overview') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="question-mark-circle" :href="route('dashboard.questions')"
+                        :current="request()->routeIs('dashboard.questions')" wire:navigate>
+                        {{ __('Questions') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="flag" :href="route('dashboard.results')"
                         :current="request()->routeIs('dashboard.results')" wire:navigate>
                         {{ __('Results') }}
