@@ -41,6 +41,10 @@
 
             @if ($canSeasons)
                 <flux:sidebar.group expandable :expanded="true" :heading="__('Season')" class="grid">
+                    <flux:sidebar.item icon="sparkles" :href="route('dashboard.matchday-wizard')"
+                        :current="request()->routeIs('dashboard.matchday-wizard')" wire:navigate>
+                        {{ __('Matchday wizard') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="calendar-days" :href="route('dashboard.seasons')"
                         :current="request()->routeIs('dashboard.seasons')" wire:navigate>
                         {{ __('Seasons') }}

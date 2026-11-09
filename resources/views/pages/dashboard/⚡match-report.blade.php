@@ -270,14 +270,8 @@ new class extends Component {
     /** Wysyła przeliczenie do kolejki zadań (Jobs\RecalculateMatchday). Przy QUEUE_CONNECTION=sync kończy się od razu. */
     private function startRecalc(): void
     {
-        \App\Support\RecalcProgress::set($this->matchday->id, 2, __('Waiting in the queue'), 'queued');
         $this->recalcRunning = true;
-
-        \Illuminate\Support\Facades\Bus::batch([new \App\Jobs\RecalculateMatchday($this->matchday->id)])
-            ->name('recalculate-matchday-'.$this->matchday->id)
-            ->allowFailures()
-            ->dispatch();
-
+        \App\Support\RecalcProgress::start($this->matchday->id);
         $this->checkRecalc();
     }
 

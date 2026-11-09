@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Jobs\RecalculateMatchday;
 use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -38,6 +40,17 @@ final class RecalcProgress
             'status' => $status,
             'message' => $message,
         ], self::TTL);
+    }
+
+    /** Wysyła przeliczenie kolejki do kolejki zadań. Przy QUEUE_CONNECTION=sync kończy się od razu. */
+    public static function start(int $matchdayId): void
+    {
+        self::set($matchdayId, 2, __('Waiting in the queue'), 'queued');
+
+        Bus::batch([new RecalculateMatchday($matchdayId)])
+            ->name('recalculate-matchday-'.$matchdayId)
+            ->allowFailures()
+            ->dispatch();
     }
 
     public static function forget(int $matchdayId): void
