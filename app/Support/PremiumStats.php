@@ -39,7 +39,7 @@ final class PremiumStats
             return [];
         }
 
-        return TeamScore::query()
+        return array_values(TeamScore::query()
             ->join('matchdays', 'matchdays.id', '=', 'team_scores.matchday_id')
             ->where('team_scores.season_team_id', $team->id)
             ->where('team_scores.user_id', $user->id)
@@ -58,8 +58,7 @@ final class PremiumStats
                 'diff' => (bool) $s->diff_hit,
                 'exact' => (bool) $s->exact_hit,
             ])
-            ->values()
-            ->all();
+            ->all());
     }
 
     /**
@@ -193,7 +192,7 @@ final class PremiumStats
         $otherEntry = $fixture ? ($entries->contains($fixture->home_entry_id) ? $fixture->away_entry_id : $fixture->home_entry_id) : null;
         $other = $otherEntry ? CompetitionEntry::with('seasonTeam.user:id,name,team_name', 'seasonTeam.bot:id,name')->find($otherEntry)?->seasonTeam : null;
 
-        if (! $other) {
+        if (! $other instanceof SeasonTeam) {
             return null;
         }
 
@@ -227,9 +226,8 @@ final class PremiumStats
             $query->whereIn('user_id', $userIds);
         }
 
-        return $query->get(['lech_goals', 'opponent_goals'])
+        return array_values($query->get(['lech_goals', 'opponent_goals'])
             ->map(fn (Tip $t) => [(int) $t->lech_goals, (int) $t->opponent_goals])
-            ->values()
-            ->all();
+            ->all());
     }
 }
