@@ -12,6 +12,7 @@ use App\Support\LegendsLeague;
 use App\Support\MatchReport;
 use App\Support\SystemFeed;
 use App\Support\TipRules;
+use Closure;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -85,7 +86,7 @@ class SaveMatchdayResult
      *
      * @throws DomainException
      */
-    public function recalculate(Matchday $matchday, ?\Closure $progress = null): array
+    public function recalculate(Matchday $matchday, ?Closure $progress = null): array
     {
         $progress ??= fn (int $percent, string $label) => null;
 

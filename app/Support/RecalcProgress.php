@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -18,7 +19,7 @@ final class RecalcProgress
      * Magazyn plikowy, a nie domyślny: przeliczenie działa w transakcji bazy, więc wpisy do cache w bazie
      * byłyby widoczne dopiero po jej końcu i pasek stałby w miejscu.
      */
-    private static function store(): \Illuminate\Contracts\Cache\Repository
+    private static function store(): Repository
     {
         return Cache::store(config('cache.stores.file') ? 'file' : null);
     }

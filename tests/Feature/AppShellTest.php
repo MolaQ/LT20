@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\RecalcProgress;
 
 // Wygląd 2.0: podgląd skorupy aplikacji i przełącznik języka.
 
@@ -53,11 +54,11 @@ test('public pages use the new shell with the bottom menu', function () {
 });
 
 test('recalculation progress is stored and cleared', function () {
-    \App\Support\RecalcProgress::set(99, 40, 'Scoring');
+    RecalcProgress::set(99, 40, 'Scoring');
 
-    expect(\App\Support\RecalcProgress::get(99))->toMatchArray(['percent' => 40, 'label' => 'Scoring', 'status' => 'running']);
+    expect(RecalcProgress::get(99))->toMatchArray(['percent' => 40, 'label' => 'Scoring', 'status' => 'running']);
 
-    \App\Support\RecalcProgress::forget(99);
+    RecalcProgress::forget(99);
 
-    expect(\App\Support\RecalcProgress::get(99))->toBeNull();
+    expect(RecalcProgress::get(99))->toBeNull();
 });

@@ -16,6 +16,7 @@ use App\Support\GameStars;
 use App\Support\LegendsLeague;
 use App\Support\PageCache;
 use App\Support\PlayerStats;
+use App\Support\Questions;
 use App\Support\Scoring;
 use App\Support\SeasonArchive;
 use App\Support\Squad;
@@ -136,7 +137,7 @@ class ScoreMatchday
             $lineups = Squad::settle($matchday, $matchesOf);
             $humanTips = Tip::where('matchday_id', $matchday->id)->get()->keyBy('user_id');
             // Bonus z pytań kolejki: user_id => atak / obrona (boty nie odpowiadają na pytania).
-            $questionBonus = \App\Support\Questions::bonusesFor($matchday);
+            $questionBonus = Questions::bonusesFor($matchday);
 
             // --- Dorobek zespołów ---
             $scores = [];
