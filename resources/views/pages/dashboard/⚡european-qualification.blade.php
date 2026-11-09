@@ -5,7 +5,6 @@ use App\Models\Season;
 use App\Models\SeasonTeam;
 use App\Support\Audit;
 use App\Support\EuropeanQualification;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -114,79 +113,79 @@ new class extends Component {
 
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div>
-        <flux:heading size="xl" level="1">{{ __('European qualification') }}</flux:heading>
-        <flux:subheading>{{ __('The first 24 teams of the qualification list play in the Champions League, the next 24 in the Europa League and the next 24 in the Conference League. Each team counts once, at its highest title. Human teams come first, bots only fill the free places.') }}</flux:subheading>
+        <x-ui.heading size="xl" level="1">{{ __('European qualification') }}</x-ui.heading>
+        <x-ui.subheading>{{ __('The first 24 teams of the qualification list play in the Champions League, the next 24 in the Europa League and the next 24 in the Conference League. Each team counts once, at its highest title. Human teams come first, bots only fill the free places.') }}</x-ui.subheading>
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[26rem_1fr]">
-        <flux:card class="space-y-3 self-start">
+        <x-ui.card class="space-y-3 self-start">
             <div class="flex items-center justify-between gap-2">
-                <flux:heading>{{ __('Order of the criteria') }}</flux:heading>
+                <x-ui.heading>{{ __('Order of the criteria') }}</x-ui.heading>
                 @can(\App\Enums\Permission::SeasonEdit->value)
-                    <flux:button size="xs" variant="ghost" icon="arrow-path" wire:click="resetOrder">{{ __('Default order') }}</flux:button>
+                    <x-ui.btn size="xs" variant="ghost" icon="arrow-path" wire:click="resetOrder">{{ __('Default order') }}</x-ui.btn>
                 @endcan
             </div>
             <ol class="space-y-1">
                 @foreach ($criteria as $index => $key)
-                    <li class="flex items-center gap-2 rounded-lg border border-zinc-200 px-2 py-1.5 text-sm dark:border-zinc-700" wire:key="criterion-{{ $key }}">
+                    <li class="flex items-center gap-2 rounded-lg border border-ui-line px-2 py-1.5 text-sm " wire:key="criterion-{{ $key }}">
                         <span class="w-6 text-right text-xs tabular-nums text-zinc-400">{{ $index + 1 }}.</span>
                         <span class="min-w-0 flex-1">{{ \App\Support\EuropeanQualification::labels()[$key] ?? $key }}</span>
                         @can(\App\Enums\Permission::SeasonEdit->value)
-                            <flux:button size="xs" variant="ghost" icon="chevron-up" wire:click="move({{ $index }}, -1)" :disabled="$index === 0" :aria-label="__('Up')" />
-                            <flux:button size="xs" variant="ghost" icon="chevron-down" wire:click="move({{ $index }}, 1)" :disabled="$index === count($criteria) - 1" :aria-label="__('Down')" />
+                            <x-ui.btn size="xs" variant="ghost" icon="chevron-up" wire:click="move({{ $index }}, -1)" :disabled="$index === 0" :aria-label="__('Up')" />
+                            <x-ui.btn size="xs" variant="ghost" icon="chevron-down" wire:click="move({{ $index }}, 1)" :disabled="$index === count($criteria) - 1" :aria-label="__('Down')" />
                         @endcan
                     </li>
                 @endforeach
-                <li class="flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-2 py-1.5 text-sm text-zinc-500 dark:border-zinc-600">
+                <li class="flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-2 py-1.5 text-sm text-ui-muted dark:border-zinc-600">
                     <span class="w-6 text-right text-xs tabular-nums">{{ count($criteria) + 1 }}.</span>
                     <span>{{ __('The rest by league level and table place (Ekstraklasa 2-10, I liga … C klasa, then Liga podwórkowa)') }}</span>
                 </li>
             </ol>
-            <flux:text class="text-xs">{{ __('In season 1 (no previous season) the teams go in the order of the season list.') }}</flux:text>
-        </flux:card>
+            <x-ui.text class="text-xs">{{ __('In season 1 (no previous season) the teams go in the order of the season list.') }}</x-ui.text>
+        </x-ui.card>
 
-        <flux:card class="space-y-3">
+        <x-ui.card class="space-y-3">
             <div class="flex flex-wrap items-end justify-between gap-3">
-                <flux:heading>{{ __('Preview') }}</flux:heading>
+                <x-ui.heading>{{ __('Preview') }}</x-ui.heading>
                 @if ($this->seasons->isNotEmpty())
                     <div class="w-full sm:w-56">
-                        <flux:select wire:model.live="seasonId" :label="__('Season')">
+                        <x-ui.select wire:model.live="seasonId" :label="__('Season')">
                             @foreach ($this->seasons as $option)
-                                <flux:select.option :value="$option->id">{{ $option->title }} ({{ $option->status->label() }})</flux:select.option>
+                                <x-ui.select.option :value="$option->id">{{ $option->title }} ({{ $option->status->label() }})</x-ui.select.option>
                             @endforeach
-                        </flux:select>
+                        </x-ui.select>
                     </div>
                 @endif
             </div>
-            <flux:text class="text-xs">{{ __('The cups are created with these teams when the season is approved. Changing the order later does not change existing cups.') }}</flux:text>
+            <x-ui.text class="text-xs">{{ __('The cups are created with these teams when the season is approved. Changing the order later does not change existing cups.') }}</x-ui.text>
 
             @if ($this->preview === [])
-                <flux:text>{{ __('The season has no team list yet.') }}</flux:text>
+                <x-ui.text>{{ __('The season has no team list yet.') }}</x-ui.text>
             @else
-                <flux:table>
-                    <flux:table.columns>
-                        <flux:table.column>{{ __('Competition') }}</flux:table.column>
-                        <flux:table.column>{{ __('Seed') }}</flux:table.column>
-                        <flux:table.column>{{ __('Team') }}</flux:table.column>
-                        <flux:table.column>{{ __('Reason') }}</flux:table.column>
-                    </flux:table.columns>
-                    <flux:table.rows>
+                <x-ui.table>
+                    <x-ui.table.columns>
+                        <x-ui.table.column>{{ __('Competition') }}</x-ui.table.column>
+                        <x-ui.table.column>{{ __('Seed') }}</x-ui.table.column>
+                        <x-ui.table.column>{{ __('Team') }}</x-ui.table.column>
+                        <x-ui.table.column>{{ __('Reason') }}</x-ui.table.column>
+                    </x-ui.table.columns>
+                    <x-ui.table.rows>
                         @foreach ($this->preview as $index => $row)
-                            <flux:table.row :key="'q-'.$index">
-                                <flux:table.cell class="text-zinc-500">{{ $row['cup'] }}</flux:table.cell>
-                                <flux:table.cell class="tabular-nums">{{ $row['seed'] }}</flux:table.cell>
-                                <flux:table.cell variant="strong">
+                            <x-ui.table.row :key="'q-'.$index">
+                                <x-ui.table.cell class="text-ui-muted">{{ $row['cup'] }}</x-ui.table.cell>
+                                <x-ui.table.cell class="tabular-nums">{{ $row['seed'] }}</x-ui.table.cell>
+                                <x-ui.table.cell variant="strong">
                                     {{ $row['team']?->name ?? '—' }}
                                     @if ($row['team']?->is_bot)
-                                        <flux:badge size="sm" color="zinc">{{ __('Bot') }}</flux:badge>
+                                        <x-ui.badge size="sm" color="zinc">{{ __('Bot') }}</x-ui.badge>
                                     @endif
-                                </flux:table.cell>
-                                <flux:table.cell class="text-sm text-zinc-500">{{ $row['reason'] }}</flux:table.cell>
-                            </flux:table.row>
+                                </x-ui.table.cell>
+                                <x-ui.table.cell class="text-sm text-ui-muted">{{ $row['reason'] }}</x-ui.table.cell>
+                            </x-ui.table.row>
                         @endforeach
-                    </flux:table.rows>
-                </flux:table>
+                    </x-ui.table.rows>
+                </x-ui.table>
             @endif
-        </flux:card>
+        </x-ui.card>
     </div>
 </div>

@@ -1,258 +1,169 @@
+{{--
+    Panel admina w wyglądzie 2.0 (bez Flux): boczne menu (na telefonie wysuwane), treść, dymki i okno potwierdzenia skorupy.
+    Menu według kolejności pracy: sezon i jego kolejki (mecz, typy, wynik), rozgrywki, gracze, treści,
+    a na końcu rzadko zmieniane ustawienia. Kalendarz Lecha to zakładka „Kolejek”, lista kontrolna jest na pulpicie.
+--}}
+@php
+    $user = auth()->user();
+
+    // Co widać w grupach menu (pusta grupa się nie pokazuje).
+    $canSeasons = $user->can(\App\Enums\Permission::SeasonList->value);
+    $canRoles = $user->hasRole('Admin');
+    $canRequests = $user->can(\App\Enums\Permission::TeamChangeName->value);
+    $canLogs = $user->can(\App\Enums\Permission::LogView->value);
+    $canNews = $user->can(\App\Enums\Permission::NewsCreate->value);
+    $office = $canRoles ? \App\Models\OfficeRequest::pending()->count() : 0;
+    $requests = $canRequests ? \App\Models\TeamNameChangeRequest::pending()->count() : 0;
+
+    // Powiadomienia (pilne i ostrzeżenia) jako plakietka przy Pulpicie.
+    $alerts = $canSeasons ? \App\Support\AdminAlerts::count() : 0;
+
+    // Pozycja: [ikona, trasa, etykieta, aktywna dla tras, plakietka, kolor plakietki, widoczna].
+    $item = fn (string $icon, string $route, string $label, array $active = [], int $badge = 0, string $tone = 'amber', bool $show = true) => compact('icon', 'route', 'label', 'active', 'badge', 'tone', 'show');
+
+    $groups = [
+        [__('Season'), $canSeasons, [
+            $item('sparkles', 'dashboard.matchday-wizard', __('Matchday wizard')),
+            $item('calendar-days', 'dashboard.seasons', __('Seasons')),
+            $item('calendar', 'dashboard.matchdays', __('Matchdays'), ['dashboard.matchdays', 'dashboard.lech-calendar']),
+            $item('users', 'dashboard.lech-squad', __('Lech squad')),
+            $item('check-badge', 'dashboard.tips', __('Tips overview')),
+            $item('question-mark-circle', 'dashboard.questions', __('Questions')),
+            $item('flag', 'dashboard.results', __('Results')),
+        ]],
+        [__('Competitions'), $canSeasons, [
+            $item('list-bullet', 'dashboard.season-teams', __('Team list')),
+            $item('trophy', 'dashboard.competitions', __('Competitions')),
+            $item('table-cells', 'dashboard.fixtures', __('Fixtures')),
+            $item('globe-europe-africa', 'dashboard.european-qualification', __('European qualification')),
+        ]],
+        [__('Players'), $canRoles || $canRequests, [
+            $item('users', 'dashboard.users', __('Users'), show: $canRoles),
+            $item('identification', 'dashboard.team-requests', __('Team requests'), badge: $requests, show: $canRequests),
+            $item('banknotes', 'dashboard.payments', __('Payments'), show: $canRoles),
+        ]],
+        [__('Site content'), $canNews || $canRoles, [
+            $item('newspaper', 'dashboard.news', __('News'), show: $canNews),
+            $item('inbox', 'dashboard.office', __('Complaints and requests office'), badge: $office, show: $canRoles),
+        ]],
+        [__('Game settings'), $canSeasons || $canRoles || $canLogs, [
+            $item('star', 'dashboard.hall-of-fame', __('Hall of Fame'), show: $canSeasons),
+            $item('user-group', 'dashboard.designation-settings', __('Line-ups'), show: $canSeasons),
+            $item('cpu-chip', 'dashboard.bots', __('Bots'), show: $canSeasons),
+            $item('megaphone', 'dashboard.sponsors', __('Sponsors'), show: $canSeasons),
+            $item('swatch', 'dashboard.competition-colors', __('Competition colors'), show: $canSeasons),
+            $item('wrench-screwdriver', 'dashboard.maintenance', __('Maintenance mode'), show: $canRoles),
+            $item('shield-check', 'dashboard.roles', __('Roles and permissions'), show: $canRoles),
+            $item('clipboard-document-list', 'dashboard.logs', __('Change log'), show: $canLogs),
+        ]],
+    ];
+
+    $isActive = fn (array $i) => request()->routeIs(...($i['active'] ?: [$i['route']]));
+@endphp
+
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     @include('partials.head')
+    @include('partials.club-theme')
 </head>
 
-<body class="min-h-screen bg-white dark:bg-zinc-800">
+<body class="min-h-screen bg-ui-bg font-sans text-ui-ink antialiased" x-data="{ nav: false }" @keydown.escape.window="nav = false">
     <x-maintenance-notice />
+
     @php
-        $user = auth()->user();
-
-        // Co widać w grupach menu (pusta grupa się nie pokazuje).
-        $canSeasons = $user->can(\App\Enums\Permission::SeasonList->value);
-
-        $canRoles = $user->hasRole('Admin');
-        $canRequests = $user->can(\App\Enums\Permission::TeamChangeName->value);
-        $canLogs = $user->can(\App\Enums\Permission::LogView->value);
-        $canNews = $user->can(\App\Enums\Permission::NewsCreate->value);
-        $office = $canRoles ? \App\Models\OfficeRequest::pending()->count() : 0;
-
-        // Powiadomienia (pilne i ostrzeżenia) jako plakietka przy Pulpicie.
-        $alerts = $canSeasons ? \App\Support\AdminAlerts::count() : 0;
+        $link = fn (bool $active) => [
+            'flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium transition',
+            $active ? 'bg-ui-raised font-semibold text-ui-ink' : 'text-ui-muted hover:bg-ui-raised hover:text-ui-ink',
+        ];
     @endphp
 
-    <flux:sidebar sticky collapsible="mobile"
-        class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
-        <flux:sidebar.header>
-            <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
-            <flux:sidebar.collapse class="lg:hidden" />
-        </flux:sidebar.header>
+    {{-- Tło pod wysuniętym menu (telefon) --}}
+    <div x-show="nav" x-cloak x-transition.opacity @click="nav = false" class="fixed inset-0 z-40 bg-black/45 lg:hidden"></div>
 
-        {{-- Menu panelu według kolejności pracy: sezon i jego kolejki (mecz, typy, wynik), rozgrywki,
-             gracze, treści, a na końcu rzadko zmieniane ustawienia. Kalendarz Lecha to zakładka „Kolejek”,
-             lista kontrolna jest na pulpicie (pasek postępu sezonu). --}}
-        <flux:sidebar.nav>
-            <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard', 'dashboard.checklist')"
-                :badge="$alerts ?: null" badge-color="red" wire:navigate>
-                {{ __('Dashboard') }}
-            </flux:sidebar.item>
+    <div class="lg:flex">
+        <aside :class="nav ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'"
+            class="fixed inset-y-0 start-0 z-50 flex w-72 -translate-x-full flex-col gap-3 overflow-y-auto border-e border-ui-line bg-ui-surface p-3 transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:translate-x-0">
+            <div class="flex items-center justify-between px-1 pt-1">
+                <x-lechtyper-logo :href="route('dashboard')" />
+                <button type="button" class="grid size-9 place-items-center rounded-xl text-ui-muted hover:bg-ui-raised lg:hidden" @click="nav = false" aria-label="{{ __('Close') }}">
+                    <x-ui.icon name="x-mark" class="size-5" />
+                </button>
+            </div>
 
-            @if ($canSeasons)
-                <flux:sidebar.group expandable :expanded="true" :heading="__('Season')" class="grid">
-                    <flux:sidebar.item icon="sparkles" :href="route('dashboard.matchday-wizard')"
-                        :current="request()->routeIs('dashboard.matchday-wizard')" wire:navigate>
-                        {{ __('Matchday wizard') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="calendar-days" :href="route('dashboard.seasons')"
-                        :current="request()->routeIs('dashboard.seasons')" wire:navigate>
-                        {{ __('Seasons') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="calendar" :href="route('dashboard.matchdays')"
-                        :current="request()->routeIs('dashboard.matchdays', 'dashboard.lech-calendar')" wire:navigate>
-                        {{ __('Matchdays') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="users" :href="route('dashboard.lech-squad')"
-                        :current="request()->routeIs('dashboard.lech-squad')" wire:navigate>
-                        {{ __('Lech squad') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="check-badge" :href="route('dashboard.tips')"
-                        :current="request()->routeIs('dashboard.tips')" wire:navigate>
-                        {{ __('Tips overview') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="question-mark-circle" :href="route('dashboard.questions')"
-                        :current="request()->routeIs('dashboard.questions')" wire:navigate>
-                        {{ __('Questions') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="flag" :href="route('dashboard.results')"
-                        :current="request()->routeIs('dashboard.results')" wire:navigate>
-                        {{ __('Results') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+            <nav class="flex flex-col gap-1" aria-label="{{ __('Dashboard') }}">
+                <a href="{{ route('dashboard') }}" wire:navigate @class($link(request()->routeIs('dashboard', 'dashboard.checklist')))>
+                    <x-ui.icon name="home" class="size-5" />
+                    <span class="flex-1">{{ __('Dashboard') }}</span>
+                    @if ($alerts)<span class="rounded-full bg-bad px-1.5 text-xs font-bold text-white">{{ $alerts }}</span>@endif
+                </a>
 
-                <flux:sidebar.group expandable
-                    :expanded="request()->routeIs('dashboard.season-teams', 'dashboard.competitions', 'dashboard.european-qualification', 'dashboard.fixtures')"
-                    :heading="__('Competitions')" class="grid">
-                    <flux:sidebar.item icon="list-bullet" :href="route('dashboard.season-teams')"
-                        :current="request()->routeIs('dashboard.season-teams')" wire:navigate>
-                        {{ __('Team list') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="trophy" :href="route('dashboard.competitions')"
-                        :current="request()->routeIs('dashboard.competitions')" wire:navigate>
-                        {{ __('Competitions') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="table-cells" :href="route('dashboard.fixtures')"
-                        :current="request()->routeIs('dashboard.fixtures')" wire:navigate>
-                        {{ __('Fixtures') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="globe-europe-africa" :href="route('dashboard.european-qualification')"
-                        :current="request()->routeIs('dashboard.european-qualification')" wire:navigate>
-                        {{ __('European qualification') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
-            @endif
-
-            @if ($canRoles || $canRequests)
-                <flux:sidebar.group expandable
-                    :expanded="request()->routeIs('dashboard.users', 'dashboard.team-requests', 'dashboard.payments')"
-                    :heading="__('Players')" class="grid">
-                    @if ($canRoles)
-                        <flux:sidebar.item icon="users" :href="route('dashboard.users')"
-                            :current="request()->routeIs('dashboard.users')" wire:navigate>
-                            {{ __('Users') }}
-                        </flux:sidebar.item>
-                    @endif
-                    @if ($canRequests)
-                        <flux:sidebar.item icon="identification" :href="route('dashboard.team-requests')"
-                            :current="request()->routeIs('dashboard.team-requests')"
-                            :badge="\App\Models\TeamNameChangeRequest::pending()->count() ?: null" badge-color="amber"
-                            wire:navigate>
-                            {{ __('Team requests') }}
-                        </flux:sidebar.item>
-                    @endif
-                    @if ($canRoles)
-                        <flux:sidebar.item icon="banknotes" :href="route('dashboard.payments')"
-                            :current="request()->routeIs('dashboard.payments')" wire:navigate>
-                            {{ __('Payments') }}
-                        </flux:sidebar.item>
-                    @endif
-                </flux:sidebar.group>
-            @endif
-
-            @if ($canSeasons || $canNews || $canRoles)
-                <flux:sidebar.group expandable
-                    :expanded="request()->routeIs('dashboard.news', 'dashboard.office')"
-                    :heading="__('Site content')" class="grid">
-                    @if ($canNews)
-                        <flux:sidebar.item icon="newspaper" :href="route('dashboard.news')"
-                            :current="request()->routeIs('dashboard.news')" wire:navigate>
-                            {{ __('News') }}
-                        </flux:sidebar.item>
-                    @endif
-                    @if ($canRoles)
-                        <flux:sidebar.item icon="inbox" :href="route('dashboard.office')"
-                            :current="request()->routeIs('dashboard.office')"
-                            :badge="$office ?: null" badge-color="amber" wire:navigate>
-                            {{ __('Complaints and requests office') }}
-                        </flux:sidebar.item>
-                    @endif
-                </flux:sidebar.group>
-            @endif
-
-            @if ($canSeasons || $canRoles || $canLogs)
-                <flux:sidebar.group expandable
-                    :expanded="request()->routeIs('dashboard.hall-of-fame', 'dashboard.designation-settings', 'dashboard.bots', 'dashboard.sponsors', 'dashboard.competition-colors', 'dashboard.maintenance', 'dashboard.roles', 'dashboard.logs')"
-                    :heading="__('Game settings')" class="grid">
-                    @if ($canSeasons)
-                        <flux:sidebar.item icon="star" :href="route('dashboard.hall-of-fame')"
-                            :current="request()->routeIs('dashboard.hall-of-fame')" wire:navigate>
-                            {{ __('Hall of Fame') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="user-group" :href="route('dashboard.designation-settings')"
-                            :current="request()->routeIs('dashboard.designation-settings')" wire:navigate>
-                            {{ __('Line-ups') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="cpu-chip" :href="route('dashboard.bots')"
-                            :current="request()->routeIs('dashboard.bots')" wire:navigate>
-                            {{ __('Bots') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="megaphone" :href="route('dashboard.sponsors')"
-                            :current="request()->routeIs('dashboard.sponsors')" wire:navigate>
-                            {{ __('Sponsors') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="swatch" :href="route('dashboard.competition-colors')"
-                            :current="request()->routeIs('dashboard.competition-colors')" wire:navigate>
-                            {{ __('Competition colors') }}
-                        </flux:sidebar.item>
-                    @endif
-                    @if ($canRoles)
-                        <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.maintenance')"
-                            :current="request()->routeIs('dashboard.maintenance')" wire:navigate>
-                            {{ __('Maintenance mode') }}
-                        </flux:sidebar.item>
-                    @endif
-                    @if ($canRoles)
-                        <flux:sidebar.item icon="shield-check" :href="route('dashboard.roles')"
-                            :current="request()->routeIs('dashboard.roles')" wire:navigate>
-                            {{ __('Roles and permissions') }}
-                        </flux:sidebar.item>
-                    @endif
-                    @if ($canLogs)
-                        <flux:sidebar.item icon="clipboard-document-list" :href="route('dashboard.logs')"
-                            :current="request()->routeIs('dashboard.logs')" wire:navigate>
-                            {{ __('Change log') }}
-                        </flux:sidebar.item>
-                    @endif
-                </flux:sidebar.group>
-            @endif
-        </flux:sidebar.nav>
-
-        <flux:spacer />
-
-        <flux:sidebar.nav>
-            <flux:sidebar.item icon="globe-alt" :href="route('home')">
-                {{ __('Public site') }}
-            </flux:sidebar.item>
-        </flux:sidebar.nav>
-
-        <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
-    </flux:sidebar>
-
-    <!-- Mobile User Menu -->
-    <flux:header class="lg:hidden">
-        <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
-
-        <flux:spacer />
-
-        <flux:dropdown position="top" align="end">
-            <flux:profile :initials="auth()->user()->initials()" icon-trailing="chevron-down" />
-
-            <flux:menu>
-                <flux:menu.radio.group>
-                    <div class="p-0 text-sm font-normal">
-                        <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                            <flux:avatar :name="auth()->user()->name" :initials="auth()->user()->initials()" />
-
-                            <div class="grid flex-1 text-start text-sm leading-tight">
-                                <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
-                                <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
-                            </div>
+                @foreach ($groups as [$heading, $visible, $items])
+                    @continue(! $visible)
+                    @php
+                        $items = array_filter($items, fn ($i) => $i['show']);
+                        $open = $loop->first || collect($items)->contains(fn ($i) => $isActive($i));
+                    @endphp
+                    <details class="group mt-1" @if ($open) open @endif>
+                        <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-ui-muted hover:text-ui-ink [&::-webkit-details-marker]:hidden">
+                            {{ $heading }}
+                            <x-ui.icon name="chevron-down" variant="micro" class="size-3.5 transition group-open:rotate-180" />
+                        </summary>
+                        <div class="mt-0.5 flex flex-col gap-0.5">
+                            @foreach ($items as $i)
+                                <a href="{{ route($i['route']) }}" wire:navigate @class($link($isActive($i)))>
+                                    <x-ui.icon :name="$i['icon']" class="size-5" />
+                                    <span class="flex-1">{{ $i['label'] }}</span>
+                                    @if ($i['badge'])<span class="rounded-full bg-gold-soft px-1.5 text-xs font-bold text-gold">{{ $i['badge'] }}</span>@endif
+                                </a>
+                            @endforeach
                         </div>
+                    </details>
+                @endforeach
+            </nav>
+
+            <div class="mt-auto flex flex-col gap-1 border-t border-ui-line pt-3">
+                <a href="{{ route('home') }}" @class($link(false))>
+                    <x-ui.icon name="globe-alt" class="size-5" />{{ __('Public site') }}
+                </a>
+                <a href="{{ route('profile.edit') }}" wire:navigate @class($link(false))>
+                    <x-ui.icon name="cog" class="size-5" />{{ __('Settings') }}
+                </a>
+                <div class="flex items-center gap-2.5 rounded-xl px-2.5 py-2">
+                    <x-ui.avatar :name="$user->name" :initials="$user->initials()" size="sm" />
+                    <div class="grid min-w-0 flex-1 text-sm leading-tight">
+                        <span class="truncate font-semibold">{{ $user->name }}</span>
+                        <span class="truncate text-xs text-ui-muted">{{ $user->email }}</span>
                     </div>
-                </flux:menu.radio.group>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="grid size-8 place-items-center rounded-lg text-ui-muted hover:bg-ui-raised hover:text-ui-ink" data-test="logout-button"
+                            title="{{ __('Log out') }}" aria-label="{{ __('Log out') }}">
+                            <x-ui.icon name="arrow-right-start-on-rectangle" variant="mini" class="size-4" />
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </aside>
 
-                <flux:menu.separator />
+        <div class="min-w-0 flex-1">
+            {{-- Pasek na telefonie: menu i znak --}}
+            <header class="sticky top-0 z-30 flex items-center gap-3 border-b border-ui-line bg-ui-surface/95 px-4 py-2.5 backdrop-blur lg:hidden">
+                <button type="button" class="grid size-9 place-items-center rounded-xl hover:bg-ui-raised" @click="nav = true" aria-label="{{ __('Menu') }}">
+                    <x-ui.icon name="bars-2" class="size-5" />
+                </button>
+                <x-lechtyper-logo :href="route('dashboard')" />
+            </header>
 
-                <flux:menu.radio.group>
-                    <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                        {{ __('Settings') }}
-                    </flux:menu.item>
-                </flux:menu.radio.group>
+            <main class="w-full p-4 sm:p-6 lg:p-8">
+                {{ $slot }}
+            </main>
+        </div>
+    </div>
 
-                <flux:menu.separator />
-
-                <form method="POST" action="{{ route('logout') }}" class="w-full">
-                    @csrf
-                    <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle"
-                        class="w-full cursor-pointer" data-test="logout-button">
-                        {{ __('Log out') }}
-                    </flux:menu.item>
-                </form>
-            </flux:menu>
-        </flux:dropdown>
-    </flux:header>
-
-    {{ $slot }}
-
-    @persist('toast')
-    <flux:toast.group>
-        <flux:toast />
-    </flux:toast.group>
-    @endpersist
-
-    <x-confirm-dialog />
-    @fluxScripts
+    <x-ui.toast />
+    <x-ui.confirm />
 </body>
 
 </html>

@@ -75,101 +75,101 @@ new #[Layout('layouts::public')] class extends Component {
 <div class="mx-auto w-full max-w-4xl space-y-6 py-10">
 
     <div>
-        <flux:heading size="xl" level="1">{{ __('Access check') }}</flux:heading>
-        <flux:subheading>{{ __('A quick view of what the signed-in user can do.') }}</flux:subheading>
+        <x-ui.heading size="xl" level="1">{{ __('Access check') }}</x-ui.heading>
+        <x-ui.subheading>{{ __('A quick view of what the signed-in user can do.') }}</x-ui.subheading>
     </div>
 
     @if (! $this->report)
-        <flux:card class="space-y-4">
-            <flux:heading>{{ __('You are not signed in') }}</flux:heading>
-            <flux:text>{{ __('Sign in to see your roles and permissions.') }}</flux:text>
+        <x-ui.card class="space-y-4">
+            <x-ui.heading>{{ __('You are not signed in') }}</x-ui.heading>
+            <x-ui.text>{{ __('Sign in to see your roles and permissions.') }}</x-ui.text>
             <div>
-                <flux:button variant="primary" :href="route('login')">{{ __('Log in') }}</flux:button>
+                <x-ui.btn variant="primary" :href="route('login')">{{ __('Log in') }}</x-ui.btn>
             </div>
-        </flux:card>
+        </x-ui.card>
     @else
         @php($report = $this->report)
 
         {{-- Użytkownik i role --}}
-        <flux:card class="space-y-4">
+        <x-ui.card class="space-y-4">
             <div class="flex items-center gap-4">
-                <flux:avatar :name="$report['user']->name" />
+                <x-ui.avatar :name="$report['user']->name" />
                 <div>
-                    <flux:heading>{{ $report['user']->name }}</flux:heading>
-                    <flux:text>{{ $report['user']->email }}</flux:text>
+                    <x-ui.heading>{{ $report['user']->name }}</x-ui.heading>
+                    <x-ui.text>{{ $report['user']->email }}</x-ui.text>
                 </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <flux:text>{{ __('Roles') }}:</flux:text>
+                <x-ui.text>{{ __('Roles') }}:</x-ui.text>
                 @forelse ($report['roles'] as $role)
-                    <flux:badge color="blue">{{ $role }}</flux:badge>
+                    <x-ui.badge color="blue">{{ $role }}</x-ui.badge>
                 @empty
-                    <flux:badge color="zinc">{{ __('None') }}</flux:badge>
+                    <x-ui.badge color="zinc">{{ __('None') }}</x-ui.badge>
                 @endforelse
             </div>
-        </flux:card>
+        </x-ui.card>
 
         {{-- Podsumowanie --}}
         <div class="grid gap-4 md:grid-cols-3">
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.check-circle class="size-8 text-green-500" />
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="check-circle" class="size-8 text-green-500" />
                 <div>
-                    <flux:text>{{ __('Granted') }}</flux:text>
-                    <flux:heading size="xl">{{ $report['granted'] }} / {{ $report['rows']->count() }}</flux:heading>
+                    <x-ui.text>{{ __('Granted') }}</x-ui.text>
+                    <x-ui.heading size="xl">{{ $report['granted'] }} / {{ $report['rows']->count() }}</x-ui.heading>
                 </div>
-            </flux:card>
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.x-circle class="size-8 text-zinc-400" />
+            </x-ui.card>
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="x-circle" class="size-8 text-zinc-400" />
                 <div>
-                    <flux:text>{{ __('Missing') }}</flux:text>
-                    <flux:heading size="xl">{{ $report['missing']->count() }}</flux:heading>
+                    <x-ui.text>{{ __('Missing') }}</x-ui.text>
+                    <x-ui.heading size="xl">{{ $report['missing']->count() }}</x-ui.heading>
                 </div>
-            </flux:card>
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.exclamation-triangle class="size-8 text-amber-500" />
+            </x-ui.card>
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="exclamation-triangle" class="size-8 text-amber-500" />
                 <div>
-                    <flux:text>{{ __('Not in database') }}</flux:text>
-                    <flux:heading size="xl">{{ $report['notInDatabase']->count() }}</flux:heading>
+                    <x-ui.text>{{ __('Not in database') }}</x-ui.text>
+                    <x-ui.heading size="xl">{{ $report['notInDatabase']->count() }}</x-ui.heading>
                 </div>
-            </flux:card>
+            </x-ui.card>
         </div>
 
         @if ($report['notInDatabase']->isNotEmpty())
-            <flux:card class="space-y-2 border-amber-300 dark:border-amber-500/50">
-                <flux:heading>{{ __('Some permissions from the code are missing in the database') }}</flux:heading>
-                <flux:text>{{ __('Run the seeder to create them:') }} <code>php artisan db:seed --class=RolesAndPermissionsSeeder</code></flux:text>
-            </flux:card>
+            <x-ui.card class="space-y-2 border-amber-300 dark:border-amber-500/50">
+                <x-ui.heading>{{ __('Some permissions from the code are missing in the database') }}</x-ui.heading>
+                <x-ui.text>{{ __('Run the seeder to create them:') }} <code>php artisan db:seed --class=RolesAndPermissionsSeeder</code></x-ui.text>
+            </x-ui.card>
         @endif
 
         {{-- Tabela wszystkich uprawnień z enuma --}}
-        <flux:table>
-            <flux:table.columns>
-                <flux:table.column>{{ __('Group') }}</flux:table.column>
-                <flux:table.column>{{ __('Permission') }}</flux:table.column>
-                <flux:table.column>{{ __('Status') }}</flux:table.column>
-                <flux:table.column>{{ __('Source') }}</flux:table.column>
-            </flux:table.columns>
+        <x-ui.table>
+            <x-ui.table.columns>
+                <x-ui.table.column>{{ __('Group') }}</x-ui.table.column>
+                <x-ui.table.column>{{ __('Permission') }}</x-ui.table.column>
+                <x-ui.table.column>{{ __('Status') }}</x-ui.table.column>
+                <x-ui.table.column>{{ __('Source') }}</x-ui.table.column>
+            </x-ui.table.columns>
 
-            <flux:table.rows>
+            <x-ui.table.rows>
                 @foreach ($report['rows'] as $row)
-                    <flux:table.row :key="$row['value']">
-                        <flux:table.cell class="text-zinc-500">{{ $row['group'] }}</flux:table.cell>
-                        <flux:table.cell>
+                    <x-ui.table.row :key="$row['value']">
+                        <x-ui.table.cell class="text-zinc-500">{{ $row['group'] }}</x-ui.table.cell>
+                        <x-ui.table.cell>
                             <code class="text-sm">{{ $row['value'] }}</code>
-                        </flux:table.cell>
-                        <flux:table.cell>
+                        </x-ui.table.cell>
+                        <x-ui.table.cell>
                             @if ($row['granted'])
-                                <flux:badge size="sm" color="green" icon="check">{{ __('Granted') }}</flux:badge>
+                                <x-ui.badge size="sm" color="green" icon="check">{{ __('Granted') }}</x-ui.badge>
                             @else
-                                <flux:badge size="sm" color="zinc" icon="x-mark">{{ __('Missing') }}</flux:badge>
+                                <x-ui.badge size="sm" color="zinc" icon="x-mark">{{ __('Missing') }}</x-ui.badge>
                             @endif
 
                             @unless ($row['inDatabase'])
-                                <flux:badge size="sm" color="amber">{{ __('Not in database') }}</flux:badge>
+                                <x-ui.badge size="sm" color="amber">{{ __('Not in database') }}</x-ui.badge>
                             @endunless
-                        </flux:table.cell>
-                        <flux:table.cell class="text-zinc-500">
+                        </x-ui.table.cell>
+                        <x-ui.table.cell class="text-zinc-500">
                             @if ($row['viaRoles'])
                                 {{ __('Role') }}: {{ implode(', ', $row['viaRoles']) }}
                             @endif
@@ -179,21 +179,21 @@ new #[Layout('layouts::public')] class extends Component {
                             @if (! $row['granted'])
                                 &ndash;
                             @endif
-                        </flux:table.cell>
-                    </flux:table.row>
+                        </x-ui.table.cell>
+                    </x-ui.table.row>
                 @endforeach
-            </flux:table.rows>
-        </flux:table>
+            </x-ui.table.rows>
+        </x-ui.table>
 
         @if ($report['outsideEnum'])
-            <flux:card class="space-y-2">
-                <flux:heading>{{ __('Permissions outside the Permission enum') }}</flux:heading>
+            <x-ui.card class="space-y-2">
+                <x-ui.heading>{{ __('Permissions outside the Permission enum') }}</x-ui.heading>
                 <div class="flex flex-wrap gap-2">
                     @foreach ($report['outsideEnum'] as $name)
-                        <flux:badge size="sm" color="amber">{{ $name }}</flux:badge>
+                        <x-ui.badge size="sm" color="amber">{{ $name }}</x-ui.badge>
                     @endforeach
                 </div>
-            </flux:card>
+            </x-ui.card>
         @endif
     @endif
 </div>

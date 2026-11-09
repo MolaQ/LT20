@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Support\Audit;
 use App\Support\Players;
 use App\Support\Roster;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -188,7 +187,7 @@ new class extends Component {
         }
 
         if (SeasonTeam::where('season_id', $this->seasonId)->exists()) {
-            Flux::toast(text: __('The list already exists. Clear it first to build it again.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('The list already exists. Clear it first to build it again.'), variant: 'warning');
 
             return;
         }
@@ -201,7 +200,7 @@ new class extends Component {
         $bots = $this->freeBots($needed);
 
         if ($bots->count() < $needed) {
-            Flux::toast(text: __('Not enough bots. Run: php artisan db:seed --class=BotsSeeder'), variant: 'danger');
+            $this->dispatch('ui-toast', text: __('Not enough bots. Run: php artisan db:seed --class=BotsSeeder'), variant: 'danger');
 
             return;
         }
@@ -229,7 +228,7 @@ new class extends Component {
         Audit::log('season_list.built', null, [], ['players' => $playerIds->count(), 'bots' => $botCount], $this->season->title);
 
         $this->clearCaches();
-        Flux::toast(text: __('Team list built.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Team list built.'), variant: 'success');
     }
 
     /** Poprzedni zakończony sezon z tabelami końcowymi (lista może powstać z jego wyników). */
@@ -251,13 +250,13 @@ new class extends Component {
         try {
             $stats = $action->handle($this->season);
         } catch (DomainException $e) {
-            Flux::toast(text: $e->getMessage(), variant: 'danger');
+            $this->dispatch('ui-toast', text: $e->getMessage(), variant: 'danger');
 
             return;
         }
 
         $this->clearCaches();
-        Flux::toast(text: __('Team list built from :season: :players players, :bots bots.', ['season' => $this->previousSeason?->title, 'players' => $stats['players'], 'bots' => $stats['bots']]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Team list built from :season: :players players, :bots bots.', ['season' => $this->previousSeason?->title, 'players' => $stats['players'], 'bots' => $stats['bots']]), variant: 'success');
     }
 
     /**
@@ -289,7 +288,7 @@ new class extends Component {
         Audit::log('season_list.players_added', null, [], ['players' => $ids->count()], $this->season->title);
 
         $this->clearCaches();
-        Flux::toast(text: __('Players added to the list.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Players added to the list.'), variant: 'success');
     }
 
     /**
@@ -308,7 +307,7 @@ new class extends Component {
         $added = app(FillTeamListWithBots::class)->handle($this->season);
 
         if ($added === 0) {
-            Flux::toast(text: __('The list already has :count teams.', ['count' => \App\Models\SeasonTeam::CUP_SIZE]), variant: 'info');
+            $this->dispatch('ui-toast', text: __('The list already has :count teams.', ['count' => \App\Models\SeasonTeam::CUP_SIZE]), variant: 'info');
 
             return;
         }
@@ -316,7 +315,7 @@ new class extends Component {
         Audit::log('season_list.bots_added', null, [], ['bots' => $added], $this->season->title);
 
         $this->clearCaches();
-        Flux::toast(text: __(':count bots added to the list.', ['count' => $added]), variant: 'success');
+        $this->dispatch('ui-toast', text: __(':count bots added to the list.', ['count' => $added]), variant: 'success');
     }
 
     /* ==================================================================
@@ -334,7 +333,7 @@ new class extends Component {
         $user = $this->unlistedPlayers()->find($userId);
 
         if (!$user) {
-            Flux::toast(text: __('This player is already on the list.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('This player is already on the list.'), variant: 'warning');
             $this->clearCaches();
 
             return;
@@ -344,7 +343,7 @@ new class extends Component {
         $this->assignName = $user->team_name ?: $user->name;
         $this->assignTier = League::Podworkowa->value;
 
-        Flux::modal('assign-player')->show();
+        $this->dispatch('ui-sheet', name: 'assign-player');
     }
 
     /**
@@ -367,10 +366,10 @@ new class extends Component {
         $user = $this->unlistedPlayers()->find($this->assignUserId);
 
         if (!$user) {
-            Flux::modal('assign-player')->close();
+            $this->dispatch('ui-sheet', name: 'assign-player', open: false);
             $this->resetAssign();
             $this->clearCaches();
-            Flux::toast(text: __('This player is already on the list.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('This player is already on the list.'), variant: 'warning');
 
             return;
         }
@@ -378,17 +377,17 @@ new class extends Component {
         $placed = DB::transaction(fn() => $this->placePlayer($user->id, $league), Roster::ATTEMPTS);
 
         if (!$placed) {
-            Flux::toast(text: __('There are no bots in :league. Nothing was changed.', ['league' => $league->label()]), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('There are no bots in :league. Nothing was changed.', ['league' => $league->label()]), variant: 'warning');
 
             return;
         }
 
         Audit::log('season_list.player_assigned', $user, [], ['league' => $league->label()], ($user->team_name ?: $user->name) . ' (' . $this->season->title . ')');
 
-        Flux::modal('assign-player')->close();
+        $this->dispatch('ui-sheet', name: 'assign-player', open: false);
         $this->resetAssign();
         $this->clearCaches();
-        Flux::toast(text: __('Player assigned to :league.', ['league' => $league->label()]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Player assigned to :league.', ['league' => $league->label()]), variant: 'success');
     }
 
     public function resetAssign(): void
@@ -401,7 +400,7 @@ new class extends Component {
         $this->authorizeAbility(Permission::SeasonEdit);
 
         if ($this->ensureEditable()) {
-            Flux::modal('reset-list')->show();
+            $this->dispatch('ui-sheet', name: 'reset-list');
         }
     }
 
@@ -419,9 +418,9 @@ new class extends Component {
 
         Audit::log('season_list.reset', null, ['teams' => $count], [], $this->season->title);
 
-        Flux::modal('reset-list')->close();
+        $this->dispatch('ui-sheet', name: 'reset-list', open: false);
         $this->clearCaches();
-        Flux::toast(text: __('Team list cleared.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Team list cleared.'), variant: 'success');
     }
 
     /* ==================================================================
@@ -443,7 +442,7 @@ new class extends Component {
         $this->moveTier = $team->league->value;
         $this->moveSlot = 0;
 
-        Flux::modal('move-team')->show();
+        $this->dispatch('ui-sheet', name: 'move-team');
     }
 
     /**
@@ -478,7 +477,7 @@ new class extends Component {
         }
 
         if ($target === $from) {
-            Flux::modal('move-team')->close();
+            $this->dispatch('ui-sheet', name: 'move-team', open: false);
             $this->resetMove();
 
             return;
@@ -510,23 +509,23 @@ new class extends Component {
                 return false;
             });
         } catch (\RuntimeException) {
-            Flux::toast(text: __('Not enough bots. Run: php artisan db:seed --class=BotsSeeder'), variant: 'danger');
+            $this->dispatch('ui-toast', text: __('Not enough bots. Run: php artisan db:seed --class=BotsSeeder'), variant: 'danger');
 
             return;
         }
 
         if (!$moved) {
-            Flux::toast(text: __('There are no bots in :league. Nothing was changed.', ['league' => $target->label()]), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('There are no bots in :league. Nothing was changed.', ['league' => $target->label()]), variant: 'warning');
 
             return;
         }
 
         Audit::log('season_list.moved', null, ['league' => $from->label(), 'position' => $oldPosition], ['league' => $target->label(), 'position' => $team->fresh()->position], $team->name . ' (' . $this->season->title . ')');
 
-        Flux::modal('move-team')->close();
+        $this->dispatch('ui-sheet', name: 'move-team', open: false);
         $this->resetMove();
         $this->clearCaches();
-        Flux::toast(text: __('Team moved.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Team moved.'), variant: 'success');
     }
 
     /**
@@ -540,7 +539,7 @@ new class extends Component {
         $targetPosition = $target->firstPosition() + $slot - 1;
 
         if ($targetPosition === $oldPosition) {
-            Flux::modal('move-team')->close();
+            $this->dispatch('ui-sheet', name: 'move-team', open: false);
             $this->resetMove();
 
             return;
@@ -559,17 +558,17 @@ new class extends Component {
         });
 
         if (!$moved) {
-            Flux::toast(text: __('There is no team at that place of the list.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('There is no team at that place of the list.'), variant: 'warning');
 
             return;
         }
 
         Audit::log('season_list.moved', null, ['league' => $from->label(), 'position' => $oldPosition], ['league' => $target->label(), 'position' => $targetPosition], $team->name . ' (' . $this->season->title . ')');
 
-        Flux::modal('move-team')->close();
+        $this->dispatch('ui-sheet', name: 'move-team', open: false);
         $this->resetMove();
         $this->clearCaches();
-        Flux::toast(text: __('Team moved.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Team moved.'), variant: 'success');
     }
 
     public function moveUp(int $id): void
@@ -749,7 +748,7 @@ new class extends Component {
     private function ensureOpen(): bool
     {
         if (!$this->isOpen) {
-            Flux::toast(text: __('The season is finished, the list cannot be changed.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('The season is finished, the list cannot be changed.'), variant: 'warning');
 
             return false;
         }
@@ -764,7 +763,7 @@ new class extends Component {
         }
 
         if (!$this->isEditable) {
-            Flux::toast(text: __('The team list can only be changed while the season is a draft.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('The team list can only be changed while the season is a draft.'), variant: 'warning');
 
             return false;
         }
@@ -794,7 +793,7 @@ new class extends Component {
     private function ensurePreviousFinished(): bool
     {
         if ($this->unfinishedPrevious) {
-            Flux::toast(text: __('Finish :season first. The new list is built from its final standings (promotion and relegation).', ['season' => $this->unfinishedPrevious->title]), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('Finish :season first. The new list is built from its final standings (promotion and relegation).', ['season' => $this->unfinishedPrevious->title]), variant: 'warning');
 
             return false;
         }
@@ -820,201 +819,201 @@ new class extends Component {
     {{-- Nagłówek i wybór sezonu --}}
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Team list') }}</flux:heading>
-            <flux:subheading>{{ __('The pre-season list decides the leagues and who is the favourite in a pair.') }}
-            </flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Team list') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('The pre-season list decides the leagues and who is the favourite in a pair.') }}
+            </x-ui.subheading>
         </div>
 
         @if ($this->seasons->isNotEmpty())
             <div class="w-full sm:w-56">
-                <flux:select wire:model.live="seasonId" :label="__('Season')">
+                <x-ui.select wire:model.live="seasonId" :label="__('Season')">
                     @foreach ($this->seasons as $option)
-                        <flux:select.option :value="$option->id">
+                        <x-ui.select.option :value="$option->id">
                             {{ $option->title }} ({{ $option->status->label() }})
-                        </flux:select.option>
+                        </x-ui.select.option>
                     @endforeach
-                </flux:select>
+                </x-ui.select>
             </div>
         @endif
     </div>
 
     @if (!$this->season)
-        <flux:card class="space-y-4">
-            <flux:heading>{{ __('Create a season first.') }}</flux:heading>
+        <x-ui.card class="space-y-4">
+            <x-ui.heading>{{ __('Create a season first.') }}</x-ui.heading>
             <div>
-                <flux:button variant="primary" :href="route('dashboard.seasons')" wire:navigate>
+                <x-ui.btn variant="primary" :href="route('dashboard.seasons')" wire:navigate>
                     {{ __('Go to season setup') }}
-                </flux:button>
+                </x-ui.btn>
             </div>
-        </flux:card>
+        </x-ui.card>
     @else
         {{-- Statystyki --}}
         <div class="grid gap-4 md:grid-cols-3">
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.list-bullet class="size-8 text-zinc-400" />
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="list-bullet" class="size-8 text-zinc-400" />
                 <div>
-                    <flux:text>{{ __('Teams on the list') }}</flux:text>
-                    <flux:heading size="xl">{{ $this->stats['total'] }}</flux:heading>
+                    <x-ui.text>{{ __('Teams on the list') }}</x-ui.text>
+                    <x-ui.heading size="xl">{{ $this->stats['total'] }}</x-ui.heading>
                 </div>
-            </flux:card>
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.users class="size-8 text-zinc-400" />
+            </x-ui.card>
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="users" class="size-8 text-zinc-400" />
                 <div>
-                    <flux:text>{{ __('Players') }}</flux:text>
-                    <flux:heading size="xl">{{ $this->stats['players'] }}</flux:heading>
+                    <x-ui.text>{{ __('Players') }}</x-ui.text>
+                    <x-ui.heading size="xl">{{ $this->stats['players'] }}</x-ui.heading>
                 </div>
-            </flux:card>
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.cpu-chip class="size-8 text-zinc-400" />
+            </x-ui.card>
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="cpu-chip" class="size-8 text-zinc-400" />
                 <div>
-                    <flux:text>{{ __('Bots') }}</flux:text>
-                    <flux:heading size="xl">{{ $this->stats['bots'] }}</flux:heading>
+                    <x-ui.text>{{ __('Bots') }}</x-ui.text>
+                    <x-ui.heading size="xl">{{ $this->stats['bots'] }}</x-ui.heading>
                 </div>
-            </flux:card>
+            </x-ui.card>
         </div>
 
         @if (!$this->isEditable)
-            <flux:text class="text-amber-600 dark:text-amber-400">
+            <x-ui.text class="text-amber-600 dark:text-amber-400">
                 {{ __('The team list can only be changed while the season is a draft.') }}
                 @if ($this->season->status === \App\Enums\SeasonStatus::Approved)
                     {{ __('To change it, revert the approval in Season setup.') }}
                 @endif
-            </flux:text>
+            </x-ui.text>
         @endif
 
         {{-- Użytkownicy bez roli: nie są graczami, dopóki admin nie nada im roli --}}
         @if ($this->stats['noRole'] > 0 && $this->isOpen)
-            <flux:card class="flex flex-wrap items-center justify-between gap-4">
-                <flux:text>
+            <x-ui.card class="flex flex-wrap items-center justify-between gap-4">
+                <x-ui.text>
                     {{ __(':count users have no role yet. They are not on the list until an administrator gives them a role.', ['count' => $this->stats['noRole']]) }}
-                </flux:text>
+                </x-ui.text>
 
                 @if (auth()->user()->hasRole('Admin'))
-                    <flux:button size="sm" :href="route('dashboard.users')" wire:navigate>
+                    <x-ui.btn size="sm" :href="route('dashboard.users')" wire:navigate>
                         {{ __('Go to users') }}
-                    </flux:button>
+                    </x-ui.btn>
                 @endif
-            </flux:card>
+            </x-ui.card>
         @endif
 
         @if ($this->stats['total'] === 0)
             {{-- Pusta lista: jeden przycisk buduje ją z zarejestrowanych graczy --}}
-            <flux:card class="space-y-4">
-                <flux:heading>{{ __('The list is empty.') }}</flux:heading>
-                <flux:text>
+            <x-ui.card class="space-y-4">
+                <x-ui.heading>{{ __('The list is empty.') }}</x-ui.heading>
+                <x-ui.text>
                     {{ __('The list is built from players with a role in order of registration: the first 10 go to Ekstraklasa, the next 10 to I liga and so on. Missing places in the first 100 are filled by bots. Later players go to Liga podwórkowa.') }}
-                </flux:text>
+                </x-ui.text>
 
                 @if ($this->isEditable && $this->previousSeason)
-                    <flux:text>
+                    <x-ui.text>
                         {{ __('You can also build the list from the final standings of :season: 4 teams go up and down between leagues, bots are swapped for players, inactive players are replaced by bots.', ['season' => $this->previousSeason->title]) }}
-                    </flux:text>
+                    </x-ui.text>
                 @endif
 
                 @if ($this->isEditable && $this->unfinishedPrevious)
                     {{-- Poprzedni sezon trwa: lista powstanie z jego tabel końcowych dopiero po zakończeniu --}}
-                    <flux:callout variant="warning" icon="exclamation-triangle"
+                    <x-ui.callout variant="warning" icon="exclamation-triangle"
                         :heading="__('Finish :season first. The new list is built from its final standings (promotion and relegation).', ['season' => $this->unfinishedPrevious->title])" />
                 @elseif ($this->isEditable)
                     @can(\App\Enums\Permission::SeasonEdit->value)
                         <div class="flex flex-wrap gap-2">
                             @if ($this->previousSeason)
-                                <flux:button variant="primary" icon="arrows-up-down" wire:click="buildFromPrevious">
+                                <x-ui.btn variant="primary" icon="arrows-up-down" wire:click="buildFromPrevious">
                                     <span wire:loading.remove wire:target="buildFromPrevious">{{ __('Build from the previous season') }}</span>
                                     <span wire:loading wire:target="buildFromPrevious">{{ __('Saving...') }}</span>
-                                </flux:button>
+                                </x-ui.btn>
                             @endif
-                            <flux:button :variant="$this->previousSeason ? 'filled' : 'primary'" icon="bolt" wire:click="buildList">
+                            <x-ui.btn :variant="$this->previousSeason ? 'filled' : 'primary'" icon="bolt" wire:click="buildList">
                                 <span wire:loading.remove
                                     wire:target="buildList">{{ __('Build the list automatically') }}</span>
                                 <span wire:loading wire:target="buildList">{{ __('Saving...') }}</span>
-                            </flux:button>
+                            </x-ui.btn>
                         </div>
                     @endcan
                 @endif
-            </flux:card>
+            </x-ui.card>
         @else
             {{-- Gracze z rolą, którzy nie mają jeszcze ligi --}}
             @if ($this->stats['unlisted'] > 0 && $this->isOpen)
-                <flux:card class="space-y-4 border-amber-300 dark:border-amber-500/50">
+                <x-ui.card class="space-y-4 border-amber-300 dark:border-amber-500/50">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                            <flux:heading>
+                            <x-ui.heading>
                                 {{ __(':count players with a role have no league yet.', ['count' => $this->stats['unlisted']]) }}
-                            </flux:heading>
-                            <flux:text class="text-sm">
+                            </x-ui.heading>
+                            <x-ui.text class="text-sm">
                                 {{ $this->isEditable ? __('Assign them to a league before approving the season.') : __('Assign each of them to a league.') }}
-                            </flux:text>
+                            </x-ui.text>
                         </div>
 
                         @if ($this->isEditable)
                             @can(\App\Enums\Permission::SeasonEdit->value)
-                                <flux:button size="sm" icon="plus" wire:click="addNewPlayers">
+                                <x-ui.btn size="sm" icon="plus" wire:click="addNewPlayers">
                                     {{ __('Add them all to Liga podwórkowa') }}
-                                </flux:button>
+                                </x-ui.btn>
                             @endcan
                         @endif
                     </div>
 
-                    <ul class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                    <ul class="divide-y divide-ui-line">
                         @foreach ($this->unlistedPreview as $player)
                             <li class="flex items-center justify-between gap-3 py-2"
                                 wire:key="unlisted-{{ $player->id }}">
                                 <div class="min-w-0">
                                     <div class="truncate">{{ $player->team_name ?: $player->name }}</div>
-                                    <div class="truncate text-xs text-zinc-500">{{ $player->name }}
+                                    <div class="truncate text-xs text-ui-muted">{{ $player->name }}
                                         ({{ $player->email }})
                                     </div>
                                 </div>
 
                                 @can(\App\Enums\Permission::SeasonEdit->value)
-                                    <flux:button size="sm" icon="arrows-right-left"
+                                    <x-ui.btn size="sm" icon="arrows-right-left"
                                         wire:click="openAssign({{ $player->id }})">
                                         {{ __('Assign to a league') }}
-                                    </flux:button>
+                                    </x-ui.btn>
                                 @endcan
                             </li>
                         @endforeach
                     </ul>
 
                     @if ($this->stats['unlisted'] > 20)
-                        <flux:text class="text-xs">{{ __('Showing the first 20 players.') }}</flux:text>
+                        <x-ui.text class="text-xs">{{ __('Showing the first 20 players.') }}</x-ui.text>
                     @endif
-                </flux:card>
+                </x-ui.card>
             @endif
 
             {{-- Uzupełnienie botami z puli do 512 zespołów --}}
             @if ($this->stats['freeBots'] > 0 && $this->isEditable)
                 @can(\App\Enums\Permission::SeasonEdit->value)
-                    <flux:card class="flex flex-wrap items-center justify-between gap-4">
-                        <flux:text>
+                    <x-ui.card class="flex flex-wrap items-center justify-between gap-4">
+                        <x-ui.text>
                             {{ __(':count bots are missing to fill the list up to 512 teams. Add them now (this also happens when the season is approved).', ['count' => $this->stats['freeBots']]) }}
-                        </flux:text>
-                        <flux:button size="sm" icon="cpu-chip" wire:click="fillWithBots">
+                        </x-ui.text>
+                        <x-ui.btn size="sm" icon="cpu-chip" wire:click="fillWithBots">
                             <span wire:loading.remove wire:target="fillWithBots">{{ __('Fill with bots') }}</span>
                             <span wire:loading wire:target="fillWithBots">{{ __('Saving...') }}</span>
-                        </flux:button>
-                    </flux:card>
+                        </x-ui.btn>
+                    </x-ui.card>
                 @endcan
             @endif
 
             {{-- Wybór ligi --}}
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="w-full sm:w-64">
-                    <flux:select wire:model.live="leagueTier" :label="__('League')">
+                    <x-ui.select wire:model.live="leagueTier" :label="__('League')">
                         @foreach ($this->leagueCounts as $row)
-                            <flux:select.option :value="$row['league']->value">
+                            <x-ui.select.option :value="$row['league']->value">
                                 {{ $row['league']->label() }} ({{ $row['total'] }})
-                            </flux:select.option>
+                            </x-ui.select.option>
                         @endforeach
-                    </flux:select>
+                    </x-ui.select>
                 </div>
 
                 @if ($this->isEditable)
                     @can(\App\Enums\Permission::SeasonEdit->value)
-                        <flux:button variant="ghost" size="sm" icon="trash" wire:click="confirmReset">
+                        <x-ui.btn variant="ghost" size="sm" icon="trash" wire:click="confirmReset">
                             {{ __('Clear the list') }}
-                        </flux:button>
+                        </x-ui.btn>
                     @endcan
                 @endif
             </div>
@@ -1023,15 +1022,15 @@ new class extends Component {
                 $teams = $this->teams;
             @endphp
 
-            <flux:table :paginate="$teams">
-                <flux:table.columns>
-                    <flux:table.column>#</flux:table.column>
-                    <flux:table.column>{{ __('Team') }}</flux:table.column>
-                    <flux:table.column>{{ __('Owner') }}</flux:table.column>
-                    <flux:table.column />
-                </flux:table.columns>
+            <x-ui.table :paginate="$teams">
+                <x-ui.table.columns>
+                    <x-ui.table.column>#</x-ui.table.column>
+                    <x-ui.table.column>{{ __('Team') }}</x-ui.table.column>
+                    <x-ui.table.column>{{ __('Owner') }}</x-ui.table.column>
+                    <x-ui.table.column />
+                </x-ui.table.columns>
 
-                <flux:table.rows>
+                <x-ui.table.rows>
                     @forelse ($teams as $team)
                         @php
                             // Miejsce w lidze: w ligach 1-10 z pozycji, w podwórkowej z numeru wiersza.
@@ -1042,142 +1041,142 @@ new class extends Component {
                             $isLast = $loop->last && !$teams->hasMorePages();
                         @endphp
 
-                        <flux:table.row :key="'team-'.$team->id">
-                            <flux:table.cell variant="strong">{{ $rank }}</flux:table.cell>
+                        <x-ui.table.row :key="'team-'.$team->id">
+                            <x-ui.table.cell variant="strong">{{ $rank }}</x-ui.table.cell>
 
-                            <flux:table.cell>
+                            <x-ui.table.cell>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span>{{ $team->name }}</span>
                                     @if ($team->is_bot)
-                                        <flux:badge size="sm" color="zinc">{{ __('Bot') }}</flux:badge>
+                                        <x-ui.badge size="sm" color="zinc">{{ __('Bot') }}</x-ui.badge>
                                     @endif
                                 </div>
-                            </flux:table.cell>
+                            </x-ui.table.cell>
 
-                            <flux:table.cell class="text-zinc-500">
+                            <x-ui.table.cell class="text-ui-muted">
                                 @if ($team->user)
                                     {{ $team->user->name }}
                                     <span class="text-xs">({{ $team->user->email }})</span>
                                 @else
                                     —
                                 @endif
-                            </flux:table.cell>
+                            </x-ui.table.cell>
 
-                            <flux:table.cell align="end">
+                            <x-ui.table.cell align="end">
                                 @if ($this->isEditable)
                                     @can(\App\Enums\Permission::SeasonEdit->value)
                                         <div class="flex items-center justify-end gap-1">
-                                            <flux:button variant="ghost" size="sm" icon="chevron-up" inset="top bottom"
+                                            <x-ui.btn variant="ghost" size="sm" icon="chevron-up" inset="top bottom"
                                                 :disabled="$isFirst" wire:click="moveUp({{ $team->id }})"
                                                 :aria-label="__('Move up')" />
-                                            <flux:button variant="ghost" size="sm" icon="chevron-down"
+                                            <x-ui.btn variant="ghost" size="sm" icon="chevron-down"
                                                 inset="top bottom" :disabled="$isLast"
                                                 wire:click="moveDown({{ $team->id }})"
                                                 :aria-label="__('Move down')" />
 
-                                            <flux:button variant="ghost" size="sm" icon="arrows-right-left"
+                                            <x-ui.btn variant="ghost" size="sm" icon="arrows-right-left"
                                                 inset="top bottom" wire:click="openMove({{ $team->id }})"
                                                 :aria-label="__('Move to another league')" />
                                         </div>
                                     @endcan
                                 @endif
-                            </flux:table.cell>
-                        </flux:table.row>
+                            </x-ui.table.cell>
+                        </x-ui.table.row>
                     @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="4" class="py-10 text-center text-zinc-500">
+                        <x-ui.table.row>
+                            <x-ui.table.cell colspan="4" class="py-10 text-center text-ui-muted">
                                 {{ __('No teams in this league.') }}
-                            </flux:table.cell>
-                        </flux:table.row>
+                            </x-ui.table.cell>
+                        </x-ui.table.row>
                     @endforelse
-                </flux:table.rows>
-            </flux:table>
+                </x-ui.table.rows>
+            </x-ui.table>
         @endif
     @endif
 
     {{-- Modal: przeniesienie gracza do innej ligi --}}
-    <flux:modal name="move-team" class="w-full md:w-[30rem]" @close="resetMove">
+    <x-ui.modal name="move-team" class="w-full md:w-[30rem]" @close="$wire.resetMove()">
         <form wire:submit="moveTeam" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Move to another league') }}</flux:heading>
-                <flux:text class="mt-1">{{ $moveName }}</flux:text>
+                <x-ui.heading size="lg">{{ __('Move to another league') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ $moveName }}</x-ui.text>
             </div>
 
-            <flux:select wire:model="moveTier" :label="__('League')">
+            <x-ui.select wire:model="moveTier" :label="__('League')">
                 @foreach (\App\Enums\League::cases() as $league)
-                    <flux:select.option :value="$league->value">{{ $league->label() }}</flux:select.option>
+                    <x-ui.select.option :value="$league->value">{{ $league->label() }}</x-ui.select.option>
                 @endforeach
-            </flux:select>
+            </x-ui.select>
 
-            <flux:select wire:model="moveSlot" :label="__('Place in the league')">
-                <flux:select.option value="0">{{ __('Automatic (the highest ranked bot)') }}</flux:select.option>
+            <x-ui.select wire:model="moveSlot" :label="__('Place in the league')">
+                <x-ui.select.option value="0">{{ __('Automatic (the highest ranked bot)') }}</x-ui.select.option>
                 @foreach (range(1, \App\Enums\League::SIZE) as $slot)
-                    <flux:select.option :value="$slot">{{ $slot }}.</flux:select.option>
+                    <x-ui.select.option :value="$slot">{{ $slot }}.</x-ui.select.option>
                 @endforeach
-            </flux:select>
+            </x-ui.select>
 
-            <flux:text class="text-sm">
+            <x-ui.text class="text-sm">
                 {{ __('Automatic: the team takes the place of the highest ranked bot in the chosen league and the bot takes its old place. A chosen place: the two teams swap places, whoever stands there.') }}
-            </flux:text>
+            </x-ui.text>
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" type="submit">
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" type="submit">
                     <span wire:loading.remove wire:target="moveTeam">{{ __('Move') }}</span>
                     <span wire:loading wire:target="moveTeam">{{ __('Saving...') }}</span>
-                </flux:button>
+                </x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 
     {{-- Modal: przypisanie gracza do ligi --}}
-    <flux:modal name="assign-player" class="w-full md:w-[30rem]" @close="resetAssign">
+    <x-ui.modal name="assign-player" class="w-full md:w-[30rem]" @close="$wire.resetAssign()">
         <form wire:submit="assignPlayer" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Assign to a league') }}</flux:heading>
-                <flux:text class="mt-1">{{ $assignName }}</flux:text>
+                <x-ui.heading size="lg">{{ __('Assign to a league') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ $assignName }}</x-ui.text>
             </div>
 
-            <flux:select wire:model="assignTier" :label="__('League')">
+            <x-ui.select wire:model="assignTier" :label="__('League')">
                 @foreach (\App\Enums\League::cases() as $league)
-                    <flux:select.option :value="$league->value">{{ $league->label() }}</flux:select.option>
+                    <x-ui.select.option :value="$league->value">{{ $league->label() }}</x-ui.select.option>
                 @endforeach
-            </flux:select>
+            </x-ui.select>
 
-            <flux:text class="text-sm">
+            <x-ui.text class="text-sm">
                 {{ __('The player takes the place of the highest ranked bot in the chosen league, and the bot moves to the end of the list (Liga podwórkowa). In Liga podwórkowa without bots the player goes to the end of the list.') }}
-            </flux:text>
+            </x-ui.text>
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" type="submit">
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" type="submit">
                     <span wire:loading.remove wire:target="assignPlayer">{{ __('Assign') }}</span>
                     <span wire:loading wire:target="assignPlayer">{{ __('Saving...') }}</span>
-                </flux:button>
+                </x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 
     {{-- Modal: czyszczenie listy --}}
-    <flux:modal name="reset-list" class="min-w-[22rem]">
+    <x-ui.modal name="reset-list" class="min-w-[22rem]">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Clear the list?') }}</flux:heading>
-                <flux:text class="mt-2">
+                <x-ui.heading size="lg">{{ __('Clear the list?') }}</x-ui.heading>
+                <x-ui.text class="mt-2">
                     {{ __('All teams will be removed from this season list. You can build it again afterwards.') }}
-                </flux:text>
+                </x-ui.text>
             </div>
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="danger" wire:click="resetList">{{ __('Clear the list') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="danger" wire:click="resetList">{{ __('Clear the list') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 </div>

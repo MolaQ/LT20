@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -154,7 +153,7 @@ new class extends Component {
     {
         $this->authorizeAdmin();
         $this->resetRoleForm();
-        Flux::modal('role-form')->show();
+        $this->dispatch('ui-sheet', name: 'role-form');
     }
 
     public function editRole(int $id): void
@@ -168,7 +167,7 @@ new class extends Component {
         $this->selected = $role->permissions->pluck('name')->all();
         $this->resetValidation();
 
-        Flux::modal('role-form')->show();
+        $this->dispatch('ui-sheet', name: 'role-form');
     }
 
     public function saveRole(): void
@@ -194,8 +193,8 @@ new class extends Component {
         $role->save();
         $role->syncPermissions($this->selected);
 
-        Flux::modal('role-form')->close();
-        Flux::toast(text: __('Role saved.'), variant: 'success');
+        $this->dispatch('ui-sheet', name: 'role-form', open: false);
+        $this->dispatch('ui-toast', text: __('Role saved.'), variant: 'success');
         $this->resetRoleForm();
     }
 
@@ -223,7 +222,7 @@ new class extends Component {
         $this->authorizeAdmin();
         $this->reset('permissionName');
         $this->resetValidation();
-        Flux::modal('permission-form')->show();
+        $this->dispatch('ui-sheet', name: 'permission-form');
     }
 
     public function savePermission(): void
@@ -240,8 +239,8 @@ new class extends Component {
 
         Permission::create(['name' => $this->permissionName, 'guard_name' => 'web']);
 
-        Flux::modal('permission-form')->close();
-        Flux::toast(text: __('Permission created.'), variant: 'success');
+        $this->dispatch('ui-sheet', name: 'permission-form', open: false);
+        $this->dispatch('ui-toast', text: __('Permission created.'), variant: 'success');
         $this->reset('permissionName');
     }
 
@@ -255,20 +254,20 @@ new class extends Component {
         $role = Role::withCount('users')->findOrFail($id);
 
         if ($role->name === self::PROTECTED_ROLE) {
-            Flux::toast(text: __('The :name role cannot be deleted.', ['name' => $role->name]), variant: 'danger');
+            $this->dispatch('ui-toast', text: __('The :name role cannot be deleted.', ['name' => $role->name]), variant: 'danger');
 
             return;
         }
 
         if ($role->users_count > 0) {
-            Flux::toast(text: __('Remove this role from its users first.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('Remove this role from its users first.'), variant: 'warning');
 
             return;
         }
 
         $this->deleteId = $role->id;
         $this->deleteName = $role->name;
-        Flux::modal('delete-role')->show();
+        $this->dispatch('ui-sheet', name: 'delete-role');
     }
 
     public function deleteRole(): void
@@ -281,8 +280,8 @@ new class extends Component {
         $role->delete();
 
         $this->reset('deleteId', 'deleteName');
-        Flux::modal('delete-role')->close();
-        Flux::toast(text: __('Role deleted.'), variant: 'success');
+        $this->dispatch('ui-sheet', name: 'delete-role', open: false);
+        $this->dispatch('ui-toast', text: __('Role deleted.'), variant: 'success');
     }
 
     public function confirmDeletePermission(int $id): void
@@ -292,7 +291,7 @@ new class extends Component {
 
         $this->deleteId = $permission->id;
         $this->deleteName = $permission->name;
-        Flux::modal('delete-permission')->show();
+        $this->dispatch('ui-sheet', name: 'delete-permission');
     }
 
     public function deletePermission(): void
@@ -302,8 +301,8 @@ new class extends Component {
         Permission::findOrFail($this->deleteId)->delete();
 
         $this->reset('deleteId', 'deleteName');
-        Flux::modal('delete-permission')->close();
-        Flux::toast(text: __('Permission deleted.'), variant: 'success');
+        $this->dispatch('ui-sheet', name: 'delete-permission', open: false);
+        $this->dispatch('ui-toast', text: __('Permission deleted.'), variant: 'success');
     }
 
     /* ------------------------------------------------------------------
@@ -322,63 +321,63 @@ new class extends Component {
     {{-- Nagłówek --}}
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Roles and permissions') }}</flux:heading>
-            <flux:subheading>{{ __('Control what each group of users can do.') }}</flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Roles and permissions') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Control what each group of users can do.') }}</x-ui.subheading>
         </div>
 
         @if ($tab === 'roles')
-            <flux:button variant="primary" icon="plus" wire:click="createRole">{{ __('New role') }}</flux:button>
+            <x-ui.btn variant="primary" icon="plus" wire:click="createRole">{{ __('New role') }}</x-ui.btn>
         @else
-            <flux:button variant="primary" icon="plus" wire:click="createPermission">{{ __('New permission') }}</flux:button>
+            <x-ui.btn variant="primary" icon="plus" wire:click="createPermission">{{ __('New permission') }}</x-ui.btn>
         @endif
     </div>
 
     {{-- Statystyki --}}
     <div class="grid gap-4 md:grid-cols-3">
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.shield-check class="size-8 text-zinc-400" />
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="shield-check" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('Roles') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['roles'] }}</flux:heading>
+                <x-ui.text>{{ __('Roles') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['roles'] }}</x-ui.heading>
             </div>
-        </flux:card>
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.key class="size-8 text-zinc-400" />
+        </x-ui.card>
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="key" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('Permissions') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['permissions'] }}</flux:heading>
+                <x-ui.text>{{ __('Permissions') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['permissions'] }}</x-ui.heading>
             </div>
-        </flux:card>
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.users class="size-8 text-zinc-400" />
+        </x-ui.card>
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="users" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('Users with a role') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['users'] }}</flux:heading>
+                <x-ui.text>{{ __('Users with a role') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['users'] }}</x-ui.heading>
             </div>
-        </flux:card>
+        </x-ui.card>
     </div>
 
     {{-- Zakładki + wyszukiwarka --}}
     <div class="flex flex-wrap items-center justify-between gap-4">
-<flux:button.group>
-    <flux:button
+<x-ui.btn.group>
+    <x-ui.btn
         icon="shield-check"
         :variant="$tab === 'roles' ? 'filled' : 'ghost'"
         wire:click="$set('tab', 'roles')"
     >
         {{ __('Roles') }}
-    </flux:button>
-    <flux:button
+    </x-ui.btn>
+    <x-ui.btn
         icon="key"
         :variant="$tab === 'permissions' ? 'filled' : 'ghost'"
         wire:click="$set('tab', 'permissions')"
     >
         {{ __('Permissions') }}
-    </flux:button>
-</flux:button.group>
+    </x-ui.btn>
+</x-ui.btn.group>
 
         <div class="w-full sm:w-72">
-            <flux:input
+            <x-ui.input
                 wire:model.live.debounce.300ms="search"
                 icon="magnifying-glass"
                 :placeholder="$tab === 'roles' ? __('Search roles...') : __('Search permissions...')"
@@ -389,91 +388,91 @@ new class extends Component {
 
     {{-- Tabela ról --}}
     @if ($tab === 'roles')
-        <flux:table :paginate="$this->roles">
-            <flux:table.columns>
-                <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">
+        <x-ui.table :paginate="$this->roles">
+            <x-ui.table.columns>
+                <x-ui.table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">
                     {{ __('Role') }}
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'permissions_count'" :direction="$sortDirection" wire:click="sort('permissions_count')">
+                </x-ui.table.column>
+                <x-ui.table.column sortable :sorted="$sortBy === 'permissions_count'" :direction="$sortDirection" wire:click="sort('permissions_count')">
                     {{ __('Permissions') }}
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'users_count'" :direction="$sortDirection" wire:click="sort('users_count')">
+                </x-ui.table.column>
+                <x-ui.table.column sortable :sorted="$sortBy === 'users_count'" :direction="$sortDirection" wire:click="sort('users_count')">
                     {{ __('Users') }}
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">
+                </x-ui.table.column>
+                <x-ui.table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">
                     {{ __('Created') }}
-                </flux:table.column>
-                <flux:table.column />
-            </flux:table.columns>
+                </x-ui.table.column>
+                <x-ui.table.column />
+            </x-ui.table.columns>
 
-            <flux:table.rows>
+            <x-ui.table.rows>
                 @forelse ($this->roles as $role)
-                    <flux:table.row :key="'role-'.$role->id">
-                        <flux:table.cell variant="strong">
+                    <x-ui.table.row :key="'role-'.$role->id">
+                        <x-ui.table.cell variant="strong">
                             <div class="flex items-center gap-2">
                                 {{ $role->name }}
                                 @if ($role->name === 'Admin')
-                                    <flux:badge size="sm" color="amber" icon="lock-closed">{{ __('Protected') }}</flux:badge>
+                                    <x-ui.badge size="sm" color="amber" icon="lock-closed">{{ __('Protected') }}</x-ui.badge>
                                 @endif
                             </div>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:badge size="sm" color="blue">{{ $role->permissions_count }}</flux:badge>
-                        </flux:table.cell>
-                        <flux:table.cell>{{ $role->users_count }}</flux:table.cell>
-                        <flux:table.cell class="text-zinc-500">{{ $role->created_at?->format('Y-m-d') }}</flux:table.cell>
-                        <flux:table.cell align="end">
-                            <flux:dropdown position="bottom" align="end">
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom" />
-                                <flux:menu>
-                                    <flux:menu.item icon="pencil-square" wire:click="editRole({{ $role->id }})">{{ __('Edit') }}</flux:menu.item>
+                        </x-ui.table.cell>
+                        <x-ui.table.cell>
+                            <x-ui.badge size="sm" color="blue">{{ $role->permissions_count }}</x-ui.badge>
+                        </x-ui.table.cell>
+                        <x-ui.table.cell>{{ $role->users_count }}</x-ui.table.cell>
+                        <x-ui.table.cell class="text-ui-muted">{{ $role->created_at?->format('Y-m-d') }}</x-ui.table.cell>
+                        <x-ui.table.cell align="end">
+                            <x-ui.dropdown position="bottom" align="end">
+                                <x-ui.btn variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom" />
+                                <x-ui.menu>
+                                    <x-ui.menu.item icon="pencil-square" wire:click="editRole({{ $role->id }})">{{ __('Edit') }}</x-ui.menu.item>
                                     @if ($role->name !== 'Admin')
-                                        <flux:menu.separator />
-                                        <flux:menu.item icon="trash" variant="danger" wire:click="confirmDeleteRole({{ $role->id }})">{{ __('Delete') }}</flux:menu.item>
+                                        <x-ui.menu.separator />
+                                        <x-ui.menu.item icon="trash" variant="danger" wire:click="confirmDeleteRole({{ $role->id }})">{{ __('Delete') }}</x-ui.menu.item>
                                     @endif
-                                </flux:menu>
-                            </flux:dropdown>
-                        </flux:table.cell>
-                    </flux:table.row>
+                                </x-ui.menu>
+                            </x-ui.dropdown>
+                        </x-ui.table.cell>
+                    </x-ui.table.row>
                 @empty
-                    <flux:table.row>
-                        <flux:table.cell colspan="5" class="py-10 text-center text-zinc-500">
+                    <x-ui.table.row>
+                        <x-ui.table.cell colspan="5" class="py-10 text-center text-ui-muted">
                             {{ $search !== '' ? __('No roles match your search.') : __('No roles yet. Create the first one.') }}
-                        </flux:table.cell>
-                    </flux:table.row>
+                        </x-ui.table.cell>
+                    </x-ui.table.row>
                 @endforelse
-            </flux:table.rows>
-        </flux:table>
+            </x-ui.table.rows>
+        </x-ui.table>
     @endif
 
     {{-- Tabela uprawnień --}}
     @if ($tab === 'permissions')
-        <flux:table :paginate="$this->permissions">
-            <flux:table.columns>
-                <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">
+        <x-ui.table :paginate="$this->permissions">
+            <x-ui.table.columns>
+                <x-ui.table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">
                     {{ __('Permission') }}
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'roles_count'" :direction="$sortDirection" wire:click="sort('roles_count')">
+                </x-ui.table.column>
+                <x-ui.table.column sortable :sorted="$sortBy === 'roles_count'" :direction="$sortDirection" wire:click="sort('roles_count')">
                     {{ __('Used in roles') }}
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">
+                </x-ui.table.column>
+                <x-ui.table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">
                     {{ __('Created') }}
-                </flux:table.column>
-                <flux:table.column />
-            </flux:table.columns>
+                </x-ui.table.column>
+                <x-ui.table.column />
+            </x-ui.table.columns>
 
-            <flux:table.rows>
+            <x-ui.table.rows>
                 @forelse ($this->permissions as $permission)
-                    <flux:table.row :key="'permission-'.$permission->id">
-                        <flux:table.cell variant="strong">
+                    <x-ui.table.row :key="'permission-'.$permission->id">
+                        <x-ui.table.cell variant="strong">
                             <code class="text-sm">{{ $permission->name }}</code>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:badge size="sm" :color="$permission->roles_count ? 'blue' : 'zinc'">{{ $permission->roles_count }}</flux:badge>
-                        </flux:table.cell>
-                        <flux:table.cell class="text-zinc-500">{{ $permission->created_at?->format('Y-m-d') }}</flux:table.cell>
-                        <flux:table.cell align="end">
-                            <flux:button
+                        </x-ui.table.cell>
+                        <x-ui.table.cell>
+                            <x-ui.badge size="sm" :color="$permission->roles_count ? 'blue' : 'zinc'">{{ $permission->roles_count }}</x-ui.badge>
+                        </x-ui.table.cell>
+                        <x-ui.table.cell class="text-ui-muted">{{ $permission->created_at?->format('Y-m-d') }}</x-ui.table.cell>
+                        <x-ui.table.cell align="end">
+                            <x-ui.btn
                                 variant="ghost"
                                 size="sm"
                                 icon="trash"
@@ -481,28 +480,28 @@ new class extends Component {
                                 wire:click="confirmDeletePermission({{ $permission->id }})"
                                 :aria-label="__('Delete')"
                             />
-                        </flux:table.cell>
-                    </flux:table.row>
+                        </x-ui.table.cell>
+                    </x-ui.table.row>
                 @empty
-                    <flux:table.row>
-                        <flux:table.cell colspan="4" class="py-10 text-center text-zinc-500">
+                    <x-ui.table.row>
+                        <x-ui.table.cell colspan="4" class="py-10 text-center text-ui-muted">
                             {{ $search !== '' ? __('No permissions match your search.') : __('No permissions yet. Create the first one.') }}
-                        </flux:table.cell>
-                    </flux:table.row>
+                        </x-ui.table.cell>
+                    </x-ui.table.row>
                 @endforelse
-            </flux:table.rows>
-        </flux:table>
+            </x-ui.table.rows>
+        </x-ui.table>
     @endif
 
     {{-- Modal: rola --}}
-    <flux:modal name="role-form" class="w-full md:w-[36rem]" @close="resetRoleForm">
+    <x-ui.modal name="role-form" class="w-full md:w-[36rem]" @close="$wire.resetRoleForm()">
         <form wire:submit="saveRole" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ $roleId ? __('Edit role') : __('New role') }}</flux:heading>
-                <flux:text class="mt-1">{{ __('Choose a name and the permissions this role grants.') }}</flux:text>
+                <x-ui.heading size="lg">{{ $roleId ? __('Edit role') : __('New role') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ __('Choose a name and the permissions this role grants.') }}</x-ui.text>
             </div>
 
-            <flux:input
+            <x-ui.input
                 wire:model="roleName"
                 :label="__('Role name')"
                 :disabled="$roleName === 'Admin' && $roleId"
@@ -510,23 +509,23 @@ new class extends Component {
             />
 
             <div class="space-y-1">
-                <flux:label>{{ __('Permissions') }}</flux:label>
+                <x-ui.label>{{ __('Permissions') }}</x-ui.label>
 
                 @if ($this->groupedPermissions->isEmpty())
-                    <flux:text>{{ __('No permissions yet. Create them in the Permissions tab first.') }}</flux:text>
+                    <x-ui.text>{{ __('No permissions yet. Create them in the Permissions tab first.') }}</x-ui.text>
                 @else
-                    <flux:checkbox.group wire:model="selected" class="max-h-80 space-y-4 overflow-y-auto rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+                    <x-ui.checkbox.group model="selected" class="max-h-80 space-y-4 overflow-y-auto rounded-lg border border-ui-line p-4 ">
                         @foreach ($this->groupedPermissions as $group => $items)
                             <div wire:key="group-{{ $group }}" class="space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <flux:heading>{{ \Illuminate\Support\Str::headline($group) }}</flux:heading>
-                                    <flux:button size="xs" variant="subtle" type="button" wire:click="toggleGroup('{{ $group }}')">
+                                    <x-ui.heading>{{ \Illuminate\Support\Str::headline($group) }}</x-ui.heading>
+                                    <x-ui.btn size="xs" variant="subtle" type="button" wire:click="toggleGroup('{{ $group }}')">
                                         {{ __('Toggle all') }}
-                                    </flux:button>
+                                    </x-ui.btn>
                                 </div>
                                 <div class="grid gap-2 sm:grid-cols-2">
                                     @foreach ($items as $permission)
-                                        <flux:checkbox
+                                        <x-ui.checkbox
                                             wire:key="perm-{{ $permission->id }}"
                                             :value="$permission->name"
                                             :label="$permission->name"
@@ -535,76 +534,76 @@ new class extends Component {
                                 </div>
                             </div>
                         @endforeach
-                    </flux:checkbox.group>
+                    </x-ui.checkbox.group>
                 @endif
 
-                <flux:error name="selected" />
+                <x-ui.error name="selected" />
             </div>
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" type="submit">
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" type="submit">
                     <span wire:loading.remove wire:target="saveRole">{{ __('Save changes') }}</span>
                     <span wire:loading wire:target="saveRole">{{ __('Saving...') }}</span>
-                </flux:button>
+                </x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 
     {{-- Modal: uprawnienie --}}
-    <flux:modal name="permission-form" class="w-full md:w-[28rem]">
+    <x-ui.modal name="permission-form" class="w-full md:w-[28rem]">
         <form wire:submit="savePermission" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('New permission') }}</flux:heading>
-                <flux:text class="mt-1">{{ __('Use the format group.action, for example roles.view.') }}</flux:text>
+                <x-ui.heading size="lg">{{ __('New permission') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ __('Use the format group.action, for example roles.view.') }}</x-ui.text>
             </div>
 
-            <flux:input wire:model="permissionName" :label="__('Permission name')" placeholder="roles.view" autofocus />
+            <x-ui.input wire:model="permissionName" :label="__('Permission name')" placeholder="roles.view" autofocus />
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" type="submit">{{ __('Create permission') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" type="submit">{{ __('Create permission') }}</x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 
     {{-- Modal: usuń rolę --}}
-    <flux:modal name="delete-role" class="min-w-[22rem]">
+    <x-ui.modal name="delete-role" class="min-w-[22rem]">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Delete role?') }}</flux:heading>
-                <flux:text class="mt-2">
+                <x-ui.heading size="lg">{{ __('Delete role?') }}</x-ui.heading>
+                <x-ui.text class="mt-2">
                     {{ __('The role :name will be permanently deleted.', ['name' => $deleteName]) }}
-                </flux:text>
+                </x-ui.text>
             </div>
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="danger" wire:click="deleteRole">{{ __('Delete role') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="danger" wire:click="deleteRole">{{ __('Delete role') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 
     {{-- Modal: usuń uprawnienie --}}
-    <flux:modal name="delete-permission" class="min-w-[22rem]">
+    <x-ui.modal name="delete-permission" class="min-w-[22rem]">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Delete permission?') }}</flux:heading>
-                <flux:text class="mt-2">
+                <x-ui.heading size="lg">{{ __('Delete permission?') }}</x-ui.heading>
+                <x-ui.text class="mt-2">
                     {{ __('The permission :name will be removed from every role that uses it.', ['name' => $deleteName]) }}
-                </flux:text>
+                </x-ui.text>
             </div>
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="danger" wire:click="deletePermission">{{ __('Delete permission') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="danger" wire:click="deletePermission">{{ __('Delete permission') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 </div>

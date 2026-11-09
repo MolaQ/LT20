@@ -133,7 +133,7 @@ class OfficeRequest extends Model
         };
     }
 
-    /** Kolor plakietki statusu (Flux badge). */
+    /** Kolor plakietki statusu (x-ui.badge). */
     public function statusColor(): string
     {
         return match ($this->status) {

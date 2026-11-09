@@ -1,7 +1,6 @@
 <?php
 
 use App\Support\Maintenance;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -32,7 +31,7 @@ new class extends Component {
         $this->validateForm();
 
         Maintenance::enable($this->message, $this->untilValue(), auth()->user());
-        Flux::toast(variant: 'warning', text: __('Maintenance mode is on. Only admins can see the site.'));
+        $this->dispatch('ui-toast', variant: 'warning', text: __('Maintenance mode is on. Only admins can see the site.'));
     }
 
     public function save(): void
@@ -41,7 +40,7 @@ new class extends Component {
         $this->validateForm();
 
         Maintenance::update($this->message, $this->untilValue());
-        Flux::toast(variant: 'success', text: __('Saved.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Saved.'));
     }
 
     public function disable(): void
@@ -49,7 +48,7 @@ new class extends Component {
         $this->authorizeAdmin();
 
         Maintenance::disable();
-        Flux::toast(variant: 'success', text: __('The site is open again.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('The site is open again.'));
     }
 
     private function validateForm(): void
@@ -78,45 +77,45 @@ new class extends Component {
 
 <div class="max-w-3xl space-y-6">
     <div>
-        <flux:heading size="xl">{{ __('Maintenance mode') }}</flux:heading>
-        <flux:text>{{ __('Close the site for players while you update it or test new features. Admins still see the whole site and the panel.') }}</flux:text>
+        <x-ui.heading size="xl">{{ __('Maintenance mode') }}</x-ui.heading>
+        <x-ui.text>{{ __('Close the site for players while you update it or test new features. Admins still see the whole site and the panel.') }}</x-ui.text>
     </div>
 
-    <flux:card class="space-y-4">
+    <x-ui.card class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3">
                 <span class="{{ $state['enabled'] ? 'bg-amber-500' : 'bg-emerald-500' }} inline-block size-3 rounded-full"></span>
                 <div>
                     <div class="font-semibold">{{ $state['enabled'] ? __('The site is closed (technical break)') : __('The site is open') }}</div>
                     @if ($state['enabled'] && $state['since'])
-                        <div class="text-xs text-zinc-500">{{ __('Since :date, by :name', ['date' => \Illuminate\Support\Carbon::parse($state['since'])->format('d.m.Y H:i'), 'name' => $state['by'] ?? '—']) }}</div>
+                        <div class="text-xs text-ui-muted">{{ __('Since :date, by :name', ['date' => \Illuminate\Support\Carbon::parse($state['since'])->format('d.m.Y H:i'), 'name' => $state['by'] ?? '—']) }}</div>
                     @endif
                 </div>
             </div>
             @if ($state['enabled'])
-                <flux:button variant="primary" icon="lock-open" wire:click="disable">{{ __('Open the site') }}</flux:button>
+                <x-ui.btn variant="primary" icon="lock-open" wire:click="disable">{{ __('Open the site') }}</x-ui.btn>
             @else
-                <flux:button variant="danger" icon="wrench-screwdriver" wire:click="enable">{{ __('Close the site') }}</flux:button>
+                <x-ui.btn variant="danger" icon="wrench-screwdriver" wire:click="enable">{{ __('Close the site') }}</x-ui.btn>
             @endif
         </div>
 
-        <flux:textarea wire:model="message" :label="__('Message for players (optional)')" rows="3" maxlength="500"
+        <x-ui.textarea wire:model="message" :label="__('Message for players (optional)')" rows="3" maxlength="500"
             :placeholder="__('e.g. We are adding player designation. Back after the update.')" />
-        <flux:input type="datetime-local" wire:model="until" :label="__('Planned end (optional)')" />
+        <x-ui.input type="datetime-local" wire:model="until" :label="__('Planned end (optional)')" />
         @if ($state['enabled'])
             <div class="flex justify-end">
-                <flux:button size="sm" wire:click="save">{{ __('Save message') }}</flux:button>
+                <x-ui.btn size="sm" wire:click="save">{{ __('Save message') }}</x-ui.btn>
             </div>
         @endif
-    </flux:card>
+    </x-ui.card>
 
-    <flux:card class="space-y-2">
-        <flux:heading>{{ __('How to update the site safely') }}</flux:heading>
-        <ol class="list-decimal space-y-1 pl-5 text-sm text-zinc-600 dark:text-zinc-300">
+    <x-ui.card class="space-y-2">
+        <x-ui.heading>{{ __('How to update the site safely') }}</x-ui.heading>
+        <ol class="list-decimal space-y-1 pl-5 text-sm text-ui-muted">
             <li>{{ __('Close the site here, so nobody saves tips while the update runs.') }}</li>
             <li>{{ __('Upload the code and run the migrations (php artisan migrate --force), then php artisan optimize.') }}</li>
             <li>{{ __('Check the site as admin, then open it again.') }}</li>
         </ol>
-        <flux:text class="text-xs">{{ __('If the update can break the panel itself, use php artisan down --secret=word instead: the site is closed for everybody and you enter it with the address /word.') }}</flux:text>
-    </flux:card>
+        <x-ui.text class="text-xs">{{ __('If the update can break the panel itself, use php artisan down --secret=word instead: the site is closed for everybody and you enter it with the address /word.') }}</x-ui.text>
+    </x-ui.card>
 </div>

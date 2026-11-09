@@ -3,7 +3,7 @@
     variant: outline (domyślnie), primary, filled, ghost, subtle, danger; size: base, sm, xs; icon i icon-trailing z x-ui.icon.
     Z href jest linkiem (wire:navigate dodaje wywołujący, tak jak we Flux).
 --}}
-@props(['variant' => 'outline', 'size' => 'base', 'icon' => null, 'iconTrailing' => null, 'href' => null, 'square' => false])
+@props(['variant' => 'outline', 'size' => 'base', 'icon' => null, 'iconTrailing' => null, 'href' => null, 'square' => false, 'inset' => null])
 
 @php
     $iconOnly = $slot->isEmpty() || $square;

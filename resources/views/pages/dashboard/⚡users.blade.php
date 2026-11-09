@@ -3,7 +3,6 @@
 use App\Enums\RoleName;
 use App\Models\User;
 use App\Support\Roster;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -177,9 +176,9 @@ new class extends Component {
         $this->checked = [];
         unset($this->users, $this->stats, $this->filteredCount);
 
-        Flux::toast(text: __(':role removed from :count accounts.', ['role' => $role, 'count' => $users->count()]), variant: 'success');
+        $this->dispatch('ui-toast', text: __(':role removed from :count accounts.', ['role' => $role, 'count' => $users->count()]), variant: 'success');
         if ($added > 0) {
-            Flux::toast(text: __('Added to the season list: :count.', ['count' => $added]), variant: 'success');
+            $this->dispatch('ui-toast', text: __('Added to the season list: :count.', ['count' => $added]), variant: 'success');
         }
     }
 
@@ -198,7 +197,7 @@ new class extends Component {
         $this->selected = $user->roles->pluck('name')->all();
         $this->resetValidation();
 
-        Flux::modal('user-roles')->show();
+        $this->dispatch('ui-sheet', name: 'user-roles');
     }
 
     public function save(): void
@@ -254,15 +253,15 @@ new class extends Component {
         // a zbanowany albo bez roli traci miejsce na rzecz bota (patrz App\Support\Roster).
         $roster = Roster::syncUser($user);
 
-        Flux::modal('user-roles')->close();
-        Flux::toast(text: __('Roles updated.'), variant: 'success');
+        $this->dispatch('ui-sheet', name: 'user-roles', open: false);
+        $this->dispatch('ui-toast', text: __('Roles updated.'), variant: 'success');
 
         if ($roster['added'] > 0) {
-            Flux::toast(text: __('The player was added to the season list.'), variant: 'success');
+            $this->dispatch('ui-toast', text: __('The player was added to the season list.'), variant: 'success');
         }
 
         if ($roster['released'] > 0) {
-            Flux::toast(text: __('The player was removed from the season list.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('The player was removed from the season list.'), variant: 'warning');
         }
         $this->resetForm();
     }
@@ -283,7 +282,7 @@ new class extends Component {
         }
 
         $code = $user->newVerificationCode();
-        Flux::toast(text: __('New code for :name: :code', ['name' => $user->name, 'code' => $code]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('New code for :name: :code', ['name' => $user->name, 'code' => $code]), variant: 'success');
     }
 
     /** Potwierdza adres bez kodu. */
@@ -299,7 +298,7 @@ new class extends Component {
         }
 
         unset($this->stats);
-        Flux::toast(text: __('Email of :name confirmed.', ['name' => $user->name]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Email of :name confirmed.', ['name' => $user->name]), variant: 'success');
     }
 
     public function resetForm(): void
@@ -323,58 +322,58 @@ new class extends Component {
 
     {{-- Nagłówek --}}
     <div>
-        <flux:heading size="xl" level="1">{{ __('Users') }}</flux:heading>
-        <flux:subheading>{{ __('Assign roles to the people who use this application.') }}</flux:subheading>
+        <x-ui.heading size="xl" level="1">{{ __('Users') }}</x-ui.heading>
+        <x-ui.subheading>{{ __('Assign roles to the people who use this application.') }}</x-ui.subheading>
     </div>
 
     {{-- Statystyki --}}
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.users class="size-8 text-zinc-400" />
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="users" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('All users') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['users'] }}</flux:heading>
+                <x-ui.text>{{ __('All users') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['users'] }}</x-ui.heading>
             </div>
-        </flux:card>
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.shield-check class="size-8 text-zinc-400" />
+        </x-ui.card>
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="shield-check" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('Admins') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['admins'] }}</flux:heading>
+                <x-ui.text>{{ __('Admins') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['admins'] }}</x-ui.heading>
             </div>
-        </flux:card>
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.user-minus class="size-8 text-zinc-400" />
+        </x-ui.card>
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="user-minus" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('Without a role') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['withoutRole'] }}</flux:heading>
+                <x-ui.text>{{ __('Without a role') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['withoutRole'] }}</x-ui.heading>
             </div>
-        </flux:card>
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.envelope class="size-8 text-zinc-400" />
+        </x-ui.card>
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="envelope" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('Email not confirmed') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['unverified'] }}</flux:heading>
+                <x-ui.text>{{ __('Email not confirmed') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['unverified'] }}</x-ui.heading>
             </div>
-        </flux:card>
+        </x-ui.card>
     </div>
 
     {{-- Wyszukiwarka i filtr --}}
     <div class="flex flex-wrap items-center gap-4">
         <div class="w-full sm:w-72">
-            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+            <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 :placeholder="__('Search by name, email or team...')" clearable />
         </div>
 
         <div class="w-full sm:w-56">
-            <flux:select wire:model.live="roleFilter">
-                <flux:select.option value="">{{ __('All roles') }}</flux:select.option>
-                <flux:select.option value="__none">{{ __('Without a role') }}</flux:select.option>
-                <flux:select.option value="__unverified">{{ __('Email not confirmed') }}</flux:select.option>
+            <x-ui.select wire:model.live="roleFilter">
+                <x-ui.select.option value="">{{ __('All roles') }}</x-ui.select.option>
+                <x-ui.select.option value="__none">{{ __('Without a role') }}</x-ui.select.option>
+                <x-ui.select.option value="__unverified">{{ __('Email not confirmed') }}</x-ui.select.option>
                 @foreach ($this->roles as $role)
-                    <flux:select.option :value="$role->name">{{ $role->name }}</flux:select.option>
+                    <x-ui.select.option :value="$role->name">{{ $role->name }}</x-ui.select.option>
                 @endforeach
-            </flux:select>
+            </x-ui.select>
         </div>
     </div>
 
@@ -382,72 +381,72 @@ new class extends Component {
     @php
         $checkedCount = count($checked);
     @endphp
-    <div class="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700">
-        <flux:text class="me-2">{{ __('Selected: :count', ['count' => $checkedCount]) }}</flux:text>
-        <flux:button size="sm" variant="ghost" icon="check" wire:click="checkAllFiltered">
+    <div class="flex flex-wrap items-center gap-2 rounded-lg border border-ui-line px-3 py-2 ">
+        <x-ui.text class="me-2">{{ __('Selected: :count', ['count' => $checkedCount]) }}</x-ui.text>
+        <x-ui.btn size="sm" variant="ghost" icon="check" wire:click="checkAllFiltered">
             {{ __('Select all matching (:count)', ['count' => $this->filteredCount]) }}
-        </flux:button>
+        </x-ui.btn>
         @if ($checkedCount > 0)
-            <flux:button size="sm" variant="ghost" icon="x-mark" wire:click="clearChecked">{{ __('Clear selection') }}</flux:button>
-            <flux:button size="sm" icon="lock-open" x-on:click="$dispatch('confirm-action', { message: @js(__('Remove the ban from the selected accounts?')), run: () => $wire.releaseRole(@js(\App\Enums\RoleName::Banned->value)) })">{{ __('Remove ban') }}</flux:button>
-            <flux:button size="sm" icon="arrow-uturn-left" x-on:click="$dispatch('confirm-action', { message: @js(__('Remove Inactive from the selected accounts?')), run: () => $wire.releaseRole(@js(\App\Enums\RoleName::Inactive->value)) })">{{ __('Remove Inactive') }}</flux:button>
+            <x-ui.btn size="sm" variant="ghost" icon="x-mark" wire:click="clearChecked">{{ __('Clear selection') }}</x-ui.btn>
+            <x-ui.btn size="sm" icon="lock-open" x-on:click="$dispatch('confirm-action', { message: @js(__('Remove the ban from the selected accounts?')), run: () => $wire.releaseRole(@js(\App\Enums\RoleName::Banned->value)) })">{{ __('Remove ban') }}</x-ui.btn>
+            <x-ui.btn size="sm" icon="arrow-uturn-left" x-on:click="$dispatch('confirm-action', { message: @js(__('Remove Inactive from the selected accounts?')), run: () => $wire.releaseRole(@js(\App\Enums\RoleName::Inactive->value)) })">{{ __('Remove Inactive') }}</x-ui.btn>
         @endif
     </div>
 
     {{-- Tabela użytkowników --}}
-    <flux:table :paginate="$this->users">
-        <flux:table.columns>
-            <flux:table.column class="w-8" />
-            <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection"
+    <x-ui.table :paginate="$this->users">
+        <x-ui.table.columns>
+            <x-ui.table.column class="w-8" />
+            <x-ui.table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection"
                 wire:click="sort('name')">
                 {{ __('User') }}
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'email'" :direction="$sortDirection"
+            </x-ui.table.column>
+            <x-ui.table.column sortable :sorted="$sortBy === 'email'" :direction="$sortDirection"
                 wire:click="sort('email')">
                 {{ __('Email') }}
-            </flux:table.column>
-            <flux:table.column>{{ __('Email confirmation') }}</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'roles_count'" :direction="$sortDirection"
+            </x-ui.table.column>
+            <x-ui.table.column>{{ __('Email confirmation') }}</x-ui.table.column>
+            <x-ui.table.column sortable :sorted="$sortBy === 'roles_count'" :direction="$sortDirection"
                 wire:click="sort('roles_count')">
                 {{ __('Roles') }}
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection"
+            </x-ui.table.column>
+            <x-ui.table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection"
                 wire:click="sort('created_at')">
                 {{ __('Joined') }}
-            </flux:table.column>
-            <flux:table.column />
-        </flux:table.columns>
+            </x-ui.table.column>
+            <x-ui.table.column />
+        </x-ui.table.columns>
 
-        <flux:table.rows>
+        <x-ui.table.rows>
             @forelse ($this->users as $user)
-                <flux:table.row :key="'user-'.$user->id">
-                    <flux:table.cell>
+                <x-ui.table.row :key="'user-'.$user->id">
+                    <x-ui.table.cell>
                         <input type="checkbox" wire:model.live="checked" value="{{ $user->id }}" aria-label="{{ __('Select') }}"
                             class="size-4 rounded border-zinc-300 text-lech-700 dark:border-zinc-600">
-                    </flux:table.cell>
-                    <flux:table.cell variant="strong">
+                    </x-ui.table.cell>
+                    <x-ui.table.cell variant="strong">
                         <div class="flex items-center gap-3">
-                            <flux:avatar size="sm" :name="$user->name" />
+                            <x-ui.avatar size="sm" :name="$user->name" />
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
                                     <span>{{ $user->name }}</span>
                                     @if ($user->is(auth()->user()))
-                                        <flux:badge size="sm" color="zinc">{{ __('You') }}</flux:badge>
+                                        <x-ui.badge size="sm" color="zinc">{{ __('You') }}</x-ui.badge>
                                     @endif
                                 </div>
                                 {{-- Nazwa drużyny z linkiem do profilu --}}
                                 @if ($user->team_name)
-                                    <a href="{{ route('team.show', $user) }}" target="_blank" class="block truncate text-xs font-normal text-zinc-500 hover:text-lech-700 hover:underline">{{ $user->team_name }}</a>
+                                    <a href="{{ route('team.show', $user) }}" target="_blank" class="block truncate text-xs font-normal text-ui-muted hover:text-lech-700 hover:underline">{{ $user->team_name }}</a>
                                 @else
                                     <span class="block text-xs font-normal text-zinc-400">{{ __('No team name') }}</span>
                                 @endif
                             </div>
                         </div>
-                    </flux:table.cell>
-                    <flux:table.cell class="text-zinc-500">{{ $user->email }}</flux:table.cell>
-                    <flux:table.cell>
+                    </x-ui.table.cell>
+                    <x-ui.table.cell class="text-ui-muted">{{ $user->email }}</x-ui.table.cell>
+                    <x-ui.table.cell>
                         @if ($user->email_verified_at)
-                            <flux:badge size="sm" color="green" icon="check">{{ __('Confirmed') }}</flux:badge>
+                            <x-ui.badge size="sm" color="green" icon="check">{{ __('Confirmed') }}</x-ui.badge>
                         @else
                             @php
                                 $codeValid = $user->verification_code && $user->verification_code_expires_at?->isFuture();
@@ -457,75 +456,75 @@ new class extends Component {
                                     <span class="rounded bg-amber-100 px-2 py-0.5 font-mono text-sm font-semibold tracking-widest text-amber-800 dark:bg-amber-500/20 dark:text-amber-200"
                                         title="{{ __('Valid until :time', ['time' => $user->verification_code_expires_at->format('d.m H:i')]) }}">{{ $user->verification_code }}</span>
                                 @else
-                                    <flux:badge size="sm" color="zinc">{{ $user->verification_code ? __('Code expired') : __('No code') }}</flux:badge>
+                                    <x-ui.badge size="sm" color="zinc">{{ $user->verification_code ? __('Code expired') : __('No code') }}</x-ui.badge>
                                 @endif
-                                <flux:button variant="ghost" size="xs" icon="arrow-path" wire:click="newCode({{ $user->id }})"
+                                <x-ui.btn variant="ghost" size="xs" icon="arrow-path" wire:click="newCode({{ $user->id }})"
                                     :aria-label="__('New code')" :tooltip="__('New code')" />
-                                <flux:button variant="ghost" size="xs" icon="check-badge" x-on:click="$dispatch('confirm-action', { message: @js(__('Confirm this email without a code?')), run: () => $wire.confirmEmail({{ $user->id }}) })" :aria-label="__('Confirm without a code')"
+                                <x-ui.btn variant="ghost" size="xs" icon="check-badge" x-on:click="$dispatch('confirm-action', { message: @js(__('Confirm this email without a code?')), run: () => $wire.confirmEmail({{ $user->id }}) })" :aria-label="__('Confirm without a code')"
                                     :tooltip="__('Confirm without a code')" />
                             </div>
                         @endif
-                    </flux:table.cell>
-                    <flux:table.cell>
+                    </x-ui.table.cell>
+                    <x-ui.table.cell>
                         <div class="flex flex-wrap gap-1">
                             @forelse ($user->roles as $role)
-                                <flux:badge size="sm"
+                                <x-ui.badge size="sm"
                                     :color="\App\Enums\RoleName::tryFrom($role->name)?->color() ?? 'zinc'">
-                                    {{ $role->name }}</flux:badge>
+                                    {{ $role->name }}</x-ui.badge>
                             @empty
                                 <span class="text-zinc-400">{{ __('None') }}</span>
                             @endforelse
                         </div>
-                    </flux:table.cell>
-                    <flux:table.cell class="text-zinc-500">{{ $user->created_at?->format('Y-m-d') }}</flux:table.cell>
-                    <flux:table.cell align="end">
-                        <flux:button variant="ghost" size="sm" icon="pencil-square" inset="top bottom"
+                    </x-ui.table.cell>
+                    <x-ui.table.cell class="text-ui-muted">{{ $user->created_at?->format('Y-m-d') }}</x-ui.table.cell>
+                    <x-ui.table.cell align="end">
+                        <x-ui.btn variant="ghost" size="sm" icon="pencil-square" inset="top bottom"
                             wire:click="edit({{ $user->id }})" :aria-label="__('Edit roles')" />
-                    </flux:table.cell>
-                </flux:table.row>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="7" class="py-10 text-center text-zinc-500">
+                <x-ui.table.row>
+                    <x-ui.table.cell colspan="7" class="py-10 text-center text-ui-muted">
                         {{ __('No users match your filters.') }}
-                    </flux:table.cell>
-                </flux:table.row>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @endforelse
-        </flux:table.rows>
-    </flux:table>
+        </x-ui.table.rows>
+    </x-ui.table>
 
     {{-- Modal: role użytkownika --}}
-    <flux:modal name="user-roles" class="w-full md:w-[30rem]" @close="resetForm">
+    <x-ui.modal name="user-roles" class="w-full md:w-[30rem]" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit roles') }}</flux:heading>
-                <flux:text class="mt-1">{{ $userName }}</flux:text>
+                <x-ui.heading size="lg">{{ __('Edit roles') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ $userName }}</x-ui.text>
             </div>
 
             <div class="space-y-1">
                 @if ($this->roles->isEmpty())
-                    <flux:text>{{ __('No roles yet. Create them in Roles and permissions first.') }}</flux:text>
+                    <x-ui.text>{{ __('No roles yet. Create them in Roles and permissions first.') }}</x-ui.text>
                 @else
-                    <flux:checkbox.group wire:model="selected"
-                        class="space-y-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
+                    <x-ui.checkbox.group model="selected"
+                        class="space-y-3 rounded-lg border border-ui-line p-4 ">
                         @foreach ($this->roles as $role)
-                            <flux:checkbox wire:key="role-{{ $role->id }}" :value="$role->name"
+                            <x-ui.checkbox wire:key="role-{{ $role->id }}" :value="$role->name"
                                 :label="$role->name" />
                         @endforeach
-                    </flux:checkbox.group>
+                    </x-ui.checkbox.group>
                 @endif
 
-                <flux:error name="selected" />
+                <x-ui.error name="selected" />
             </div>
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" type="submit">
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" type="submit">
                     <span wire:loading.remove wire:target="save">{{ __('Save changes') }}</span>
                     <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
-                </flux:button>
+                </x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 </div>

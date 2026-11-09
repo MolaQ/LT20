@@ -68,25 +68,25 @@ new class extends Component {
 
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('To do') }}</flux:heading>
-            <flux:subheading>{{ __('Everything that must be set up for the season to work correctly.') }}
-            </flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('To do') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Everything that must be set up for the season to work correctly.') }}
+            </x-ui.subheading>
         </div>
 
         <div class="flex items-end gap-2">
             @if ($this->seasons->isNotEmpty())
                 <div class="w-full sm:w-56">
-                    <flux:select wire:model.live="seasonId" :label="__('Season')">
+                    <x-ui.select wire:model.live="seasonId" :label="__('Season')">
                         @foreach ($this->seasons as $option)
-                            <flux:select.option :value="$option->id">
+                            <x-ui.select.option :value="$option->id">
                                 {{ $option->title }} ({{ $option->status->label() }})
-                            </flux:select.option>
+                            </x-ui.select.option>
                         @endforeach
-                    </flux:select>
+                    </x-ui.select>
                 </div>
             @endif
 
-            <flux:button icon="arrow-path" wire:click="recheck">{{ __('Check again') }}</flux:button>
+            <x-ui.btn icon="arrow-path" wire:click="recheck">{{ __('Check again') }}</x-ui.btn>
         </div>
     </div>
 
@@ -95,54 +95,54 @@ new class extends Component {
         $percent = $progress['total'] > 0 ? round(($progress['done'] / $progress['total']) * 100) : 0;
     @endphp
 
-    <flux:card class="space-y-3">
+    <x-ui.card class="space-y-3">
         <div class="flex items-center justify-between">
-            <flux:heading>{{ __(':done of :total done', ['done' => $progress['done'], 'total' => $progress['total']]) }}
-            </flux:heading>
+            <x-ui.heading>{{ __(':done of :total done', ['done' => $progress['done'], 'total' => $progress['total']]) }}
+            </x-ui.heading>
             @if ($progress['done'] === $progress['total'])
-                <flux:badge color="green">{{ __('Ready') }}</flux:badge>
+                <x-ui.badge color="green">{{ __('Ready') }}</x-ui.badge>
             @endif
         </div>
-        <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+        <div class="h-2 w-full overflow-hidden rounded-full bg-ui-line">
             <div class="h-full rounded-full bg-green-500" style="width: {{ $percent }}%"></div>
         </div>
-    </flux:card>
+    </x-ui.card>
 
     @foreach ($this->groups as $group => $items)
-        <flux:card class="space-y-1">
-            <flux:heading class="mb-2">{{ $group }}</flux:heading>
+        <x-ui.card class="space-y-1">
+            <x-ui.heading class="mb-2">{{ $group }}</x-ui.heading>
 
-            <ul class="divide-y divide-zinc-200 dark:divide-zinc-700">
+            <ul class="divide-y divide-ui-line">
                 @foreach ($items as $item)
                     <li class="flex items-center gap-3 py-3"
                         wire:key="check-{{ $loop->parent->index }}-{{ $loop->index }}">
                         @if ($item['ok'])
-                            <flux:icon.check-circle class="size-6 shrink-0 text-green-500" />
+                            <x-ui.icon name="check-circle" class="size-6 shrink-0 text-green-500" />
                         @else
-                            <flux:icon.exclamation-circle class="size-6 shrink-0 text-amber-500" />
+                            <x-ui.icon name="exclamation-circle" class="size-6 shrink-0 text-amber-500" />
                         @endif
 
                         <div class="min-w-0 flex-1">
                             <div>{{ $item['title'] }}</div>
                             @if (!$item['ok'] && $item['hint'])
-                                <code class="text-xs text-zinc-500">{{ $item['hint'] }}</code>
+                                <code class="text-xs text-ui-muted">{{ $item['hint'] }}</code>
                             @endif
                         </div>
 
                         @if ($item['detail'] !== '')
-                            <span class="shrink-0 text-sm tabular-nums text-zinc-500">{{ $item['detail'] }}</span>
+                            <span class="shrink-0 text-sm tabular-nums text-ui-muted">{{ $item['detail'] }}</span>
                         @endif
 
                         @if (!$item['ok'] && $item['route'] && \Illuminate\Support\Facades\Route::has($item['route']))
-                            <flux:button size="sm"
+                            <x-ui.btn size="sm"
                                 :href="route($item['route'], $this->seasonId ? ['season' => $this->seasonId] : [])"
                                 wire:navigate>
                                 {{ __('Fix') }}
-                            </flux:button>
+                            </x-ui.btn>
                         @endif
                     </li>
                 @endforeach
             </ul>
-        </flux:card>
+        </x-ui.card>
     @endforeach
 </div>

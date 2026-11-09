@@ -133,6 +133,10 @@ document.addEventListener('alpine:init', () => {
             });
         },
         close() {
+            // Zdarzenie close na oknie (jak we Flux: @close="resetForm"), tylko gdy było otwarte.
+            if (this.open) {
+                this.$root.dispatchEvent(new CustomEvent('close'));
+            }
             this.open = false;
             this.drag = 0;
         },

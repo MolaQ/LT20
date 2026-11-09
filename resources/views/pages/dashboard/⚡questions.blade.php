@@ -7,7 +7,6 @@ use App\Models\QuestionTemplate;
 use App\Models\Season;
 use App\Support\Audit;
 use App\Support\Questions;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -82,7 +81,7 @@ new class extends Component {
         $ids = in_array($templateId, $ids, true) ? array_values(array_diff($ids, [$templateId])) : [...$ids, $templateId];
 
         if (count($ids) > Questions::PER_MATCHDAY) {
-            Flux::toast(variant: 'warning', text: __('A matchday has at most :count questions.', ['count' => Questions::PER_MATCHDAY]));
+            $this->dispatch('ui-toast', variant: 'warning', text: __('A matchday has at most :count questions.', ['count' => Questions::PER_MATCHDAY]));
 
             return;
         }
@@ -129,17 +128,17 @@ new class extends Component {
 
 <div class="mx-auto flex w-full max-w-5xl flex-col gap-6">
     <div>
-        <flux:heading size="xl">{{ __('Questions') }}</flux:heading>
-        <flux:text>{{ __('Pick up to :count yes/no questions for the matchday with a click. After the match, mark the right answer.', ['count' => \App\Support\Questions::PER_MATCHDAY]) }}</flux:text>
+        <x-ui.heading size="xl">{{ __('Questions') }}</x-ui.heading>
+        <x-ui.text>{{ __('Pick up to :count yes/no questions for the matchday with a click. After the match, mark the right answer.', ['count' => \App\Support\Questions::PER_MATCHDAY]) }}</x-ui.text>
     </div>
 
     @if ($this->matchdays->isEmpty())
-        <flux:callout icon="information-circle">{{ __('No matchdays yet.') }}</flux:callout>
+        <x-ui.callout icon="information-circle">{{ __('No matchdays yet.') }}</x-ui.callout>
     @else
         <div class="flex gap-2 overflow-x-auto pb-1">
             @foreach ($this->matchdays as $option)
                 <button type="button" wire:click="$set('number', {{ $option->number }})" wire:key="qmd-{{ $option->id }}"
-                    class="{{ $option->number === $number ? 'bg-lech-700 text-white' : 'bg-zinc-100 dark:bg-zinc-800' }} shrink-0 rounded-xl px-3 py-2 text-sm font-semibold">
+                    class="{{ $option->number === $number ? 'bg-club text-club-ink' : 'bg-ui-raised' }} shrink-0 rounded-xl px-3 py-2 text-sm font-semibold">
                     {{ __('Matchday :number', ['number' => $option->number]) }}
                     @if ($option->isOpenForTips())<span class="ms-1 inline-block size-2 rounded-full bg-green-500"></span>@endif
                 </button>
@@ -152,36 +151,36 @@ new class extends Component {
             @php($canEdit = false)
         @endcan
 
-        <flux:card class="space-y-3">
-            <flux:heading>{{ __('Questions of matchday :number', ['number' => $number]) }} ({{ $this->questions->count() }}/{{ \App\Support\Questions::PER_MATCHDAY }})</flux:heading>
+        <x-ui.card class="space-y-3">
+            <x-ui.heading>{{ __('Questions of matchday :number', ['number' => $number]) }} ({{ $this->questions->count() }}/{{ \App\Support\Questions::PER_MATCHDAY }})</x-ui.heading>
             @forelse ($this->questions as $question)
                 @php($state = $question->voided ? 'void' : ($question->correct === null ? '' : ($question->correct ? 'yes' : 'no')))
-                <div class="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-700" wire:key="mq-{{ $question->id }}">
+                <div class="flex flex-wrap items-center gap-2 rounded-xl border border-ui-line p-3 " wire:key="mq-{{ $question->id }}">
                     <span class="w-6 font-bold text-zinc-400">{{ $question->position }}.</span>
                     <span class="min-w-0 flex-1 font-medium">{{ $question->text }}</span>
-                    <span class="text-xs text-zinc-500">{{ trans_choice(':count answer|:count answers', $question->answers_count, ['count' => $question->answers_count]) }}</span>
+                    <span class="text-xs text-ui-muted">{{ trans_choice(':count answer|:count answers', $question->answers_count, ['count' => $question->answers_count]) }}</span>
                     <div class="flex gap-1">
                         @foreach (['yes' => __('Yes'), 'no' => __('No'), 'void' => __('Voided'), '' => __('Not yet')] as $value => $label)
                             <button type="button" wire:click="settle({{ $question->id }}, '{{ $value }}')" @disabled(!$canEdit)
-                                class="{{ $state === $value ? 'bg-lech-700 text-white' : 'bg-zinc-100 dark:bg-zinc-800' }} rounded-lg px-2.5 py-1 text-xs font-bold">{{ $label }}</button>
+                                class="{{ $state === $value ? 'bg-club text-club-ink' : 'bg-ui-raised' }} rounded-lg px-2.5 py-1 text-xs font-bold">{{ $label }}</button>
                         @endforeach
                     </div>
                 </div>
             @empty
-                <flux:text>{{ __('No questions in this matchday. Click questions from the bank below.') }}</flux:text>
+                <x-ui.text>{{ __('No questions in this matchday. Click questions from the bank below.') }}</x-ui.text>
             @endforelse
             @if ($this->matchday?->status === \App\Enums\MatchdayStatus::Played)
-                <flux:callout icon="arrow-path" variant="warning">{{ __('The matchday is already settled: after changing answers recalculate it in Results.') }}</flux:callout>
+                <x-ui.callout icon="arrow-path" variant="warning">{{ __('The matchday is already settled: after changing answers recalculate it in Results.') }}</x-ui.callout>
             @endif
-        </flux:card>
+        </x-ui.card>
 
-        <flux:card class="space-y-3">
-            <flux:heading>{{ __('Question bank') }}</flux:heading>
+        <x-ui.card class="space-y-3">
+            <x-ui.heading>{{ __('Question bank') }}</x-ui.heading>
             <div class="flex flex-wrap gap-2">
                 @php($chosen = $this->questions->pluck('question_template_id')->all())
                 @foreach ($this->templates->where('is_active', true) as $template)
                     <button type="button" wire:click="toggleTemplate({{ $template->id }})" wire:key="qt-{{ $template->id }}" @disabled(!$canEdit)
-                        class="{{ in_array($template->id, $chosen) ? 'border-lech-700 bg-lech-700 text-white' : 'border-zinc-300 hover:border-lech-500 dark:border-zinc-600' }} rounded-xl border px-3 py-2 text-start text-sm">
+                        class="{{ in_array($template->id, $chosen) ? 'border-lech-700 bg-club text-club-ink' : 'border-zinc-300 hover:border-lech-500 dark:border-zinc-600' }} rounded-xl border px-3 py-2 text-start text-sm">
                         {{ $template->text }}
                         <span class="ms-1 text-xs opacity-60">×{{ $template->times_used }}</span>
                     </button>
@@ -190,12 +189,12 @@ new class extends Component {
 
             @if ($canEdit)
                 <form wire:submit="addTemplate" class="flex gap-2">
-                    <flux:input wire:model="newText" :placeholder="__('New yes/no question, e.g. Will Lech score first?')" class="flex-1" />
-                    <flux:button type="submit" variant="primary">{{ __('Add') }}</flux:button>
+                    <x-ui.input wire:model="newText" :placeholder="__('New yes/no question, e.g. Will Lech score first?')" class="flex-1" />
+                    <x-ui.btn type="submit" variant="primary">{{ __('Add') }}</x-ui.btn>
                 </form>
 
                 <details class="text-sm">
-                    <summary class="cursor-pointer text-zinc-500">{{ __('Turn questions in the bank on or off') }}</summary>
+                    <summary class="cursor-pointer text-ui-muted">{{ __('Turn questions in the bank on or off') }}</summary>
                     <div class="mt-2 space-y-1">
                         @foreach ($this->templates as $template)
                             <label class="flex items-center gap-2" wire:key="qta-{{ $template->id }}">
@@ -206,6 +205,6 @@ new class extends Component {
                     </div>
                 </details>
             @endif
-        </flux:card>
+        </x-ui.card>
     @endif
 </div>

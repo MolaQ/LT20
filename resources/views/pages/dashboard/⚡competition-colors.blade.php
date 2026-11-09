@@ -4,7 +4,6 @@ use App\Enums\Permission;
 use App\Support\Audit;
 use App\Support\CompetitionColors;
 use App\Support\HallOfFame;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -64,7 +63,7 @@ new class extends Component {
         CompetitionColors::flush();
 
         Audit::log('competition_colors.saved', null, [], [], __('Competition colors'));
-        Flux::toast(variant: 'success', text: __('Colors saved.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Colors saved.'));
     }
 
     /** Przywraca barwy domyślne jednych rozgrywek (zapis dopiero po „Zapisz”). */
@@ -83,11 +82,11 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Competition colors') }}</flux:heading>
-            <flux:subheading>{{ __('Background gradient, accent and text color of each competition, used in banners, badges and winner marks. Backgrounds without yellow, orange or red; gold only as an accent.') }}</flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Competition colors') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Background gradient, accent and text color of each competition, used in banners, badges and winner marks. Backgrounds without yellow, orange or red; gold only as an accent.') }}</x-ui.subheading>
         </div>
         @can(\App\Enums\Permission::SeasonEdit->value)
-            <flux:button variant="primary" icon="check" wire:click="save">{{ __('Save') }}</flux:button>
+            <x-ui.btn variant="primary" icon="check" wire:click="save">{{ __('Save') }}</x-ui.btn>
         @endcan
     </div>
 
@@ -98,14 +97,14 @@ new class extends Component {
                 $style = "--c-bg1: {$c['bg1']}; --c-bg2: {$c['bg2']}; --c-accent: {$c['accent']}; --c-ink: {$c['ink']};";
                 $dashed = \App\Support\CompetitionColors::dashed($key) ? 'comp-dashed' : '';
             @endphp
-            <flux:card class="space-y-3" wire:key="cc-{{ $key }}">
+            <x-ui.card class="space-y-3" wire:key="cc-{{ $key }}">
                 {{-- Podgląd na żywo: baner z trofeum, odznaka i plakietka zwycięzcy --}}
                 <div class="comp-banner {{ $dashed }} flex items-center gap-3 rounded-xl px-4 py-3" style="{{ $style }}">
                     <div class="comp-badge {{ $dashed }} relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full">
                         @if (isset($this->icons[$key]))
                             <img src="{{ $this->icons[$key] }}" alt="" class="size-8 object-contain">
                         @else
-                            <flux:icon.trophy class="size-6" />
+                            <x-ui.icon name="trophy" class="size-6" />
                         @endif
                     </div>
                     <div class="relative z-10 min-w-0 flex-1">
@@ -117,21 +116,21 @@ new class extends Component {
 
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     @foreach (['bg1' => __('Background 1'), 'bg2' => __('Background 2'), 'accent' => __('Accent'), 'ink' => __('Text')] as $field => $fieldLabel)
-                        <label class="flex flex-col gap-1 text-xs text-zinc-500">
+                        <label class="flex flex-col gap-1 text-xs text-ui-muted">
                             {{ $fieldLabel }}
                             <span class="flex items-center gap-1.5">
                                 <input type="color" wire:model.live="colors.{{ $key }}.{{ $field }}" id="cc-{{ $key }}-{{ $field }}"
                                     class="h-8 w-10 cursor-pointer rounded border border-zinc-300 bg-transparent p-0.5 dark:border-zinc-600">
-                                <code class="text-[11px] text-zinc-700 dark:text-zinc-300">{{ $c[$field] }}</code>
+                                <code class="text-[11px] text-ui-ink">{{ $c[$field] }}</code>
                             </span>
                         </label>
                     @endforeach
                 </div>
 
                 <div class="flex justify-end">
-                    <flux:button size="xs" variant="ghost" icon="arrow-uturn-left" wire:click="restore('{{ $key }}')">{{ __('Restore default') }}</flux:button>
+                    <x-ui.btn size="xs" variant="ghost" icon="arrow-uturn-left" wire:click="restore('{{ $key }}')">{{ __('Restore default') }}</x-ui.btn>
                 </div>
-            </flux:card>
+            </x-ui.card>
         @endforeach
     </div>
 </div>

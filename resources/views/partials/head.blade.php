@@ -11,4 +11,16 @@
 @fonts
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-@fluxAppearance
+{{-- Motyw przed pierwszym malowaniem (bez mrugnięcia): zapisany wybór albo ustawienie telefonu, ten sam klucz co w app.js. --}}
+<script>
+    (() => {
+        const apply = () => {
+            let mode = 'system';
+            try { mode = localStorage.getItem('flux.appearance') ?? 'system'; } catch (e) {}
+            const dark = mode === 'dark' || (mode !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+        };
+        apply();
+        document.addEventListener('livewire:navigated', apply);
+    })();
+</script>
