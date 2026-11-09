@@ -111,7 +111,8 @@ document.addEventListener('alpine:init', () => {
             if (next === Number(this.value)) {
                 return;
             }
-            this.value = next;
+            // Pole Livewire może być tekstem ('2'), więc zachowujemy typ wartości.
+            this.value = typeof this.value === 'string' ? String(next) : next;
             vibrate();
             this.bump = false;
             this.$nextTick(() => (this.bump = true));
