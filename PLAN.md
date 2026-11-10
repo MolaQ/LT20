@@ -72,7 +72,7 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Zapisywanie odsłon stron bez IP i ciasteczek (`page_views`, 400 dni, bez robotów, panelu i adminów) |
 | V | Klapki tablicy: osobne połówki, szczelina i zawiasy |
 | V | Dymek (toast) nad menu zamiast pod nim; błąd „Udostępnij” pokazuje przyczynę |
-| X | „Udostępnij” u Marcina pokazuje błąd – czekam na komunikat z konsoli (F12) |
+| V | „Udostępnij”: błąd „error” naprawiony (atrybuty Livewire i Alpine w kopii do zdjęcia); sam znaczek bez napisu |
 | X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
 | X | Nowoczesny i spójny wygląd panelu administratora |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji); kolory już są („Kolory strony”) |
