@@ -1,9 +1,11 @@
 <?php
 
+use App\Enums\Permission;
 use App\Enums\RoleName;
 use App\Models\PageView;
 use App\Models\User;
 use App\Support\SiteStats;
+use Spatie\Permission\Models\Permission as PermissionModel;
 use Spatie\Permission\Models\Role;
 
 // Odsłony stron do licznika w stopce: zapis zwykłych wejść, bez robotów i panelu, bez IP.
@@ -31,6 +33,9 @@ test('the admin sees the visit statistics page', function () {
     Role::findOrCreate(RoleName::Admin->value, 'web');
     $admin = User::factory()->create();
     $admin->assignRole(RoleName::Admin->value);
+    // Cały panel wymaga też uprawnienia dashboard-access (jak w DashboardTest).
+    PermissionModel::findOrCreate(Permission::DashboardAccess->value, 'web');
+    $admin->givePermissionTo(Permission::DashboardAccess->value);
     PageView::create(['path' => '/rules', 'route_name' => 'rules', 'visitor_hash' => str_repeat('a', 64), 'device' => 'mobile']);
 
     $this->actingAs($admin)->get(route('dashboard.site-statistics'))
