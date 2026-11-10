@@ -176,7 +176,8 @@ document.addEventListener('alpine:init', () => {
                 const t0 = performance.now();
                 const step = (now) => {
                     const k = dur ? Math.min(1, (now - t0) / dur) : 1;
-                    this.shown = prefix + Math.round(to * (1 - Math.pow(1 - k, 3)));
+                    // Spacja co trzy cyfry, tak jak liczby z serwera (1 445, 38 271).
+                    this.shown = prefix + String(Math.round(to * (1 - Math.pow(1 - k, 3)))).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
                     if (k < 1) {
                         requestAnimationFrame(step);
                     }
