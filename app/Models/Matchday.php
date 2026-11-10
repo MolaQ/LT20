@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $push_open_at powiadomienie „typowanie otwarte” wysłane
  * @property Carbon|null $push_reminder_at przypomnienie przed końcem typowania wysłane
  * @property Carbon|null $push_results_at powiadomienie z wynikiem i punktami wysłane
+ * @property-read string $fixture "Lech Poznań – rywal" albo "rywal – Lech Poznań" (akcesor fixture)
  */
 class Matchday extends Model
 {
