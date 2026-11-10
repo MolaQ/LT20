@@ -49,6 +49,20 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Ostrzeżenie „kartki” po kolejkach bez typu (strona główna i typowanie): żółte kartki, od 4 „Ostatnia szansa”, premium widzi tarczę |
 | V | Push po rozliczeniu kolejki bez typu: od 3 kolejek ostrzeżenie zamiast zwykłego wyniku |
 
+### Biznes: pozycjonowanie, reklamy, sponsoring
+
+| Stan | Zadanie |
+|:----:|---------|
+| V | Sponsor sezonu: nazwa, logo i link w banerze sezonu (panel „Sezony”) |
+| V | Sponsorzy rozgrywek: logo i link w banerze rozgrywek na /results (panel „Sponsorzy”) |
+| X | Pozycjonowanie (SEO): opisy stron (meta description), podgląd linków na Facebooku i X (Open Graph z obrazkiem), mapa strony `sitemap.xml`, `robots.txt`, dane strukturalne (np. wydarzenia sportowe) |
+| X | Przyjazne adresy i tytuły stron pod wyszukiwarki (częściowo już są: /results/sezon-13/ekstraklasa/kolejka-9) |
+| X | Reklamy: wyznaczone miejsca (baner na stronie głównej, w wynikach, w stopce), bez reklam dla premium; do decyzji: własne reklamy z panelu czy sieć (np. Google AdSense) |
+| X | Płatny sponsoring: pakiety (sezon, liga, puchar, Liga Legend, kolejka, nagrody Hall of Fame), cennik, czas trwania, co sponsor dostaje (logo, link, nazwa rozgrywek „… powered by”, wzmianki w newsach i na obrazkach na sociale) |
+| X | Strona „Zostań sponsorem”: oferta pakietów, statystyki zasięgu (odwiedziny, gracze), przykłady ekspozycji, formularz kontaktowy do Biura albo maila, regulamin sponsoringu |
+| X | Panel sponsorów: okres obowiązywania, automatyczne zdjęcie logo po wygaśnięciu, raport dla sponsora (wyświetlenia banerów i kliknięcia w logo) |
+| X | Płatność za sponsoring online (po wdrożeniu Przelewy24) albo faktura |
+
 ### Płatności (odłożone na później)
 
 | Stan | Zadanie |
