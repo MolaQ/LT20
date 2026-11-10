@@ -66,11 +66,15 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Odliczanie na stronie głównej jak tablica klapkowa na dworcu (cyfry się przewracają) |
 | V | Panel „Kolory strony” (`/panel/site-colors`, tylko Admin): barwy klubu, belki i banery, jasny motyw, dobrze/źle, klapki tablicy; podgląd na żywo, przywracanie domyślnych |
 | X | Kolejne kolory do panelu (ciemny motyw, przyciski, tabele) – w miarę potrzeb |
+| V | Powrót do granatu „Bułgarska nocą” na belkach i banerach (czcionka Inter zostaje) |
+| V | /tips: wybór typu rozgrywek i zawodnicy bez wersalików i grubej czcionki |
 | X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
 | X | Nowoczesny i spójny wygląd panelu administratora |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji); kolory już są („Kolory strony”) |
 
 ### Do zaplanowania i dyskusji
+
+Pytania z propozycjami: `DYSKUSJA.md`.
 
 | Stan | Zadanie |
 |:----:|---------|
