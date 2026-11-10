@@ -53,7 +53,7 @@ final class Seo
         $cut = mb_substr($text, 0, $limit - 1);
         $space = mb_strrpos($cut, ' ');
 
-        return rtrim($space > 80 ? mb_substr($cut, 0, $space) : $cut, " ,.;:-").'…';
+        return rtrim($space > 80 ? mb_substr($cut, 0, $space) : $cut, ' ,.;:-').'…';
     }
 
     /** Między żądaniami (testy, kolejka) wartości się nie przenoszą. */
