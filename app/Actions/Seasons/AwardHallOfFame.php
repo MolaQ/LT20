@@ -3,7 +3,6 @@
 namespace App\Actions\Seasons;
 
 use App\Enums\CompetitionType;
-use App\Enums\League;
 use App\Models\Competition;
 use App\Models\CompetitionEntry;
 use App\Models\FinalStanding;
@@ -17,7 +16,7 @@ use App\Support\EuropeanCup;
 use App\Support\HallOfFame;
 use App\Support\Ownership;
 use App\Support\PageCache;
-use App\Support\Promotion;
+use App\Support\Standings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -96,8 +95,9 @@ class AwardHallOfFame
     /** Ligi 1-10 i podwórkowa. */
     private function league(Competition $competition, Collection $final): void
     {
-        $tier = $competition->type === CompetitionType::Swiss ? League::Podworkowa->value : (int) $competition->tier;
+        $tier = (int) $competition->leagueTier();
         $multiplier = HallOfFame::multiplier($tier);
+        $promoted = Standings::zoneSizes($competition)['up'];
 
         // Mecze: na bieżąco z terminarza.
         foreach ($this->results($competition) as $result) {
@@ -119,8 +119,8 @@ class AwardHallOfFame
                 $this->add($competition, $standing, $placeKey, HallOfFame::value('league_'.$placeKey) * $multiplier, $trophy);
             }
 
-            // Awans: 4 najlepsze z lig 2-10 i z podwórkowej (z Ekstraklasy nikt nie awansuje).
-            if ($tier > 1 && $standing->place <= Promotion::MOVES) {
+            // Awans: 4 najlepsze z lig 2-10 i ze starej podwórkowej, zwycięzca ligi podwórkowej (z Ekstraklasy nikt nie awansuje).
+            if ($standing->place <= $promoted) {
                 $this->add($competition, $standing, 'promotion', HallOfFame::value('league_promotion') * $multiplier);
             }
 
@@ -349,14 +349,14 @@ class AwardHallOfFame
         /** @var array<int, array<string, mixed>> $rows */
         $rows = [];
         foreach ($leagues as $competition) {
-            $tier = $competition->type === CompetitionType::Swiss ? League::Podworkowa->value : (int) $competition->tier;
+            $tier = (int) $competition->leagueTier();
 
             foreach ($standings[$competition->id] ?? [] as $standing) {
                 $owner = $standing->user_id ? 'u'.$standing->user_id : 'b'.$standing->bot_id;
                 $rows[$standing->season_team_id] = [
                     'standing' => $standing,
                     'competition' => $competition,
-                    'rank' => $tier * 10000 + $standing->place, // remis: wyższa liga, potem wyższe miejsce
+                    'rank' => $tier * 10000000 + $competition->division * 1000 + $standing->place, // remis: wyższa liga, potem wyższe miejsce
                     'trophies' => $trophies[$owner] ?? 0,
                     'outcomes' => 0, 'attack' => 0, 'defense' => 0,
                     'mvp' => 0, 'goals' => 0, 'boot' => 0, 'gloves' => 0,

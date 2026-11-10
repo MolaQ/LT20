@@ -4,7 +4,6 @@ use App\Enums\Permission;
 use App\Models\Bot;
 use App\Support\Audit;
 use App\Support\BotNames;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -78,7 +77,7 @@ new class extends Component {
         $this->name = $bot->name;
         $this->resetValidation();
 
-        Flux::modal('bot-form')->show();
+        $this->dispatch('ui-sheet', name: 'bot-form');
     }
 
     protected function rules(): array
@@ -105,10 +104,10 @@ new class extends Component {
 
         $this->rename($bot, $this->name);
 
-        Flux::modal('bot-form')->close();
+        $this->dispatch('ui-sheet', name: 'bot-form', open: false);
         $this->resetForm();
 
-        Flux::toast(text: __('Bot name saved.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Bot name saved.'), variant: 'success');
     }
 
     /** Przywraca domyślną nazwę z BotNames, o ile nie zajął jej inny bot. */
@@ -124,14 +123,14 @@ new class extends Component {
         }
 
         if (Bot::where('name', $default)->where('id', '!=', $bot->id)->exists()) {
-            Flux::toast(text: __('The default name is used by another bot.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('The default name is used by another bot.'), variant: 'warning');
 
             return;
         }
 
         $this->rename($bot, $default);
 
-        Flux::toast(text: __('Default name restored.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Default name restored.'), variant: 'success');
     }
 
     /** Wywoływana także przez @close modala, więc jest publiczna. */
@@ -172,109 +171,109 @@ new class extends Component {
 
     {{-- Nagłówek --}}
     <div>
-        <flux:heading size="xl" level="1">{{ __('Bots') }}</flux:heading>
-        <flux:subheading>{{ __('Bots fill the empty places on the team list. Here you can change their names.') }}
-        </flux:subheading>
+        <x-ui.heading size="xl" level="1">{{ __('Bots') }}</x-ui.heading>
+        <x-ui.subheading>{{ __('Bots fill the empty places on the team list. Here you can change their names.') }}
+        </x-ui.subheading>
     </div>
 
     {{-- Statystyki --}}
     <div class="grid gap-4 md:grid-cols-2">
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.cpu-chip class="size-8 text-zinc-400" />
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="cpu-chip" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('Bots in the database') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['total'] }} / {{ BotNames::COUNT }}</flux:heading>
+                <x-ui.text>{{ __('Bots in the database') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['total'] }} / {{ BotNames::COUNT }}</x-ui.heading>
             </div>
-        </flux:card>
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.pencil-square class="size-8 text-zinc-400" />
+        </x-ui.card>
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="pencil-square" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('Renamed bots') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['renamed'] }}</flux:heading>
+                <x-ui.text>{{ __('Renamed bots') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['renamed'] }}</x-ui.heading>
             </div>
-        </flux:card>
+        </x-ui.card>
     </div>
 
     @if ($this->stats['total'] < BotNames::COUNT)
-        <flux:text class="text-amber-600 dark:text-amber-400">
+        <x-ui.text class="text-amber-600 dark:text-amber-400">
             {{ __('Some bots are missing. Run: php artisan db:seed --class=BotsSeeder') }}
-        </flux:text>
+        </x-ui.text>
     @endif
 
     {{-- Wyszukiwarka --}}
     <div class="w-full sm:w-72">
-        <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+        <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
             :placeholder="__('Search by name...')" clearable />
     </div>
 
     {{-- Tabela --}}
-    <flux:table :paginate="$this->bots">
-        <flux:table.columns>
-            <flux:table.column>#</flux:table.column>
-            <flux:table.column>{{ __('Bot name') }}</flux:table.column>
-            <flux:table.column>{{ __('Status') }}</flux:table.column>
-            <flux:table.column />
-        </flux:table.columns>
+    <x-ui.table :paginate="$this->bots">
+        <x-ui.table.columns>
+            <x-ui.table.column>#</x-ui.table.column>
+            <x-ui.table.column>{{ __('Bot name') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Status') }}</x-ui.table.column>
+            <x-ui.table.column />
+        </x-ui.table.columns>
 
-        <flux:table.rows>
+        <x-ui.table.rows>
             @forelse ($this->bots as $bot)
-                <flux:table.row :key="'bot-'.$bot->id">
-                    <flux:table.cell variant="strong">{{ $bot->sort_order }}</flux:table.cell>
-                    <flux:table.cell>
-                        <flux:link :href="route('bot.show', $bot)" wire:navigate>{{ $bot->name }}</flux:link>
-                    </flux:table.cell>
-                    <flux:table.cell>
+                <x-ui.table.row :key="'bot-'.$bot->id">
+                    <x-ui.table.cell variant="strong">{{ $bot->sort_order }}</x-ui.table.cell>
+                    <x-ui.table.cell>
+                        <x-ui.link :href="route('bot.show', $bot)" wire:navigate>{{ $bot->name }}</x-ui.link>
+                    </x-ui.table.cell>
+                    <x-ui.table.cell>
                         @if ($bot->isRenamed())
-                            <flux:badge size="sm" color="amber">{{ __('Renamed') }}</flux:badge>
+                            <x-ui.badge size="sm" color="amber">{{ __('Renamed') }}</x-ui.badge>
                         @else
-                            <flux:badge size="sm" color="zinc">{{ __('Default') }}</flux:badge>
+                            <x-ui.badge size="sm" color="zinc">{{ __('Default') }}</x-ui.badge>
                         @endif
                         @if (! $bot->is_active)
-                            <flux:badge size="sm" color="red" :title="__('Beyond place 512 of the list: rests this season, can replace a banned player')">{{ __('Resting') }}</flux:badge>
+                            <x-ui.badge size="sm" color="red" :title="__('Beyond place 512 of the list: rests this season, can replace a banned player')">{{ __('Resting') }}</x-ui.badge>
                         @endif
-                    </flux:table.cell>
-                    <flux:table.cell align="end">
+                    </x-ui.table.cell>
+                    <x-ui.table.cell align="end">
                         @can(\App\Enums\Permission::SeasonEdit->value)
                             <div class="flex items-center justify-end gap-1">
                                 @if ($bot->isRenamed())
-                                    <flux:button variant="ghost" size="sm" icon="arrow-uturn-left" inset="top bottom"
+                                    <x-ui.btn variant="ghost" size="sm" icon="arrow-uturn-left" inset="top bottom"
                                         wire:click="resetName({{ $bot->id }})" :aria-label="__('Restore default name')" />
                                 @endif
-                                <flux:button variant="ghost" size="sm" icon="pencil-square" inset="top bottom"
+                                <x-ui.btn variant="ghost" size="sm" icon="pencil-square" inset="top bottom"
                                     wire:click="edit({{ $bot->id }})" :aria-label="__('Edit')" />
                             </div>
                         @endcan
-                    </flux:table.cell>
-                </flux:table.row>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="4" class="py-10 text-center text-zinc-500">
+                <x-ui.table.row>
+                    <x-ui.table.cell colspan="4" class="py-10 text-center text-ui-muted">
                         {{ __('No bots match your search.') }}
-                    </flux:table.cell>
-                </flux:table.row>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @endforelse
-        </flux:table.rows>
-    </flux:table>
+        </x-ui.table.rows>
+    </x-ui.table>
 
     {{-- Modal: zmiana nazwy bota --}}
-    <flux:modal name="bot-form" class="w-full md:w-[28rem]" @close="resetForm">
+    <x-ui.modal name="bot-form" class="w-full md:w-[28rem]" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit bot name') }}</flux:heading>
-                <flux:text class="mt-1">{{ __('Bot') }} #{{ $botSlot }}</flux:text>
+                <x-ui.heading size="lg">{{ __('Edit bot name') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ __('Bot') }} #{{ $botSlot }}</x-ui.text>
             </div>
 
-            <flux:input wire:model="name" :label="__('Bot name')" maxlength="40" />
+            <x-ui.input wire:model="name" :label="__('Bot name')" maxlength="40" />
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" type="submit">
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" type="submit">
                     <span wire:loading.remove wire:target="save">{{ __('Save changes') }}</span>
                     <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
-                </flux:button>
+                </x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 </div>

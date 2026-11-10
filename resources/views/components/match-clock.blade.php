@@ -24,7 +24,7 @@
     $extra = $played ? $sector(max($from - 4, 0) / 4, max($to - 4, 0) / 4) : null;
 @endphp
 <span {{ $attributes->class(['inline-flex shrink-0 items-center gap-0.5 align-middle']) }} @if ($title) title="{{ $title }}" @endif>
-    <svg viewBox="0 0 20 20" aria-hidden="true" class="size-4 text-lech-700 dark:text-lech-300">
+    <svg viewBox="0 0 20 20" aria-hidden="true" class="size-4 text-club">
         <circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-opacity="0.45" stroke-width="1.2" />
         <path d="M10 1.5 V18.5 M1.5 10 H18.5" stroke="currentColor" stroke-opacity="0.15" stroke-width="0.8" />
         @if ($regular === 'full')

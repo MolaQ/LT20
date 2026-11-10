@@ -7,7 +7,6 @@ use App\Models\LechMatch;
 use App\Models\Matchday;
 use App\Models\Season;
 use App\Support\Audit;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -151,7 +150,7 @@ new class extends Component {
         $season = Season::findOrFail($this->seasonId);
 
         if ($season->status === SeasonStatus::Finished) {
-            Flux::toast(text: __('This season is finished, its matchdays cannot be changed.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('This season is finished, its matchdays cannot be changed.'), variant: 'warning');
 
             return;
         }
@@ -177,7 +176,7 @@ new class extends Component {
         }
 
         unset($this->matchdays, $this->stats, $this->progress);
-        Flux::toast(text: __('Matchdays created.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Matchdays created.'), variant: 'success');
     }
 
     /* ==================================================================
@@ -206,7 +205,7 @@ new class extends Component {
         $this->resetValidation();
         unset($this->availableMatches);
 
-        Flux::modal('matchday-form')->show();
+        $this->dispatch('ui-sheet', name: 'matchday-form');
     }
 
     /**
@@ -276,11 +275,11 @@ new class extends Component {
             }
         }
 
-        Flux::modal('matchday-form')->close();
+        $this->dispatch('ui-sheet', name: 'matchday-form', open: false);
         $this->resetForm();
         unset($this->matchdays, $this->stats, $this->progress);
 
-        Flux::toast(text: __('Matchday saved.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Matchday saved.'), variant: 'success');
     }
 
     /** Wywoływana także przez @close modala, więc jest publiczna. */
@@ -369,13 +368,13 @@ new class extends Component {
     private function canChange(Matchday $matchday): bool
     {
         if ($this->isLocked) {
-            Flux::toast(text: __('This season is finished, its matchdays cannot be changed.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('This season is finished, its matchdays cannot be changed.'), variant: 'warning');
 
             return false;
         }
 
         if ($matchday->status === MatchdayStatus::Played) {
-            Flux::toast(text: __('A played matchday cannot be edited.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('A played matchday cannot be edited.'), variant: 'warning');
 
             return false;
         }
@@ -410,85 +409,85 @@ new class extends Component {
     {{-- Nagłówek i wybór sezonu --}}
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Matchdays') }}</flux:heading>
-            <flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Matchdays') }}</x-ui.heading>
+            <x-ui.subheading>
                 {{ __('One real Lech match per matchday. Every competition of the season tips the same match.') }}
-            </flux:subheading>
+            </x-ui.subheading>
         </div>
 
         @if ($this->seasons->isNotEmpty())
             <div class="w-full sm:w-56">
-                <flux:select wire:model.live="seasonId" :label="__('Season')">
+                <x-ui.select wire:model.live="seasonId" :label="__('Season')">
                     @foreach ($this->seasons as $option)
-                        <flux:select.option :value="$option->id">
+                        <x-ui.select.option :value="$option->id">
                             {{ $option->title }} ({{ $option->status->label() }})
-                        </flux:select.option>
+                        </x-ui.select.option>
                     @endforeach
-                </flux:select>
+                </x-ui.select>
             </div>
         @endif
     </div>
 
     @if (!$this->season)
         {{-- Brak sezonów --}}
-        <flux:card class="space-y-4">
-            <flux:heading>{{ __('Create a season first.') }}</flux:heading>
+        <x-ui.card class="space-y-4">
+            <x-ui.heading>{{ __('Create a season first.') }}</x-ui.heading>
             <div>
-                <flux:button variant="primary" :href="route('dashboard.seasons')" wire:navigate>
+                <x-ui.btn variant="primary" :href="route('dashboard.seasons')" wire:navigate>
                     {{ __('Go to season setup') }}
-                </flux:button>
+                </x-ui.btn>
             </div>
-        </flux:card>
+        </x-ui.card>
     @else
         {{-- Statystyki --}}
         <div class="grid gap-4 md:grid-cols-3">
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.calendar-days class="size-8 text-zinc-400" />
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="calendar-days" class="size-8 text-zinc-400" />
                 <div>
-                    <flux:text>{{ __('Season') }}</flux:text>
+                    <x-ui.text>{{ __('Season') }}</x-ui.text>
                     <div class="flex items-center gap-2">
-                        <flux:heading size="xl">{{ $this->season->title }}</flux:heading>
-                        <flux:badge size="sm" :color="$this->season->status->color()">
-                            {{ $this->season->status->label() }}</flux:badge>
+                        <x-ui.heading size="xl">{{ $this->season->title }}</x-ui.heading>
+                        <x-ui.badge size="sm" :color="$this->season->status->color()">
+                            {{ $this->season->status->label() }}</x-ui.badge>
                     </div>
                 </div>
-            </flux:card>
+            </x-ui.card>
 
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.check-circle class="size-8 text-zinc-400" />
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="check-circle" class="size-8 text-zinc-400" />
                 <div>
-                    <flux:text>{{ __('Filled matchdays') }}</flux:text>
-                    <flux:heading size="xl">{{ $this->stats['filled'] }} / {{ \App\Models\Matchday::PER_SEASON }}
-                    </flux:heading>
+                    <x-ui.text>{{ __('Filled matchdays') }}</x-ui.text>
+                    <x-ui.heading size="xl">{{ $this->stats['filled'] }} / {{ \App\Models\Matchday::PER_SEASON }}
+                    </x-ui.heading>
                 </div>
-            </flux:card>
+            </x-ui.card>
 
-            <flux:card class="flex items-center gap-4">
-                <flux:icon.clock class="size-8 text-zinc-400" />
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon name="clock" class="size-8 text-zinc-400" />
                 <div>
-                    <flux:text>{{ __('Next kickoff') }}</flux:text>
-                    <flux:heading size="xl">
+                    <x-ui.text>{{ __('Next kickoff') }}</x-ui.text>
+                    <x-ui.heading size="xl">
                         {{ $this->stats['next']?->kickoff_at?->format('d.m.Y H:i') ?? '—' }}
-                    </flux:heading>
+                    </x-ui.heading>
                 </div>
-            </flux:card>
+            </x-ui.card>
         </div>
 
         @if ($this->matchdays->isEmpty())
             {{-- Sezon bez kolejek: jeden przycisk tworzy wszystkie 9 --}}
-            <flux:card class="space-y-4">
-                <flux:heading>{{ __('No matchdays yet.') }}</flux:heading>
+            <x-ui.card class="space-y-4">
+                <x-ui.heading>{{ __('No matchdays yet.') }}</x-ui.heading>
 
                 @if (!$this->isLocked)
                     @can(\App\Enums\Permission::SeasonEdit->value)
                         <div>
-                            <flux:button variant="primary" icon="plus" wire:click="createMatchdays">
+                            <x-ui.btn variant="primary" icon="plus" wire:click="createMatchdays">
                                 {{ __('Create 9 matchdays') }}
-                            </flux:button>
+                            </x-ui.btn>
                         </div>
                     @endcan
                 @endif
-            </flux:card>
+            </x-ui.card>
         @else
             {{-- Karty kolejek: każda prowadzi przez kroki kolejki (mecz, typowanie, wynik) z szybkimi akcjami --}}
             @php
@@ -528,22 +527,22 @@ new class extends Component {
                         $stateIcons = ['done' => 'check-circle', 'todo' => 'minus-circle', 'urgent' => 'exclamation-circle', 'wait' => 'clock'];
                         $stateColors = ['done' => 'text-green-600', 'todo' => 'text-zinc-400', 'urgent' => 'text-red-600', 'wait' => 'text-lech-600'];
                     @endphp
-                    <flux:card class="flex flex-col gap-4" wire:key="matchday-card-{{ $matchday->id }}">
+                    <x-ui.card class="flex flex-col gap-4" wire:key="matchday-card-{{ $matchday->id }}">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <flux:heading size="lg">{{ __('Matchday :number', ['number' => $matchday->number]) }}</flux:heading>
-                                <flux:text size="sm">{{ $matchday->competitionLabel() ?? '—' }}@if (filled($matchday->opponent)) · {{ $matchday->is_home ? __('Home') : __('Away') }}@endif</flux:text>
+                                <x-ui.heading size="lg">{{ __('Matchday :number', ['number' => $matchday->number]) }}</x-ui.heading>
+                                <x-ui.text size="sm">{{ $matchday->competitionLabel() ?? '—' }}@if (filled($matchday->opponent)) · {{ $matchday->is_home ? __('Home') : __('Away') }}@endif</x-ui.text>
                             </div>
-                            <flux:badge size="sm" :color="$matchday->status->color()">{{ $matchday->status->label() }}</flux:badge>
+                            <x-ui.badge size="sm" :color="$matchday->status->color()">{{ $matchday->status->label() }}</x-ui.badge>
                         </div>
 
                         <ol class="space-y-3">
                             @foreach ($steps as [$state, $title, $detail])
                                 <li class="flex items-start gap-3">
-                                    <flux:icon :name="$stateIcons[$state]" class="{{ $stateColors[$state] }} mt-0.5 size-5 shrink-0" />
+                                    <x-ui.icon :name="$stateIcons[$state]" class="{{ $stateColors[$state] }} mt-0.5 size-5 shrink-0" />
                                     <div class="min-w-0">
                                         <div class="text-sm font-medium">{{ $title }}</div>
-                                        <div class="truncate text-sm text-zinc-500" title="{{ $detail }}">{{ $detail }}</div>
+                                        <div class="truncate text-sm text-ui-muted" title="{{ $detail }}">{{ $detail }}</div>
                                     </div>
                                 </li>
                             @endforeach
@@ -552,19 +551,19 @@ new class extends Component {
                         {{-- Akcje kolejki: najważniejsza (pierwszy niezałatwiony krok) jako główny przycisk --}}
                         <div class="mt-auto flex flex-wrap gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-700">
                             @if ($canEdit && !$played)
-                                <flux:button size="sm" icon="pencil-square" wire:click="edit({{ $matchday->id }})"
+                                <x-ui.btn size="sm" icon="pencil-square" wire:click="edit({{ $matchday->id }})"
                                     :variant="$matchday->isFilled() ? 'filled' : 'primary'">
                                     {{ $matchday->isFilled() ? __('Edit match') : __('Fill in') }}
-                                </flux:button>
+                                </x-ui.btn>
                             @endif
-                            <flux:button size="sm" variant="ghost" icon="check-badge" :href="route('dashboard.tips', $routeParams)" wire:navigate>
+                            <x-ui.btn size="sm" variant="ghost" icon="check-badge" :href="route('dashboard.tips', $routeParams)" wire:navigate>
                                 {{ __('Tips') }}
-                            </flux:button>
-                            <flux:button size="sm" :variant="$started && !$played ? 'primary' : 'ghost'" icon="flag" :href="route('dashboard.results', $routeParams)" wire:navigate>
+                            </x-ui.btn>
+                            <x-ui.btn size="sm" :variant="$started && !$played ? 'primary' : 'ghost'" icon="flag" :href="route('dashboard.results', $routeParams)" wire:navigate>
                                 {{ __('Result') }}
-                            </flux:button>
+                            </x-ui.btn>
                         </div>
-                    </flux:card>
+                    </x-ui.card>
                 @endforeach
             </div>
 
@@ -572,8 +571,8 @@ new class extends Component {
             @if ($this->matchdays->count() < \App\Models\Matchday::PER_SEASON && !$this->isLocked)
                 @can(\App\Enums\Permission::SeasonEdit->value)
                     <div>
-                        <flux:button icon="plus" wire:click="createMatchdays">{{ __('Create 9 matchdays') }}
-                        </flux:button>
+                        <x-ui.btn icon="plus" wire:click="createMatchdays">{{ __('Create 9 matchdays') }}
+                        </x-ui.btn>
                     </div>
                 @endcan
             @endif
@@ -581,55 +580,55 @@ new class extends Component {
     @endif
 
     {{-- Modal: edycja kolejki --}}
-    <flux:modal name="matchday-form" class="w-full md:w-[30rem]" @close="resetForm">
+    <x-ui.modal name="matchday-form" class="w-full md:w-[30rem]" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit matchday') }}</flux:heading>
-                <flux:text class="mt-1">{{ $this->season?->title }}</flux:text>
+                <x-ui.heading size="lg">{{ __('Edit matchday') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ $this->season?->title }}</x-ui.text>
             </div>
 
-            <flux:radio.group wire:model.live="mode" variant="segmented">
-                <flux:radio value="edit" :label="__('This match')" />
-                <flux:radio value="pick" :label="__('Another match from the calendar')" />
-            </flux:radio.group>
+            <x-ui.radio.group wire:model.live="mode" variant="segmented">
+                <x-ui.radio value="edit" :label="__('This match')" />
+                <x-ui.radio value="pick" :label="__('Another match from the calendar')" />
+            </x-ui.radio.group>
 
             @if ($mode === 'edit')
                 {{-- Dane meczu kolejki: zapis zmienia mecz w kalendarzu Lecha i kolejkę, typy graczy zostają --}}
-                <flux:input wire:model="opponent" :label="__('Opponent')" placeholder="Legia Warszawa" />
-                <flux:switch wire:model="isHome" :label="__('Home match')" />
-                <flux:select wire:model="competition" :label="__('Competition')">
+                <x-ui.input wire:model="opponent" :label="__('Opponent')" placeholder="Legia Warszawa" />
+                <x-ui.switch wire:model="isHome" :label="__('Home match')" />
+                <x-ui.select wire:model="competition" :label="__('Competition')">
                     @foreach (\App\Enums\MatchCompetition::options() as $value => $label)
-                        <flux:select.option :value="$value">{{ $label }}</flux:select.option>
+                        <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
                     @endforeach
-                </flux:select>
-                <flux:input wire:model="kickoffAt" type="datetime-local" :label="__('Kickoff')"
+                </x-ui.select>
+                <x-ui.input wire:model="kickoffAt" type="datetime-local" :label="__('Kickoff')"
                     :description="__('Polish time. Can be empty when the date is not known yet.')" />
             @else
                 {{-- Mecz z kalendarza Lecha: dane meczu trafiają do kolejki, typy graczy zostają --}}
-                <flux:select wire:model="lechMatchId" :label="__('Match')" :placeholder="__('Choose a match...')">
+                <x-ui.select wire:model="lechMatchId" :label="__('Match')" :placeholder="__('Choose a match...')">
                     @foreach ($this->availableMatches as $option)
-                        <flux:select.option :value="$option->id">
+                        <x-ui.select.option :value="$option->id">
                             {{ $option->kickoff_at?->format('d.m.Y H:i') ?? __('No date') }} · {{ $option->fixture() }}
                             ({{ $option->competitionLabel() }}){{ $option->postponed ? ' · ' . __('Postponed') : '' }}
-                        </flux:select.option>
+                        </x-ui.select.option>
                     @endforeach
-                </flux:select>
+                </x-ui.select>
 
-                <flux:text class="text-sm">
+                <x-ui.text class="text-sm">
                     {{ __('Missing match? Add it in the') }}
-                    <flux:link :href="route('dashboard.lech-calendar')" wire:navigate>{{ __('Lech calendar') }}</flux:link>.
-                </flux:text>
+                    <x-ui.link :href="route('dashboard.lech-calendar')" wire:navigate>{{ __('Lech calendar') }}</x-ui.link>.
+                </x-ui.text>
             @endif
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" type="submit">
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" type="submit">
                     <span wire:loading.remove wire:target="save">{{ __('Save changes') }}</span>
                     <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
-                </flux:button>
+                </x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 </div>

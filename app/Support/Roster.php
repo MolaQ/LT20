@@ -64,12 +64,12 @@ class Roster
             $bot->update(['user_id' => $userId, 'bot_id' => null]);
             self::joinLegends($seasonId, $bot->id);
 
-            // Wypchnięty bot przechodzi na koniec listy (Liga podwórkowa) tylko wtedy, gdy lista ma mniej niż 512 zespołów.
+            // Wypchnięty bot przechodzi na koniec listy (Liga podwórkowa) tylko wtedy, gdy lista ma mniej niż 520 zespołów.
             // Przy pełnej liście (od 15.10.2026) z gry wypada najsłabszy bot: przed startem sezonu boty za tym miejscem
             // przesuwają się o jedno (każde miejsce bierze bota z miejsca wyżej, ostatni pauzuje), w trakcie sezonu
             // pauzuje wypchnięty bot (wyniki miejsc zostają przy botach, które je zdobyły).
             if ($botId) {
-                if (SeasonTeam::where('season_id', $seasonId)->count() < SeasonTeam::CUP_SIZE) {
+                if (SeasonTeam::where('season_id', $seasonId)->count() < SeasonTeam::LIST_MIN) {
                     self::appendBot($seasonId, $botId);
                 } elseif (! Competition::where('season_id', $seasonId)->exists()) {
                     self::shiftBots($seasonId, $bot->position, $botId);

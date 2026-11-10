@@ -6,7 +6,6 @@ use App\Models\Competition;
 use App\Models\Season;
 use App\Models\Sponsor;
 use App\Support\Audit;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
@@ -101,7 +100,7 @@ new class extends Component {
             $this->url = (string) $sponsor->url;
         }
 
-        Flux::modal('sponsor-form')->show();
+        $this->dispatch('ui-sheet', name: 'sponsor-form');
     }
 
     public function save(): void
@@ -128,10 +127,10 @@ new class extends Component {
         $sponsor->save();
         Audit::log($this->editId ? 'sponsor.updated' : 'sponsor.created', null, $old, $sponsor->only(['name', 'url']), $sponsor->name);
 
-        Flux::modal('sponsor-form')->close();
+        $this->dispatch('ui-sheet', name: 'sponsor-form', open: false);
         $this->reset('editId', 'name', 'url', 'logo');
         unset($this->sponsors);
-        Flux::toast(variant: 'success', text: __('Sponsor saved.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Sponsor saved.'));
     }
 
     public function confirmDelete(int $id): void
@@ -139,7 +138,7 @@ new class extends Component {
         $this->authorizeEdit();
         $this->deleteId = Sponsor::findOrFail($id)->id;
 
-        Flux::modal('delete-sponsor')->show();
+        $this->dispatch('ui-sheet', name: 'delete-sponsor');
     }
 
     public function delete(): void
@@ -154,7 +153,7 @@ new class extends Component {
 
         Audit::log('sponsor.deleted', null, ['name' => $sponsor->name], [], $sponsor->name);
 
-        Flux::modal('delete-sponsor')->close();
+        $this->dispatch('ui-sheet', name: 'delete-sponsor', open: false);
         $this->reset('deleteId');
         unset($this->sponsors, $this->competitions);
         $this->loadAssigned();
@@ -178,7 +177,7 @@ new class extends Component {
         Audit::log('competition.sponsor', null, ['sponsor' => $old], ['sponsor' => $competition->fresh()->sponsor?->name], $competition->name);
 
         unset($this->sponsors);
-        Flux::toast(variant: 'success', text: __('Sponsor assigned.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Sponsor assigned.'));
     }
 
     private function authorizeEdit(): void
@@ -190,50 +189,50 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Sponsors') }}</flux:heading>
-            <flux:subheading>{{ __('Sponsors of the competitions. Each competition of a season can have its own sponsor.') }}</flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Sponsors') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Sponsors of the competitions. Each competition of a season can have its own sponsor.') }}</x-ui.subheading>
         </div>
 
         @can(\App\Enums\Permission::SeasonEdit->value)
-            <flux:button variant="primary" icon="plus" wire:click="openForm">{{ __('New sponsor') }}</flux:button>
+            <x-ui.btn variant="primary" icon="plus" wire:click="openForm">{{ __('New sponsor') }}</x-ui.btn>
         @endcan
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[22rem_1fr]">
         {{-- Sponsorzy --}}
-        <flux:card class="space-y-3 self-start">
-            <flux:heading>{{ __('Sponsors') }} ({{ $this->sponsors->count() }})</flux:heading>
+        <x-ui.card class="space-y-3 self-start">
+            <x-ui.heading>{{ __('Sponsors') }} ({{ $this->sponsors->count() }})</x-ui.heading>
             @forelse ($this->sponsors as $sponsor)
                 <div class="flex items-center gap-3" wire:key="sponsor-{{ $sponsor->id }}">
                     @if ($sponsor->logoUrl())
                         <img src="{{ $sponsor->logoUrl() }}" alt="" class="h-10 w-16 shrink-0 object-contain">
                     @else
-                        <div class="flex h-10 w-16 shrink-0 items-center justify-center rounded bg-zinc-100 text-xs text-zinc-400 dark:bg-zinc-800">{{ __('Logo') }}</div>
+                        <div class="flex h-10 w-16 shrink-0 items-center justify-center rounded bg-ui-raised text-xs text-zinc-400 ">{{ __('Logo') }}</div>
                     @endif
                     <div class="min-w-0 flex-1">
                         <div class="truncate text-sm font-medium">{{ $sponsor->name }}</div>
-                        <div class="text-xs text-zinc-500">{{ trans_choice(':count competition|:count competitions', $sponsor->competitions_count, ['count' => $sponsor->competitions_count]) }}</div>
+                        <div class="text-xs text-ui-muted">{{ trans_choice(':count competition|:count competitions', $sponsor->competitions_count, ['count' => $sponsor->competitions_count]) }}</div>
                     </div>
                     @can(\App\Enums\Permission::SeasonEdit->value)
-                        <flux:button size="xs" variant="ghost" icon="pencil" wire:click="openForm({{ $sponsor->id }})" :aria-label="__('Edit')" />
-                        <flux:button size="xs" variant="ghost" icon="trash" wire:click="confirmDelete({{ $sponsor->id }})" :aria-label="__('Delete')" />
+                        <x-ui.btn size="xs" variant="ghost" icon="pencil" wire:click="openForm({{ $sponsor->id }})" :aria-label="__('Edit')" />
+                        <x-ui.btn size="xs" variant="ghost" icon="trash" wire:click="confirmDelete({{ $sponsor->id }})" :aria-label="__('Delete')" />
                     @endcan
                 </div>
             @empty
-                <flux:text class="text-sm">{{ __('No sponsors yet.') }}</flux:text>
+                <x-ui.text class="text-sm">{{ __('No sponsors yet.') }}</x-ui.text>
             @endforelse
-        </flux:card>
+        </x-ui.card>
 
         {{-- Przypisanie --}}
-        <flux:card class="space-y-4">
+        <x-ui.card class="space-y-4">
             <div class="flex flex-wrap items-end justify-between gap-3">
-                <flux:heading>{{ __('Competitions of the season') }}</flux:heading>
+                <x-ui.heading>{{ __('Competitions of the season') }}</x-ui.heading>
                 <div class="w-full sm:w-56">
-                    <flux:select wire:model.live="seasonId" :label="__('Season')">
+                    <x-ui.select wire:model.live="seasonId" :label="__('Season')">
                         @foreach ($this->seasons as $option)
-                            <flux:select.option :value="$option->id">{{ $option->title }}</flux:select.option>
+                            <x-ui.select.option :value="$option->id">{{ $option->title }}</x-ui.select.option>
                         @endforeach
-                    </flux:select>
+                    </x-ui.select>
                 </div>
             </div>
 
@@ -241,53 +240,53 @@ new class extends Component {
                 <div class="flex flex-wrap items-center gap-3" wire:key="assign-{{ $competition->id }}">
                     <span class="min-w-0 flex-1 text-sm font-medium">{{ $competition->name ?: $competition->type->label() }}</span>
                     <div class="w-full sm:w-64">
-                        <flux:select wire:model.live="assigned.{{ $competition->id }}" size="sm"
+                        <x-ui.select wire:model.live="assigned.{{ $competition->id }}" size="sm"
                             :disabled="! auth()->user()->can(\App\Enums\Permission::SeasonEdit->value)">
-                            <flux:select.option value="">{{ __('No sponsor') }}</flux:select.option>
+                            <x-ui.select.option value="">{{ __('No sponsor') }}</x-ui.select.option>
                             @foreach ($this->sponsors as $sponsor)
-                                <flux:select.option :value="(string) $sponsor->id">{{ $sponsor->name }}</flux:select.option>
+                                <x-ui.select.option :value="(string) $sponsor->id">{{ $sponsor->name }}</x-ui.select.option>
                             @endforeach
-                        </flux:select>
+                        </x-ui.select>
                     </div>
                 </div>
             @empty
-                <flux:text class="text-sm">{{ __('This season has no competitions yet.') }}</flux:text>
+                <x-ui.text class="text-sm">{{ __('This season has no competitions yet.') }}</x-ui.text>
             @endforelse
-        </flux:card>
+        </x-ui.card>
     </div>
 
-    <flux:modal name="sponsor-form" class="w-full md:w-[28rem]">
+    <x-ui.modal name="sponsor-form" class="w-full md:w-[28rem]">
         <div class="space-y-4">
-            <flux:heading size="lg">{{ $editId ? __('Edit sponsor') : __('New sponsor') }}</flux:heading>
-            <flux:input wire:model="name" :label="__('Name')" />
-            <flux:input wire:model="url" type="url" :label="__('Website')" placeholder="https://" />
+            <x-ui.heading size="lg">{{ $editId ? __('Edit sponsor') : __('New sponsor') }}</x-ui.heading>
+            <x-ui.input wire:model="name" :label="__('Name')" />
+            <x-ui.input wire:model="url" type="url" :label="__('Website')" placeholder="https://" />
             <div class="space-y-2">
-                <flux:label>{{ __('Logo') }}</flux:label>
+                <x-ui.label>{{ __('Logo') }}</x-ui.label>
                 <input type="file" wire:model="logo" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm">
-                <flux:error name="logo" />
+                <x-ui.error name="logo" />
                 @if ($logo && !$errors->has('logo'))
                     <img src="{{ $logo->temporaryUrl() }}" alt="" class="h-16 object-contain">
                 @endif
             </div>
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" wire:click="save" wire:loading.attr="disabled">{{ __('Save') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" wire:click="save" wire:loading.attr="disabled">{{ __('Save') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 
-    <flux:modal name="delete-sponsor" class="w-full md:w-[28rem]">
+    <x-ui.modal name="delete-sponsor" class="w-full md:w-[28rem]">
         <div class="space-y-4">
-            <flux:heading size="lg">{{ __('Delete sponsor') }}</flux:heading>
-            <flux:text>{{ __('Delete this sponsor? The competitions lose their sponsor.') }}</flux:text>
+            <x-ui.heading size="lg">{{ __('Delete sponsor') }}</x-ui.heading>
+            <x-ui.text>{{ __('Delete this sponsor? The competitions lose their sponsor.') }}</x-ui.text>
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="danger" wire:click="delete">{{ __('Delete') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="danger" wire:click="delete">{{ __('Delete') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 </div>

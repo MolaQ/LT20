@@ -10,7 +10,6 @@ use App\Models\Matchday;
 use App\Models\Season;
 use App\Support\Audit;
 use App\Support\Roman;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +53,7 @@ new class extends Component {
     public ?int $deleteId = null;
     public string $deleteTitle = '';
 
-    // Potwierdzenie aktywacji / zakończenia sezonu (modal Flux zamiast okna przeglądarki)
+    // Potwierdzenie aktywacji / zakończenia sezonu (okno panelu zamiast okna przeglądarki)
     public ?int $statusId = null;
     public string $statusAction = ''; // 'approve', 'unapprove', 'activate' albo 'finish'
     public string $statusTitle = '';
@@ -244,7 +243,7 @@ new class extends Component {
         // Podpowiadamy kolejny numer po najwyższym istniejącym.
         $this->number = (string) (((int) Season::max('number')) + 1);
 
-        Flux::modal('season-form')->show();
+        $this->dispatch('ui-sheet', name: 'season-form');
     }
 
     public function edit(int $id): void
@@ -261,7 +260,7 @@ new class extends Component {
         $this->sponsorUrl = (string) $season->sponsor_url;
         $this->currentLogoPath = $season->sponsor_logo_path;
 
-        Flux::modal('season-form')->show();
+        $this->dispatch('ui-sheet', name: 'season-form');
     }
 
     /** Zapis sezonu (nowego albo edytowanego) razem z logo i wpisem w dzienniku zmian. */
@@ -326,12 +325,12 @@ new class extends Component {
             Audit::log('season.updated', null, $before, $after, $season->title);
         }
 
-        Flux::modal('season-form')->close();
+        $this->dispatch('ui-sheet', name: 'season-form', open: false);
         $this->resetForm();
         $this->clearCaches();
 
         if (!$isNew) {
-            Flux::toast(text: __('Season saved.'), variant: 'success');
+            $this->dispatch('ui-toast', text: __('Season saved.'), variant: 'success');
 
             return;
         }
@@ -341,13 +340,13 @@ new class extends Component {
         try {
             $result = app(\App\Actions\Seasons\SetUpSeason::class)->handle($season);
         } catch (DomainException $e) {
-            Flux::toast(text: __('The season was created as a draft. It could not be set up: :reason', ['reason' => $e->getMessage()]), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('The season was created as a draft. It could not be set up: :reason', ['reason' => $e->getMessage()]), variant: 'warning');
 
             return;
         }
 
         $this->clearCaches();
-        Flux::toast(
+        $this->dispatch('ui-toast',
             text: __('Season created and approved: :players players, :leagues leagues, :fixtures fixtures. Fill in the unnamed Lech matches of the matchdays.', $result),
             variant: 'success',
         );
@@ -409,7 +408,7 @@ new class extends Component {
 
             // Aktywacja to osobny krok po zatwierdzeniu (lista zamknięta, terminarz gotowy).
             if ($season->status !== SeasonStatus::Approved) {
-                Flux::toast(text: __('Approve the season before activating it.'), variant: 'warning');
+                $this->dispatch('ui-toast', text: __('Approve the season before activating it.'), variant: 'warning');
 
                 return false;
             }
@@ -433,7 +432,7 @@ new class extends Component {
         $this->clearCaches();
 
         if ($activated) {
-            Flux::toast(text: __('Season activated.'), variant: 'success');
+            $this->dispatch('ui-toast', text: __('Season activated.'), variant: 'success');
         }
     }
 
@@ -450,13 +449,13 @@ new class extends Component {
         try {
             $stats = app(FinishSeason::class)->handle($season);
         } catch (DomainException $e) {
-            Flux::toast(text: $e->getMessage(), variant: 'danger');
+            $this->dispatch('ui-toast', text: $e->getMessage(), variant: 'danger');
 
             return;
         }
 
         $this->clearCaches();
-        Flux::toast(
+        $this->dispatch('ui-toast',
             text: __('Season finished.') . ' ' . __('Inactive players: :count.', ['count' => $stats['inactive']]),
             variant: 'success',
         );
@@ -473,14 +472,14 @@ new class extends Component {
         try {
             $result = app(ApproveSeason::class)->handle(Season::findOrFail($id));
         } catch (DomainException $e) {
-            Flux::toast(text: $e->getMessage(), variant: 'danger');
+            $this->dispatch('ui-toast', text: $e->getMessage(), variant: 'danger');
 
             return;
         }
 
         $this->clearCaches();
 
-        Flux::toast(
+        $this->dispatch('ui-toast',
             text: __('Season approved. :leagues leagues and :fixtures fixtures were generated.', [
                 'leagues' => $result['leagues'],
                 'fixtures' => $result['fixtures'],
@@ -497,17 +496,17 @@ new class extends Component {
         try {
             app(RevertApproval::class)->handle(Season::findOrFail($id));
         } catch (DomainException $e) {
-            Flux::toast(text: $e->getMessage(), variant: 'danger');
+            $this->dispatch('ui-toast', text: $e->getMessage(), variant: 'danger');
 
             return;
         }
 
         $this->clearCaches();
-        Flux::toast(text: __('Approval reverted. The season is a draft again.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Approval reverted. The season is a draft again.'), variant: 'success');
     }
 
     /**
-     * Krok 1: otwiera modal Flux z pytaniem. Niczego jeszcze nie zmienia.
+     * Krok 1: otwiera okno z pytaniem. Niczego jeszcze nie zmienia.
      * Treść pytania budujemy po stronie serwera, więc widok jest prosty.
      */
     public function confirmStatus(int $id, string $action): void
@@ -540,7 +539,7 @@ new class extends Component {
             default => $season->title,
         };
 
-        Flux::modal('season-status')->show();
+        $this->dispatch('ui-sheet', name: 'season-status');
     }
 
     /** Ile kolejek sezonu ma status "rozegrana" (do ostrzeżenia przy przedwczesnym kończeniu). */
@@ -562,7 +561,7 @@ new class extends Component {
             default => abort(422),
         };
 
-        Flux::modal('season-status')->close();
+        $this->dispatch('ui-sheet', name: 'season-status', open: false);
         $this->reset('statusId', 'statusAction', 'statusTitle', 'statusMessage');
     }
 
@@ -577,7 +576,7 @@ new class extends Component {
         $season = Season::findOrFail($id);
 
         if ($season->status !== SeasonStatus::Draft) {
-            Flux::toast(text: __('Only draft seasons can be deleted.'), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('Only draft seasons can be deleted.'), variant: 'warning');
 
             return;
         }
@@ -585,7 +584,7 @@ new class extends Component {
         $this->deleteId = $season->id;
         $this->deleteTitle = $season->title;
 
-        Flux::modal('delete-season')->show();
+        $this->dispatch('ui-sheet', name: 'delete-season');
     }
 
     public function delete(): void
@@ -608,11 +607,11 @@ new class extends Component {
 
         Audit::log('season.deleted', null, $snapshot, [], $title);
 
-        Flux::modal('delete-season')->close();
+        $this->dispatch('ui-sheet', name: 'delete-season', open: false);
         $this->reset('deleteId', 'deleteTitle');
         $this->clearCaches();
 
-        Flux::toast(text: __('Season deleted.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Season deleted.'), variant: 'success');
     }
 
     /* ==================================================================
@@ -637,94 +636,94 @@ new class extends Component {
     {{-- Nagłówek --}}
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Season setup') }}</flux:heading>
-            <flux:subheading>{{ __('Create seasons, choose the active one and manage the sponsor.') }}</flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Season setup') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Create seasons, choose the active one and manage the sponsor.') }}</x-ui.subheading>
         </div>
 
         @can(\App\Enums\Permission::SeasonCreate->value)
-            <flux:button variant="primary" icon="plus" wire:click="createSeason">{{ __('New season') }}</flux:button>
+            <x-ui.btn variant="primary" icon="plus" wire:click="createSeason">{{ __('New season') }}</x-ui.btn>
         @endcan
     </div>
 
     {{-- Karty --}}
     <div class="grid gap-4 md:grid-cols-3">
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.calendar-days class="size-8 text-zinc-400" />
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="calendar-days" class="size-8 text-zinc-400" />
             <div>
-                <flux:text>{{ __('All seasons') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['all'] }}</flux:heading>
+                <x-ui.text>{{ __('All seasons') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['all'] }}</x-ui.heading>
             </div>
-        </flux:card>
+        </x-ui.card>
 
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.bolt class="size-8 text-green-500" />
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="bolt" class="size-8 text-green-500" />
             <div class="min-w-0">
-                <flux:text>{{ __('Active season') }}</flux:text>
+                <x-ui.text>{{ __('Active season') }}</x-ui.text>
                 @if ($this->activeSeason)
-                    <flux:heading size="xl">{{ $this->activeSeason->title }}</flux:heading>
+                    <x-ui.heading size="xl">{{ $this->activeSeason->title }}</x-ui.heading>
                     @if ($this->activeSeason->slogan)
-                        <flux:text class="truncate text-sm">{{ $this->activeSeason->slogan }}</flux:text>
+                        <x-ui.text class="truncate text-sm">{{ $this->activeSeason->slogan }}</x-ui.text>
                     @endif
                 @else
-                    <flux:heading size="xl">&mdash;</flux:heading>
-                    <flux:text class="text-sm">{{ __('No active season') }}</flux:text>
+                    <x-ui.heading size="xl">&mdash;</x-ui.heading>
+                    <x-ui.text class="text-sm">{{ __('No active season') }}</x-ui.text>
                 @endif
             </div>
-        </flux:card>
+        </x-ui.card>
 
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.check-circle class="size-8 text-blue-500" />
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="check-circle" class="size-8 text-blue-500" />
             <div>
-                <flux:text>{{ __('Finished seasons') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['finished'] }}</flux:heading>
+                <x-ui.text>{{ __('Finished seasons') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['finished'] }}</x-ui.heading>
             </div>
-        </flux:card>
+        </x-ui.card>
     </div>
 
     {{-- Wyszukiwarka i filtr --}}
     <div class="flex flex-wrap items-center gap-4">
         <div class="w-full sm:w-80">
-            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+            <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 :placeholder="__('Search by number, slogan or sponsor...')" clearable />
         </div>
 
         <div class="w-full sm:w-56">
-            <flux:select wire:model.live="status">
-                <flux:select.option value="">{{ __('All statuses') }}</flux:select.option>
+            <x-ui.select wire:model.live="status">
+                <x-ui.select.option value="">{{ __('All statuses') }}</x-ui.select.option>
                 @foreach (\App\Enums\SeasonStatus::cases() as $case)
-                    <flux:select.option :value="$case->value">{{ $case->label() }}</flux:select.option>
+                    <x-ui.select.option :value="$case->value">{{ $case->label() }}</x-ui.select.option>
                 @endforeach
-            </flux:select>
+            </x-ui.select>
         </div>
     </div>
 
     {{-- Tabela sezonów --}}
-    <flux:table :paginate="$this->seasons">
-        <flux:table.columns>
-            <flux:table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection"
+    <x-ui.table :paginate="$this->seasons">
+        <x-ui.table.columns>
+            <x-ui.table.column sortable :sorted="$sortBy === 'number'" :direction="$sortDirection"
                 wire:click="sort('number')">
                 {{ __('Season') }}
-            </flux:table.column>
-            <flux:table.column>{{ __('Sponsor') }}</flux:table.column>
-            <flux:table.column>{{ __('Status') }}</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection"
+            </x-ui.table.column>
+            <x-ui.table.column>{{ __('Sponsor') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Status') }}</x-ui.table.column>
+            <x-ui.table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection"
                 wire:click="sort('created_at')">
                 {{ __('Created') }}
-            </flux:table.column>
-            <flux:table.column />
-        </flux:table.columns>
+            </x-ui.table.column>
+            <x-ui.table.column />
+        </x-ui.table.columns>
 
-        <flux:table.rows>
+        <x-ui.table.rows>
             @forelse ($this->seasons as $season)
-                <flux:table.row :key="'season-'.$season->id">
-                    <flux:table.cell>
+                <x-ui.table.row :key="'season-'.$season->id">
+                    <x-ui.table.cell>
                         <div class="text-lg font-semibold">{{ $season->title }}</div>
                         @if ($season->slogan)
-                            <div class="text-sm text-zinc-500">{{ $season->slogan }}</div>
+                            <div class="text-sm text-ui-muted">{{ $season->slogan }}</div>
                         @endif
-                    </flux:table.cell>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell>
+                    <x-ui.table.cell>
                         @if ($season->sponsor_name || $season->sponsor_logo_url)
                             <div class="flex items-center gap-3">
                                 @if ($season->sponsor_logo_url)
@@ -742,185 +741,185 @@ new class extends Component {
                         @else
                             <span class="text-zinc-400">&mdash;</span>
                         @endif
-                    </flux:table.cell>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm" :color="$season->status->color()">{{ $season->status->label() }}
-                        </flux:badge>
-                    </flux:table.cell>
+                    <x-ui.table.cell>
+                        <x-ui.badge size="sm" :color="$season->status->color()">{{ $season->status->label() }}
+                        </x-ui.badge>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell class="text-zinc-500">{{ $season->created_at?->format('Y-m-d') }}
-                    </flux:table.cell>
+                    <x-ui.table.cell class="text-ui-muted">{{ $season->created_at?->format('Y-m-d') }}
+                    </x-ui.table.cell>
 
-                    <flux:table.cell align="end">
-                        <flux:dropdown position="bottom" align="end">
-                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom" />
+                    <x-ui.table.cell align="end">
+                        <x-ui.dropdown position="bottom" align="end">
+                            <x-ui.btn variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom" />
 
-                            <flux:menu>
+                            <x-ui.menu>
                                 @can(\App\Enums\Permission::SeasonEdit->value)
-                                    <flux:menu.item icon="pencil-square" wire:click="edit({{ $season->id }})">
-                                        {{ __('Edit') }}</flux:menu.item>
+                                    <x-ui.menu.item icon="pencil-square" wire:click="edit({{ $season->id }})">
+                                        {{ __('Edit') }}</x-ui.menu.item>
 
                                     @if ($season->status === \App\Enums\SeasonStatus::Draft)
-                                        <flux:menu.item icon="check-badge"
+                                        <x-ui.menu.item icon="check-badge"
                                             wire:click="confirmStatus({{ $season->id }}, 'approve')">
                                             {{ __('Approve season') }}
-                                        </flux:menu.item>
+                                        </x-ui.menu.item>
                                     @elseif ($season->status === \App\Enums\SeasonStatus::Approved)
-                                        <flux:menu.item icon="bolt"
+                                        <x-ui.menu.item icon="bolt"
                                             wire:click="confirmStatus({{ $season->id }}, 'activate')">
                                             {{ __('Activate') }}
-                                        </flux:menu.item>
-                                        <flux:menu.item icon="arrow-uturn-left"
+                                        </x-ui.menu.item>
+                                        <x-ui.menu.item icon="arrow-uturn-left"
                                             wire:click="confirmStatus({{ $season->id }}, 'unapprove')">
                                             {{ __('Revert to draft') }}
-                                        </flux:menu.item>
+                                        </x-ui.menu.item>
                                     @elseif ($season->status === \App\Enums\SeasonStatus::Active)
-                                        <flux:menu.item icon="flag"
+                                        <x-ui.menu.item icon="flag"
                                             wire:click="confirmStatus({{ $season->id }}, 'finish')">
                                             {{ __('Finish season') }}
-                                        </flux:menu.item>
+                                        </x-ui.menu.item>
                                     @endif
                                 @endcan
 
                                 @can(\App\Enums\Permission::SeasonDelete->value)
                                     @if ($season->status === \App\Enums\SeasonStatus::Draft)
-                                        <flux:menu.separator />
-                                        <flux:menu.item icon="trash" variant="danger"
+                                        <x-ui.menu.separator />
+                                        <x-ui.menu.item icon="trash" variant="danger"
                                             wire:click="confirmDelete({{ $season->id }})">{{ __('Delete') }}
-                                        </flux:menu.item>
+                                        </x-ui.menu.item>
                                     @endif
                                 @endcan
-                            </flux:menu>
-                        </flux:dropdown>
-                    </flux:table.cell>
-                </flux:table.row>
+                            </x-ui.menu>
+                        </x-ui.dropdown>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="5" class="py-10 text-center text-zinc-500">
+                <x-ui.table.row>
+                    <x-ui.table.cell colspan="5" class="py-10 text-center text-ui-muted">
                         {{ $search !== '' || $status !== '' ? __('No seasons match your filters.') : __('No seasons yet. Create the first one.') }}
-                    </flux:table.cell>
-                </flux:table.row>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @endforelse
-        </flux:table.rows>
-    </flux:table>
+        </x-ui.table.rows>
+    </x-ui.table>
 
     {{-- Modal: formularz sezonu --}}
-    <flux:modal name="season-form" class="w-full md:w-[34rem]" @close="resetForm">
+    <x-ui.modal name="season-form" class="w-full md:w-[34rem]" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ $seasonId ? __('Edit season') : __('New season') }}</flux:heading>
+                <x-ui.heading size="lg">{{ $seasonId ? __('Edit season') : __('New season') }}</x-ui.heading>
             </div>
 
             {{-- Numer z podglądem zapisu rzymskiego --}}
             <div>
                 <div class="flex items-end gap-4">
                     <div class="flex-1">
-                        <flux:input wire:model.live.debounce.400ms="number" type="number" min="1" max="3999"
+                        <x-ui.input wire:model.live.debounce.400ms="number" type="number" min="1" max="3999"
                             :label="__('Season number')" autofocus />
                     </div>
                     <div class="min-w-20 pb-2 text-center text-3xl font-semibold tabular-nums">
                         {{ $this->romanPreview ?? '—' }}
                     </div>
                 </div>
-                <flux:text class="mt-1 text-sm">{{ __('Number from 1 to 3999. It is shown in Roman numerals.') }}
-                </flux:text>
+                <x-ui.text class="mt-1 text-sm">{{ __('Number from 1 to 3999. It is shown in Roman numerals.') }}
+                </x-ui.text>
             </div>
 
-            <flux:input wire:model.live.blur="slogan" :label="__('Slogan')" maxlength="120"
+            <x-ui.input wire:model.live.blur="slogan" :label="__('Slogan')" maxlength="120"
                 :placeholder="__('e.g. Rising from the ashes')" />
 
-            <flux:separator :text="__('Sponsor')" />
+            <x-ui.separator :text="__('Sponsor')" />
 
-            <flux:input wire:model.live.blur="sponsorName" :label="__('Sponsor name')" maxlength="80" />
+            <x-ui.input wire:model.live.blur="sponsorName" :label="__('Sponsor name')" maxlength="80" />
 
-            <flux:input wire:model.live.blur="sponsorUrl" type="url" :label="__('Sponsor website')"
+            <x-ui.input wire:model.live.blur="sponsorUrl" type="url" :label="__('Sponsor website')"
                 placeholder="https://" maxlength="255" />
 
             {{-- Logo: wybór pliku, podgląd, usuwanie --}}
             <div class="space-y-2">
-                <flux:label>{{ __('Sponsor logo') }}</flux:label>
+                <x-ui.label>{{ __('Sponsor logo') }}</x-ui.label>
 
                 <div class="flex items-center gap-4">
                     @if ($this->logoPreview)
                         <img src="{{ $this->logoPreview }}" alt="{{ __('Sponsor logo') }}"
-                            class="size-20 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                            class="size-20 rounded-lg border border-ui-line object-cover ">
                     @else
                         <div
                             class="flex size-20 items-center justify-center rounded-lg border border-dashed border-zinc-300 text-zinc-400 dark:border-zinc-600">
-                            <flux:icon.photo class="size-8" />
+                            <x-ui.icon name="photo" class="size-8" />
                         </div>
                     @endif
 
                     <div class="min-w-0 flex-1 space-y-2">
                         <input type="file" wire:model="logo" accept="image/png,image/jpeg,image/webp"
-                            class="block w-full text-sm text-zinc-600 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-700 dark:file:text-zinc-100 dark:hover:file:bg-zinc-600">
+                            class="block w-full text-sm text-ui-muted file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-200 dark:file:bg-zinc-700 dark:file:text-zinc-100 dark:hover:file:bg-zinc-600">
 
-                        <div wire:loading wire:target="logo" class="text-sm text-zinc-500">{{ __('Uploading...') }}
+                        <div wire:loading wire:target="logo" class="text-sm text-ui-muted">{{ __('Uploading...') }}
                         </div>
 
                         @if ($this->logoPreview)
-                            <flux:button type="button" size="xs" variant="ghost" icon="trash"
+                            <x-ui.btn type="button" size="xs" variant="ghost" icon="trash"
                                 wire:click="clearLogo">
                                 {{ __('Remove logo') }}
-                            </flux:button>
+                            </x-ui.btn>
                         @endif
                     </div>
                 </div>
 
-                <flux:text class="text-sm">{{ __('PNG, JPG or WebP, square, 200–2000 px, up to 2 MB.') }}</flux:text>
-                <flux:error name="logo" />
+                <x-ui.text class="text-sm">{{ __('PNG, JPG or WebP, square, 200–2000 px, up to 2 MB.') }}</x-ui.text>
+                <x-ui.error name="logo" />
             </div>
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
 
                 {{-- Przycisk jest zablokowany na czas wysyłania pliku --}}
-                <flux:button variant="primary" type="submit" wire:loading.attr="disabled" wire:target="logo">
+                <x-ui.btn variant="primary" type="submit" wire:loading.attr="disabled" wire:target="logo">
                     <span wire:loading.remove wire:target="save">{{ __('Save changes') }}</span>
                     <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
-                </flux:button>
+                </x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 
     {{-- Modal: potwierdzenie aktywacji / zakończenia sezonu --}}
-    <flux:modal name="season-status" class="min-w-[22rem] md:w-[26rem]">
+    <x-ui.modal name="season-status" class="min-w-[22rem] md:w-[26rem]">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ $statusTitle }}</flux:heading>
-                <flux:text class="mt-2">{{ $statusMessage }}</flux:text>
+                <x-ui.heading size="lg">{{ $statusTitle }}</x-ui.heading>
+                <x-ui.text class="mt-2">{{ $statusMessage }}</x-ui.text>
             </div>
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" wire:click="applyStatus">
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" wire:click="applyStatus">
                     <span wire:loading.remove wire:target="applyStatus">{{ __('Confirm') }}</span>
                     <span wire:loading wire:target="applyStatus">{{ __('Saving...') }}</span>
-                </flux:button>
+                </x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 
     {{-- Modal: usuwanie szkicu --}}
-    <flux:modal name="delete-season" class="min-w-[22rem]">
+    <x-ui.modal name="delete-season" class="min-w-[22rem]">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Delete season?') }}</flux:heading>
-                <flux:text class="mt-2">
-                    {{ __('The season :title will be permanently deleted.', ['title' => $deleteTitle]) }}</flux:text>
+                <x-ui.heading size="lg">{{ __('Delete season?') }}</x-ui.heading>
+                <x-ui.text class="mt-2">
+                    {{ __('The season :title will be permanently deleted.', ['title' => $deleteTitle]) }}</x-ui.text>
             </div>
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="danger" wire:click="delete">{{ __('Delete season') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="danger" wire:click="delete">{{ __('Delete season') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 </div>

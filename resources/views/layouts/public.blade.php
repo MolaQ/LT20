@@ -1,58 +1,13 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+{{--
+    Strony publiczne w nowej skorupie aplikacji (wygląd 2.0), bez Flux (komponenty x-ui.*). Tryb legacy dokłada
+    wyszukiwarkę w nagłówku, okna pojedynku i meczu Lecha oraz prawą kolumnę z rywalami i newsami.
+--}}
+@props(['title' => null])
 
-<head>
-    @include('partials.head')
-</head>
-
-<body class="bg-zinc-50 antialiased dark:bg-zinc-950">
-    <x-maintenance-notice />
-    @php
-        // 4rem = header (także dla gości, bo jest w nim wyszukiwarka), 3rem = stopka.
-        $asideClasses = 'top-16 h-[calc(100dvh-7rem)]';
-    @endphp
-
-    <div class="flex min-h-dvh">
-
-        {{-- Lewy sidebar: od góry do dołu ekranu, na telefonie szuflada --}}
-        <x-public.left-sidebar />
-
-        <div class="flex min-w-0 flex-1 flex-col">
-
-            <x-public.header />
-
-            <div class="flex flex-1">
-                <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
-                    <flux:toast position="top end" class="pt-20" />
-                    <x-flash-toast />
-
-                    {{ $slot }}
-                </main>
-
-                {{-- Prawy panel: kolumna od xl wzwyż --}}
-                <aside
-                    class="{{ $asideClasses }} sticky hidden w-72 shrink-0 self-start overflow-y-auto border-s border-zinc-200 p-4 dark:border-zinc-700 xl:block">
-                    <x-public.right-panel />
-                </aside>
-            </div>
-
-            <x-public.info-panel />
-            <x-public.footer />
-        </div>
-    </div>
-
-    {{-- Prawy panel poniżej xl: wysuwany z prawej strony --}}
-    <flux:modal name="right-panel" flyout position="right" class="w-80 max-w-full">
+<x-layouts::shell :title="$title" legacy>
+    <x-slot:aside>
         <x-public.right-panel />
-    </flux:modal>
+    </x-slot:aside>
 
-    {{-- Uniwersalne okno pojedynku (zdarzenie „show-duel”) dostępne na każdej stronie publicznej --}}
-    <livewire:pages::home.duel-modal />
-    {{-- Okno meczu Lecha (zdarzenie „show-lech-match”): szczegóły typów --}}
-    <livewire:pages::home.lech-match-modal />
-
-    <x-confirm-dialog />
-    @fluxScripts
-</body>
-
-</html>
+    {{ $slot }}
+</x-layouts::shell>

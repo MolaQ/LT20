@@ -7,7 +7,7 @@ use Closure;
 use Illuminate\Validation\Rule;
 
 /**
- * Domyślne nazwy 512 botów (jedno źródło prawdy, tak jak enum Permission dla uprawnień).
+ * Domyślne nazwy 520 botów (jedno źródło prawdy, tak jak enum Permission dla uprawnień).
  *
  * Dlaczego klasa, a nie enum: stałe enuma muszą być poprawnymi identyfikatorami PHP,
  * a nazwy botów zawierają spacje i polskie znaki. Lista jest więc zwykłą tablicą.
@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
 class BotNames
 {
     /** Liczba botów, czyli rozmiar Pucharu Polski. */
-    public const COUNT = 512;
+    public const COUNT = 520;
 
     /** @return array<int, string> nazwy po kolei, indeks 0 = slot 1 */
     public static function all(): array
@@ -540,6 +540,15 @@ class BotNames
             'Warciański Kolejorz',
             'Ratajskie Laczki',
             'Śródecka Jupa',
+            // --- Dopełnienie puli do 520 (nowa Liga podwórkowa: lista w pełnych ligach po 10) ---
+            'Łazarskie Podwórko',
+            'Garbarska Szpica',
+            'Wildecka Ferajna',
+            'Dębieckie Chachary',
+            'Sołacka Banda',
+            'Winogradzka Paka',
+            'Głogowska Tyralka',
+            'Naramowicki Klejnot',
         ];
     }
 
@@ -565,7 +574,7 @@ class BotNames
         ];
     }
 
-    /** Domyślna nazwa dla slotu 1..512 (do przywracania nazwy w panelu). */
+    /** Domyślna nazwa dla slotu 1..520 (do przywracania nazwy w panelu). */
     public static function forSlot(int $slot): ?string
     {
         return self::all()[$slot - 1] ?? null;

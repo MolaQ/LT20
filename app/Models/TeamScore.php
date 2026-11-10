@@ -27,6 +27,8 @@ use Illuminate\Support\Carbon;
  * @property bool $exact_hit
  * @property int $offense_bonus
  * @property int $defense_bonus
+ * @property int $question_offense
+ * @property int $question_defense
  * @property int $offense
  * @property int $own_goals samobóje wystawionych zawodników (punkty ataku dla rywala)
  * @property float $experience doświadczenie wystawionych zawodników w klubie (remisy w pucharach)
@@ -40,7 +42,7 @@ class TeamScore extends Model
         'matchday_id', 'season_team_id', 'score_set',
         'has_tip', 'tip_lech', 'tip_opponent', 'tipped_at', 'tip_order',
         'tip_points', 'outcome_hit', 'diff_hit', 'exact_hit',
-        'offense_bonus', 'defense_bonus', 'offense',
+        'offense_bonus', 'defense_bonus', 'question_offense', 'question_defense', 'offense',
         'own_goals', 'experience', 'yellow_cards', 'red_cards',
     ];
 
@@ -59,6 +61,8 @@ class TeamScore extends Model
             'exact_hit' => 'boolean',
             'offense_bonus' => 'integer',
             'defense_bonus' => 'integer',
+            'question_offense' => 'integer',
+            'question_defense' => 'integer',
             'experience' => 'float',
             'offense' => 'integer',
         ];

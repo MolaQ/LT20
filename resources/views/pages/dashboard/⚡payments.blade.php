@@ -7,7 +7,6 @@ use App\Support\Audit;
 use App\Support\Supporters;
 use App\Support\Premium;
 use App\Support\Przelewy24;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Computed;
@@ -131,7 +130,7 @@ new class extends Component {
         $this->paidAt = now()->format('Y-m-d');
         $this->resetValidation();
 
-        Flux::modal('payment-form')->show();
+        $this->dispatch('ui-sheet', name: 'payment-form');
     }
 
     public function updatedPlan(): void
@@ -181,9 +180,9 @@ new class extends Component {
 
         $complete->handle($payment);
 
-        Flux::modal('payment-form')->close();
+        $this->dispatch('ui-sheet', name: 'payment-form', open: false);
         $this->clearCaches();
-        Flux::toast(variant: 'success', text: __('Payment saved.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Payment saved.'));
     }
 
     /** Wisząca wpłata online (np. powiadomienie z P24 nie dotarło, a pieniądze są na koncie). */
@@ -191,7 +190,7 @@ new class extends Component {
     {
         $this->completeId = Payment::where('status', '!=', Payment::PAID)->findOrFail($id)->id;
 
-        Flux::modal('confirm-complete')->show();
+        $this->dispatch('ui-sheet', name: 'confirm-complete');
     }
 
     public function complete(CompletePayment $complete): void
@@ -201,10 +200,10 @@ new class extends Component {
 
         $complete->handle($payment);
 
-        Flux::modal('confirm-complete')->close();
+        $this->dispatch('ui-sheet', name: 'confirm-complete', open: false);
         $this->reset('completeId');
         $this->clearCaches();
-        Flux::toast(variant: 'success', text: __('Payment confirmed.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Payment confirmed.'));
     }
 
     /* ==================================================================
@@ -220,7 +219,7 @@ new class extends Component {
             $this->pickUser($userId);
         }
 
-        Flux::modal('premium-form')->show();
+        $this->dispatch('ui-sheet', name: 'premium-form');
     }
 
     /** Ustawia datę końca premium (dzień włącznie). Data w przeszłości odbiera premium. */
@@ -240,9 +239,9 @@ new class extends Component {
 
         Audit::log('premium.manual', $user, ['premium_until' => $old], ['premium_until' => $user->premium_until?->toDateTimeString()]);
 
-        Flux::modal('premium-form')->close();
+        $this->dispatch('ui-sheet', name: 'premium-form', open: false);
         $this->clearCaches();
-        Flux::toast(variant: 'success', text: __('Premium saved.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Premium saved.'));
     }
 
     public ?int $revokeId = null;
@@ -251,7 +250,7 @@ new class extends Component {
     {
         $this->revokeId = User::findOrFail($userId)->id;
 
-        Flux::modal('confirm-revoke')->show();
+        $this->dispatch('ui-sheet', name: 'confirm-revoke');
     }
 
     public function revokePremium(): void
@@ -262,10 +261,10 @@ new class extends Component {
         Premium::setUntil($user, now());
         Audit::log('premium.manual', $user, ['premium_until' => $old], ['premium_until' => null]);
 
-        Flux::modal('confirm-revoke')->close();
+        $this->dispatch('ui-sheet', name: 'confirm-revoke', open: false);
         $this->reset('revokeId');
         $this->clearCaches();
-        Flux::toast(text: __('Premium revoked.'));
+        $this->dispatch('ui-toast', text: __('Premium revoked.'));
     }
 
     private function clearCaches(): void
@@ -277,24 +276,24 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Payments') }}</flux:heading>
-            <flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Payments') }}</x-ui.heading>
+            <x-ui.subheading>
                 {{ __('Premium and support payments. Online payments come from Przelewy24, others you add by hand.') }}
-            </flux:subheading>
+            </x-ui.subheading>
         </div>
 
         <div class="flex flex-wrap gap-2">
-            <flux:button icon="sparkles" wire:click="openPremium">{{ __('Grant premium') }}</flux:button>
-            <flux:button variant="primary" icon="plus" wire:click="openPayment">{{ __('Add payment') }}</flux:button>
+            <x-ui.btn icon="sparkles" wire:click="openPremium">{{ __('Grant premium') }}</x-ui.btn>
+            <x-ui.btn variant="primary" icon="plus" wire:click="openPayment">{{ __('Add payment') }}</x-ui.btn>
         </div>
     </div>
 
     @if (!\App\Support\Przelewy24::configured())
-        <flux:callout variant="warning" icon="exclamation-triangle">
-            <flux:callout.text>
+        <x-ui.callout variant="warning" icon="exclamation-triangle">
+            <p>
                 {{ __('Przelewy24 is not configured: set P24_MERCHANT_ID, P24_POS_ID, P24_CRC and P24_API_KEY in .env.') }}
-            </flux:callout.text>
-        </flux:callout>
+            </p>
+        </x-ui.callout>
     @endif
 
     <div class="grid gap-6 xl:grid-cols-[1fr_22rem]">
@@ -302,45 +301,45 @@ new class extends Component {
         <div class="space-y-3">
             <div class="flex flex-wrap gap-2">
                 <div class="w-full sm:w-64">
-                    <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable
+                    <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable
                         :placeholder="__('Search by player...')" />
                 </div>
                 <div class="w-full sm:w-44">
-                    <flux:select wire:model.live="status">
-                        <flux:select.option value="">{{ __('All statuses') }}</flux:select.option>
-                        <flux:select.option value="paid">{{ __('Paid') }}</flux:select.option>
-                        <flux:select.option value="pending">{{ __('Pending') }}</flux:select.option>
-                        <flux:select.option value="failed">{{ __('Failed') }}</flux:select.option>
-                    </flux:select>
+                    <x-ui.select wire:model.live="status">
+                        <x-ui.select.option value="">{{ __('All statuses') }}</x-ui.select.option>
+                        <x-ui.select.option value="paid">{{ __('Paid') }}</x-ui.select.option>
+                        <x-ui.select.option value="pending">{{ __('Pending') }}</x-ui.select.option>
+                        <x-ui.select.option value="failed">{{ __('Failed') }}</x-ui.select.option>
+                    </x-ui.select>
                 </div>
             </div>
 
-            <flux:table :paginate="$this->payments">
-                <flux:table.columns>
-                    <flux:table.column>{{ __('Date') }}</flux:table.column>
-                    <flux:table.column>{{ __('Player') }}</flux:table.column>
-                    <flux:table.column>{{ __('Type') }}</flux:table.column>
-                    <flux:table.column align="end">{{ __('Amount') }}</flux:table.column>
-                    <flux:table.column>{{ __('Status') }}</flux:table.column>
-                    <flux:table.column></flux:table.column>
-                </flux:table.columns>
+            <x-ui.table :paginate="$this->payments">
+                <x-ui.table.columns>
+                    <x-ui.table.column>{{ __('Date') }}</x-ui.table.column>
+                    <x-ui.table.column>{{ __('Player') }}</x-ui.table.column>
+                    <x-ui.table.column>{{ __('Type') }}</x-ui.table.column>
+                    <x-ui.table.column align="end">{{ __('Amount') }}</x-ui.table.column>
+                    <x-ui.table.column>{{ __('Status') }}</x-ui.table.column>
+                    <x-ui.table.column></x-ui.table.column>
+                </x-ui.table.columns>
 
-                <flux:table.rows>
+                <x-ui.table.rows>
                     @forelse ($this->payments as $payment)
-                        <flux:table.row :key="$payment->id">
-                            <flux:table.cell class="whitespace-nowrap text-sm">
+                        <x-ui.table.row :key="$payment->id">
+                            <x-ui.table.cell class="whitespace-nowrap text-sm">
                                 {{ ($payment->paid_at ?? $payment->created_at)->format('d.m.Y H:i') }}
-                            </flux:table.cell>
-                            <flux:table.cell>
+                            </x-ui.table.cell>
+                            <x-ui.table.cell>
                                 <div class="text-sm font-medium">{{ $payment->user?->name ?? '—' }}</div>
-                                <div class="text-xs text-zinc-500">{{ $payment->user?->email }}</div>
-                            </flux:table.cell>
-                            <flux:table.cell class="text-sm">
+                                <div class="text-xs text-ui-muted">{{ $payment->user?->email }}</div>
+                            </x-ui.table.cell>
+                            <x-ui.table.cell class="text-sm">
                                 {{ $payment->kindLabel() }}
                                 @if ($payment->plan)
                                     ({{ \App\Support\Premium::labels()[$payment->plan] ?? $payment->plan }})
                                 @endif
-                                <div class="text-xs text-zinc-500">
+                                <div class="text-xs text-ui-muted">
                                     {{ $payment->source === 'manual' ? __('By hand') . ($payment->creator ? ': ' . $payment->creator->name : '') : 'Przelewy24' }}
                                     @if ($payment->premium_days > 0)
                                         &middot; {{ trans_choice(':count day|:count days', $payment->premium_days, ['count' => $payment->premium_days]) }}
@@ -349,143 +348,143 @@ new class extends Component {
                                 @if ($payment->note)
                                     <div class="text-xs text-zinc-400">{{ $payment->note }}</div>
                                 @endif
-                            </flux:table.cell>
-                            <flux:table.cell align="end" class="tabular-nums">{{ $payment->amountLabel() }}</flux:table.cell>
-                            <flux:table.cell>
-                                <flux:badge size="sm" :color="$payment->statusColor()">{{ $payment->statusLabel() }}</flux:badge>
-                            </flux:table.cell>
-                            <flux:table.cell align="end">
+                            </x-ui.table.cell>
+                            <x-ui.table.cell align="end" class="tabular-nums">{{ $payment->amountLabel() }}</x-ui.table.cell>
+                            <x-ui.table.cell>
+                                <x-ui.badge size="sm" :color="$payment->statusColor()">{{ $payment->statusLabel() }}</x-ui.badge>
+                            </x-ui.table.cell>
+                            <x-ui.table.cell align="end">
                                 @if ($payment->status !== 'paid')
-                                    <flux:button size="xs" icon="check" wire:click="confirmComplete({{ $payment->id }})">
+                                    <x-ui.btn size="xs" icon="check" wire:click="confirmComplete({{ $payment->id }})">
                                         {{ __('Confirm') }}
-                                    </flux:button>
+                                    </x-ui.btn>
                                 @endif
-                            </flux:table.cell>
-                        </flux:table.row>
+                            </x-ui.table.cell>
+                        </x-ui.table.row>
                     @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="6">{{ __('No payments yet.') }}</flux:table.cell>
-                        </flux:table.row>
+                        <x-ui.table.row>
+                            <x-ui.table.cell colspan="6">{{ __('No payments yet.') }}</x-ui.table.cell>
+                        </x-ui.table.row>
                     @endforelse
-                </flux:table.rows>
-            </flux:table>
+                </x-ui.table.rows>
+            </x-ui.table>
         </div>
 
         <div class="space-y-6">
             {{-- Premium --}}
-            <flux:card class="space-y-3">
-                <flux:heading>{{ __('Active premium') }} ({{ $this->premiumUsers->count() }})</flux:heading>
+            <x-ui.card class="space-y-3">
+                <x-ui.heading>{{ __('Active premium') }} ({{ $this->premiumUsers->count() }})</x-ui.heading>
                 @forelse ($this->premiumUsers as $user)
                     <div class="flex items-center gap-2 text-sm" wire:key="premium-{{ $user->id }}">
                         <span class="min-w-0 flex-1 truncate">{{ $user->team_name ?: $user->name }}</span>
-                        <span class="text-xs text-zinc-500">{{ $user->premium_until->format('d.m.Y') }}</span>
-                        <flux:button size="xs" variant="ghost" icon="pencil" wire:click="openPremium({{ $user->id }})"
+                        <span class="text-xs text-ui-muted">{{ $user->premium_until->format('d.m.Y') }}</span>
+                        <x-ui.btn size="xs" variant="ghost" icon="pencil" wire:click="openPremium({{ $user->id }})"
                             :aria-label="__('Edit')" />
-                        <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="confirmRevoke({{ $user->id }})"
+                        <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="confirmRevoke({{ $user->id }})"
                             :aria-label="__('Revoke premium')" />
                     </div>
                 @empty
-                    <flux:text class="text-sm">{{ __('Nobody has premium now.') }}</flux:text>
+                    <x-ui.text class="text-sm">{{ __('Nobody has premium now.') }}</x-ui.text>
                 @endforelse
-            </flux:card>
+            </x-ui.card>
 
             {{-- Najwięksi wspierający --}}
-            <flux:card class="space-y-3">
+            <x-ui.card class="space-y-3">
                 <div>
-                    <flux:heading>{{ __('Top supporters') }}</flux:heading>
-                    <flux:text class="text-xs">{{ __('Payments in the last 12 months.') }}</flux:text>
+                    <x-ui.heading>{{ __('Top supporters') }}</x-ui.heading>
+                    <x-ui.text class="text-xs">{{ __('Payments in the last 12 months.') }}</x-ui.text>
                 </div>
                 @forelse ($this->supporters as $row)
                     <div class="flex items-center gap-2 text-sm" wire:key="supporter-{{ $row['user_id'] }}">
-                        <span class="w-6 text-right tabular-nums text-zinc-500">{{ $loop->iteration }}.</span>
+                        <span class="w-6 text-right tabular-nums text-ui-muted">{{ $loop->iteration }}.</span>
                         <span class="min-w-0 flex-1 truncate">{{ $row['user']?->team_name ?: $row['user']?->name }}</span>
                         <span class="tabular-nums">{{ \App\Models\Payment::money($row['total']) }}</span>
                     </div>
                 @empty
-                    <flux:text class="text-sm">{{ __('No payments in the last 12 months.') }}</flux:text>
+                    <x-ui.text class="text-sm">{{ __('No payments in the last 12 months.') }}</x-ui.text>
                 @endforelse
-            </flux:card>
+            </x-ui.card>
         </div>
     </div>
 
-    <flux:modal name="payment-form" class="w-full md:w-[30rem]">
+    <x-ui.modal name="payment-form" class="w-full md:w-[30rem]">
         <div class="space-y-4">
-            <flux:heading size="lg">{{ __('Add payment') }}</flux:heading>
-            <flux:text class="text-sm">{{ __('For example a bank transfer. The payment is saved as paid and extends premium.') }}</flux:text>
+            <x-ui.heading size="lg">{{ __('Add payment') }}</x-ui.heading>
+            <x-ui.text class="text-sm">{{ __('For example a bank transfer. The payment is saved as paid and extends premium.') }}</x-ui.text>
 
             @include('partials.payments-user-picker')
 
-            <flux:radio.group wire:model.live="kind" :label="__('Type')" variant="segmented">
-                <flux:radio value="support" :label="__('Support')" />
-                <flux:radio value="premium" :label="__('Premium')" />
-            </flux:radio.group>
+            <x-ui.radio.group wire:model.live="kind" :label="__('Type')" variant="segmented">
+                <x-ui.radio value="support" :label="__('Support')" />
+                <x-ui.radio value="premium" :label="__('Premium')" />
+            </x-ui.radio.group>
 
             @if ($kind === 'premium')
-                <flux:select wire:model.live="plan" :label="__('Plan')">
+                <x-ui.select wire:model.live="plan" :label="__('Plan')">
                     @foreach (\App\Support\Premium::PLANS as $key => [$price, $days])
-                        <flux:select.option :value="$key">
+                        <x-ui.select.option :value="$key">
                             {{ \App\Support\Premium::labels()[$key] }} ({{ \App\Models\Payment::money($price) }})
-                        </flux:select.option>
+                        </x-ui.select.option>
                     @endforeach
-                </flux:select>
+                </x-ui.select>
             @endif
 
             <div class="grid grid-cols-2 gap-3">
-                <flux:input type="number" step="0.01" min="1" wire:model="amount" :label="__('Amount')" suffix="zł" />
-                <flux:input type="date" wire:model="paidAt" :label="__('Payment date')" />
+                <x-ui.input type="number" step="0.01" min="1" wire:model="amount" :label="__('Amount')" suffix="zł" />
+                <x-ui.input type="date" wire:model="paidAt" :label="__('Payment date')" />
             </div>
-            <flux:input wire:model="note" :label="__('Note')" />
+            <x-ui.input wire:model="note" :label="__('Note')" />
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" wire:click="savePayment">{{ __('Save') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" wire:click="savePayment">{{ __('Save') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 
-    <flux:modal name="premium-form" class="w-full md:w-[30rem]">
+    <x-ui.modal name="premium-form" class="w-full md:w-[30rem]">
         <div class="space-y-4">
-            <flux:heading size="lg">{{ __('Grant premium') }}</flux:heading>
-            <flux:text class="text-sm">{{ __('Premium lasts until the end of the chosen day. A past date revokes it.') }}</flux:text>
+            <x-ui.heading size="lg">{{ __('Grant premium') }}</x-ui.heading>
+            <x-ui.text class="text-sm">{{ __('Premium lasts until the end of the chosen day. A past date revokes it.') }}</x-ui.text>
 
             @include('partials.payments-user-picker')
 
-            <flux:input type="date" wire:model="premiumUntil" :label="__('Premium until')" />
+            <x-ui.input type="date" wire:model="premiumUntil" :label="__('Premium until')" />
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" wire:click="savePremium">{{ __('Save') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" wire:click="savePremium">{{ __('Save') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 
-    <flux:modal name="confirm-revoke" class="w-full md:w-[28rem]">
+    <x-ui.modal name="confirm-revoke" class="w-full md:w-[28rem]">
         <div class="space-y-4">
-            <flux:heading size="lg">{{ __('Revoke premium') }}</flux:heading>
-            <flux:text>{{ __('Revoke premium?') }}</flux:text>
+            <x-ui.heading size="lg">{{ __('Revoke premium') }}</x-ui.heading>
+            <x-ui.text>{{ __('Revoke premium?') }}</x-ui.text>
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="danger" wire:click="revokePremium">{{ __('Revoke premium') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="danger" wire:click="revokePremium">{{ __('Revoke premium') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 
-    <flux:modal name="confirm-complete" class="w-full md:w-[28rem]">
+    <x-ui.modal name="confirm-complete" class="w-full md:w-[28rem]">
         <div class="space-y-4">
-            <flux:heading size="lg">{{ __('Confirm payment') }}</flux:heading>
-            <flux:text>{{ __('Mark this payment as paid? Check first that the money is in the account. Premium will be extended.') }}</flux:text>
+            <x-ui.heading size="lg">{{ __('Confirm payment') }}</x-ui.heading>
+            <x-ui.text>{{ __('Mark this payment as paid? Check first that the money is in the account. Premium will be extended.') }}</x-ui.text>
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="primary" wire:click="complete">{{ __('Confirm') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" wire:click="complete">{{ __('Confirm') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 </div>

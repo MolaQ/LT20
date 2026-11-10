@@ -11,7 +11,6 @@ use App\Models\Matchday;
 use App\Models\Season;
 use App\Support\CupBracket;
 use App\Support\Standings;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -90,7 +89,7 @@ new class extends Component {
     {
         $options = [];
 
-        foreach (Competition::where('season_id', $this->seasonId)->orderBy('tier')->orderBy('id')->get() as $competition) {
+        foreach (Competition::where('season_id', $this->seasonId)->orderBy('tier')->orderBy('division')->orderBy('id')->get() as $competition) {
             $options[$this->keyOf($competition)] = $competition->name;
         }
 
@@ -214,7 +213,7 @@ new class extends Component {
             $previous = $this->matchdays->get($next - 1);
 
             if (!$previous || $previous->status !== \App\Enums\MatchdayStatus::Played) {
-                Flux::toast(text: __('Enter the result of matchday :number first.', ['number' => $next - 1]), variant: 'warning');
+                $this->dispatch('ui-toast', text: __('Enter the result of matchday :number first.', ['number' => $next - 1]), variant: 'warning');
 
                 return;
             }
@@ -225,14 +224,14 @@ new class extends Component {
         try {
             $matches = app(DrawSwissRound::class)->handle($competition, $next, $ranked);
         } catch (DomainException $e) {
-            Flux::toast(text: $e->getMessage(), variant: 'warning');
+            $this->dispatch('ui-toast', text: $e->getMessage(), variant: 'warning');
 
             return;
         }
 
         $this->round = $next;
         unset($this->drawnRounds, $this->roundFixtures);
-        Flux::toast(text: __('Round :round drawn: :matches matches.', ['round' => $next, 'matches' => $matches]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Round :round drawn: :matches matches.', ['round' => $next, 'matches' => $matches]), variant: 'success');
     }
 
     /** Tworzy ligi, puchar i ligę podwórkową, których jeszcze brakuje (np. po aktualizacji aplikacji). */
@@ -247,13 +246,13 @@ new class extends Component {
         try {
             app(BuildCompetitions::class)->handle($this->season);
         } catch (DomainException $e) {
-            Flux::toast(text: $e->getMessage(), variant: 'danger');
+            $this->dispatch('ui-toast', text: $e->getMessage(), variant: 'danger');
 
             return;
         }
 
         unset($this->options, $this->competition);
-        Flux::toast(text: __('Missing competitions generated.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Missing competitions generated.'), variant: 'success');
     }
 
     /* ==================================================================
@@ -263,7 +262,7 @@ new class extends Component {
     private function keyOf(Competition $competition): string
     {
         return match ($competition->type) {
-            CompetitionType::League => 'league-' . $competition->tier,
+            CompetitionType::League => 'league-' . $competition->tier . ($competition->division ? '-' . $competition->division : ''),
             CompetitionType::Cup => 'cup',
             CompetitionType::Swiss => 'swiss',
             default => 'c-' . $competition->id,
@@ -285,75 +284,75 @@ new class extends Component {
 
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Fixtures') }}</flux:heading>
-            <flux:subheading>{{ __('Leagues, Puchar Polski, Liga podwórkowa and the competitions created by hand.') }}
-            </flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Fixtures') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Leagues, Puchar Polski, Liga podwórkowa and the competitions created by hand.') }}
+            </x-ui.subheading>
         </div>
 
         @if ($this->seasons->isNotEmpty())
             <div class="w-full sm:w-56">
-                <flux:select wire:model.live="seasonId" :label="__('Season')">
+                <x-ui.select wire:model.live="seasonId" :label="__('Season')">
                     @foreach ($this->seasons as $option)
-                        <flux:select.option :value="$option->id">
+                        <x-ui.select.option :value="$option->id">
                             {{ $option->title }} ({{ $option->status->label() }})
-                        </flux:select.option>
+                        </x-ui.select.option>
                     @endforeach
-                </flux:select>
+                </x-ui.select>
             </div>
         @endif
     </div>
 
     @if (!$this->season)
-        <flux:card class="space-y-4">
-            <flux:heading>{{ __('Create a season first.') }}</flux:heading>
+        <x-ui.card class="space-y-4">
+            <x-ui.heading>{{ __('Create a season first.') }}</x-ui.heading>
             <div>
-                <flux:button variant="primary" :href="route('dashboard.seasons')" wire:navigate>
+                <x-ui.btn variant="primary" :href="route('dashboard.seasons')" wire:navigate>
                     {{ __('Go to season setup') }}
-                </flux:button>
+                </x-ui.btn>
             </div>
-        </flux:card>
+        </x-ui.card>
     @elseif (!$this->competition)
-        <flux:card class="space-y-4">
-            <flux:heading>{{ __('No fixtures yet.') }}</flux:heading>
-            <flux:text>{{ __('The fixtures are generated when the season is approved.') }}</flux:text>
+        <x-ui.card class="space-y-4">
+            <x-ui.heading>{{ __('No fixtures yet.') }}</x-ui.heading>
+            <x-ui.text>{{ __('The fixtures are generated when the season is approved.') }}</x-ui.text>
             <div class="flex flex-wrap gap-2">
-                <flux:button :href="route('dashboard.seasons')" wire:navigate>{{ __('Go to season setup') }}
-                </flux:button>
+                <x-ui.btn :href="route('dashboard.seasons')" wire:navigate>{{ __('Go to season setup') }}
+                </x-ui.btn>
 
                 @if ($this->canGenerate)
                     @can(\App\Enums\Permission::SeasonEdit->value)
-                        <flux:button variant="primary" icon="bolt" wire:click="generateMissing">
-                            {{ __('Generate missing competitions') }}</flux:button>
+                        <x-ui.btn variant="primary" icon="bolt" wire:click="generateMissing">
+                            {{ __('Generate missing competitions') }}</x-ui.btn>
                     @endcan
                 @endif
             </div>
-        </flux:card>
+        </x-ui.card>
     @else
         <div class="flex flex-wrap items-end gap-4">
             <div class="w-full sm:w-72">
-                <flux:select wire:model.live="key" :label="__('Competition')">
+                <x-ui.select wire:model.live="key" :label="__('Competition')">
                     @foreach ($this->options as $optionKey => $optionName)
-                        <flux:select.option :value="$optionKey">{{ $optionName }}</flux:select.option>
+                        <x-ui.select.option :value="$optionKey">{{ $optionName }}</x-ui.select.option>
                     @endforeach
-                </flux:select>
+                </x-ui.select>
             </div>
 
             @if ($this->isRoundList)
                 <div class="w-full sm:w-56">
-                    <flux:select wire:model.live="round" :label="__('Round')">
+                    <x-ui.select wire:model.live="round" :label="__('Round')">
                         @foreach (range(1, \App\Support\CupBracket::ROUNDS) as $number)
-                            <flux:select.option :value="$number">
+                            <x-ui.select.option :value="$number">
                                 {{ $this->competition->type === \App\Enums\CompetitionType::Swiss ? __('Round :number', ['number' => $number]) : $number . '. ' . $this->competition->type->stageLabel($number) }}
-                            </flux:select.option>
+                            </x-ui.select.option>
                         @endforeach
-                    </flux:select>
+                    </x-ui.select>
                 </div>
             @endif
 
             @if ($this->canGenerate)
                 @can(\App\Enums\Permission::SeasonEdit->value)
-                    <flux:button size="sm" variant="ghost" icon="bolt" wire:click="generateMissing">
-                        {{ __('Generate missing competitions') }}</flux:button>
+                    <x-ui.btn size="sm" variant="ghost" icon="bolt" wire:click="generateMissing">
+                        {{ __('Generate missing competitions') }}</x-ui.btn>
                 @endcan
             @endif
         </div>
@@ -362,24 +361,24 @@ new class extends Component {
         @if ($this->isBoard)
             <div class="grid gap-6 xl:grid-cols-[18rem_1fr]">
 
-                <flux:card class="space-y-3 self-start">
-                    <flux:heading>{{ $this->competition->name }}</flux:heading>
+                <x-ui.card class="space-y-3 self-start">
+                    <x-ui.heading>{{ $this->competition->name }}</x-ui.heading>
 
                     <ol class="space-y-1">
                         @foreach ($this->entries as $entry)
                             <li class="flex items-center gap-2 text-sm">
-                                <span class="w-6 text-right tabular-nums text-zinc-500">{{ $entry->seed }}.</span>
+                                <span class="w-6 text-right tabular-nums text-ui-muted">{{ $entry->seed }}.</span>
                                 <span class="truncate">{{ $entry->seasonTeam->name }}</span>
                                 @if ($entry->seasonTeam->is_bot)
-                                    <flux:badge size="sm" color="zinc">{{ __('Bot') }}</flux:badge>
+                                    <x-ui.badge size="sm" color="zinc">{{ __('Bot') }}</x-ui.badge>
                                 @endif
                             </li>
                         @endforeach
                     </ol>
 
-                    <flux:text class="text-xs">
-                        {{ __('The team higher on the list is the favourite and plays at home.') }}</flux:text>
-                </flux:card>
+                    <x-ui.text class="text-xs">
+                        {{ __('The team higher on the list is the favourite and plays at home.') }}</x-ui.text>
+                </x-ui.card>
 
                 <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                     @forelse ($this->rounds as $number => $fixtures)
@@ -387,10 +386,10 @@ new class extends Component {
                             $matchday = $this->matchdays->get($number);
                         @endphp
 
-                        <flux:card class="space-y-3">
+                        <x-ui.card class="space-y-3">
                             <div>
-                                <flux:heading>{{ __('Round :number', ['number' => $number]) }}</flux:heading>
-                                <flux:text class="text-xs">
+                                <x-ui.heading>{{ __('Round :number', ['number' => $number]) }}</x-ui.heading>
+                                <x-ui.text class="text-xs">
                                     @if ($matchday && filled($matchday->opponent))
                                         {{ $matchday->fixture }}
                                         @if ($matchday->kickoff_at)
@@ -399,7 +398,7 @@ new class extends Component {
                                     @else
                                         {{ __('Lech match not set yet') }}
                                     @endif
-                                </flux:text>
+                                </x-ui.text>
                             </div>
 
                             <ul class="space-y-2">
@@ -413,14 +412,14 @@ new class extends Component {
                                     </li>
                                 @endforeach
                             </ul>
-                        </flux:card>
+                        </x-ui.card>
                     @empty
-                        <flux:card class="md:col-span-2 2xl:col-span-3">
-                            <flux:heading>{{ __('No matches yet.') }}</flux:heading>
-                            <flux:text class="mt-1">
+                        <x-ui.card class="md:col-span-2 2xl:col-span-3">
+                            <x-ui.heading>{{ __('No matches yet.') }}</x-ui.heading>
+                            <x-ui.text class="mt-1">
                                 {{ __('This competition has no fixtures generated yet. Add exactly 10 teams and generate them on the Competitions page.') }}
-                            </flux:text>
-                        </flux:card>
+                            </x-ui.text>
+                        </x-ui.card>
                     @endforelse
                 </div>
             </div>
@@ -434,69 +433,69 @@ new class extends Component {
             @endphp
 
             <div class="flex flex-wrap items-center justify-between gap-4">
-                <flux:text>
+                <x-ui.text>
                     {{ __(':count teams', ['count' => $this->entryCount]) }}
                     @if ($isCup)
                         &middot; {{ __('Round :number', ['number' => $round]) }}:
                         {{ \App\Support\CupBracket::seatsInRound($round) }} {{ __('teams') }}
                     @endif
-                </flux:text>
+                </x-ui.text>
 
                 @if ($isSwiss)
                     @can(\App\Enums\Permission::SeasonEdit->value)
                         @if ($this->drawnRounds < \App\Actions\Competitions\DrawSwissRound::ROUNDS)
-                            <flux:button variant="primary" icon="arrows-right-left" wire:click="drawRound">
+                            <x-ui.btn variant="primary" icon="arrows-right-left" wire:click="drawRound">
                                 {{ __('Draw round :number', ['number' => $this->drawnRounds + 1]) }}
-                            </flux:button>
+                            </x-ui.btn>
                         @endif
                     @endcan
                 @endif
             </div>
 
             @if ($isCup)
-                <flux:text class="text-sm">
+                <x-ui.text class="text-sm">
                     {{ __('The bracket is fixed: the best seat plays the worst. The winner takes the better seat of the pair, so later rounds show seat numbers until the results decide who stands there.') }}
-                </flux:text>
+                </x-ui.text>
             @elseif (!$isSwiss)
-                <flux:text class="text-sm">
+                <x-ui.text class="text-sm">
                     {{ __('Four groups of six teams, everyone plays everyone once. Points and tie-breakers as in the leagues.') }}
                     {{ __('The round of 16 is drawn after the last group matchday.') }}
-                </flux:text>
+                </x-ui.text>
             @else
-                <flux:text class="text-sm">
+                <x-ui.text class="text-sm">
                     {{ __('Round 1 is drawn from the pre-season list (1-2, 3-4, ...). Next rounds follow the standings after the previous round has results. With an odd number of teams the last team in the standings plays a virtual opponent (Lech Poznań).') }}
-                </flux:text>
+                </x-ui.text>
             @endif
 
-            <flux:table :paginate="$matches">
-                <flux:table.columns>
-                    <flux:table.column>{{ __('Seats') }}</flux:table.column>
-                    <flux:table.column align="end">{{ __('Home') }}</flux:table.column>
-                    <flux:table.column align="center">{{ __('Score') }}</flux:table.column>
-                    <flux:table.column>{{ __('Away') }}</flux:table.column>
-                </flux:table.columns>
+            <x-ui.table :paginate="$matches">
+                <x-ui.table.columns>
+                    <x-ui.table.column>{{ __('Seats') }}</x-ui.table.column>
+                    <x-ui.table.column align="end">{{ __('Home') }}</x-ui.table.column>
+                    <x-ui.table.column align="center">{{ __('Score') }}</x-ui.table.column>
+                    <x-ui.table.column>{{ __('Away') }}</x-ui.table.column>
+                </x-ui.table.columns>
 
-                <flux:table.rows>
+                <x-ui.table.rows>
                     @forelse ($matches as $fixture)
-                        <flux:table.row :key="'fx-'.$fixture->id">
-                            <flux:table.cell class="text-xs tabular-nums text-zinc-400">
+                        <x-ui.table.row :key="'fx-'.$fixture->id">
+                            <x-ui.table.cell class="text-xs tabular-nums text-zinc-400">
                                 {{ $fixture->home_seat }}&ndash;{{ $fixture->away_seat ?? '—' }}
-                            </flux:table.cell>
+                            </x-ui.table.cell>
 
-                            <flux:table.cell align="end">
+                            <x-ui.table.cell align="end">
                                 @if ($fixture->home)
                                     {{ $fixture->home->seasonTeam->name }}
                                 @else
                                     <span
                                         class="text-zinc-400">{{ __('Seat :number', ['number' => $fixture->home_seat]) }}</span>
                                 @endif
-                            </flux:table.cell>
+                            </x-ui.table.cell>
 
-                            <flux:table.cell align="center" class="tabular-nums {{ $fixture->isPlayed() ? 'font-semibold' : 'text-zinc-400' }}">
+                            <x-ui.table.cell align="center" class="tabular-nums {{ $fixture->isPlayed() ? 'font-semibold' : 'text-zinc-400' }}">
                                 {{ $fixture->score() }}
-                            </flux:table.cell>
+                            </x-ui.table.cell>
 
-                            <flux:table.cell>
+                            <x-ui.table.cell>
                                 @if ($fixture->away)
                                     {{ $fixture->away->seasonTeam->name }}
                                 @elseif ($fixture->away_seat)
@@ -505,35 +504,35 @@ new class extends Component {
                                 @else
                                     <span class="italic text-zinc-400">{{ \App\Models\Fixture::VIRTUAL_OPPONENT }} ({{ __('virtual opponent') }})</span>
                                 @endif
-                            </flux:table.cell>
-                        </flux:table.row>
+                            </x-ui.table.cell>
+                        </x-ui.table.row>
                     @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="4" class="py-10 text-center text-zinc-500">
+                        <x-ui.table.row>
+                            <x-ui.table.cell colspan="4" class="py-10 text-center text-ui-muted">
                                 {{ $isSwiss ? __('This round has not been drawn yet.') : __('No matches in this round.') }}
-                            </flux:table.cell>
-                        </flux:table.row>
+                            </x-ui.table.cell>
+                        </x-ui.table.row>
                     @endforelse
-                </flux:table.rows>
-            </flux:table>
+                </x-ui.table.rows>
+            </x-ui.table>
 
             {{-- ============ Rozgrywki ręczne bez stałego terminarza (Liga Legend) ============ --}}
         @else
-            <flux:card class="space-y-3">
-                <flux:heading>{{ $this->competition->name }}</flux:heading>
-                <flux:text>
+            <x-ui.card class="space-y-3">
+                <x-ui.heading>{{ $this->competition->name }}</x-ui.heading>
+                <x-ui.text>
                     {{ __('The fixtures of this competition are not generated automatically yet. The participants are managed on the Competitions page.') }}
-                </flux:text>
+                </x-ui.text>
 
                 <ol class="space-y-1">
                     @foreach ($this->entries as $entry)
                         <li class="flex items-center gap-2 text-sm">
-                            <span class="w-6 text-right tabular-nums text-zinc-500">{{ $entry->seed }}.</span>
+                            <span class="w-6 text-right tabular-nums text-ui-muted">{{ $entry->seed }}.</span>
                             <span class="truncate">{{ $entry->seasonTeam->name }}</span>
                         </li>
                     @endforeach
                 </ol>
-            </flux:card>
+            </x-ui.card>
         @endif
     @endif
 </div>

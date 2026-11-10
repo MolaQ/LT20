@@ -1,10 +1,7 @@
 @import 'tailwindcss';
-@import '../../vendor/livewire/flux/dist/flux.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
-@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -79,20 +76,6 @@
     box-shadow: 0 6px 18px -10px rgb(6 19 49 / 0.45);
 }
 
-[data-flux-field]:not(ui-radio, ui-checkbox) {
-    @apply grid gap-2;
-}
-
-[data-flux-label] {
-    @apply  !mb-0 !leading-tight;
-}
-
-input:focus[data-flux-control],
-textarea:focus[data-flux-control],
-select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
-}
-
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
@@ -136,4 +119,142 @@ select:focus[data-flux-control] {
 /* Alpine: ukryj elementy z x-cloak, zanim Alpine je pokaże (zakładki w oknach). */
 [x-cloak] {
     display: none !important;
+}
+
+/* ==========================================================================
+   Wygląd 2.0 (przebudowa): tokeny motywu i elementy skorupy aplikacji.
+   Barwy klubu przychodzą z config/club.php (partials/club-theme) jako --club-*,
+   dzięki czemu inna drużyna zmienia tylko .env. Ciemny motyw = klasa .dark (jak Flux).
+   ========================================================================== */
+@theme inline {
+    --font-display: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+    --font-ui: 'Barlow', 'Segoe UI', Roboto, sans-serif;
+
+    --color-ui-bg: var(--ui-bg);
+    --color-ui-surface: var(--ui-surface);
+    --color-ui-raised: var(--ui-raised);
+    --color-ui-ink: var(--ui-ink);
+    --color-ui-muted: var(--ui-muted);
+    --color-ui-line: var(--ui-line);
+    --color-club: var(--ui-club);
+    --color-club-ink: var(--ui-club-ink);
+    --color-gold: var(--ui-gold);
+    --color-gold-soft: var(--ui-gold-soft);
+    --color-good: var(--ui-good);
+    --color-good-soft: var(--ui-good-soft);
+    --color-bad: var(--ui-bad);
+    --color-bad-soft: var(--ui-bad-soft);
+}
+
+@layer theme {
+    :root {
+        --club-primary: #0b4ea2;
+        --club-primary-dark: #5b9bff;
+        --club-deep: #071228;
+        --club-accent: #f0c45a;
+
+        --ui-bg: #f7f9fd;
+        --ui-surface: #ffffff;
+        --ui-raised: #eaf0fa;
+        --ui-ink: #0d1a33;
+        --ui-muted: #5a6886;
+        --ui-line: #d6dfee;
+        --ui-club: var(--club-primary);
+        --ui-club-ink: #ffffff;
+        --ui-glow: color-mix(in srgb, var(--club-primary) 18%, transparent);
+        --ui-gold: color-mix(in srgb, var(--club-accent) 70%, #000);
+        --ui-gold-soft: color-mix(in srgb, var(--club-accent) 22%, #fff);
+        --ui-good: #1a7f45;
+        --ui-good-soft: #dcf3e5;
+        --ui-bad: #c2410c;
+        --ui-bad-soft: #fde5d8;
+        --ui-nav: rgb(255 255 255 / 0.93);
+        --ui-hero: linear-gradient(160deg, var(--club-primary), color-mix(in srgb, var(--club-primary) 45%, var(--club-deep)));
+    }
+
+    .dark {
+        --ui-bg: var(--club-deep);
+        --ui-surface: color-mix(in srgb, var(--club-deep) 82%, #2a4a8a);
+        --ui-raised: color-mix(in srgb, var(--club-deep) 65%, #3a64b0);
+        --ui-ink: #e9f1ff;
+        --ui-muted: #9aaccb;
+        --ui-line: color-mix(in srgb, var(--club-deep) 60%, #4a74c0);
+        --ui-club: var(--club-primary-dark);
+        --ui-club-ink: var(--club-deep);
+        --ui-glow: color-mix(in srgb, var(--club-primary-dark) 28%, transparent);
+        --ui-gold: var(--club-accent);
+        --ui-gold-soft: color-mix(in srgb, var(--club-accent) 16%, transparent);
+        --ui-good: #4ade80;
+        --ui-good-soft: rgb(74 222 128 / 0.14);
+        --ui-bad: #fb923c;
+        --ui-bad-soft: rgb(251 146 60 / 0.15);
+        --ui-nav: color-mix(in srgb, var(--club-deep) 92%, transparent);
+        --ui-hero: linear-gradient(160deg, color-mix(in srgb, var(--club-primary) 80%, var(--club-deep)), var(--club-deep) 70%);
+    }
+}
+
+/* Duża karta meczu w barwach klubu z poświatą jupiterów. */
+@utility ui-hero {
+    background-image: var(--ui-hero);
+    color: #eef4ff;
+    box-shadow: 0 10px 30px var(--ui-glow);
+}
+
+@utility ui-glow {
+    box-shadow: 0 8px 22px var(--ui-glow);
+}
+
+/* Liczby w wynikach i tabelach o stałej szerokości, żeby nic nie skakało przy nabijaniu. */
+@utility ui-num {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+}
+
+@keyframes ui-bump {
+    40% {
+        transform: scale(1.25);
+        color: var(--ui-club);
+    }
+}
+
+@keyframes ui-stamp {
+    from {
+        transform: rotate(-14deg) scale(2.6);
+        opacity: 0;
+    }
+
+    to {
+        transform: rotate(-14deg) scale(1);
+        opacity: 1;
+    }
+}
+
+@utility animate-ui-bump {
+    animation: ui-bump 0.35s;
+}
+
+@utility animate-ui-stamp {
+    animation: ui-stamp 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+
+/* Płynne przejścia między stronami: reguła @view-transition siedzi w layouts/shell, więc działa tylko w nowej skorupie. */
+::view-transition-old(ui-main),
+::view-transition-new(ui-main) {
+    animation-duration: 0.25s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .ui-shell *,
+    .ui-shell *::before,
+    .ui-shell *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
 }

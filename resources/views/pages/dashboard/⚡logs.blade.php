@@ -128,66 +128,66 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
 
     <div>
-        <flux:heading size="xl" level="1">{{ __('Change log') }}</flux:heading>
-        <flux:subheading>{{ __('Who changed what, and when.') }}</flux:subheading>
+        <x-ui.heading size="xl" level="1">{{ __('Change log') }}</x-ui.heading>
+        <x-ui.subheading>{{ __('Who changed what, and when.') }}</x-ui.subheading>
     </div>
 
     {{-- Filtry --}}
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div class="lg:col-span-2">
-            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+            <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 :placeholder="__('Search by user, team or description...')" clearable />
         </div>
 
-        <flux:select wire:model.live="event">
-            <flux:select.option value="">{{ __('All events') }}</flux:select.option>
+        <x-ui.select wire:model.live="event">
+            <x-ui.select.option value="">{{ __('All events') }}</x-ui.select.option>
             @foreach (\App\Support\Audit::events() as $key => $label)
-                <flux:select.option :value="$key">{{ $label }}</flux:select.option>
+                <x-ui.select.option :value="$key">{{ $label }}</x-ui.select.option>
             @endforeach
-        </flux:select>
+        </x-ui.select>
 
-        <flux:input type="date" wire:model.live="dateFrom" :aria-label="__('From')" />
-        <flux:input type="date" wire:model.live="dateTo" :aria-label="__('To')" />
+        <x-ui.input type="date" wire:model.live="dateFrom" :aria-label="__('From')" />
+        <x-ui.input type="date" wire:model.live="dateTo" :aria-label="__('To')" />
     </div>
 
     @if ($search !== '' || $event !== '' || $dateFrom !== '' || $dateTo !== '')
         <div>
-            <flux:button size="sm" variant="ghost" icon="x-mark" wire:click="resetFilters">
+            <x-ui.btn size="sm" variant="ghost" icon="x-mark" wire:click="resetFilters">
                 {{ __('Clear filters') }}
-            </flux:button>
+            </x-ui.btn>
         </div>
     @endif
 
     {{-- Tabela --}}
-    <flux:table :paginate="$this->logs">
-        <flux:table.columns>
-            <flux:table.column sortable sorted direction="{{ $sortDirection }}" wire:click="sort">
+    <x-ui.table :paginate="$this->logs">
+        <x-ui.table.columns>
+            <x-ui.table.column sortable sorted direction="{{ $sortDirection }}" wire:click="sort">
                 {{ __('When') }}
-            </flux:table.column>
-            <flux:table.column>{{ __('Event') }}</flux:table.column>
-            <flux:table.column>{{ __('Done by') }}</flux:table.column>
-            <flux:table.column>{{ __('Concerns') }}</flux:table.column>
-            <flux:table.column>{{ __('Details') }}</flux:table.column>
-            <flux:table.column class="hidden xl:table-cell">{{ __('IP address') }}</flux:table.column>
-        </flux:table.columns>
+            </x-ui.table.column>
+            <x-ui.table.column>{{ __('Event') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Done by') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Concerns') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Details') }}</x-ui.table.column>
+            <x-ui.table.column class="hidden xl:table-cell">{{ __('IP address') }}</x-ui.table.column>
+        </x-ui.table.columns>
 
-        <flux:table.rows>
+        <x-ui.table.rows>
             @forelse ($this->logs as $log)
-                <flux:table.row :key="'log-'.$log->id">
-                    <flux:table.cell class="whitespace-nowrap text-zinc-500">
+                <x-ui.table.row :key="'log-'.$log->id">
+                    <x-ui.table.cell class="whitespace-nowrap text-ui-muted">
                         {{ $log->created_at?->format('Y-m-d H:i:s') }}
-                    </flux:table.cell>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell>
-                        <flux:badge size="sm" :color="\App\Support\Audit::color($log->event)">
+                    <x-ui.table.cell>
+                        <x-ui.badge size="sm" :color="\App\Support\Audit::color($log->event)">
                             {{ \App\Support\Audit::label($log->event) }}
-                        </flux:badge>
-                    </flux:table.cell>
+                        </x-ui.badge>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell>{{ $log->actor?->name ?? $log->actor_name ?? '—' }}</flux:table.cell>
-                    <flux:table.cell>{{ $log->target?->name ?? $log->target_name ?? '—' }}</flux:table.cell>
+                    <x-ui.table.cell>{{ $log->actor?->name ?? $log->actor_name ?? '—' }}</x-ui.table.cell>
+                    <x-ui.table.cell>{{ $log->target?->name ?? $log->target_name ?? '—' }}</x-ui.table.cell>
 
-                    <flux:table.cell>
+                    <x-ui.table.cell>
                         <div class="space-y-1 text-sm">
                             @if ($log->description)
                                 <div>{{ $log->description }}</div>
@@ -195,24 +195,24 @@ new class extends Component {
 
                             @foreach ($this->changes($log) as [$label, $before, $after])
                                 <div class="flex flex-wrap items-baseline gap-x-2 text-xs">
-                                    <span class="text-zinc-500">{{ $label }}:</span>
+                                    <span class="text-ui-muted">{{ $label }}:</span>
                                     <span class="text-zinc-400 line-through">{{ $before }}</span>
                                     <span>&rarr;</span>
                                     <span class="font-medium">{{ $after }}</span>
                                 </div>
                             @endforeach
                         </div>
-                    </flux:table.cell>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell class="hidden text-zinc-500 xl:table-cell">{{ $log->ip_address }}</flux:table.cell>
-                </flux:table.row>
+                    <x-ui.table.cell class="hidden text-ui-muted xl:table-cell">{{ $log->ip_address }}</x-ui.table.cell>
+                </x-ui.table.row>
             @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="6" class="py-10 text-center text-zinc-500">
+                <x-ui.table.row>
+                    <x-ui.table.cell colspan="6" class="py-10 text-center text-ui-muted">
                         {{ __('No log entries match your filters.') }}
-                    </flux:table.cell>
-                </flux:table.row>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @endforelse
-        </flux:table.rows>
-    </flux:table>
+        </x-ui.table.rows>
+    </x-ui.table>
 </div>

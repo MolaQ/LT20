@@ -8,8 +8,8 @@ use App\Models\SeasonTeam;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Dopełnia listę sezonu botami z puli do 512 zespołów (SeasonTeam::CUP_SIZE, od 15.10.2026): gracze + boty = 512,
- * a przy ponad 512 graczach nie dochodzi żaden bot (odchudzona lista działa szybciej). Pozostałe boty pauzują (is_active).
+ * Dopełnia listę sezonu botami z puli do pełnych lig (SeasonTeam::listSize: co najmniej 520, potem do pełnej dziesiątki,
+ * przebudowa 2.0), więc Liga podwórkowa zawsze gra w ligach po 10. Pozostałe boty pauzują (is_active).
  *
  * Kolejność: najpierw ewentualne luki w numeracji (1..max), potem koniec listy.
  * Boty idą od najlepszych (Bot::bestFirst), więc wynik jest powtarzalny. Gracze zostają tam,
@@ -24,7 +24,8 @@ class FillTeamListWithBots
     {
         return DB::transaction(function () use ($season): int {
             $used = SeasonTeam::where('season_id', $season->id)->whereNotNull('bot_id')->select('bot_id');
-            $needed = SeasonTeam::CUP_SIZE - SeasonTeam::where('season_id', $season->id)->count();
+            $count = SeasonTeam::where('season_id', $season->id)->count();
+            $needed = SeasonTeam::listSize($count) - $count;
 
             $bots = $needed > 0 ? Bot::query()->whereNotIn('id', $used)->bestFirst()->limit($needed)->get() : collect();
 

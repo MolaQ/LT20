@@ -3,7 +3,6 @@
 use App\Enums\Permission;
 use App\Support\Audit;
 use App\Support\Designation;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -93,7 +92,7 @@ new class extends Component {
         $changed = array_keys(array_filter($after, fn($v, $k) => ($before[$k] ?? null) !== $v, ARRAY_FILTER_USE_BOTH));
         Audit::log('designation.settings', null, array_intersect_key($before, array_flip($changed)), array_intersect_key($after, array_flip($changed)), __('Line-ups'));
 
-        Flux::toast(variant: 'success', text: __('Settings saved.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Settings saved.'));
     }
 
     public function restoreDefaults(): void
@@ -104,8 +103,8 @@ new class extends Component {
 
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div>
-        <flux:heading size="xl" level="1">{{ __('Line-ups') }}</flux:heading>
-        <flux:subheading>{{ __('Rules for fielding Lech players: line-up size, bots, clean sheets, rest and experience.') }}</flux:subheading>
+        <x-ui.heading size="xl" level="1">{{ __('Line-ups') }}</x-ui.heading>
+        <x-ui.subheading>{{ __('Rules for fielding Lech players: line-up size, bots, clean sheets, rest and experience.') }}</x-ui.subheading>
     </div>
 
     @php
@@ -115,28 +114,28 @@ new class extends Component {
     <form wire:submit="save" class="space-y-6">
         <div class="grid gap-6 lg:grid-cols-2">
             @foreach ($this->fields() as $group => $fields)
-                <flux:card class="space-y-4">
-                    <flux:heading size="lg">{{ $group }}</flux:heading>
+                <x-ui.card class="space-y-4">
+                    <x-ui.heading size="lg">{{ $group }}</x-ui.heading>
 
                     @foreach ($fields as $key => [$label, $hint, $min, $max, $step])
                         <div class="grid items-start gap-2 sm:grid-cols-[1fr_6rem]">
                             <div>
-                                <flux:label>{{ $label }}</flux:label>
+                                <x-ui.label>{{ $label }}</x-ui.label>
                                 @if ($hint)
-                                    <flux:text class="text-xs">{{ $hint }}</flux:text>
+                                    <x-ui.text class="text-xs">{{ $hint }}</x-ui.text>
                                 @endif
                             </div>
-                            <flux:input type="number" wire:model.live.debounce.500ms="values.{{ $key }}" min="{{ $min }}" max="{{ $max }}" step="{{ $step }}" :disabled="! $canEdit" />
+                            <x-ui.input type="number" wire:model.live.debounce.500ms="values.{{ $key }}" min="{{ $min }}" max="{{ $max }}" step="{{ $step }}" :disabled="! $canEdit" />
                         </div>
-                        <flux:error name="values.{{ $key }}" />
+                        <x-ui.error name="values.{{ $key }}" />
                     @endforeach
 
-                </flux:card>
+                </x-ui.card>
             @endforeach
 
             {{-- Podgląd: godziny odpoczynku dla przycisków zejścia w raporcie meczu (zawodnik od początku meczu). --}}
-            <flux:card class="space-y-3">
-                <flux:heading size="lg">{{ __('Rest after the match') }}</flux:heading>
+            <x-ui.card class="space-y-3">
+                <x-ui.heading size="lg">{{ __('Rest after the match') }}</x-ui.heading>
                 @php
                     $base = (float) str_replace(',', '.', (string) ($values['rest_base_hours'] ?? 0));
                     $perHalf = (float) str_replace(',', '.', (string) ($values['rest_hours_per_half'] ?? 0));
@@ -147,20 +146,20 @@ new class extends Component {
                             [$full, $partial] = \App\Support\MatchReport::halves(0, $slot);
                             $hours = (int) round($base + ($full + $partial / 2) * $perHalf);
                         @endphp
-                        <div class="rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
+                        <div class="rounded-lg border border-ui-line p-2 ">
                             <div class="flex justify-center"><x-match-clock :to="$slot" :title="\App\Support\MatchReport::phase($slot, long: true)" /></div>
                             <div class="{{ \App\Support\Squad::lockColor($hours) }} mt-1 whitespace-nowrap rounded px-1 font-bold tabular-nums">{{ $hours }} h</div>
                         </div>
                     @endforeach
                 </div>
-                <flux:text class="text-xs">{{ __('Counted from the kickoff of the matchday in which the club fielded the player. A bench player who did not come on does not rest.') }}</flux:text>
-            </flux:card>
+                <x-ui.text class="text-xs">{{ __('Counted from the kickoff of the matchday in which the club fielded the player. A bench player who did not come on does not rest.') }}</x-ui.text>
+            </x-ui.card>
         </div>
 
         @if ($canEdit)
             <div class="flex flex-wrap gap-2">
-                <flux:button type="submit" variant="primary" icon="check">{{ __('Save') }}</flux:button>
-                <flux:button type="button" variant="ghost" icon="arrow-path" wire:click="restoreDefaults">{{ __('Restore defaults') }}</flux:button>
+                <x-ui.btn type="submit" variant="primary" icon="check">{{ __('Save') }}</x-ui.btn>
+                <x-ui.btn type="button" variant="ghost" icon="arrow-path" wire:click="restoreDefaults">{{ __('Restore defaults') }}</x-ui.btn>
             </div>
         @endif
     </form>

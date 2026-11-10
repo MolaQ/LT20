@@ -16,6 +16,7 @@ use App\Support\GameStars;
 use App\Support\LegendsLeague;
 use App\Support\PageCache;
 use App\Support\PlayerStats;
+use App\Support\Questions;
 use App\Support\Scoring;
 use App\Support\SeasonArchive;
 use App\Support\Squad;
@@ -34,8 +35,8 @@ use Illuminate\Support\Facades\DB;
  *  7. kto odpadł z pucharu, pucharu europejskiego albo Ligi Legend, nie dostaje dorobku w zestawie tych rozgrywek
  *     w kolejnych kolejkach. Czy gra, wynika zawsze z eliminated_round, więc przeliczenie kolejki,
  *     które zmieni awans, zmienia też to. Złota Piłka i Złote Rękawice liczą się z team_scores, więc też tego nie widzą.
- * Bonusy ataku i obrony (offense_bonus, defense_bonus) na razie są zerowe: pytania usunięto, punkty
- * desygnowanych zawodników (gole, asysty, czyste konto) dojdą w tym miejscu.
+ * Bonusy ataku i obrony (offense_bonus, defense_bonus): dorobek desygnowanych zawodników (gole, asysty, czyste konto)
+ * plus bonus z pytań kolejki (Support\Questions, osobno w question_offense / question_defense; jedno pudło zeruje oba).
  * Można wywołać wielokrotnie: przeliczenie nadpisuje poprzednie wyniki tej kolejki.
  * Runda rozgrywek = numer kolejki.
  */
@@ -135,6 +136,8 @@ class ScoreMatchday
             // Dorobek wystawionych zawodników z raportu meczu: klub => typ rozgrywek => sumy (Support\Squad::settle).
             $lineups = Squad::settle($matchday, $matchesOf);
             $humanTips = Tip::where('matchday_id', $matchday->id)->get()->keyBy('user_id');
+            // Bonus z pytań kolejki: user_id => atak / obrona (boty nie odpowiadają na pytania).
+            $questionBonus = Questions::bonusesFor($matchday);
 
             // --- Dorobek zespołów ---
             $scores = [];
@@ -154,8 +157,11 @@ class ScoreMatchday
                 foreach (array_keys($setsOfTeam[$team->id] ?? []) as $set) {
                     // Atak (gole i asysty) i obrona (czyste konta) wystawionych zawodników.
                     $lineup = $lineups[Squad::clubKey($team->user_id, $team->bot_id)][$set] ?? [];
-                    $offense = $lineup['attack'] ?? 0;
-                    $defense = $lineup['defense'] ?? 0;
+                    $questions = $team->user_id ? ($questionBonus[$team->user_id] ?? null) : null;
+                    $questionOffense = $questions['attack'] ?? 0;
+                    $questionDefense = $questions['defense'] ?? 0;
+                    $offense = ($lineup['attack'] ?? 0) + $questionOffense;
+                    $defense = ($lineup['defense'] ?? 0) + $questionDefense;
 
                     $row = [
                         'matchday_id' => $matchday->id,
@@ -174,6 +180,8 @@ class ScoreMatchday
                         'exact_hit' => $tipResult['exact'],
                         'offense_bonus' => $offense,
                         'defense_bonus' => $defense,
+                        'question_offense' => $questionOffense,
+                        'question_defense' => $questionDefense,
                         'offense' => $tipResult['points'] + $offense,
                         'own_goals' => $lineup['own_goals'] ?? 0,
                         'experience' => $lineup['experience'] ?? 0,

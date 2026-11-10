@@ -15,6 +15,13 @@ export default defineConfig({
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600],
                 }),
+                // Wygląd 2.0: Barlow do tekstu i Barlow Condensed do liczb i nagłówków (pliki serwowane z naszego serwera).
+                bunny('Barlow', {
+                    weights: [400, 500, 600, 700],
+                }),
+                bunny('Barlow Condensed', {
+                    weights: [600, 700, 800],
+                }),
             ],
         }),
         tailwindcss(),

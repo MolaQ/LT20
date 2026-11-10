@@ -12,7 +12,6 @@ use App\Models\MatchEvent;
 use App\Models\Matchday;
 use App\Support\MatchReport;
 use App\Support\TipRules;
-use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -40,6 +39,9 @@ new class extends Component {
 
     /** Wyjściowa jedenastka. */
     public const STARTERS = 11;
+
+    /** Przeliczenie kolejki w tle trwa (pasek postępu, wire:poll). */
+    public bool $recalcRunning = false;
 
     /** Nowy wpis protokołu: rodzaj (MatchReport::EVENTS), zawodnik, drugi zawodnik (asysta, wchodzący), kartka, czas. */
     public string $eventType = MatchReport::EVENT_GOAL;
@@ -203,11 +205,12 @@ new class extends Component {
             $action->saveScore($this->matchday, $lech, $opponent);
 
             if ($this->matchday->fresh()->status === MatchdayStatus::Played) {
-                $stats = $action->recalculate($this->matchday->fresh());
-                Flux::toast(variant: 'success', text: __('Saved and the matchday recalculated. Matches settled: :count.', ['count' => $stats['fixtures']]));
+                // Przeliczona kolejka przelicza się od razu, w tle z paskiem postępu.
+                unset($this->matchday);
+                $this->startRecalc();
             }
         } catch (DomainException $e) {
-            Flux::toast(variant: 'danger', text: $e->getMessage());
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
         $this->dispatch('match-report-saved');
@@ -245,31 +248,53 @@ new class extends Component {
         $this->afterReport();
     }
 
-    /** Przycisk „Przelicz wyniki” / „Przelicz ponownie” (tylko kolejka). */
-    public function recalculate(SaveMatchdayResult $action): void
+    /** Przycisk „Przelicz wyniki” / „Przelicz ponownie” (tylko kolejka): przeliczenie w tle z paskiem postępu. */
+    public function recalculate(): void
     {
         if (!$this->guard() || !$this->matchday) {
             return;
         }
 
         try {
-            $stats = $action->recalculate($this->matchday);
+            SaveMatchdayResult::ensureEditable($this->matchday);
         } catch (DomainException $e) {
-            Flux::toast(variant: 'danger', text: $e->getMessage());
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
 
             return;
         }
 
-        $text = __('Matchday recalculated. Matches settled: :count.', ['count' => $stats['fixtures']]);
+        $this->startRecalc();
+    }
 
-        // Liga podwórkowa losuje się sama po przeliczeniu (SaveMatchdayResult::recalculate).
-        if (($stats['swiss'] ?? 0) > 0) {
-            $text .= ' ' . __('Liga podwórkowa: the next round has been drawn (:count matches).', ['count' => $stats['swiss']]);
+    /** Wysyła przeliczenie do kolejki zadań (Jobs\RecalculateMatchday). Przy QUEUE_CONNECTION=sync kończy się od razu. */
+    private function startRecalc(): void
+    {
+        $this->recalcRunning = true;
+        \App\Support\RecalcProgress::start($this->matchday->id);
+        $this->checkRecalc();
+    }
+
+    /** Odpytywane co chwilę (wire:poll), dopóki przeliczenie trwa. */
+    public function checkRecalc(): void
+    {
+        $progress = $this->matchday ? \App\Support\RecalcProgress::get($this->matchday->id) : null;
+
+        if (!$this->recalcRunning || !$progress || !in_array($progress['status'], ['done', 'failed'], true)) {
+            return;
         }
 
+        $this->recalcRunning = false;
+        \App\Support\RecalcProgress::forget($this->matchday->id);
         $this->refresh();
         $this->dispatch('match-report-saved');
-        Flux::toast(variant: 'success', text: $text);
+        $this->dispatch('recalc-finished');
+        $this->dispatch('ui-toast', variant: $progress['status'] === 'done' ? 'success' : 'danger', text: $progress['message']);
+    }
+
+    #[Computed]
+    public function recalcProgress(): ?array
+    {
+        return $this->matchday ? \App\Support\RecalcProgress::get($this->matchday->id) : null;
     }
 
     /* ==================================================================
@@ -376,7 +401,7 @@ new class extends Component {
         };
 
         if ($error) {
-            Flux::toast(variant: 'danger', text: $error);
+            $this->dispatch('ui-toast', variant: 'danger', text: $error);
 
             return;
         }
@@ -436,7 +461,7 @@ new class extends Component {
         abort_unless(auth()->user()?->can(Permission::SeasonEdit->value), 403);
 
         if (!$this->editable) {
-            Flux::toast(variant: 'danger', text: __('This match report cannot be changed now.'));
+            $this->dispatch('ui-toast', variant: 'danger', text: __('This match report cannot be changed now.'));
 
             return false;
         }
@@ -452,7 +477,7 @@ new class extends Component {
 
 <div>
     @if (!$this->lechMatch)
-        <flux:callout variant="warning" icon="exclamation-triangle" :heading="__('This matchday has no Lech match from the calendar yet.')" />
+        <x-ui.callout variant="warning" icon="exclamation-triangle" :heading="__('This matchday has no Lech match from the calendar yet.')" />
     @else
         @php
             $match = $this->lechMatch;
@@ -466,14 +491,14 @@ new class extends Component {
             $subs = $appearances->where('started', false);
             $fmt = fn ($v) => \App\Support\ClubStats::format($v);
 
-            $boardBtn = 'flex h-10 w-16 items-center justify-center rounded-xl border border-zinc-300 bg-white text-xl font-black text-lech-800 shadow-sm transition active:scale-95 hover:bg-lech-50 disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-800 dark:text-lech-200 dark:hover:bg-zinc-700';
+            $boardBtn = 'flex h-10 w-16 items-center justify-center rounded-xl border border-zinc-300 bg-ui-surface text-xl font-black text-club shadow-sm transition active:scale-95 hover:bg-lech-50 disabled:opacity-40 dark:border-zinc-600 dark:hover:bg-zinc-700';
             $quickScores = [[0, 0], [1, 0], [2, 0], [2, 1], [3, 1], [1, 1], [2, 2], [0, 1], [1, 2]];
         @endphp
 
         <div class="grid gap-6 lg:grid-cols-3">
             {{-- 1/3: wynik --}}
             <div class="space-y-4">
-                <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                <div class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm ">
                     <div class="space-y-4 px-4 py-5">
                         <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                             @foreach (['lech' => 'Lech Poznań', 'opponent' => $match->opponent ?: __('Opponent')] as $side => $team)
@@ -499,24 +524,24 @@ new class extends Component {
                                         $quickOn = $match->lech_goals === $quickLech && $match->opponent_goals === $quickOpp;
                                     @endphp
                                     <button type="button" wire:click="pick({{ $quickLech }}, {{ $quickOpp }})"
-                                        class="{{ $quickOn ? 'border-lech-600 bg-lech-700 text-white' : 'border-zinc-300 text-zinc-700 hover:border-lech-400 dark:border-zinc-600 dark:text-zinc-200' }} rounded-full border px-3 py-1 text-sm font-bold tabular-nums transition">
+                                        class="{{ $quickOn ? 'border-lech-600 bg-club text-club-ink' : 'border-zinc-300 text-ui-ink hover:border-lech-400 dark:border-zinc-600 ' }} rounded-full border px-3 py-1 text-sm font-bold tabular-nums transition">
                                         {{ $quickLech }}:{{ $quickOpp }}
                                     </button>
                                 @endforeach
                             </div>
                         @endif
-                        <flux:text class="text-center text-xs">{{ __('Score after 90 minutes.') }}</flux:text>
+                        <x-ui.text class="text-center text-xs">{{ __('Score after 90 minutes.') }}</x-ui.text>
                     </div>
 
                     {{-- Dogrywka i karne --}}
-                    <div class="space-y-3 border-t border-zinc-100 px-4 py-4 dark:border-zinc-800">
-                        <flux:checkbox :checked="$match->extra_time" wire:click="toggleExtraTime" :disabled="! $editable" :label="__('Extra time')"
+                    <div class="space-y-3 border-t border-ui-line px-4 py-4 ">
+                        <x-ui.checkbox :checked="$match->extra_time" wire:click="toggleExtraTime" :disabled="! $editable" :label="__('Extra time')"
                             :description="__('Players who played until the 90th minute play until the 120th.')" />
 
                         @if ($match->extra_time)
                             @include('partials.score-pair', ['label' => __('Goals in extra time'), 'lechKey' => 'et_lech', 'oppKey' => 'et_opponent', 'lechValue' => $match->et_lech_goals, 'oppValue' => $match->et_opponent_goals])
 
-                            <flux:checkbox :checked="$match->penalties" wire:click="togglePenalties" :disabled="! $editable" :label="__('Penalty shootout')"
+                            <x-ui.checkbox :checked="$match->penalties" wire:click="togglePenalties" :disabled="! $editable" :label="__('Penalty shootout')"
                                 :description="__('For information only. Add the shootout goals to the protocol as goals.')" />
 
                             @if ($match->penalties)
@@ -530,8 +555,8 @@ new class extends Component {
                         @php
                             $played = $md->status === \App\Enums\MatchdayStatus::Played;
                         @endphp
-                        <div class="space-y-2 border-t border-zinc-100 px-4 py-4 dark:border-zinc-800">
-                            <flux:text class="text-xs">
+                        <div class="space-y-2 border-t border-ui-line px-4 py-4 ">
+                            <x-ui.text class="text-xs">
                                 @if ($md->lech_goals === null)
                                     {{ __('Enter the score, the line-up and the events, then recalculate the matchday.') }}
                                 @elseif (!$played)
@@ -539,18 +564,33 @@ new class extends Component {
                                 @else
                                     {{ __('Score changes recalculate the matchday at once. After line-up changes, recalculate again.') }}
                                 @endif
-                            </flux:text>
-                            <flux:button class="w-full" :variant="$played ? 'filled' : 'primary'" icon="calculator" wire:click="recalculate" wire:loading.attr="disabled"
-                                :disabled="$md->lech_goals === null || ! $editable">
-                                <span wire:loading.remove wire:target="recalculate">{{ $played ? __('Recalculate again') : __('Recalculate results') }}</span>
-                                <span wire:loading wire:target="recalculate">{{ __('Recalculating...') }}</span>
-                            </flux:button>
+                            </x-ui.text>
+                            @if ($recalcRunning)
+                                {{-- Pasek postępu przeliczenia w tle (Jobs\RecalculateMatchday) --}}
+                                @php $progress = $this->recalcProgress ?? ['percent' => 2, 'label' => __('Waiting in the queue')]; @endphp
+                                <div wire:poll.750ms="checkRecalc" class="space-y-1.5" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progress['percent'] }}">
+                                    <div class="flex justify-between text-xs font-semibold">
+                                        <span>{{ $progress['label'] }}</span><span class="tabular-nums">{{ $progress['percent'] }}%</span>
+                                    </div>
+                                    <div class="h-2.5 overflow-hidden rounded-full bg-ui-line">
+                                        <div class="h-full rounded-full bg-lech-600 transition-[width] duration-700" style="width: {{ $progress['percent'] }}%"></div>
+                                    </div>
+                                    @if (($progress['status'] ?? '') === 'queued')
+                                        <x-ui.text class="text-xs">{{ __('The recalculation starts within a minute (queue worker or cron).') }}</x-ui.text>
+                                    @endif
+                                </div>
+                            @else
+                                <x-ui.btn class="w-full" :variant="$played ? 'filled' : 'primary'" icon="calculator" wire:click="recalculate" wire:loading.attr="disabled"
+                                    :disabled="$md->lech_goals === null || ! $editable">
+                                    {{ $played ? __('Recalculate again') : __('Recalculate results') }}
+                                </x-ui.btn>
+                            @endif
                         </div>
                     @endif
                 </div>
 
                 @foreach ($this->warnings as $warning)
-                    <flux:callout variant="warning" icon="exclamation-triangle" :heading="$warning" />
+                    <x-ui.callout variant="warning" icon="exclamation-triangle" :heading="$warning" />
                 @endforeach
             </div>
 
@@ -560,10 +600,10 @@ new class extends Component {
                     <span class="rounded-full px-3 py-1 text-sm font-bold tabular-nums {{ $starters->count() === $this::STARTERS ? 'bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300' }}">
                         {{ __('Starting eleven') }}: {{ $starters->count() }}/{{ $this::STARTERS }}
                     </span>
-                    <span class="rounded-full bg-zinc-100 px-3 py-1 text-sm font-bold tabular-nums text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                    <span class="rounded-full bg-ui-raised px-3 py-1 text-sm font-bold tabular-nums text-ui-ink">
                         {{ __('Bench') }}: {{ $subs->count() }}
                     </span>
-                    <flux:text class="text-xs">{{ __('Click players in the coach\'s order: the first eleven start, the next ones sit on the bench.') }}</flux:text>
+                    <x-ui.text class="text-xs">{{ __('Click players in the coach\'s order: the first eleven start, the next ones sit on the bench.') }}</x-ui.text>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 2xl:grid-cols-4">
@@ -571,8 +611,8 @@ new class extends Component {
                         @php
                             $position = \App\Enums\PlayerPosition::from($positionValue);
                         @endphp
-                        <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900" wire:key="col-{{ $positionValue }}">
-                            <div class="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-zinc-600 dark:border-zinc-700 dark:bg-white/5 dark:text-zinc-300">
+                        <div class="overflow-hidden rounded-xl border border-ui-line bg-ui-surface" wire:key="col-{{ $positionValue }}">
+                            <div class="flex items-center justify-between border-b border-ui-line bg-zinc-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-ui-muted dark:bg-white/5 ">
                                 <span>{{ $position->label() }}</span>
                                 <span class="tabular-nums">{{ $appearances->filter(fn ($a) => ($players[$a->lech_player_id] ?? null)?->position === $position)->count() }}</span>
                             </div>
@@ -584,11 +624,11 @@ new class extends Component {
                                     <li wire:key="pick-{{ $player->id }}">
                                         {{-- Wybrany: jasne tło i znacznik XI (jedenastka) albo Ł (ławka) --}}
                                         <button type="button" wire:click="togglePlayer({{ $player->id }})" @disabled(!$editable)
-                                            class="{{ $a ? 'border-lech-600 bg-lech-50 font-semibold text-lech-900 dark:bg-lech-500/10 dark:text-lech-100' : 'border-transparent text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-white/5' }} flex w-full items-center gap-2 border-l-4 px-2 py-1.5 text-left text-sm transition disabled:cursor-default">
+                                            class="{{ $a ? 'border-lech-600 bg-lech-50 font-semibold text-lech-900 dark:bg-lech-500/10 dark:text-lech-100' : 'border-transparent text-ui-ink hover:bg-ui-raised' }} flex w-full items-center gap-2 border-l-4 px-2 py-1.5 text-left text-sm transition disabled:cursor-default">
                                             <span class="w-5 shrink-0 text-right text-xs tabular-nums text-zinc-400">{{ $player->number }}</span>
                                             <span class="min-w-0 flex-1 truncate">{{ $player->name }}</span>
                                             @if ($a)
-                                                <span class="{{ $a->started ? 'bg-lech-700 text-white' : 'bg-zinc-300 text-zinc-800 dark:bg-zinc-600 dark:text-white' }} w-6 shrink-0 rounded text-center text-[10px] font-bold leading-4">{{ $a->started ? __('XI') : __('Sub') }}</span>
+                                                <span class="{{ $a->started ? 'bg-club text-club-ink' : 'bg-zinc-300 text-zinc-800 dark:bg-zinc-600 dark:text-white' }} w-6 shrink-0 rounded text-center text-[10px] font-bold leading-4">{{ $a->started ? __('XI') : __('Sub') }}</span>
                                             @else
                                                 <span class="w-8 shrink-0 text-right text-[10px] tabular-nums text-zinc-400" title="{{ __('Experience') }}">{{ \App\Support\ClubStats::experience($totals[$player->id] ?? 0) }}</span>
                                             @endif
@@ -630,19 +670,19 @@ new class extends Component {
                     \App\Support\MatchReport::EVENT_OWN_GOAL => __('Own goal'),
                 ];
                 $cardLabels = ['yellow' => __('Yellow card'), 'second_yellow' => __('Second yellow card'), 'red' => __('Red card')];
-                $chipOn = 'border-lech-700 bg-lech-700 text-white';
-                $chipOff = 'border-zinc-300 bg-white text-zinc-700 hover:border-lech-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200';
+                $chipOn = 'border-lech-700 bg-club text-club-ink';
+                $chipOff = 'border-zinc-300 bg-ui-surface text-ui-ink hover:border-lech-400 dark:border-zinc-600 ';
                 $chip = 'rounded-md border px-1.5 py-0.5 text-xs font-semibold transition active:scale-95';
-                $stepLabel = 'text-[10px] font-bold uppercase tracking-wide text-zinc-500';
+                $stepLabel = 'text-[10px] font-bold uppercase tracking-wide text-ui-muted';
                 $th = 'px-2 py-2 text-center font-semibold';
             @endphp
             <div class="mt-6 grid items-start gap-6 lg:grid-cols-4">
                 {{-- 1/4: protokół --}}
-                <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+                <div class="overflow-hidden rounded-xl border border-ui-line bg-ui-surface">
                     <div class="lech-bar px-3 py-2 text-xs font-bold uppercase tracking-wide">{{ __('Match protocol') }}</div>
 
                     @if ($editable)
-                        <div class="space-y-3 border-b border-zinc-100 p-3 dark:border-zinc-800">
+                        <div class="space-y-3 border-b border-ui-line p-3 ">
                             <div class="grid grid-cols-2 gap-1">
                                 @foreach ($typeLabels as $typeKey => $typeLabel)
                                     <button type="button" wire:click="setEventType('{{ $typeKey }}')"
@@ -654,7 +694,7 @@ new class extends Component {
                                         @elseif ($typeKey === \App\Support\MatchReport::EVENT_CARD)
                                             <span class="inline-block h-3.5 w-2.5 rounded-[2px] bg-yellow-400"></span>
                                         @else
-                                            <flux:icon.arrows-right-left variant="micro" />
+                                            <x-ui.icon name="arrows-right-left" variant="micro" />
                                         @endif
                                         {{ $typeLabel }}
                                     </button>
@@ -676,7 +716,7 @@ new class extends Component {
                                         $choices = $this->eventChoices($group);
                                     @endphp
                                     @if ($choices === [])
-                                        <flux:text class="text-xs">{{ __('Nobody to choose.') }}</flux:text>
+                                        <x-ui.text class="text-xs">{{ __('Nobody to choose.') }}</x-ui.text>
                                     @endif
                                     <div class="flex flex-wrap gap-1">
                                         @foreach ($choices as $choiceId)
@@ -708,15 +748,15 @@ new class extends Component {
                                 </div>
                             @endif
 
-                            <flux:button class="w-full" size="sm" variant="primary" icon="plus" wire:click="addEvent" :disabled="$this->eventPlayer === null || ($needsSlot && $this->eventSlot === null)">
+                            <x-ui.btn class="w-full" size="sm" variant="primary" icon="plus" wire:click="addEvent" :disabled="$this->eventPlayer === null || ($needsSlot && $this->eventSlot === null)">
                                 {{ __('Add to the protocol') }}
-                            </flux:button>
+                            </x-ui.btn>
                         </div>
                     @endif
 
                     <div class="px-3 py-2">
                         @if ($this->events->isEmpty())
-                            <flux:text class="py-2 text-xs">{{ __('No events yet. The starting eleven plays the whole match, the bench does not come on.') }}</flux:text>
+                            <x-ui.text class="py-2 text-xs">{{ __('No events yet. The starting eleven plays the whole match, the bench does not come on.') }}</x-ui.text>
                         @else
                             @include('partials.match-protocol', ['events' => $this->events, 'deletable' => $editable])
                         @endif
@@ -725,7 +765,7 @@ new class extends Component {
 
                 {{-- 3/4: tabela zbiorcza (tylko odczyt, liczona z protokołu) --}}
                 <div class="lg:col-span-3">
-                    <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+                    <div class="overflow-x-auto rounded-xl border border-ui-line bg-ui-surface">
                         <table class="w-full min-w-[46rem] text-sm">
                             <thead class="lech-bar text-xs uppercase tracking-wide">
                                 <tr>
@@ -747,7 +787,7 @@ new class extends Component {
                                 @if ($group->isNotEmpty())
                                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                                         <tr class="bg-zinc-50 dark:bg-white/5">
-                                            <td colspan="12" class="px-3 py-1 text-xs font-bold uppercase tracking-wide text-zinc-500">{{ $groupTitle }} ({{ $group->count() }})</td>
+                                            <td colspan="12" class="px-3 py-1 text-xs font-bold uppercase tracking-wide text-ui-muted">{{ $groupTitle }} ({{ $group->count() }})</td>
                                         </tr>
                                         @foreach ($group as $a)
                                             @php
@@ -763,7 +803,7 @@ new class extends Component {
                                                             <span class="w-4 text-[10px] font-semibold uppercase text-zinc-400">{{ $player->position->short() }}</span>
                                                             <span class="font-medium">{{ $player->name }}</span>
                                                             @if ($editable)
-                                                                <button type="button" wire:click="toggleRole({{ $a->lech_player_id }})" class="rounded px-1 text-[10px] font-semibold text-lech-700 hover:bg-lech-50 dark:text-lech-300"
+                                                                <button type="button" wire:click="toggleRole({{ $a->lech_player_id }})" class="rounded px-1 text-[10px] font-semibold text-club hover:bg-lech-50 "
                                                                     title="{{ $a->started ? __('To the bench') : __('To the eleven') }}">{{ $a->started ? '↓' . __('Sub') : '↑' . __('XI') }}</button>
                                                             @endif
                                                         </div>
@@ -772,7 +812,7 @@ new class extends Component {
                                                     @foreach (['goals', 'assists', 'own_goals'] as $field)
                                                         <td class="px-2 py-1.5 text-center tabular-nums">
                                                             @if ($a->{$field} > 0)
-                                                                <span class="{{ $field === 'own_goals' ? 'bg-red-600' : 'bg-lech-700' }} inline-flex size-6 items-center justify-center rounded-full text-xs font-bold text-white">{{ $a->{$field} }}</span>
+                                                                <span class="{{ $field === 'own_goals' ? 'bg-red-600' : 'bg-club text-club-ink' }} inline-flex size-6 items-center justify-center rounded-full text-xs font-bold ">{{ $a->{$field} }}</span>
                                                             @endif
                                                         </td>
                                                     @endforeach
@@ -799,10 +839,10 @@ new class extends Component {
                                                             <span class="{{ \App\Support\Squad::lockColor($a->rest_hours) }} inline-block rounded px-1 text-[11px] font-bold tabular-nums">{{ $a->rest_hours }} h</span>
                                                         @endif
                                                     </td>
-                                                    <td class="px-2 py-1.5 text-center font-bold tabular-nums text-lech-700 dark:text-lech-300">{{ \App\Support\ClubStats::experience($a->experience) }}</td>
+                                                    <td class="px-2 py-1.5 text-center font-bold tabular-nums text-club">{{ \App\Support\ClubStats::experience($a->experience) }}</td>
                                                     <td class="px-1 py-1.5 text-center">
                                                         @if ($editable)
-                                                            <flux:button size="xs" variant="ghost" icon="x-mark" wire:click="togglePlayer({{ $a->lech_player_id }})" :aria-label="__('Remove')" />
+                                                            <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="togglePlayer({{ $a->lech_player_id }})" :aria-label="__('Remove')" />
                                                         @endif
                                                     </td>
                                                 </tr>
@@ -814,9 +854,9 @@ new class extends Component {
                         </table>
                     </div>
 
-                    <flux:text class="mt-2 text-xs">
+                    <x-ui.text class="mt-2 text-xs">
                         {{ __('The table is calculated from the protocol. Experience: starting eleven 1, bench 0.5 (also without coming on), a whole half 1 and part of a half 0.5, a clean sheet (goalkeeper, defender who played, Lech conceded nothing) 1, each goal (also in a penalty shootout) and assist 1. Points are set in the line-up settings.') }}
-                    </flux:text>
+                    </x-ui.text>
                 </div>
             </div>
         @endif

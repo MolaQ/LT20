@@ -211,17 +211,17 @@ new class extends Component {
 }; ?>
 
 <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
-    <flux:input wire:model.live.debounce.250ms="q" size="sm" icon="magnifying-glass" clearable
+    <x-ui.input wire:model.live.debounce.250ms="q" size="sm" icon="magnifying-glass" clearable
         :placeholder="__('Search…')" class="w-36 sm:w-56 lg:w-72" x-on:focus="open = true" x-on:input="open = true"
         :aria-label="__('Search')" />
 
     @if (mb_strlen(trim($q)) >= 2)
         <div x-show="open" x-cloak x-transition.opacity
-            class="absolute end-0 z-50 mt-2 max-h-[70vh] w-[min(24rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+            class="absolute end-0 z-50 mt-2 max-h-[70vh] w-[min(24rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-ui-line bg-ui-surface p-2 shadow-xl">
             @forelse ($this->groups as $group)
                 <div class="py-1" wire:key="gs-{{ $loop->index }}">
-                    <div class="flex items-center gap-1.5 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-lech-700 dark:text-lech-300">
-                        <flux:icon :name="$group['icon']" variant="micro" />
+                    <div class="flex items-center gap-1.5 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-club">
+                        <x-ui.icon :name="$group['icon']" variant="micro" />
                         {{ $group['label'] }}
                     </div>
                     @foreach ($group['items'] as $item)
@@ -229,13 +229,13 @@ new class extends Component {
                             class="block rounded-lg px-2 py-1.5 text-sm hover:bg-lech-50 dark:hover:bg-lech-950">
                             <span class="block truncate font-medium">{{ $item['title'] }}</span>
                             @if ($item['sub'])
-                                <span class="block truncate text-xs text-zinc-500">{{ $item['sub'] }}</span>
+                                <span class="block truncate text-xs text-ui-muted">{{ $item['sub'] }}</span>
                             @endif
                         </a>
                     @endforeach
                 </div>
             @empty
-                <div class="px-2 py-3 text-sm text-zinc-500">{{ __('Nothing found.') }}</div>
+                <div class="px-2 py-3 text-sm text-ui-muted">{{ __('Nothing found.') }}</div>
             @endforelse
         </div>
     @endif

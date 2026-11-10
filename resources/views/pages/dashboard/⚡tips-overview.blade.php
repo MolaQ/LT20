@@ -140,88 +140,88 @@ new class extends Component {
 <div class="flex w-full flex-col gap-6">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="space-y-1">
-            <flux:heading size="xl" level="1">{{ __('Tips overview') }}</flux:heading>
-            <flux:text>{{ __('Who has already tipped the selected matchday and who has not.') }}</flux:text>
+            <x-ui.heading size="xl" level="1">{{ __('Tips overview') }}</x-ui.heading>
+            <x-ui.text>{{ __('Who has already tipped the selected matchday and who has not.') }}</x-ui.text>
         </div>
 
         <div class="flex flex-wrap items-end gap-2">
             @if ($this->seasons->isNotEmpty())
                 <div class="w-full sm:w-48">
-                    <flux:select wire:model.live="seasonId" :label="__('Season')">
+                    <x-ui.select wire:model.live="seasonId" :label="__('Season')">
                         @foreach ($this->seasons as $option)
-                            <flux:select.option :value="$option->id">{{ $option->title }} ({{ $option->status->label() }})
-                            </flux:select.option>
+                            <x-ui.select.option :value="$option->id">{{ $option->title }} ({{ $option->status->label() }})
+                            </x-ui.select.option>
                         @endforeach
-                    </flux:select>
+                    </x-ui.select>
                 </div>
             @endif
 
             @if ($this->matchdays->isNotEmpty())
                 <div class="w-full sm:w-64">
-                    <flux:select wire:model.live="number" :label="__('Matchday')">
+                    <x-ui.select wire:model.live="number" :label="__('Matchday')">
                         @foreach ($this->matchdays as $option)
-                            <flux:select.option :value="$option->number">
+                            <x-ui.select.option :value="$option->number">
                                 {{ $option->number }}. {{ filled($option->opponent) ? $option->fixture : __('not set yet') }}
-                            </flux:select.option>
+                            </x-ui.select.option>
                         @endforeach
-                    </flux:select>
+                    </x-ui.select>
                 </div>
             @endif
 
             <div class="w-full sm:w-44">
-                <flux:select wire:model.live="show" :label="__('Show')">
-                    <flux:select.option value="all">{{ __('Everyone') }}</flux:select.option>
-                    <flux:select.option value="tipped">{{ __('Already tipped') }}</flux:select.option>
-                    <flux:select.option value="missing">{{ __('Not tipped yet') }}</flux:select.option>
-                </flux:select>
+                <x-ui.select wire:model.live="show" :label="__('Show')">
+                    <x-ui.select.option value="all">{{ __('Everyone') }}</x-ui.select.option>
+                    <x-ui.select.option value="tipped">{{ __('Already tipped') }}</x-ui.select.option>
+                    <x-ui.select.option value="missing">{{ __('Not tipped yet') }}</x-ui.select.option>
+                </x-ui.select>
             </div>
         </div>
     </div>
 
     @if (!$this->matchday)
-        <flux:card>
-            <flux:text>{{ __('No matchdays yet.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('No matchdays yet.') }}</x-ui.text>
+        </x-ui.card>
     @else
     <div class="flex flex-wrap items-center gap-2">
-        <flux:badge color="green">
+        <x-ui.badge color="green">
             {{ __('Tipped: :done of :total', ['done' => $this->totals[1], 'total' => $this->totals[0]]) }}
-        </flux:badge>
-        <flux:text size="sm">{{ $this->matchday->fixture }}</flux:text>
+        </x-ui.badge>
+        <x-ui.text size="sm">{{ $this->matchday->fixture }}</x-ui.text>
     </div>
 
-    <flux:table :paginate="$this->players">
-        <flux:table.columns>
-            <flux:table.column>{{ __('Place') }}</flux:table.column>
-            <flux:table.column>{{ __('Team') }}</flux:table.column>
-            <flux:table.column>{{ __('Tip') }}</flux:table.column>
-            <flux:table.column>{{ __('Saved') }}</flux:table.column>
-        </flux:table.columns>
+    <x-ui.table :paginate="$this->players">
+        <x-ui.table.columns>
+            <x-ui.table.column>{{ __('Place') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Team') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Tip') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Saved') }}</x-ui.table.column>
+        </x-ui.table.columns>
 
-        <flux:table.rows>
+        <x-ui.table.rows>
             @forelse ($this->players as $team)
             @php
                 $detail = $this->details[$team->user_id] ?? ['tip' => null];
             @endphp
-            <flux:table.row :key="$team->id">
-                <flux:table.cell>{{ $team->position }}</flux:table.cell>
-                <flux:table.cell>{{ $team->name }}</flux:table.cell>
-                <flux:table.cell>
+            <x-ui.table.row :key="$team->id">
+                <x-ui.table.cell>{{ $team->position }}</x-ui.table.cell>
+                <x-ui.table.cell>{{ $team->name }}</x-ui.table.cell>
+                <x-ui.table.cell>
                     @if ($detail['tip'])
-                        <flux:badge color="green">{{ $detail['tip']->score() }}</flux:badge>
+                        <x-ui.badge color="green">{{ $detail['tip']->score() }}</x-ui.badge>
                     @else
-                        <flux:badge color="zinc">—</flux:badge>
+                        <x-ui.badge color="zinc">—</x-ui.badge>
                     @endif
-                </flux:table.cell>
-                <flux:table.cell>{{ $detail['tip']?->saved_at->translatedFormat('j F, H:i:s') ?? '—' }}
-                </flux:table.cell>
-            </flux:table.row>
+                </x-ui.table.cell>
+                <x-ui.table.cell>{{ $detail['tip']?->saved_at->translatedFormat('j F, H:i:s') ?? '—' }}
+                </x-ui.table.cell>
+            </x-ui.table.row>
             @empty
-            <flux:table.row>
-                <flux:table.cell colspan="4">{{ __('No players match your filters.') }}</flux:table.cell>
-            </flux:table.row>
+            <x-ui.table.row>
+                <x-ui.table.cell colspan="4">{{ __('No players match your filters.') }}</x-ui.table.cell>
+            </x-ui.table.row>
             @endforelse
-        </flux:table.rows>
-    </flux:table>
+        </x-ui.table.rows>
+    </x-ui.table>
     @endif
 </div>

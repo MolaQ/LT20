@@ -4,7 +4,6 @@ use App\Models\Payment;
 use App\Support\Supporters;
 use App\Support\Premium;
 use App\Support\Przelewy24;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -103,7 +102,7 @@ new #[Layout('layouts::public')] class extends Component {
         }
 
         if (!$this->configured) {
-            Flux::toast(variant: 'warning', text: __('Online payments are not available yet.'));
+            $this->dispatch('ui-toast', variant: 'warning', text: __('Online payments are not available yet.'));
 
             return;
         }
@@ -124,7 +123,7 @@ new #[Layout('layouts::public')] class extends Component {
         } catch (\Throwable $e) {
             $payment->update(['status' => Payment::FAILED, 'note' => Str::limit($e->getMessage(), 250)]);
             report($e);
-            Flux::toast(variant: 'danger', text: __('The payment could not be started. Try again later.'));
+            $this->dispatch('ui-toast', variant: 'danger', text: __('The payment could not be started. Try again later.'));
 
             return;
         }
@@ -144,109 +143,109 @@ new #[Layout('layouts::public')] class extends Component {
         @endphp
         {{-- Potwierdzenie z P24 przychodzi osobno, więc dopóki wpłata czeka, odświeżamy stan. --}}
         <div @if ($returnedPayment->status === 'pending') wire:poll.5s @endif>
-            <flux:callout :variant="$returnedPayment->status === 'paid' ? 'success' : ($returnedPayment->status === 'failed' ? 'danger' : 'warning')"
+            <x-ui.callout :variant="$returnedPayment->status === 'paid' ? 'success' : ($returnedPayment->status === 'failed' ? 'danger' : 'warning')"
                 :icon="$returnedPayment->status === 'paid' ? 'check-circle' : 'clock'">
-                <flux:callout.heading>
+                <p class="font-semibold">
                     {{ $returnedPayment->status === 'paid' ? __('Thank you! The payment is confirmed.') : ($returnedPayment->status === 'failed' ? __('The payment failed.') : __('Waiting for the payment confirmation...')) }}
-                </flux:callout.heading>
-                <flux:callout.text>{{ $returnedPayment->kindLabel() }}: {{ $returnedPayment->amountLabel() }}</flux:callout.text>
-            </flux:callout>
+                </p>
+                <p>{{ $returnedPayment->kindLabel() }}: {{ $returnedPayment->amountLabel() }}</p>
+            </x-ui.callout>
         </div>
     @endif
 
     @if (!$this->configured)
-        <flux:callout variant="warning" icon="exclamation-triangle">
-            <flux:callout.text>{{ __('Online payments are not available yet.') }}</flux:callout.text>
-        </flux:callout>
+        <x-ui.callout variant="warning" icon="exclamation-triangle">
+            <p>{{ __('Online payments are not available yet.') }}</p>
+        </x-ui.callout>
     @endif
 
     {{-- Stan premium gracza --}}
     @auth
-        <flux:card class="space-y-4">
+        <x-ui.card class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <flux:heading size="lg">{{ __('Your premium') }}</flux:heading>
+                <x-ui.heading size="lg">{{ __('Your premium') }}</x-ui.heading>
                 @if ($this->isPremium)
-                    <flux:badge color="purple" icon="sparkles">
+                    <x-ui.badge color="purple" icon="sparkles">
                         {{ auth()->user()->premium_until ? __('Active until :date', ['date' => auth()->user()->premium_until->format('d.m.Y H:i')]) : __('Active without an end date') }}
-                    </flux:badge>
+                    </x-ui.badge>
                 @else
-                    <flux:badge color="zinc">{{ __('Inactive') }}</flux:badge>
+                    <x-ui.badge color="zinc">{{ __('Inactive') }}</x-ui.badge>
                 @endif
             </div>
 
 
-            <flux:text class="text-sm">
+            <x-ui.text class="text-sm">
                 {{ __('Your payments in the last 12 months: :amount.', ['amount' => \App\Models\Payment::money($this->supporter['total'])]) }}
                 @if ($this->supporter['rank'])
                     {{ __('Supporters ranking: :rank. place.', ['rank' => $this->supporter['rank']]) }}
                 @endif
-            </flux:text>
-        </flux:card>
+            </x-ui.text>
+        </x-ui.card>
     @endauth
 
     {{-- Cennik premium --}}
     <div class="space-y-3">
-        <flux:heading size="lg">{{ __('Premium') }}</flux:heading>
-        <flux:text class="text-sm">
+        <x-ui.heading size="lg">{{ __('Premium') }}</x-ui.heading>
+        <x-ui.text class="text-sm">
             {{ __('Premium: statistics from the other players’ tips while you tip, a rival preview, a team name change without approval and a badge. A new payment extends it.') }}
-        </flux:text>
+        </x-ui.text>
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             @foreach (\App\Support\Premium::PLANS as $plan => [$price, $days])
-                <flux:card class="flex flex-col items-center gap-2 text-center" wire:key="plan-{{ $plan }}">
-                    <flux:heading>{{ \App\Support\Premium::labels()[$plan] }}</flux:heading>
+                <x-ui.card class="flex flex-col items-center gap-2 text-center" wire:key="plan-{{ $plan }}">
+                    <x-ui.heading>{{ \App\Support\Premium::labels()[$plan] }}</x-ui.heading>
                     <p class="text-3xl font-black tabular-nums">{{ \App\Models\Payment::money($price) }}</p>
-                    <flux:text class="text-sm">{{ trans_choice(':count day|:count days', $days, ['count' => $days]) }}</flux:text>
+                    <x-ui.text class="text-sm">{{ trans_choice(':count day|:count days', $days, ['count' => $days]) }}</x-ui.text>
                     @auth
-                        <flux:button variant="primary" class="w-full" wire:click="buy('{{ $plan }}')" :disabled="!$this->configured">
+                        <x-ui.btn variant="primary" class="w-full" wire:click="buy('{{ $plan }}')" :disabled="!$this->configured">
                             {{ __('Buy') }}
-                        </flux:button>
+                        </x-ui.btn>
                     @else
-                        <flux:button class="w-full" :href="route('login')">{{ __('Log in') }}</flux:button>
+                        <x-ui.btn class="w-full" :href="route('login')">{{ __('Log in') }}</x-ui.btn>
                     @endauth
-                </flux:card>
+                </x-ui.card>
             @endforeach
         </div>
     </div>
 
     {{-- Cegiełka --}}
-    <flux:card class="space-y-3">
-        <flux:heading size="lg">{{ __('Support') }}</flux:heading>
-        <flux:text class="text-sm">
+    <x-ui.card class="space-y-3">
+        <x-ui.heading size="lg">{{ __('Support') }}</x-ui.heading>
+        <x-ui.text class="text-sm">
             {{ __('Any amount from 5 zł. You get premium for the highest price list option the amount covers.') }}
-        </flux:text>
+        </x-ui.text>
 
         @auth
             <div class="flex flex-wrap items-end gap-2">
                 <div class="w-40">
-                    <flux:input type="number" min="5" step="1" wire:model="supportAmount" :label="__('Amount')" suffix="zł" />
+                    <x-ui.input type="number" min="5" step="1" wire:model="supportAmount" :label="__('Amount')" suffix="zł" />
                 </div>
-                <flux:button variant="primary" icon="heart" wire:click="support" :disabled="!$this->configured">
+                <x-ui.btn variant="primary" icon="heart" wire:click="support" :disabled="!$this->configured">
                     {{ __('Support') }}
-                </flux:button>
+                </x-ui.btn>
             </div>
-            <flux:error name="supportAmount" />
+            <x-ui.error name="supportAmount" />
         @else
             <div>
-                <flux:button :href="route('login')">{{ __('Log in') }}</flux:button>
+                <x-ui.btn :href="route('login')">{{ __('Log in') }}</x-ui.btn>
             </div>
         @endauth
-    </flux:card>
+    </x-ui.card>
 
     {{-- Historia wpłat --}}
     @if ($this->payments->isNotEmpty())
-        <flux:card class="space-y-3">
-            <flux:heading size="lg">{{ __('Your payments') }}</flux:heading>
+        <x-ui.card class="space-y-3">
+            <x-ui.heading size="lg">{{ __('Your payments') }}</x-ui.heading>
             <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @foreach ($this->payments as $payment)
                     <div class="flex items-center justify-between gap-3 py-2 text-sm" wire:key="pay-{{ $payment->id }}">
-                        <span class="w-32 text-zinc-500">{{ ($payment->paid_at ?? $payment->created_at)->format('d.m.Y H:i') }}</span>
+                        <span class="w-32 text-ui-muted">{{ ($payment->paid_at ?? $payment->created_at)->format('d.m.Y H:i') }}</span>
                         <span class="min-w-0 flex-1">{{ $payment->kindLabel() }}</span>
                         <span class="tabular-nums">{{ $payment->amountLabel() }}</span>
-                        <flux:badge size="sm" :color="$payment->statusColor()">{{ $payment->statusLabel() }}</flux:badge>
+                        <x-ui.badge size="sm" :color="$payment->statusColor()">{{ $payment->statusLabel() }}</x-ui.badge>
                     </div>
                 @endforeach
             </div>
-        </flux:card>
+        </x-ui.card>
     @endif
 </div>

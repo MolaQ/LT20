@@ -117,57 +117,57 @@ new class extends Component {
 
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Results') }}</flux:heading>
-            <flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Results') }}</x-ui.heading>
+            <x-ui.subheading>
                 {{ __('Enter the Lech score, the line-up and the events. Every click is saved at once, then recalculate the matchday.') }}
-            </flux:subheading>
+            </x-ui.subheading>
         </div>
 
         <div class="flex flex-wrap items-end gap-2">
             @if ($this->seasons->isNotEmpty())
                 <div class="w-full sm:w-48">
-                    <flux:select wire:model.live="seasonId" :label="__('Season')">
+                    <x-ui.select wire:model.live="seasonId" :label="__('Season')">
                         @foreach ($this->seasons as $option)
-                            <flux:select.option :value="$option->id">{{ $option->title }} ({{ $option->status->label() }})
-                            </flux:select.option>
+                            <x-ui.select.option :value="$option->id">{{ $option->title }} ({{ $option->status->label() }})
+                            </x-ui.select.option>
                         @endforeach
-                    </flux:select>
+                    </x-ui.select>
                 </div>
             @endif
 
             @if ($this->matchdays->isNotEmpty())
                 <div class="w-full sm:w-64">
-                    <flux:select wire:model.live="number" :label="__('Matchday')">
+                    <x-ui.select wire:model.live="number" :label="__('Matchday')">
                         @foreach ($this->matchdays as $option)
-                            <flux:select.option :value="$option->number">
+                            <x-ui.select.option :value="$option->number">
                                 {{ $option->number }}. {{ filled($option->opponent) ? $option->fixture : __('not set yet') }}
                                 @if ($option->status === \App\Enums\MatchdayStatus::Played) ({{ $option->lech_goals }}:{{ $option->opponent_goals }}) @endif
-                            </flux:select.option>
+                            </x-ui.select.option>
                         @endforeach
-                    </flux:select>
+                    </x-ui.select>
                 </div>
             @endif
         </div>
     </div>
 
     @if (!$this->season || !$this->matchday)
-        <flux:card class="space-y-4">
-            <flux:heading>{{ __('No matchdays yet.') }}</flux:heading>
+        <x-ui.card class="space-y-4">
+            <x-ui.heading>{{ __('No matchdays yet.') }}</x-ui.heading>
             <div>
-                <flux:button :href="route('dashboard.matchdays')" wire:navigate>{{ __('Go to matchdays') }}</flux:button>
+                <x-ui.btn :href="route('dashboard.matchdays')" wire:navigate>{{ __('Go to matchdays') }}</x-ui.btn>
             </div>
-        </flux:card>
+        </x-ui.card>
     @else
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="space-y-1">
-                <flux:heading size="lg">{{ __('Matchday :number', ['number' => $this->matchday->number]) }}: {{ $this->matchday->fixture }}</flux:heading>
-                <flux:text>{{ $this->matchday->kickoff_at ? $this->matchday->kickoff_at->translatedFormat('j F Y, H:i') : __('not set yet') }}</flux:text>
+                <x-ui.heading size="lg">{{ __('Matchday :number', ['number' => $this->matchday->number]) }}: {{ $this->matchday->fixture }}</x-ui.heading>
+                <x-ui.text>{{ $this->matchday->kickoff_at ? $this->matchday->kickoff_at->translatedFormat('j F Y, H:i') : __('not set yet') }}</x-ui.text>
             </div>
-            <flux:badge :color="$this->matchday->status->color()">{{ $this->matchday->status->label() }}</flux:badge>
+            <x-ui.badge :color="$this->matchday->status->color()">{{ $this->matchday->status->label() }}</x-ui.badge>
         </div>
 
         @if ($this->blocker)
-            <flux:callout variant="warning" icon="lock-closed" :heading="$this->blocker" />
+            <x-ui.callout variant="warning" icon="lock-closed" :heading="$this->blocker" />
         @endif
 
         <livewire:pages::dashboard.match-report :lech-match-id="(int) $this->matchday->lech_match_id" :matchday-id="$this->matchday->id"

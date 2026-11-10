@@ -5,7 +5,6 @@ use App\Enums\TeamNameRequestStatus;
 use App\Models\TeamNameChangeRequest;
 use App\Models\User;
 use App\Support\Audit;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -143,13 +142,13 @@ new class extends Component {
         }
 
         if ($error !== null) {
-            Flux::toast(text: $error, variant: 'danger');
+            $this->dispatch('ui-toast', text: $error, variant: 'danger');
 
             return;
         }
 
         unset($this->requests, $this->stats);
-        Flux::toast(text: __('Request approved.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Request approved.'), variant: 'success');
     }
 
     /** Zwraca etykiety pól, które zajmuje już ktoś inny (bez względu na wielkość liter). */
@@ -191,7 +190,7 @@ new class extends Component {
         $this->rejectReason = '';
         $this->resetValidation();
 
-        Flux::modal('reject-request')->show();
+        $this->dispatch('ui-sheet', name: 'reject-request');
     }
 
     public function reject(): void
@@ -234,17 +233,17 @@ new class extends Component {
             return null;
         });
 
-        Flux::modal('reject-request')->close();
+        $this->dispatch('ui-sheet', name: 'reject-request', open: false);
         $this->reset('rejectId', 'rejectUserName', 'rejectReason');
         unset($this->requests, $this->stats);
 
         if ($error !== null) {
-            Flux::toast(text: $error, variant: 'warning');
+            $this->dispatch('ui-toast', text: $error, variant: 'warning');
 
             return;
         }
 
-        Flux::toast(text: __('Request rejected.'), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Request rejected.'), variant: 'success');
     }
 
     /* ------------------------------------------------------------------
@@ -261,73 +260,73 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
 
     <div>
-        <flux:heading size="xl" level="1">{{ __('Team requests') }}</flux:heading>
-        <flux:subheading>{{ __('Review requests to change team names.') }}</flux:subheading>
+        <x-ui.heading size="xl" level="1">{{ __('Team requests') }}</x-ui.heading>
+        <x-ui.subheading>{{ __('Review requests to change team names.') }}</x-ui.subheading>
     </div>
 
     {{-- Statystyki --}}
     <div class="grid gap-4 md:grid-cols-3">
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.clock class="size-8 text-amber-500" />
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="clock" class="size-8 text-amber-500" />
             <div>
-                <flux:text>{{ __('Pending') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['pending'] }}</flux:heading>
+                <x-ui.text>{{ __('Pending') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['pending'] }}</x-ui.heading>
             </div>
-        </flux:card>
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.check-circle class="size-8 text-green-500" />
+        </x-ui.card>
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="check-circle" class="size-8 text-green-500" />
             <div>
-                <flux:text>{{ __('Approved') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['approved'] }}</flux:heading>
+                <x-ui.text>{{ __('Approved') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['approved'] }}</x-ui.heading>
             </div>
-        </flux:card>
-        <flux:card class="flex items-center gap-4">
-            <flux:icon.x-circle class="size-8 text-red-500" />
+        </x-ui.card>
+        <x-ui.card class="flex items-center gap-4">
+            <x-ui.icon name="x-circle" class="size-8 text-red-500" />
             <div>
-                <flux:text>{{ __('Rejected') }}</flux:text>
-                <flux:heading size="xl">{{ $this->stats['rejected'] }}</flux:heading>
+                <x-ui.text>{{ __('Rejected') }}</x-ui.text>
+                <x-ui.heading size="xl">{{ $this->stats['rejected'] }}</x-ui.heading>
             </div>
-        </flux:card>
+        </x-ui.card>
     </div>
 
     {{-- Filtry --}}
     <div class="flex flex-wrap items-center gap-4">
         <div class="w-full sm:w-72">
-            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+            <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
                 :placeholder="__('Search by user or team...')" clearable />
         </div>
 
         <div class="w-full sm:w-56">
-            <flux:select wire:model.live="status">
-                <flux:select.option value="">{{ __('All statuses') }}</flux:select.option>
-                <flux:select.option value="pending">{{ __('Pending') }}</flux:select.option>
-                <flux:select.option value="approved">{{ __('Approved') }}</flux:select.option>
-                <flux:select.option value="rejected">{{ __('Rejected') }}</flux:select.option>
-            </flux:select>
+            <x-ui.select wire:model.live="status">
+                <x-ui.select.option value="">{{ __('All statuses') }}</x-ui.select.option>
+                <x-ui.select.option value="pending">{{ __('Pending') }}</x-ui.select.option>
+                <x-ui.select.option value="approved">{{ __('Approved') }}</x-ui.select.option>
+                <x-ui.select.option value="rejected">{{ __('Rejected') }}</x-ui.select.option>
+            </x-ui.select>
         </div>
     </div>
 
     {{-- Tabela --}}
-    <flux:table :paginate="$this->requests">
-        <flux:table.columns>
-            <flux:table.column>{{ __('User') }}</flux:table.column>
-            <flux:table.column>{{ __('Requested change') }}</flux:table.column>
-            <flux:table.column>{{ __('Status') }}</flux:table.column>
-            <flux:table.column sortable sorted direction="{{ $sortDirection }}" wire:click="sort">
+    <x-ui.table :paginate="$this->requests">
+        <x-ui.table.columns>
+            <x-ui.table.column>{{ __('User') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Requested change') }}</x-ui.table.column>
+            <x-ui.table.column>{{ __('Status') }}</x-ui.table.column>
+            <x-ui.table.column sortable sorted direction="{{ $sortDirection }}" wire:click="sort">
                 {{ __('Sent') }}
-            </flux:table.column>
-            <flux:table.column />
-        </flux:table.columns>
+            </x-ui.table.column>
+            <x-ui.table.column />
+        </x-ui.table.columns>
 
-        <flux:table.rows>
+        <x-ui.table.rows>
             @forelse ($this->requests as $req)
-                <flux:table.row :key="'request-'.$req->id">
-                    <flux:table.cell>
+                <x-ui.table.row :key="'request-'.$req->id">
+                    <x-ui.table.cell>
                         <div class="font-medium">{{ $req->user?->name ?? '—' }}</div>
-                        <div class="text-sm text-zinc-500">{{ $req->user?->email }}</div>
-                    </flux:table.cell>
+                        <div class="text-sm text-ui-muted">{{ $req->user?->email }}</div>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell>
+                    <x-ui.table.cell>
                         <div class="space-y-1 text-sm">
                             @foreach ([['team_name', __('Team name')]] as [$field, $label])
                                 @php
@@ -335,7 +334,7 @@ new class extends Component {
                                     $new = $req->{'requested_' . $field};
                                 @endphp
                                 <div class="flex flex-wrap items-baseline gap-x-2">
-                                    <span class="text-zinc-500">{{ $label }}:</span>
+                                    <span class="text-ui-muted">{{ $label }}:</span>
                                     @if ($old !== $new)
                                         <span class="text-zinc-400 line-through">{{ $old ?? '—' }}</span>
                                         <span>&rarr;</span>
@@ -346,9 +345,9 @@ new class extends Component {
                                 </div>
                             @endforeach
                         </div>
-                    </flux:table.cell>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell>
+                    <x-ui.table.cell>
                         @php
                             $color = match ($req->status) {
                                 \App\Enums\TeamNameRequestStatus::Approved => 'green',
@@ -361,59 +360,59 @@ new class extends Component {
                                 default => __('Pending'),
                             };
                         @endphp
-                        <flux:badge size="sm" :color="$color">{{ $statusLabel }}</flux:badge>
+                        <x-ui.badge size="sm" :color="$color">{{ $statusLabel }}</x-ui.badge>
 
                         @if ($req->reviewed_at)
-                            <div class="mt-1 text-xs text-zinc-500">
+                            <div class="mt-1 text-xs text-ui-muted">
                                 {{ $req->reviewer?->name ?? '—' }}, {{ $req->reviewed_at->format('Y-m-d H:i') }}
                             </div>
                         @endif
                         @if ($req->reject_reason)
-                            <div class="mt-1 text-xs text-zinc-500">{{ $req->reject_reason }}</div>
+                            <div class="mt-1 text-xs text-ui-muted">{{ $req->reject_reason }}</div>
                         @endif
-                    </flux:table.cell>
+                    </x-ui.table.cell>
 
-                    <flux:table.cell class="text-zinc-500">{{ $req->created_at->format('Y-m-d H:i') }}</flux:table.cell>
+                    <x-ui.table.cell class="text-ui-muted">{{ $req->created_at->format('Y-m-d H:i') }}</x-ui.table.cell>
 
-                    <flux:table.cell align="end">
+                    <x-ui.table.cell align="end">
                         @if ($req->status === \App\Enums\TeamNameRequestStatus::Pending)
                             <div class="flex justify-end gap-2">
-                                <flux:button size="sm" variant="primary" icon="check" x-on:click="$dispatch('confirm-action', { message: @js(__('Approve this change?')), run: () => $wire.approve({{ $req->id }}) })">
+                                <x-ui.btn size="sm" variant="primary" icon="check" x-on:click="$dispatch('confirm-action', { message: @js(__('Approve this change?')), run: () => $wire.approve({{ $req->id }}) })">
                                     {{ __('Approve') }}
-                                </flux:button>
-                                <flux:button size="sm" variant="ghost" icon="x-mark" wire:click="confirmReject({{ $req->id }})">
+                                </x-ui.btn>
+                                <x-ui.btn size="sm" variant="ghost" icon="x-mark" wire:click="confirmReject({{ $req->id }})">
                                     {{ __('Reject') }}
-                                </flux:button>
+                                </x-ui.btn>
                             </div>
                         @endif
-                    </flux:table.cell>
-                </flux:table.row>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="5" class="py-10 text-center text-zinc-500">
+                <x-ui.table.row>
+                    <x-ui.table.cell colspan="5" class="py-10 text-center text-ui-muted">
                         {{ __('No requests match your filters.') }}
-                    </flux:table.cell>
-                </flux:table.row>
+                    </x-ui.table.cell>
+                </x-ui.table.row>
             @endforelse
-        </flux:table.rows>
-    </flux:table>
+        </x-ui.table.rows>
+    </x-ui.table>
 
     {{-- Modal: odrzucenie --}}
-    <flux:modal name="reject-request" class="w-full md:w-[28rem]">
+    <x-ui.modal name="reject-request" class="w-full md:w-[28rem]">
         <form wire:submit="reject" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Reject request') }}</flux:heading>
-                <flux:text class="mt-1">{{ $rejectUserName }}</flux:text>
+                <x-ui.heading size="lg">{{ __('Reject request') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ $rejectUserName }}</x-ui.text>
             </div>
 
-            <flux:textarea wire:model="rejectReason" :label="__('Reason (optional)')" rows="3" />
+            <x-ui.textarea wire:model="rejectReason" :label="__('Reason (optional)')" rows="3" />
 
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost" type="button">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="danger" type="submit">{{ __('Reject') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="danger" type="submit">{{ __('Reject') }}</x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 </div>

@@ -12,6 +12,7 @@ use App\Support\LegendsLeague;
 use App\Support\MatchReport;
 use App\Support\SystemFeed;
 use App\Support\TipRules;
+use Closure;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -79,23 +80,29 @@ class SaveMatchdayResult
     /**
      * Przeliczenie kolejki: status „rozegrana”, punkty i mecze.
      *
+     * $progress (opcjonalnie): fn(int $procent, string $etap) do paska postępu przy przeliczeniu w tle (Jobs\RecalculateMatchday).
+     *
      * @return array{teams: int, fixtures: int, eliminated: int, swiss: int}
      *
      * @throws DomainException
      */
-    public function recalculate(Matchday $matchday): array
+    public function recalculate(Matchday $matchday, ?Closure $progress = null): array
     {
+        $progress ??= fn (int $percent, string $label) => null;
+
         self::ensureEditable($matchday);
 
         if ($matchday->lech_goals === null || $matchday->opponent_goals === null) {
             throw new DomainException(__('Enter the result of the Lech match first.'));
         }
 
-        return DB::transaction(function () use ($matchday): array {
+        return DB::transaction(function () use ($matchday, $progress): array {
             $wasPlayed = $matchday->status === MatchdayStatus::Played;
             $matchday->update(['status' => MatchdayStatus::Played]);
 
+            $progress(15, __('Scoring teams and matches'));
             $stats = $this->score->handle($matchday->fresh());
+            $progress(70, __('Drawing next rounds'));
 
             // Liga podwórkowa: pary kolejnej rundy losujemy od razu według nowej klasyfikacji.
             $stats['swiss'] = app(DrawNextSwissRound::class)->afterMatchday($matchday->fresh());
@@ -118,6 +125,7 @@ class SaveMatchdayResult
             }
 
             // Hall of Fame na bieżąco: punkty za mecze sezonu (tytuły i trofea dopiero po jego zakończeniu).
+            $progress(85, __('Updating Hall of Fame'));
             app(AwardHallOfFame::class)->handle($matchday->season);
 
             Audit::log(

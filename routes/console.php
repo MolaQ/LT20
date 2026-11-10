@@ -16,3 +16,13 @@ Artisan::command('premium:expire', function () {
 })->purpose('Remove the Premium role after its expiry date');
 
 Schedule::command('premium:expire')->hourly();
+
+// Kolejka zadań (etap F: przeliczenie kolejki w tle z paskiem postępu). Na hostingu współdzielonym bez procesów w tle
+// zadania wykonuje ten sam cron co harmonogram: co minutę worker kończy pracę, gdy kolejka jest pusta.
+// Na VPS z Supervisorem ustaw QUEUE_VIA_SCHEDULER=false i uruchom stały „php artisan queue:work”.
+if (config('queue.via_scheduler') && config('queue.default') !== 'sync') {
+    Schedule::command('queue:work --stop-when-empty --max-time=55 --tries=1')
+        ->everyMinute()
+        ->withoutOverlapping()
+        ->runInBackground();
+}

@@ -75,7 +75,7 @@ new class extends Component {
                 <span>{{ $matchday->kickoff_at?->translatedFormat('j M Y, H:i') }}</span>
                 <span class="inline-flex items-center gap-1 font-semibold text-white">
                     {{ __('Match details') }}
-                    <flux:icon.chevron-right variant="micro" />
+                    <x-ui.icon name="chevron-right" variant="micro" />
                 </span>
             </div>
         </button>

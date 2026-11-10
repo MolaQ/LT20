@@ -4,7 +4,6 @@ use App\Enums\Permission;
 use App\Models\News;
 use App\Support\Audit;
 use App\Support\SystemFeed;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -57,7 +56,7 @@ new class extends Component {
             $this->publish = $news->published_at !== null;
         }
 
-        Flux::modal('news-form')->show();
+        $this->dispatch('ui-sheet', name: 'news-form');
     }
 
     public function save(): void
@@ -86,10 +85,10 @@ new class extends Component {
             SystemFeed::record('news', 'News: :title', ['title' => $news->title], 'news.show', ['news' => $news->id], auth()->id());
         }
 
-        Flux::modal('news-form')->close();
+        $this->dispatch('ui-sheet', name: 'news-form', open: false);
         $this->reset('editId', 'title', 'body', 'publish');
         unset($this->items);
-        Flux::toast(variant: 'success', text: __('News saved.'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('News saved.'));
     }
 
     public function confirmDelete(int $id): void
@@ -97,7 +96,7 @@ new class extends Component {
         $this->authorize(Permission::NewsCreate->value);
         $this->deleteId = News::findOrFail($id)->id;
 
-        Flux::modal('delete-news')->show();
+        $this->dispatch('ui-sheet', name: 'delete-news');
     }
 
     public function delete(): void
@@ -108,7 +107,7 @@ new class extends Component {
 
         Audit::log('news.deleted', null, ['title' => $news->title], [], $news->title);
 
-        Flux::modal('delete-news')->close();
+        $this->dispatch('ui-sheet', name: 'delete-news', open: false);
         $this->reset('deleteId');
         unset($this->items);
     }
@@ -117,74 +116,74 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('News') }}</flux:heading>
-            <flux:subheading>{{ __('Announcements on the home page. Logged-in players can rate them.') }}</flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('News') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Announcements on the home page. Logged-in players can rate them.') }}</x-ui.subheading>
         </div>
-        <flux:button variant="primary" icon="plus" wire:click="openForm">{{ __('New news') }}</flux:button>
+        <x-ui.btn variant="primary" icon="plus" wire:click="openForm">{{ __('New news') }}</x-ui.btn>
     </div>
 
     <div class="space-y-3">
         @forelse ($this->items as $news)
-            <flux:card wire:key="news-{{ $news->id }}" class="space-y-2">
+            <x-ui.card wire:key="news-{{ $news->id }}" class="space-y-2">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-center gap-2">
-                            <flux:heading>{{ $news->title }}</flux:heading>
+                            <x-ui.heading>{{ $news->title }}</x-ui.heading>
                             @if ($news->published_at)
-                                <flux:badge size="sm" color="green">{{ __('Published') }}</flux:badge>
+                                <x-ui.badge size="sm" color="green">{{ __('Published') }}</x-ui.badge>
                             @else
-                                <flux:badge size="sm" color="zinc">{{ __('Draft') }}</flux:badge>
+                                <x-ui.badge size="sm" color="zinc">{{ __('Draft') }}</x-ui.badge>
                             @endif
                         </div>
-                        <flux:text size="sm">
+                        <x-ui.text size="sm">
                             {{ $news->author?->name ?? '–' }}
                             · {{ ($news->published_at ?? $news->created_at)?->format('d.m.Y H:i') }}
                             · <span class="text-green-600">👍 {{ $news->up_count }}</span>
                             · <span class="text-red-600">👎 {{ $news->down_count }}</span>
-                        </flux:text>
+                        </x-ui.text>
                     </div>
                     <div class="flex gap-1">
-                        <flux:button size="xs" variant="ghost" icon="pencil" wire:click="openForm({{ $news->id }})" :aria-label="__('Edit')" />
-                        <flux:button size="xs" variant="ghost" icon="trash" wire:click="confirmDelete({{ $news->id }})" :aria-label="__('Delete')" />
+                        <x-ui.btn size="xs" variant="ghost" icon="pencil" wire:click="openForm({{ $news->id }})" :aria-label="__('Edit')" />
+                        <x-ui.btn size="xs" variant="ghost" icon="trash" wire:click="confirmDelete({{ $news->id }})" :aria-label="__('Delete')" />
                     </div>
                 </div>
-                <flux:text class="line-clamp-3 whitespace-pre-line">{{ $news->body }}</flux:text>
-            </flux:card>
+                <x-ui.text class="line-clamp-3 whitespace-pre-line">{{ $news->body }}</x-ui.text>
+            </x-ui.card>
         @empty
-            <flux:card>
-                <flux:text>{{ __('No news yet.') }}</flux:text>
-            </flux:card>
+            <x-ui.card>
+                <x-ui.text>{{ __('No news yet.') }}</x-ui.text>
+            </x-ui.card>
         @endforelse
 
         {{ $this->items->links() }}
     </div>
 
-    <flux:modal name="news-form" class="w-full max-w-2xl">
+    <x-ui.modal name="news-form" class="w-full max-w-2xl">
         <form wire:submit="save" class="space-y-5">
-            <flux:heading size="lg">{{ $editId ? __('Edit news') : __('New news') }}</flux:heading>
-            <flux:input wire:model="title" :label="__('Title')" maxlength="150" required />
-            <flux:textarea wire:model="body" :label="__('Content')" rows="8" required
+            <x-ui.heading size="lg">{{ $editId ? __('Edit news') : __('New news') }}</x-ui.heading>
+            <x-ui.input wire:model="title" :label="__('Title')" maxlength="150" required />
+            <x-ui.textarea wire:model="body" :label="__('Content')" rows="8" required
                 :description="__('Plain text, empty lines separate paragraphs.')" />
-            <flux:switch wire:model="publish" :label="__('Publish on the home page')" />
+            <x-ui.switch wire:model="publish" :label="__('Publish on the home page')" />
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn type="submit" variant="primary">{{ __('Save') }}</x-ui.btn>
             </div>
         </form>
-    </flux:modal>
+    </x-ui.modal>
 
-    <flux:modal name="delete-news" class="w-full max-w-md">
+    <x-ui.modal name="delete-news" class="w-full max-w-md">
         <div class="space-y-5">
-            <flux:heading size="lg">{{ __('Delete this news?') }}</flux:heading>
-            <flux:text>{{ __('Its ratings will be deleted too.') }}</flux:text>
+            <x-ui.heading size="lg">{{ __('Delete this news?') }}</x-ui.heading>
+            <x-ui.text>{{ __('Its ratings will be deleted too.') }}</x-ui.text>
             <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button variant="danger" wire:click="delete">{{ __('Delete') }}</flux:button>
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="danger" wire:click="delete">{{ __('Delete') }}</x-ui.btn>
             </div>
         </div>
-    </flux:modal>
+    </x-ui.modal>
 </div>

@@ -668,7 +668,7 @@ class SimulateSeason extends Command
     private function printLeagueHumans(Season $season): void
     {
         $rows = [];
-        foreach (Competition::where('season_id', $season->id)->whereIn('type', [CompetitionType::League->value, CompetitionType::Swiss->value])->orderBy('tier')->get() as $competition) {
+        foreach (Competition::where('season_id', $season->id)->whereIn('type', [CompetitionType::League->value, CompetitionType::Swiss->value])->orderBy('tier')->orderBy('division')->get() as $competition) {
             $teams = SeasonTeam::whereIn('id', $competition->entries()->pluck('season_team_id'))->get(['user_id']);
             $humans = $teams->whereNotNull('user_id')->count();
             $rows[] = [$competition->name ?: $competition->type->label(), $humans, $teams->count() - $humans];
@@ -687,9 +687,10 @@ class SimulateSeason extends Command
         $moves = Standings::seasonMoves($season->id);
         $out = [];
 
-        foreach (Competition::where('season_id', $season->id)->whereIn('type', [CompetitionType::League->value, CompetitionType::Swiss->value])->orderBy('tier')->get() as $competition) {
+        foreach (Competition::where('season_id', $season->id)->whereIn('type', [CompetitionType::League->value, CompetitionType::Swiss->value])->orderBy('tier')->orderBy('division')->get() as $competition) {
             $table = Standings::for($competition)->values();
             $count = $table->count();
+            $zone = Standings::zoneSizes($competition);
             $up = $down = $swaps = 0;
 
             foreach ($table as $index => $row) {
@@ -697,10 +698,10 @@ class SimulateSeason extends Command
                 $place = $index + 1;
                 if ($move === 'up') {
                     $up++;
-                    $swaps += (int) ($place > 4);
+                    $swaps += (int) ($place > $zone['up']);
                 } elseif ($move === 'down') {
                     $down++;
-                    $swaps += (int) ($place <= $count - 4);
+                    $swaps += (int) ($place <= $count - $zone['down']);
                 }
             }
 

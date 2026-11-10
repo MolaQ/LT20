@@ -2,7 +2,6 @@
 
 use App\Models\OfficeRequest;
 use App\Support\Office;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -75,7 +74,7 @@ new class extends Component {
         $this->botName = (string) $request->bot_name;
         $this->resetValidation();
 
-        Flux::modal('office-decide')->show();
+        $this->dispatch('ui-sheet', name: 'office-decide');
     }
 
     public function decide(): void
@@ -96,10 +95,10 @@ new class extends Component {
             return;
         }
 
-        Flux::modal('office-decide')->close();
+        $this->dispatch('ui-sheet', name: 'office-decide', open: false);
         $this->reset('decideId', 'reply', 'botName');
         unset($this->stats, $this->requests);
-        Flux::toast(variant: 'success', text: $this->accept ? __('Request accepted.') : __('Request rejected.'));
+        $this->dispatch('ui-toast', variant: 'success', text: $this->accept ? __('Request accepted.') : __('Request rejected.'));
     }
 
     private function authorizeAdmin(): void
@@ -122,56 +121,56 @@ new class extends Component {
 <div class="space-y-6">
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-            <flux:heading size="xl">{{ __('Complaints and requests office') }}</flux:heading>
-            <flux:text>{{ __('Appeals go straight to you. Bot names come here after the players\' vote (:votes votes, at least :approval% for).', ['votes' => \App\Support\Office::VOTES_NEEDED, 'approval' => \App\Support\Office::APPROVAL]) }}</flux:text>
+            <x-ui.heading size="xl">{{ __('Complaints and requests office') }}</x-ui.heading>
+            <x-ui.text>{{ __('Appeals go straight to you. Bot names come here after the players\' vote (:votes votes, at least :approval% for).', ['votes' => \App\Support\Office::VOTES_NEEDED, 'approval' => \App\Support\Office::APPROVAL]) }}</x-ui.text>
         </div>
         <div class="w-full sm:w-64">
-        <flux:select wire:model.live="type">
+        <x-ui.select wire:model.live="type">
             @foreach ($typeLabels as $value => $label)
-                <flux:select.option :value="$value">{{ $label }}</flux:select.option>
+                <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
             @endforeach
-        </flux:select>
+        </x-ui.select>
         </div>
     </div>
 
     <div class="flex flex-wrap gap-2">
         @foreach (['pending' => __('Waiting for decision'), 'voting' => __('Players are voting'), 'done' => __('Decided')] as $value => $label)
-            <flux:button size="sm" wire:click="$set('status', '{{ $value }}')" :variant="$status === $value ? 'primary' : 'outline'">
+            <x-ui.btn size="sm" wire:click="$set('status', '{{ $value }}')" :variant="$status === $value ? 'primary' : 'outline'">
                 {{ $label }} ({{ $this->stats[$value] }})
-            </flux:button>
+            </x-ui.btn>
         @endforeach
     </div>
 
     <div class="space-y-3">
         @forelse ($this->requests as $request)
-            <flux:card wire:key="office-admin-{{ $request->id }}" class="space-y-3">
+            <x-ui.card wire:key="office-admin-{{ $request->id }}" class="space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex flex-wrap items-center gap-2">
-                        <flux:badge size="sm">{{ $request->typeLabel() }}</flux:badge>
-                        <flux:badge size="sm" :color="$request->statusColor()">{{ $request->statusLabel() }}</flux:badge>
-                        <span class="text-xs text-zinc-500">{{ $request->created_at?->format('d.m.Y H:i') }}</span>
+                        <x-ui.badge size="sm">{{ $request->typeLabel() }}</x-ui.badge>
+                        <x-ui.badge size="sm" :color="$request->statusColor()">{{ $request->statusLabel() }}</x-ui.badge>
+                        <span class="text-xs text-ui-muted">{{ $request->created_at?->format('d.m.Y H:i') }}</span>
                     </div>
                     @if ($request->user)
                         <span class="text-sm">
-                            <flux:link :href="route('dashboard.users', ['search' => $request->user->email])" wire:navigate>{{ $request->user->name }}</flux:link>
-                            <span class="text-zinc-500">· {{ $request->user->team_name }} · {{ $request->user->roles->pluck('name')->join(', ') ?: __('no role') }}</span>
+                            <x-ui.link :href="route('dashboard.users', ['search' => $request->user->email])" wire:navigate>{{ $request->user->name }}</x-ui.link>
+                            <span class="text-ui-muted">· {{ $request->user->team_name }} · {{ $request->user->roles->pluck('name')->join(', ') ?: __('no role') }}</span>
                         </span>
                     @endif
                 </div>
 
                 @if ($request->type === \App\Models\OfficeRequest::BOT_RENAME)
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="italic text-zinc-500">#{{ $request->bot?->sort_order }} {{ $request->old_bot_name ?? $request->bot?->name }}</span>
-                        <flux:icon.arrow-long-right class="size-4 text-zinc-400" />
+                        <span class="italic text-ui-muted">#{{ $request->bot?->sort_order }} {{ $request->old_bot_name ?? $request->bot?->name }}</span>
+                        <x-ui.icon name="arrow-long-right" class="size-4 text-zinc-400" />
                         <span class="font-semibold italic">{{ $request->bot_name }}</span>
-                        <span class="text-xs text-zinc-500">· 👍 {{ $request->votes_up }} · 👎 {{ $request->votes_down }} ({{ $request->approval() }}%)</span>
+                        <span class="text-xs text-ui-muted">· 👍 {{ $request->votes_up }} · 👎 {{ $request->votes_down }} ({{ $request->approval() }}%)</span>
                     </div>
                 @endif
 
                 <p class="whitespace-pre-line text-sm">{{ $request->body }}</p>
 
                 @if ($request->admin_reply || $request->reviewer)
-                    <p class="text-xs text-zinc-500">
+                    <p class="text-xs text-ui-muted">
                         {{ __('Decided by :name on :date', ['name' => $request->reviewer?->name ?? '—', 'date' => $request->reviewed_at?->format('d.m.Y H:i') ?? '—']) }}
                         @if ($request->admin_reply)· „{{ $request->admin_reply }}”@endif
                     </p>
@@ -179,43 +178,43 @@ new class extends Component {
 
                 @if (in_array($request->status, \App\Models\OfficeRequest::OPEN, true))
                     <div class="flex gap-2">
-                        <flux:button size="sm" variant="primary" icon="check" wire:click="open({{ $request->id }}, true)">{{ __('Accept') }}</flux:button>
-                        <flux:button size="sm" variant="danger" icon="x-mark" wire:click="open({{ $request->id }}, false)">{{ __('Reject') }}</flux:button>
+                        <x-ui.btn size="sm" variant="primary" icon="check" wire:click="open({{ $request->id }}, true)">{{ __('Accept') }}</x-ui.btn>
+                        <x-ui.btn size="sm" variant="danger" icon="x-mark" wire:click="open({{ $request->id }}, false)">{{ __('Reject') }}</x-ui.btn>
                     </div>
                 @endif
-            </flux:card>
+            </x-ui.card>
         @empty
-            <flux:card><flux:text>{{ __('Nothing here.') }}</flux:text></flux:card>
+            <x-ui.card><x-ui.text>{{ __('Nothing here.') }}</x-ui.text></x-ui.card>
         @endforelse
     </div>
 
-    <flux:pagination :paginator="$this->requests" />
+    <x-ui.pagination :paginator="$this->requests" />
 
-    <flux:modal name="office-decide" class="md:w-[32rem]">
+    <x-ui.modal name="office-decide" class="md:w-[32rem]">
         @if ($decided)
             <form wire:submit="decide" class="space-y-4">
-                <flux:heading size="lg">{{ $accept ? __('Accept request') : __('Reject request') }}</flux:heading>
-                <flux:text>{{ $decided->typeLabel() }} · {{ $decided->user?->name }}</flux:text>
+                <x-ui.heading size="lg">{{ $accept ? __('Accept request') : __('Reject request') }}</x-ui.heading>
+                <x-ui.text>{{ $decided->typeLabel() }} · {{ $decided->user?->name }}</x-ui.text>
                 @if ($accept)
-                    <flux:text class="text-sm">
+                    <x-ui.text class="text-sm">
                         {{ match ($decided->type) {
                             \App\Models\OfficeRequest::BAN_APPEAL => __('The ban will be lifted and the player returns to the game.'),
                             \App\Models\OfficeRequest::INACTIVE_APPEAL => __('The Inactive status will be lifted and the player returns to Liga podwórkowa.'),
                             \App\Models\OfficeRequest::BOT_RENAME => __('The bot gets the new name.'),
                             default => __('The request is marked as accepted.'),
                         } }}
-                    </flux:text>
+                    </x-ui.text>
                     @if ($decided->type === \App\Models\OfficeRequest::BOT_RENAME)
-                        <flux:input wire:model="botName" :label="__('New bot name')" maxlength="40" />
+                        <x-ui.input wire:model="botName" :label="__('New bot name')" maxlength="40" />
                     @endif
                 @endif
-                <flux:error name="botName" />
-                <flux:textarea wire:model="reply" :label="__('Reply to the player (optional)')" rows="3" maxlength="500" />
+                <x-ui.error name="botName" />
+                <x-ui.textarea wire:model="reply" :label="__('Reply to the player (optional)')" rows="3" maxlength="500" />
                 <div class="flex justify-end gap-2">
-                    <flux:modal.close><flux:button variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
-                    <flux:button type="submit" :variant="$accept ? 'primary' : 'danger'">{{ $accept ? __('Accept') : __('Reject') }}</flux:button>
+                    <x-ui.modal.close><x-ui.btn variant="ghost">{{ __('Cancel') }}</x-ui.btn></x-ui.modal.close>
+                    <x-ui.btn type="submit" :variant="$accept ? 'primary' : 'danger'">{{ $accept ? __('Accept') : __('Reject') }}</x-ui.btn>
                 </div>
             </form>
         @endif
-    </flux:modal>
+    </x-ui.modal>
 </div>

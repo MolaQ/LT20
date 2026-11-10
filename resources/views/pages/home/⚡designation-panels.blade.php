@@ -7,7 +7,6 @@ use App\Models\SeasonTeam;
 use App\Support\MatchSheet;
 use App\Support\PlayerCompetitions;
 use App\Support\Squad;
-use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
@@ -170,7 +169,7 @@ new class extends Component {
         try {
             Squad::toggle($user, $this->matchday, $type, $playerId);
         } catch (DomainException $e) {
-            Flux::toast(variant: 'danger', text: $e->getMessage());
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
         unset($this->picks);
@@ -206,20 +205,20 @@ new class extends Component {
             <div class="space-y-3">
                 <div class="flex flex-wrap items-end justify-between gap-2">
                     <div>
-                        <flux:heading size="lg">{{ __('Your line-ups') }}</flux:heading>
-                        <flux:text class="text-sm">
+                        <x-ui.heading size="lg">{{ __('Your line-ups') }}</x-ui.heading>
+                        <x-ui.text class="text-sm">
                             {{ __('Field up to :count Lech players in each competition type. Their goals and assists add attack points, clean sheets take points from the rival.', ['count' => $max]) }}
-                        </flux:text>
+                        </x-ui.text>
                     </div>
                     @if (!$open)
-                        <flux:badge color="zinc" icon="lock-closed">{{ __('Line-ups closed') }}</flux:badge>
+                        <x-ui.badge color="zinc" icon="lock-closed">{{ __('Line-ups closed') }}</x-ui.badge>
                     @endif
                 </div>
 
                 {{-- Wybór typu rozgrywek, do którego trafia kliknięty zawodnik --}}
                 @if ($open)
                     <div class="space-y-1.5">
-                        <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">{{ __('Add players to') }}</div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ __('Add players to') }}</div>
                         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                             @foreach ($sets as $setValue => $set)
                                 @php
@@ -238,15 +237,15 @@ new class extends Component {
                 @endif
 
                 {{-- Dostępni zawodnicy według doświadczenia w klubie: barwa = typ rozgrywek, w którym są wystawieni --}}
-                <section class="space-y-2 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900" x-data="{ pos: '' }">
+                <section class="space-y-2 rounded-2xl border border-ui-line bg-ui-surface p-3" x-data="{ pos: '' }">
                     <div class="flex flex-wrap items-center justify-between gap-2">
-                        <flux:heading>{{ __('Available players') }} <span class="font-normal text-zinc-500">({{ $available->count() }})</span></flux:heading>
+                        <x-ui.heading>{{ __('Available players') }} <span class="font-normal text-ui-muted">({{ $available->count() }})</span></x-ui.heading>
                         <div class="flex gap-1">
-                            <button type="button" x-on:click="pos = ''" x-bind:class="pos === '' ? 'bg-lech-700 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-white/10 dark:text-zinc-300'"
+                            <button type="button" x-on:click="pos = ''" x-bind:class="pos === '' ? 'bg-club text-club-ink' : 'bg-ui-raised text-ui-muted '"
                                 class="rounded-full px-2.5 py-0.5 text-xs font-bold">{{ __('All') }}</button>
                             @foreach (\App\Enums\PlayerPosition::cases() as $position)
                                 <button type="button" x-on:click="pos = '{{ $position->value }}'" title="{{ $position->label() }}"
-                                    x-bind:class="pos === '{{ $position->value }}' ? 'bg-lech-700 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-white/10 dark:text-zinc-300'"
+                                    x-bind:class="pos === '{{ $position->value }}' ? 'bg-club text-club-ink' : 'bg-ui-raised text-ui-muted '"
                                     class="rounded-full px-2.5 py-0.5 text-xs font-bold">{{ $position->short() }}</button>
                             @endforeach
                         </div>
@@ -263,24 +262,24 @@ new class extends Component {
                             <button type="button" wire:click="toggle({{ $player->id }})" wire:key="avail-{{ $player->id }}" @disabled(!$open || $full)
                                 x-show="pos === '' || pos === '{{ $player->position->value }}'" title="{{ $title }}"
                                 @if ($in) style="{{ \App\Support\CompetitionColors::style($colors[$in] ?? 'league_1') }}" @endif
-                                class="{{ $in ? 'comp-chip font-bold shadow-sm' : 'border border-zinc-200 hover:border-lech-400 hover:bg-lech-50 dark:border-zinc-700 dark:hover:bg-white/5' }} {{ $full && !$in ? 'opacity-50' : '' }} flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition disabled:cursor-default">
+                                class="{{ $in ? 'comp-chip font-bold shadow-sm' : 'border border-ui-line hover:border-lech-400 hover:bg-lech-50 dark:hover:bg-white/5' }} {{ $full && !$in ? 'opacity-50' : '' }} flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition disabled:cursor-default">
                                 <span class="w-4 shrink-0 text-[10px] font-semibold uppercase opacity-70">{{ $player->position->short() }}</span>
                                 <span class="w-4 shrink-0 text-right text-[10px] tabular-nums opacity-60">{{ $player->number }}</span>
                                 <span class="min-w-0 flex-1 truncate">
                                     {{ $player->name }}
                                     @if ($player->is_academy)
-                                        <flux:icon.academic-cap variant="micro" class="inline opacity-70" />
+                                        <x-ui.icon name="academic-cap" variant="micro" class="inline opacity-70" />
                                     @endif
                                 </span>
                                 @if ($inSet)
-                                    <flux:icon.check-circle variant="micro" class="shrink-0" />
+                                    <x-ui.icon name="check-circle" variant="micro" class="shrink-0" />
                                 @endif
                                 <span class="shrink-0 text-[10px] tabular-nums opacity-70" title="{{ __('Experience in your club') }}">{{ $fmt($player->club_experience) }}</span>
                             </button>
                         @endforeach
                     </div>
                 </section>
-                <flux:text class="text-xs">{{ __('The number next to a player is his experience in your club. A player can be in only one competition type per matchday: clicking him with another type selected moves him there.') }}</flux:text>
+                <x-ui.text class="text-xs">{{ __('The number next to a player is his experience in your club. A player can be in only one competition type per matchday: clicking him with another type selected moves him there.') }}</x-ui.text>
             </div>
         @else
             @php
@@ -322,9 +321,9 @@ new class extends Component {
                                             <span class="min-w-0 flex-1 truncate">{{ $player->name }}</span>
                                             <span class="shrink-0 text-[10px] tabular-nums opacity-60" title="{{ __('Experience in your club') }}">{{ $fmt($player->club_experience) }}</span>
                                             @if ($forfeit)
-                                                <flux:icon.no-symbol variant="micro" />
+                                                <x-ui.icon name="no-symbol" variant="micro" />
                                             @elseif ($open)
-                                                <flux:icon.x-mark variant="micro" class="opacity-50" />
+                                                <x-ui.icon name="x-mark" variant="micro" class="opacity-50" />
                                             @endif
                                         </button>
                                     @empty
@@ -344,7 +343,7 @@ new class extends Component {
 
                 {{-- Legenda protokołów --}}
                 @if ($sheets !== [])
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl border border-ui-line bg-ui-surface px-3 py-2 text-xs text-ui-muted">
                         <span class="flex items-center gap-1.5"><x-ball /> {{ __('Attack point (goal, assist)') }}</span>
                         <span class="flex items-center gap-1.5"><x-ball own /> {{ __('Own goal: a point for the rival') }}</span>
                         <span class="flex items-center gap-1.5"><x-fist /> {{ __('Clean sheet: takes a point from the rival') }}</span>
@@ -357,15 +356,15 @@ new class extends Component {
 
                 {{-- Odpoczywający: kolor według godzin do końca odpoczynku --}}
                 @if ($resting->isNotEmpty())
-                    <section class="space-y-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-white/5">
-                        <flux:heading>{{ __('Resting players') }} <span class="font-normal text-zinc-500">({{ $resting->count() }})</span></flux:heading>
+                    <section class="space-y-2 rounded-2xl border border-ui-line bg-zinc-50 p-3 dark:bg-white/5">
+                        <x-ui.heading>{{ __('Resting players') }} <span class="font-normal text-ui-muted">({{ $resting->count() }})</span></x-ui.heading>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach ($resting as $player)
                                 @php
                                     $freeAt = $locks[$player->id];
                                     $in = $pickedIn[$player->id] ?? null;
                                 @endphp
-                                <div class="flex max-w-full items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900" wire:key="rest-{{ $player->id }}">
+                                <div class="flex max-w-full items-center gap-1.5 rounded-md border border-ui-line bg-ui-surface px-2 py-1 text-xs text-ui-muted" wire:key="rest-{{ $player->id }}">
                                     <span class="w-4 shrink-0 text-[10px] font-semibold uppercase">{{ $player->position->short() }}</span>
                                     <span class="min-w-0 truncate">{{ $player->name }}</span>
                                     @if ($in && $open)
@@ -380,7 +379,7 @@ new class extends Component {
                                 </div>
                             @endforeach
                         </div>
-                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ui-muted">
                             @foreach (\App\Support\Squad::REST_LEGEND as $upTo => $sample)
                                 <span class="flex items-center gap-1.5">
                                     <span class="{{ \App\Support\Squad::lockColor($sample) }} inline-block h-3 w-5 rounded"></span>
@@ -391,7 +390,7 @@ new class extends Component {
                     </section>
                 @endif
 
-                <flux:text class="text-xs">{{ __('A fielded player who played rests in your club for some hours from the kickoff (from 40 h for part of the first half to 250 h for the whole match with extra time).') }}</flux:text>
+                <x-ui.text class="text-xs">{{ __('A fielded player who played rests in your club for some hours from the kickoff (from 40 h for part of the first half to 250 h for the whole match with extra time).') }}</x-ui.text>
             </div>
         @endif
     @endif

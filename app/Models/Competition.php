@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CompetitionType;
 use App\Enums\League;
+use App\Support\Backyard;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,18 +17,20 @@ use Illuminate\Support\Str;
  * @property int $season_id
  * @property CompetitionType $type
  * @property int|null $tier
+ * @property int $division numer ligi podwórkowej (App\Support\Backyard: 1 = 1.1, 5 = 2.1 …), 0 dla pozostałych
  * @property string $name
  * @property int|null $sponsor_id
  */
 class Competition extends Model
 {
-    protected $fillable = ['season_id', 'type', 'tier', 'name', 'sponsor_id'];
+    protected $fillable = ['season_id', 'type', 'tier', 'division', 'name', 'sponsor_id'];
 
     protected function casts(): array
     {
         return [
             'type' => CompetitionType::class,
             'tier' => 'integer',
+            'division' => 'integer',
         ];
     }
 
@@ -39,6 +42,22 @@ class Competition extends Model
     public function sponsor(): BelongsTo
     {
         return $this->belongsTo(Sponsor::class);
+    }
+
+    /** Liga nowej Ligi podwórkowej (przebudowa 2.0): typ League, poziom 11, numer ligi w division. */
+    public function isBackyard(): bool
+    {
+        return $this->type === CompetitionType::League && $this->tier === League::Podworkowa->value;
+    }
+
+    /** Poziom ligi do porównań (1-10, podwórkowa 11, także stara w systemie szwajcarskim) albo null dla pucharów. */
+    public function leagueTier(): ?int
+    {
+        return match ($this->type) {
+            CompetitionType::League => $this->tier,
+            CompetitionType::Swiss => League::Podworkowa->value,
+            default => null,
+        };
     }
 
     /** Trofeum do zdobycia (klucz z HallOfFame::trophies()), np. league_3, cup, legends. */
@@ -58,6 +77,10 @@ class Competition extends Model
      */
     public function slug(): string
     {
+        if ($this->isBackyard()) {
+            return Str::slug(League::Podworkowa->label()).'-'.str_replace('.', '-', Backyard::label($this->division));
+        }
+
         return $this->type === CompetitionType::League && $this->tier
             ? Str::slug(League::from((int) $this->tier)->label())
             : Str::slug($this->type->label());

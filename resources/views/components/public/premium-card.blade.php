@@ -13,28 +13,28 @@
 
 <div class="space-y-3 rounded-xl border border-purple-200 bg-purple-50 p-4 dark:border-purple-500/30 dark:bg-purple-500/10">
     <div class="flex items-center gap-2">
-        <flux:icon.sparkles class="size-5 text-purple-600 dark:text-purple-300" />
-        <flux:heading>{{ __('Premium') }}</flux:heading>
+        <x-ui.icon name="sparkles" class="size-5 text-purple-600 dark:text-purple-300" />
+        <x-ui.heading>{{ __('Premium') }}</x-ui.heading>
     </div>
 
     @if ($active)
-        <flux:text class="text-sm">
+        <x-ui.text class="text-sm">
             {{ $user->premium_until ? __('Active until :date', ['date' => $user->premium_until->format('d.m.Y')]) : __('Active without an end date') }}
-        </flux:text>
+        </x-ui.text>
     @endif
 
     <ul class="space-y-2 text-sm">
         @foreach ($benefits as [$icon, $text])
             <li class="flex gap-2">
-                <flux:icon :name="$icon" variant="micro" class="mt-0.5 shrink-0 text-purple-600 dark:text-purple-300" />
+                <x-ui.icon :name="$icon" variant="micro" class="mt-0.5 shrink-0 text-purple-600 dark:text-purple-300" />
                 <span>{{ $text }}</span>
             </li>
         @endforeach
     </ul>
 
-    <flux:text class="text-xs">{{ __('Tipping is always free.') }}</flux:text>
+    <x-ui.text class="text-xs">{{ __('Tipping is always free.') }}</x-ui.text>
 
-    <flux:button size="sm" class="w-full" variant="primary" :href="route('support')" wire:navigate>
+    <x-ui.btn size="sm" class="w-full" variant="primary" :href="route('support')" wire:navigate>
         {{ $active ? __('Extend premium') : __('From 5 zł a week') }}
-    </flux:button>
+    </x-ui.btn>
 </div>

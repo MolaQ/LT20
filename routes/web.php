@@ -1,6 +1,8 @@
 <?php
 
 use App\Enums\Permission;
+use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\Przelewy24Controller;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +20,8 @@ Route::livewire('tips/{matchday_slug?}/{tab_slug?}', 'pages::tips')
 Route::livewire('results/{season_slug?}/{competition_slug?}/{round_slug?}', 'pages::results')
     ->where(['season_slug' => 'sezon-[0-9]+', 'competition_slug' => '[a-z0-9-]+', 'round_slug' => 'kolejka-[0-9]+'])
     ->name('results');
+// Statystyki premium (przebudowa 2.0): forma, serie, odznaki, „co jeśli” i mapa typów.
+Route::livewire('my-stats', 'pages::my-stats')->middleware(['auth', 'verified'])->name('my-stats');
 Route::livewire('hall-of-fame', 'pages::hall-of-fame')->name('hall-of-fame');
 Route::livewire('history/{key_slug?}', 'pages::history')->name('history');
 Route::livewire('stars', 'pages::stars')->name('stars');
@@ -31,6 +35,15 @@ Route::livewire('faq', 'pages::faq')->name('faq');
 Route::livewire('system', 'pages::system-feed')->name('system');
 Route::livewire('news/{news}', 'pages::news-show')->name('news.show');
 Route::livewire('office', 'pages::office')->name('office');
+// Przełącznik języka (pl, en) z menu „Więcej”.
+Route::post('locale/{locale}', LocaleController::class)->name('locale.switch');
+
+// PWA: manifest z konfiguracji klubu i strona bez internetu (service worker: public/sw.js).
+Route::get('manifest.webmanifest', ManifestController::class)->name('manifest');
+Route::view('offline', 'offline')->name('offline');
+
+// Podgląd nowego wyglądu (przebudowa 2.0): skorupa aplikacji i komponenty bez Flux.
+Route::livewire('preview', 'pages::app-preview')->name('preview');
 Route::post('payments/przelewy24/status', [Przelewy24Controller::class, 'status'])->name('przelewy24.status');
 
 // Panel: wejście tylko z uprawnieniem dashboard-access (Admin ma je zawsze)
@@ -74,6 +87,12 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('dashboard/tips', 'pages::dashboard.tips-overview')
         ->middleware('permission:season-list')
         ->name('dashboard.tips');
+    Route::livewire('dashboard/matchday-wizard', 'pages::dashboard.matchday-wizard')
+        ->middleware('permission:season-list')
+        ->name('dashboard.matchday-wizard');
+    Route::livewire('dashboard/questions', 'pages::dashboard.questions')
+        ->middleware('permission:season-list')
+        ->name('dashboard.questions');
     Route::livewire('dashboard/results', 'pages::dashboard.results')
         ->middleware('permission:season-list')
         ->name('dashboard.results');

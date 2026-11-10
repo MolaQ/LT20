@@ -66,24 +66,30 @@ new class extends Component {
 }; ?>
 
 <div class="flex flex-col gap-6">
-    <flux:text class="text-center">
+    <x-ui.text class="text-center">
         {{ __('We have sent a 6-digit code to :email. Enter it below to confirm your address.', ['email' => auth()->user()->email]) }}
-    </flux:text>
+    </x-ui.text>
 
     <form wire:submit="verify" class="flex flex-col items-center gap-4">
-        <flux:otp wire:model="code" length="6" submit="auto" :label="__('Code')" label:sr-only class="mx-auto" />
+        {{-- Sześć cyfr, po wpisaniu ostatniej formularz wysyła się sam. --}}
+        <label class="w-full">
+            <span class="sr-only">{{ __('Code') }}</span>
+            <input wire:model="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" autofocus
+                x-on:input="$el.value = $el.value.replace(/\D/g, '').slice(0, 6); $el.value.length === 6 && $nextTick(() => $el.form.requestSubmit())"
+                class="h-14 w-full rounded-2xl border border-ui-line bg-ui-surface text-center font-display text-3xl font-extrabold tracking-[.5em] text-ui-ink focus:border-club focus:outline-none focus:ring-2 focus:ring-club/30"
+                placeholder="••••••">
+        </label>
+        <x-ui.error name="code" />
 
-        <flux:button type="submit" variant="primary" class="w-full">{{ __('Confirm') }}</flux:button>
+        <x-ui.button type="submit">{{ __('Confirm') }}</x-ui.button>
     </form>
 
     @if ($sent)
-        <flux:text class="text-center font-medium !text-green-600 dark:!text-green-400">
-            {{ __('A new code has been sent.') }}
-        </flux:text>
+        <x-ui.text class="text-center font-medium text-good">{{ __('A new code has been sent.') }}</x-ui.text>
     @endif
 
     <div class="flex flex-col items-center gap-2">
-        <flux:button variant="ghost" size="sm" wire:click="resend">{{ __('Send a new code') }}</flux:button>
-        <flux:text size="sm" class="text-center text-zinc-500">{{ __('No email? Check the spam folder or ask the admin for the code.') }}</flux:text>
+        <x-ui.btn variant="ghost" size="sm" wire:click="resend">{{ __('Send a new code') }}</x-ui.btn>
+        <x-ui.text size="sm" class="text-center">{{ __('No email? Check the spam folder or ask the admin for the code.') }}</x-ui.text>
     </div>
 </div>

@@ -153,7 +153,7 @@ new #[Layout('layouts::public')] class extends Component {
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <x-page-banner :eyebrow="__('Bot')" :title="$bot->name" :subtitle="__('Bots always play: they tip a random score.')">
         <a href="{{ route('hall-of-fame') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-lech-100 hover:text-white hover:underline">
-            <flux:icon.arrow-left variant="micro" /> {{ __('Full ranking') }}
+            <x-ui.icon name="arrow-left" variant="micro" /> {{ __('Full ranking') }}
         </a>
 
         <x-slot:aside>
@@ -195,26 +195,26 @@ new #[Layout('layouts::public')] class extends Component {
                 [__('Best outcome streak'), $s['outcome_streak_best'], __('Current: :count', ['count' => $s['outcome_streak']])],
             ];
         @endphp
-        <flux:card class="space-y-4">
+        <x-ui.card class="space-y-4">
             <div class="flex items-center justify-between gap-2">
-                <flux:heading size="lg">{{ __('Statistics') }}</flux:heading>
-                <flux:badge color="zinc">{{ $this->currentSeason->title }}</flux:badge>
+                <x-ui.heading size="lg">{{ __('Statistics') }}</x-ui.heading>
+                <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
             </div>
             @if ($s['scored'] === 0)
-                <flux:text>{{ __('No settled matchdays played by this bot yet.') }}</flux:text>
+                <x-ui.text>{{ __('No settled matchdays played by this bot yet.') }}</x-ui.text>
             @else
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     @foreach ($tiles as [$label, $value, $hint])
-                        <div class="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700" wire:key="bs-{{ $loop->index }}">
-                            <p class="text-xs uppercase tracking-wide text-zinc-500">{{ $label }}</p>
+                        <div class="rounded-xl border border-ui-line p-3" wire:key="bs-{{ $loop->index }}">
+                            <p class="text-xs uppercase tracking-wide text-ui-muted">{{ $label }}</p>
                             <p class="text-2xl font-bold tabular-nums">{{ $value }}</p>
-                            <p class="text-xs text-zinc-500">{{ $hint }}</p>
+                            <p class="text-xs text-ui-muted">{{ $hint }}</p>
                         </div>
                     @endforeach
                 </div>
                 @if ($s['form'] !== [])
                     <div class="flex items-center gap-1 text-xs">
-                        <span class="mr-1 text-zinc-500">{{ __('Form') }}</span>
+                        <span class="mr-1 text-ui-muted">{{ __('Form') }}</span>
                         @foreach ($s['form'] as $result)
                             @php
                                 $formClass = match ($result) { 'W' => 'bg-green-500', 'D' => 'bg-amber-400', default => 'bg-red-500' };
@@ -224,41 +224,41 @@ new #[Layout('layouts::public')] class extends Component {
                     </div>
                 @endif
             @endif
-        </flux:card>
+        </x-ui.card>
     @endif
 
     {{-- Zawodnicy Lecha w klubie bota i ich dorobek (desygnowanie, Support\ClubStats) --}}
-    <flux:card>
+    <x-ui.card>
         @include('partials.club-players', ['clubPlayers' => $this->clubPlayers, 'clubTitle' => __('Bot players')])
-    </flux:card>
+    </x-ui.card>
 
     {{-- Gablota --}}
-    <flux:card class="space-y-4">
-        <flux:heading size="lg">{{ __('Trophy cabinet') }}</flux:heading>
+    <x-ui.card class="space-y-4">
+        <x-ui.heading size="lg">{{ __('Trophy cabinet') }}</x-ui.heading>
 
         @if (count($this->cabinet) === 0)
-            <flux:text>{{ __('No trophies yet.') }}</flux:text>
+            <x-ui.text>{{ __('No trophies yet.') }}</x-ui.text>
         @else
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 @foreach ($this->cabinet as $item)
-                    <div class="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 p-4 text-center dark:border-zinc-700" wire:key="cab-{{ $item['key'] }}">
+                    <div class="flex flex-col items-center gap-2 rounded-xl border border-ui-line p-4 text-center" wire:key="cab-{{ $item['key'] }}">
                         <div class="relative">
                             @if (isset($this->icons[$item['key']]))
                                 <img src="{{ $this->icons[$item['key']] }}" alt="" class="size-16 object-contain">
                             @else
-                                <flux:icon.trophy class="size-16 text-amber-500" />
+                                <x-ui.icon name="trophy" class="size-16 text-amber-500" />
                             @endif
                             @if ($item['count'] > 1)
                                 <span class="absolute -right-2 -top-1 rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">×{{ $item['count'] }}</span>
                             @endif
                         </div>
                         <span class="text-sm font-medium">{{ $item['label'] }}</span>
-                        <span class="text-xs text-zinc-500">{{ implode(', ', $item['seasons']) }}</span>
+                        <span class="text-xs text-ui-muted">{{ implode(', ', $item['seasons']) }}</span>
                     </div>
                 @endforeach
             </div>
         @endif
-    </flux:card>
+    </x-ui.card>
 
     {{-- Historia sezonów --}}
     @include('partials.team-history', ['history' => $this->history])

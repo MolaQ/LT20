@@ -14,7 +14,6 @@ use App\Models\User;
 use App\Support\AdminAlerts;
 use App\Support\Audit;
 use App\Support\Standings;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
@@ -123,7 +122,7 @@ new class extends Component {
         }
 
         unset($this->alerts, $this->nextStep, $this->numbers);
-        Flux::toast(text: trans_choice(':count player added to Liga podwórkowa.|:count players added to Liga podwórkowa.', $placed, ['count' => $placed]), variant: 'success');
+        $this->dispatch('ui-toast', text: trans_choice(':count player added to Liga podwórkowa.|:count players added to Liga podwórkowa.', $placed, ['count' => $placed]), variant: 'success');
     }
 
     /** Losuje kolejną rundę Ligi podwórkowej (runda 1 z listy, dalsze z klasyfikacji). */
@@ -137,21 +136,21 @@ new class extends Component {
         try {
             $matches = app(DrawSwissRound::class)->handle($competition, $round, $round > 1 ? Standings::rankedEntryIds($competition) : null);
         } catch (DomainException $e) {
-            Flux::toast(text: $e->getMessage(), variant: 'danger');
+            $this->dispatch('ui-toast', text: $e->getMessage(), variant: 'danger');
 
             return;
         }
 
         unset($this->alerts, $this->nextStep, $this->seasonProgress);
-        Flux::toast(text: __('Round :round drawn: :matches matches.', ['round' => $round, 'matches' => $matches]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Round :round drawn: :matches matches.', ['round' => $round, 'matches' => $matches]), variant: 'success');
     }
 }; ?>
 
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <flux:heading size="xl" level="1">{{ __('Dashboard') }}</flux:heading>
-            <flux:subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Dashboard') }}</x-ui.heading>
+            <x-ui.subheading>
                 {{ $this->season ? $this->season->title : __('No active season.') }}
                 @if ($this->nextMatchday)
                     &middot; {{ __('Next: :matchday', ['matchday' => __('Matchday :number', ['number' => $this->nextMatchday->number])]) }}
@@ -159,15 +158,15 @@ new class extends Component {
                         ({{ $this->nextMatchday->fixture }}, {{ $this->nextMatchday->kickoff_at->translatedFormat('j F, H:i') }})
                     @endif
                 @endif
-            </flux:subheading>
+            </x-ui.subheading>
         </div>
-        <flux:button icon="globe-alt" :href="route('home')">{{ __('Public site') }}</flux:button>
+        <x-ui.btn icon="globe-alt" :href="route('home')">{{ __('Public site') }}</x-ui.btn>
     </div>
 
     {{-- Następny krok: najpilniejsza sprawa z powiadomień jako duża karta z jednym przyciskiem --}}
     @if ($step = $this->nextStep)
         <div class="lech-banner flex flex-wrap items-center gap-4 rounded-2xl p-5 text-white" wire:key="next-step">
-            <flux:icon :name="$step['icon']" class="size-10 shrink-0 text-white/80" />
+            <x-ui.icon :name="$step['icon']" class="size-10 shrink-0 text-white/80" />
             <div class="min-w-0 flex-1">
                 <div class="text-xs font-semibold uppercase tracking-wider text-white/70">{{ __('Next step') }}</div>
                 <div class="text-lg font-semibold">{{ $step['title'] }}</div>
@@ -175,14 +174,14 @@ new class extends Component {
             </div>
             <div class="flex gap-2">
                 @if ($step['action'])
-                    <flux:button variant="primary" wire:click="{{ $step['action']['method'] }}({{ $step['action']['arg'] }})">
+                    <x-ui.btn variant="primary" wire:click="{{ $step['action']['method'] }}({{ $step['action']['arg'] }})">
                         {{ $step['action']['label'] }}
-                    </flux:button>
+                    </x-ui.btn>
                 @endif
                 @if ($step['route'] && \Illuminate\Support\Facades\Route::has($step['route']))
-                    <flux:button :variant="$step['action'] ? 'filled' : 'primary'" icon-trailing="arrow-right" :href="route($step['route'], $step['params'])" wire:navigate>
+                    <x-ui.btn :variant="$step['action'] ? 'filled' : 'primary'" icon-trailing="arrow-right" :href="route($step['route'], $step['params'])" wire:navigate>
                         {{ __('Go') }}
-                    </flux:button>
+                    </x-ui.btn>
                 @endif
             </div>
         </div>
@@ -193,30 +192,30 @@ new class extends Component {
         $progress = $this->seasonProgress;
     @endphp
     @if ($progress['season'])
-        <flux:card class="space-y-4">
+        <x-ui.card class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
-                    <flux:heading size="lg">{{ $progress['season']->title }}</flux:heading>
-                    <flux:badge size="sm" :color="$progress['season']->status->color()">{{ $progress['season']->status->label() }}</flux:badge>
+                    <x-ui.heading size="lg">{{ $progress['season']->title }}</x-ui.heading>
+                    <x-ui.badge size="sm" :color="$progress['season']->status->color()">{{ $progress['season']->status->label() }}</x-ui.badge>
                 </div>
-                <flux:button size="sm" variant="ghost" icon="clipboard-document-check" :href="route('dashboard.checklist', ['season' => $progress['season']->id])" wire:navigate>
+                <x-ui.btn size="sm" variant="ghost" icon="clipboard-document-check" :href="route('dashboard.checklist', ['season' => $progress['season']->id])" wire:navigate>
                     {{ __('Full checklist') }}
-                </flux:button>
+                </x-ui.btn>
             </div>
             <ol class="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 @foreach ($progress['steps'] as $item)
-                    <li class="flex items-center gap-2 rounded-xl border p-3 {{ $item['done'] ? 'border-green-200 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10' : 'border-zinc-200 dark:border-zinc-700' }}">
-                        <flux:icon :name="$item['done'] ? 'check-circle' : 'minus-circle'" class="{{ $item['done'] ? 'text-green-600' : 'text-zinc-400' }} size-5 shrink-0" />
+                    <li class="flex items-center gap-2 rounded-xl border p-3 {{ $item['done'] ? 'border-green-200 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10' : 'border-ui-line' }}">
+                        <x-ui.icon :name="$item['done'] ? 'check-circle' : 'minus-circle'" class="{{ $item['done'] ? 'text-green-600' : 'text-zinc-400' }} size-5 shrink-0" />
                         <div class="min-w-0">
                             <div class="text-sm font-medium">{{ $item['label'] }}</div>
                             @if ($item['detail'])
-                                <div class="text-xs tabular-nums text-zinc-500">{{ $item['detail'] }}</div>
+                                <div class="text-xs tabular-nums text-ui-muted">{{ $item['detail'] }}</div>
                             @endif
                         </div>
                     </li>
                 @endforeach
             </ol>
-        </flux:card>
+        </x-ui.card>
     @endif
 
     {{-- Skrót liczb --}}
@@ -231,21 +230,21 @@ new class extends Component {
     @endphp
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         @foreach ($tiles as [$icon, $label, $value])
-            <flux:card class="flex items-center gap-4">
-                <flux:icon :name="$icon" class="size-8 text-lech-500" />
+            <x-ui.card class="flex items-center gap-4">
+                <x-ui.icon :name="$icon" class="size-8 text-lech-500" />
                 <div>
-                    <flux:text>{{ $label }}</flux:text>
-                    <flux:heading size="xl" class="tabular-nums">{{ $value }}</flux:heading>
+                    <x-ui.text>{{ $label }}</x-ui.text>
+                    <x-ui.heading size="xl" class="tabular-nums">{{ $value }}</x-ui.heading>
                 </div>
-            </flux:card>
+            </x-ui.card>
         @endforeach
     </div>
 
     {{-- Powiadomienia --}}
-    <flux:card class="space-y-3">
+    <x-ui.card class="space-y-3">
         <div class="flex items-center justify-between gap-3">
-            <flux:heading size="lg">{{ __('Notifications') }}</flux:heading>
-            <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="$refresh">{{ __('Check again') }}</flux:button>
+            <x-ui.heading size="lg">{{ __('Notifications') }}</x-ui.heading>
+            <x-ui.btn size="sm" variant="ghost" icon="arrow-path" wire:click="$refresh">{{ __('Check again') }}</x-ui.btn>
         </div>
 
         @forelse ($this->alerts as $alert)
@@ -253,32 +252,32 @@ new class extends Component {
                 $styles = [
                     'danger' => 'border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10',
                     'warning' => 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10',
-                    'info' => 'border-lech-100 bg-lech-50 dark:border-lech-800 dark:bg-lech-950/40',
+                    'info' => 'border-lech-100 bg-ui-raised dark:border-lech-800 ',
                 ];
                 $iconColors = ['danger' => 'text-red-600', 'warning' => 'text-amber-600', 'info' => 'text-lech-600'];
             @endphp
             <div class="{{ $styles[$alert['level']] }} flex flex-wrap items-center gap-3 rounded-xl border p-3" wire:key="alert-{{ $loop->index }}">
-                <flux:icon :name="$alert['icon']" class="{{ $iconColors[$alert['level']] }} size-6 shrink-0" />
+                <x-ui.icon :name="$alert['icon']" class="{{ $iconColors[$alert['level']] }} size-6 shrink-0" />
                 <div class="min-w-0 flex-1">
                     <div class="font-medium">{{ $alert['title'] }}</div>
-                    <flux:text size="sm">{{ $alert['detail'] }}</flux:text>
+                    <x-ui.text size="sm">{{ $alert['detail'] }}</x-ui.text>
                 </div>
                 <div class="flex gap-2">
                     @if ($alert['action'])
-                        <flux:button size="sm" variant="primary" wire:click="{{ $alert['action']['method'] }}({{ $alert['action']['arg'] }})">
+                        <x-ui.btn size="sm" variant="primary" wire:click="{{ $alert['action']['method'] }}({{ $alert['action']['arg'] }})">
                             {{ $alert['action']['label'] }}
-                        </flux:button>
+                        </x-ui.btn>
                     @endif
                     @if ($alert['route'] && \Illuminate\Support\Facades\Route::has($alert['route']))
-                        <flux:button size="sm" :href="route($alert['route'], $alert['params'])" wire:navigate>{{ __('Open') }}</flux:button>
+                        <x-ui.btn size="sm" :href="route($alert['route'], $alert['params'])" wire:navigate>{{ __('Open') }}</x-ui.btn>
                     @endif
                 </div>
             </div>
         @empty
             <div class="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-3 dark:border-green-500/30 dark:bg-green-500/10">
-                <flux:icon.check-circle class="size-6 text-green-600" />
-                <flux:text>{{ __('Everything is in place. Nothing needs your attention.') }}</flux:text>
+                <x-ui.icon name="check-circle" class="size-6 text-green-600" />
+                <x-ui.text>{{ __('Everything is in place. Nothing needs your attention.') }}</x-ui.text>
             </div>
         @endforelse
-    </flux:card>
+    </x-ui.card>
 </div>

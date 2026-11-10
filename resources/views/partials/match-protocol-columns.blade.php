@@ -43,7 +43,7 @@
                                     @endif
                                     @break
                                 @default
-                                    <flux:icon.arrows-right-left variant="micro" class="size-3.5 text-lech-700 dark:text-lech-300" />
+                                    <x-ui.icon name="arrows-right-left" variant="micro" class="size-3.5 text-club" />
                             @endswitch
                         </span>
                         @if ($type === \App\Support\MatchReport::EVENT_SUB)
@@ -58,7 +58,7 @@
                         <span class="min-w-0 flex-1 truncate">
                                 <span class="font-semibold" title="{{ $event->player?->name }}">{{ $surname($event->player) }}</span>
                                 @if ($type === \App\Support\MatchReport::EVENT_GOAL && $event->other)
-                                    <span class="text-zinc-500" title="{{ $event->other->name }}">({{ $surname($event->other) }})</span>
+                                    <span class="text-ui-muted" title="{{ $event->other->name }}">({{ $surname($event->other) }})</span>
                                 @endif
                         </span>
                         @endif

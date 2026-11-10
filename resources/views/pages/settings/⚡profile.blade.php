@@ -2,15 +2,15 @@
 
 use App\Concerns\ProfileValidationRules;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Title('Profile settings')]
+new #[Layout('layouts::public'), Title('Profile settings')]
     class extends Component {
     use ProfileValidationRules;
 
@@ -47,7 +47,7 @@ new #[Title('Profile settings')]
 
         $user->save();
 
-        Flux::toast(variant: 'success', text: __('Profile updated.'));
+        $this->dispatch('ui-toast', text: __('Profile updated.'), variant: 'success');
     }
 
     /**
@@ -86,79 +86,41 @@ new #[Title('Profile settings')]
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
-
     <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your account details and your team')">
-
         {{-- Zakładki --}}
-        <div role="tablist" class="my-6 flex gap-1 overflow-x-auto border-b border-zinc-200 dark:border-zinc-700">
-            <button type="button" role="tab" aria-selected="{{ $tab !== 'team' ? 'true' : 'false' }}"
-                wire:click="$set('tab', 'account')" @class([
-                    'flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition',
-                    'border-zinc-900 text-zinc-900 dark:border-white dark:text-white' => $tab !== 'team',
-                    'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white' => $tab === 'team',
-                ])>
-                <flux:icon.user class="size-4" />
-                {{ __('Account') }}
-            </button>
-
-            <button type="button" role="tab" aria-selected="{{ $tab === 'team' ? 'true' : 'false' }}"
-                wire:click="$set('tab', 'team')" @class([
-                    'flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition',
-                    'border-zinc-900 text-zinc-900 dark:border-white dark:text-white' => $tab === 'team',
-                    'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white' => $tab !== 'team',
-                ])>
-                <flux:icon.users class="size-4" />
-                {{ __('Team') }}
-            </button>
-        </div>
+        <x-ui.segmented wire:model.live="tab" class="mb-5" :options="['account' => __('Account'), 'team' => __('Team')]" />
 
         @if ($tab === 'team')
-
             {{-- Zakładka: Drużyna (osobny komponent z własnym formularzem) --}}
             <livewire:pages::settings.team />
-
         @else
-
             {{-- Zakładka: Konto --}}
-            <form wire:submit="updateProfileInformation" class="w-full space-y-6">
-                <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+            <form wire:submit="updateProfileInformation" class="w-full space-y-5">
+                <x-ui.input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 
                 <div>
-                    <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+                    <x-ui.input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
 
                     @if ($this->hasUnverifiedEmail)
-                        <div>
-                            <flux:text class="mt-4">
-                                {{ __('Your email address is unverified.') }}
+                        <x-ui.text class="mt-3">
+                            {{ __('Your email address is unverified.') }}
+                            <button type="button" class="font-semibold text-club underline underline-offset-2" wire:click.prevent="resendVerificationNotification">
+                                {{ __('Send a code and confirm it.') }}
+                            </button>
+                        </x-ui.text>
 
-                                <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
-                                    {{ __('Send a code and confirm it.') }}
-                                </flux:link>
-                            </flux:text>
-
-                            @if (session('status') === 'verification-link-sent')
-                                <flux:text class="mt-2 font-medium !dark:text-green-400 !text-green-600">
-                                    {{ __('A new verification link has been sent to your email address.') }}
-                                </flux:text>
-                            @endif
-                        </div>
+                        @if (session('status') === 'verification-link-sent')
+                            <x-ui.text class="mt-2 font-medium text-good">{{ __('A new verification link has been sent to your email address.') }}</x-ui.text>
+                        @endif
                     @endif
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center justify-end">
-                        <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
-                            {{ __('Save') }}
-                        </flux:button>
-                    </div>
-                </div>
+                <x-ui.btn variant="primary" type="submit" data-test="update-profile-button">{{ __('Save') }}</x-ui.btn>
             </form>
 
             @if ($this->showDeleteUser)
                 <livewire:pages::settings.delete-user-form />
             @endif
-
         @endif
     </x-pages::settings.layout>
 </section>

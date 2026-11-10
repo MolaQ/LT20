@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SiteMaintenance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,7 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: ['payments/przelewy24/status']);
 
         // Tryb konserwacji z panelu admina (App\Support\Maintenance): admini widzą stronę, reszta przerwę techniczną.
-        $middleware->web(append: [SiteMaintenance::class]);
+        // Język strony (konto, sesja, przeglądarka) ustawiamy przed resztą, żeby komunikaty były w dobrym języku.
+        $middleware->web(append: [SetLocale::class, SiteMaintenance::class]);
 
         $middleware->alias([
             'role' => RoleMiddleware::class,

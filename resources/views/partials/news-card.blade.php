@@ -7,12 +7,12 @@
 @php
     $full = $full ?? false;
     $base = 'inline-flex size-8 items-center justify-center rounded-full border transition';
-    $white = 'border-white/70 bg-white text-zinc-500';
+    $white = 'border-white/70 bg-white text-ui-muted';
     $upClass = $mine === 1 ? 'border-green-500 bg-green-600 text-white' : $white;
     $downClass = $mine === -1 ? 'border-red-500 bg-red-600 text-white' : $white;
 @endphp
 <article id="news-{{ $news->id }}" wire:key="news-card-{{ $news->id }}"
-    class="lech-bar-shadow flex scroll-mt-20 flex-col overflow-hidden rounded-2xl border border-lech-950/20 bg-white dark:border-lech-900 dark:bg-zinc-900">
+    class="lech-bar-shadow flex scroll-mt-20 flex-col overflow-hidden rounded-2xl border border-lech-950/20 bg-ui-surface dark:border-lech-900">
     <header class="lech-bar px-5 py-3">
         @if ($full)
             <h1 class="text-xl font-bold leading-snug">{{ $news->title }}</h1>
@@ -23,11 +23,11 @@
         @endif
     </header>
 
-    <div class="{{ $full ? '' : 'line-clamp-5' }} flex-1 whitespace-pre-line px-5 py-4 text-sm text-zinc-700 dark:text-zinc-300">{{ $news->body }}</div>
+    <div class="{{ $full ? '' : 'line-clamp-5' }} flex-1 whitespace-pre-line px-5 py-4 text-sm text-ui-ink">{{ $news->body }}</div>
 
     @if (!$full)
         <div class="px-5 pb-3">
-            <a href="{{ route('news.show', $news) }}" wire:navigate class="text-xs font-semibold text-lech-700 hover:underline dark:text-lech-300">{{ __('Read more') }}</a>
+            <a href="{{ route('news.show', $news) }}" wire:navigate class="text-xs font-semibold text-club hover:underline">{{ __('Read more') }}</a>
         </div>
     @endif
 
@@ -50,18 +50,18 @@
             @auth
                 <button type="button" wire:click="vote({{ $news->id }}, 1)" class="{{ $base }} {{ $upClass }} cursor-pointer hover:scale-110"
                     aria-label="{{ __('Thumbs up') }}" aria-pressed="{{ $mine === 1 ? 'true' : 'false' }}">
-                    <flux:icon.hand-thumb-up :variant="$mine === 1 ? 'solid' : 'outline'" class="size-4" />
+                    <x-ui.icon name="hand-thumb-up" :variant="$mine === 1 ? 'solid' : 'outline'" class="size-4" />
                 </button>
                 <button type="button" wire:click="vote({{ $news->id }}, -1)" class="{{ $base }} {{ $downClass }} cursor-pointer hover:scale-110"
                     aria-label="{{ __('Thumbs down') }}" aria-pressed="{{ $mine === -1 ? 'true' : 'false' }}">
-                    <flux:icon.hand-thumb-down :variant="$mine === -1 ? 'solid' : 'outline'" class="size-4" />
+                    <x-ui.icon name="hand-thumb-down" :variant="$mine === -1 ? 'solid' : 'outline'" class="size-4" />
                 </button>
             @else
                 <a href="{{ route('login') }}" class="{{ $base }} {{ $white }}" title="{{ __('Log in to rate') }}" aria-label="{{ __('Log in to rate') }}">
-                    <flux:icon.hand-thumb-up class="size-4" />
+                    <x-ui.icon name="hand-thumb-up" class="size-4" />
                 </a>
                 <a href="{{ route('login') }}" class="{{ $base }} {{ $white }}" title="{{ __('Log in to rate') }}" aria-label="{{ __('Log in to rate') }}">
-                    <flux:icon.hand-thumb-down class="size-4" />
+                    <x-ui.icon name="hand-thumb-down" class="size-4" />
                 </a>
             @endauth
         </div>

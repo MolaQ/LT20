@@ -8,7 +8,6 @@ use App\Models\TeamScore;
 use App\Models\Tip;
 use App\Support\Players;
 use App\Support\TipRules;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -34,6 +33,9 @@ new #[Layout('layouts::public')] class extends Component {
     /** Wpisany wynik (teksty, bo pole formularza może być puste). */
     public string $lech = '';
     public string $opponent = '';
+
+    /** Krok kreatora typowania (wygląd 2.0): score (wynik), players (zawodnicy), ticket (bilet). */
+    public string $step = 'score';
 
     /** Godzina ostatniego automatycznego zapisu (do napisu „Zapisano” w pasku na dole). */
     public string $savedTime = '';
@@ -103,7 +105,7 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->syncUrl();
 
-        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd);
+        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket, $this->questions, $this->myAnswers);
         $this->loadTip();
         $this->ensureTip();
 
@@ -358,6 +360,42 @@ new #[Layout('layouts::public')] class extends Component {
             ->keyBy(fn($score) => $score->score_set->value);
     }
 
+    /**
+     * Bilet: wystawieni zawodnicy w każdym typie rozgrywek gracza (etykieta typu => nazwiska po przecinku).
+     *
+     * @return list<array{label: string, players: string}>
+     */
+    #[Computed]
+    public function ticket(): array
+    {
+        if (!$this->matchday) {
+            return [];
+        }
+
+        $picks = \App\Support\Squad::picks(auth()->id(), null, $this->matchday);
+        $names = \App\Models\LechPlayer::whereIn('id', collect($picks)->flatten()->all())->pluck('name', 'id');
+        $sets = \App\Support\PlayerCompetitions::types(auth()->id(), $this->matchday->season_id, $this->matchday->number);
+
+        return collect($sets)->map(fn ($set) => [
+            'label' => $set->label(),
+            'players' => collect($picks[$set->value] ?? [])->map(fn ($id) => $names[$id] ?? '?')->implode(', '),
+        ])->values()->all();
+    }
+
+    /** Pytania kolejki (Support\Questions). */
+    #[Computed]
+    public function questions()
+    {
+        return $this->matchday ? \App\Support\Questions::for($this->matchday) : collect();
+    }
+
+    /** Odpowiedzi gracza: id pytania => QuestionAnswer. */
+    #[Computed]
+    public function myAnswers()
+    {
+        return $this->matchday ? \App\Support\Questions::answers(auth()->id(), $this->matchday) : collect();
+    }
+
     /* ==================================================================
      | AKCJE
      * ================================================================*/
@@ -377,6 +415,58 @@ new #[Layout('layouts::public')] class extends Component {
     public function updatedOpponent(): void
     {
         $this->autosave();
+    }
+
+    /** Odpowiedź na pytanie: 'yes', 'no' albo '' (pominięcie). */
+    public function answerQuestion(int $questionId, string $value): void
+    {
+        $question = $this->questions->firstWhere('id', $questionId);
+
+        if (!$question || !$this->canPlay) {
+            return;
+        }
+
+        try {
+            \App\Support\Questions::answer(auth()->user(), $question, match ($value) {
+                'yes' => true,
+                'no' => false,
+                default => null,
+            });
+        } catch (DomainException $e) {
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
+        }
+
+        unset($this->myAnswers);
+    }
+
+    /** Strona bonusu pytania: 'attack' albo 'defense'. */
+    public function questionSide(int $questionId, string $side): void
+    {
+        $question = $this->questions->firstWhere('id', $questionId);
+
+        if (!$question || !$this->canPlay) {
+            return;
+        }
+
+        try {
+            \App\Support\Questions::side(auth()->user(), $question, $side);
+        } catch (DomainException $e) {
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
+        }
+
+        unset($this->myAnswers);
+    }
+
+    /** „Skasuj bilet”: typ i skład zapisują się na bieżąco, tu tylko potwierdzenie z pieczątką i konfetti. */
+    public function punch(): void
+    {
+        if (!$this->isOpen || !$this->tip) {
+            return;
+        }
+
+        $this->dispatch('ticket-punched');
+        $this->dispatch('ui-toast', text: __('Tip saved! You can change it until kick-off.'));
+        $this->js('setTimeout(() => window.ui.confetti(110), 380)');
     }
 
     /** Przyciski + / − pod liczbą goli Lecha ('lech') albo rywala ('opponent'). */
@@ -437,7 +527,7 @@ new #[Layout('layouts::public')] class extends Component {
         try {
             app(SaveTip::class)->handle(auth()->user(), $matchday, $this->lech, $this->opponent);
         } catch (DomainException $e) {
-            Flux::toast(variant: 'danger', text: $e->getMessage());
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
 
             return;
         }
@@ -453,23 +543,23 @@ new #[Layout('layouts::public')] class extends Component {
         :subtitle="__('Tip the score of the Lech match. You can change your tip until kickoff.')" />
 
     @if (!$this->season)
-        <flux:card>
-            <flux:text>{{ __('There is no active season right now.') }}</flux:text>
+        <x-ui.card>
+            <x-ui.text>{{ __('There is no active season right now.') }}</x-ui.text>
             @if ($this->statsSeason)
-                <flux:text class="text-xs">{{ __('Tipping starts with the next season. Below: your numbers from :season.', ['season' => $this->statsSeason->title]) }}</flux:text>
+                <x-ui.text class="text-xs">{{ __('Tipping starts with the next season. Below: your numbers from :season.', ['season' => $this->statsSeason->title]) }}</x-ui.text>
             @endif
-        </flux:card>
+        </x-ui.card>
     @elseif (!$this->canPlay)
-        <flux:card class="space-y-1">
-            <flux:heading>{{ __('You are not taking part in this season') }}</flux:heading>
-            <flux:text>
+        <x-ui.card class="space-y-1">
+            <x-ui.heading>{{ __('You are not taking part in this season') }}</x-ui.heading>
+            <x-ui.text>
                 {{ __('Your account needs a role (without a ban) and a place on the team list. Contact the administrator.') }}
-            </flux:text>
-        </flux:card>
+            </x-ui.text>
+        </x-ui.card>
     @elseif ($this->matchdays->isEmpty() || !$this->matchday)
-        <flux:card>
-            <flux:text>{{ __('No matchdays yet.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('No matchdays yet.') }}</x-ui.text>
+        </x-ui.card>
     @endif
 
     @php
@@ -498,196 +588,184 @@ new #[Layout('layouts::public')] class extends Component {
     @endphp
 
     {{-- Zakładki: segmentowy przełącznik --}}
-    <nav class="flex gap-1 overflow-x-auto rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800">
+    <nav class="flex gap-1 overflow-x-auto rounded-2xl bg-ui-raised p-1 [scrollbar-width:none]" data-no-swipe>
         @foreach ($tabs as $key => [$icon, $label])
             <button type="button" wire:click="$set('tab', '{{ $key }}')"
-                class="{{ $tab === $key ? 'bg-white text-lech-800 shadow-sm dark:bg-zinc-900 dark:text-lech-300' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200' }} flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition">
-                <flux:icon :name="$icon" variant="micro" />
+                class="{{ $tab === $key ? 'bg-ui-surface text-ui-ink shadow' : 'text-ui-muted hover:text-ui-ink' }} flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-bold transition">
+                <x-ui.icon :name="$icon" variant="micro" />
                 {{ $label }}
                 @if (in_array($key, ['scalps', 'blacklist'], true))
-                    <flux:icon.sparkles variant="micro" class="text-purple-500" />
+                    <x-ui.icon name="sparkles" variant="micro" class="text-purple-500" />
                 @endif
             </button>
         @endforeach
     </nav>
 
     @if ($tab === 'tip')
-    @if ($league = $this->myLeague)
-        {{--
-            Wybór kolejki: „Twoje ligowe mecze” (jak „Twoja droga w pucharze”). Etykieta kolejki wybiera ją do typowania,
-            pod nią mecz Lecha (wynik albo termin), karta meczu otwiera okno pojedynku.
-        --}}
-        @php
-            $matchdaysByNumber = $this->matchdays->keyBy('number');
-        @endphp
-        @include('partials.my-matches-path', [
-            'title' => __('Your league matches') . ' · ' . ($league['competition']->name ?: $league['competition']->type->label()),
-            'status' => $league['status'],
-            'rounds' => \App\Models\Matchday::PER_SEASON,
-            'perRound' => 1,
-            'path' => $league['path'],
-            'entryId' => $league['entry_id'],
-            'eliminated' => null,
-            'stageLabel' => fn (int $stage) => __('Matchday :number', ['number' => $stage]) . (($matchdaysByNumber[$stage] ?? null)?->isOpenForTips() ? ' •' : ''),
-            'stageAction' => 'openMatchday',
-            'stageExtra' => fn (int $stage) => match (true) {
-                !isset($matchdaysByNumber[$stage]) || blank($matchdaysByNumber[$stage]->opponent) => __('Match not assigned yet'),
-                $matchdaysByNumber[$stage]->lech_goals !== null => 'Lech ' . $matchdaysByNumber[$stage]->lech_goals . ':' . $matchdaysByNumber[$stage]->opponent_goals . ' ' . $matchdaysByNumber[$stage]->opponent,
-                default => $matchdaysByNumber[$stage]->opponent . ($matchdaysByNumber[$stage]->kickoff_at ? ', ' . $matchdaysByNumber[$stage]->kickoff_at->translatedFormat('j M H:i') : ''),
-            },
-            'current' => $this->number,
-        ])
-    @else
     {{--
-        Wybór kolejki (gdy gracz nie ma ligi): siatka 3 x 3. Kolejki z wynikiem w kolorze meczu Lecha (zielony wygrana, żółty remis,
-        czerwony porażka), bez wyniku szare z ciemnoszarą obwódką. Kropka: zielona = typowanie otwarte.
+        Wygląd 2.0: typowanie jako kreator krok po kroku (Wynik → Zawodnicy → Bilet), wszystko kliknięciem.
+        Pasek kolejek przewija się w bok; kropka = typowanie otwarte.
     --}}
-    <div class="grid grid-cols-3 gap-2">
+    @php
+        $md = $this->matchday;
+        $statusChip = $this->isOpen ? ['good', __('Open')] : ($played ? ['club', __('Settled')] : ['default', __('Closed')]);
+        $steps = ['score' => __('Score')]
+            + ($this->questions->isNotEmpty() ? ['questions' => __('Questions')] : [])
+            + ['players' => __('Squad picks'), 'ticket' => __('Ticket')];
+        if (!isset($steps[$step])) {
+            $step = 'score';
+        }
+    @endphp
+
+    <div class="-mx-3.5 flex snap-x gap-2 overflow-x-auto px-3.5 pb-1 [scrollbar-width:none]" data-no-swipe
+        x-init="$el.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' })">
         @foreach ($this->matchdays as $option)
             @php
                 $hasResult = $option->status === \App\Enums\MatchdayStatus::Played && $option->lech_goals !== null;
-                $tileClass = !$hasResult
-                    ? 'border-zinc-500 bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
-                    : match ($option->lech_goals <=> $option->opponent_goals) {
-                        1 => 'border-green-500 bg-green-100 text-green-950',
-                        0 => 'border-yellow-500 bg-yellow-100 text-yellow-950',
-                        default => 'border-red-500 bg-red-100 text-red-950',
-                    };
                 $selected = $option->number === $this->number;
             @endphp
-            <button type="button" wire:click="openMatchday({{ $option->number }})" wire:key="md-{{ $option->id }}"
-                class="{{ $tileClass }} {{ $selected ? 'ring-2 ring-lech-600 ring-offset-2 dark:ring-lech-400 dark:ring-offset-zinc-900' : 'hover:shadow-md' }} flex min-w-0 flex-col items-start gap-0.5 rounded-xl border px-3 py-2 text-left transition">
-                <span class="flex w-full items-center justify-between gap-1.5 text-xs font-semibold opacity-80">
-                    <span>{{ __('Matchday :number', ['number' => $option->number]) }}</span>
-                    <span class="flex items-center gap-1.5">
-                        @if (!$hasResult && $option->kickoff_at)
-                            <span class="font-normal">{{ $option->kickoff_at->translatedFormat('j M, H:i') }}</span>
-                        @endif
-                        @if (!$hasResult && $option->isOpenForTips())
-                            <span class="size-2 rounded-full bg-green-500" title="{{ __('Tipping open') }}"></span>
-                        @endif
-                    </span>
-                </span>
-                {{-- Rywal Lecha i wynik w jednej linii; bez przypisanego meczu informacja i „?:?” --}}
-                <span class="flex w-full items-baseline justify-between gap-2">
-                    <span class="{{ filled($option->opponent) ? 'font-bold' : 'italic opacity-70' }} min-w-0 truncate text-base">{{ filled($option->opponent) ? $option->opponent : __('Match not assigned yet') }}</span>
-                    <span class="shrink-0 text-xl font-black tabular-nums">{{ $hasResult ? $option->lech_goals . ':' . $option->opponent_goals : '?:?' }}</span>
-                </span>
-                {{-- Liczba typów graczy i odsetek trafionych rozstrzygnięć --}}
-                @php
-                    $tipStat = $this->matchdayTipStats[$option->id] ?? ['tips' => 0, 'outcome' => null];
-                @endphp
-                <span class="flex w-full items-center justify-between gap-2 text-[11px] font-semibold opacity-80">
-                    <span class="flex items-center gap-1" title="{{ __('Tips') }}"><flux:icon.users variant="micro" />{{ $tipStat['tips'] }}</span>
-                    @if ($tipStat['outcome'] !== null)
-                        <span class="flex items-center gap-1" title="{{ __('Correct outcomes') }}"><flux:icon.check-circle variant="micro" />{{ $tipStat['outcome'] }}%</span>
+            <button type="button" wire:click="openMatchday({{ $option->number }})" wire:key="md-{{ $option->id }}" @if ($selected) aria-current="true" @endif
+                @class([
+                    'flex w-28 shrink-0 snap-center flex-col items-start gap-0.5 rounded-2xl border px-3 py-2 text-start transition',
+                    'border-club bg-club text-club-ink' => $selected,
+                    'border-ui-line bg-ui-surface' => ! $selected,
+                ])>
+                <span class="flex w-full items-center justify-between font-display text-xs font-bold uppercase tracking-wider opacity-80">
+                    {{ __('Matchday :number', ['number' => $option->number]) }}
+                    @if (!$hasResult && $option->isOpenForTips())
+                        <span class="size-2 rounded-full bg-good" title="{{ __('Tipping open') }}"></span>
                     @endif
                 </span>
+                <span class="w-full truncate text-sm font-semibold">{{ filled($option->opponent) ? $option->opponent : '…' }}</span>
+                <span class="ui-num text-lg font-extrabold leading-none">{{ $hasResult ? $option->lech_goals.':'.$option->opponent_goals : ($option->kickoff_at?->translatedFormat('j M') ?? '?:?') }}</span>
             </button>
         @endforeach
     </div>
-    @endif
 
-    {{--
-        Tablica typu (1/4 szerokości) obok wyboru składu (3/4, pages::home.designation-panels part=select); na telefonie jedno pod drugim.
-        Pod spodem karty typów rozgrywek z protokołami meczów (part=cards).
-    --}}
-    <div class="grid items-start gap-4 lg:grid-cols-4">
-    {{-- Tablica meczu i typ wyniku --}}
-    <div class="overflow-hidden rounded-2xl lg:col-span-1 border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-5 py-3 lg:px-3 dark:border-zinc-800">
-            <div class="text-sm text-zinc-500">
-                <span class="font-semibold text-zinc-800 dark:text-zinc-100">{{ __('Matchday :number', ['number' => $this->matchday->number]) }}</span>
-                &middot; {{ $this->matchday->kickoff_at ? $this->matchday->kickoff_at->translatedFormat('j F Y, H:i') : __('not set yet') }}
-                @if ($this->matchday->competitionLabel()) &middot; {{ $this->matchday->competitionLabel() }} @endif
+    <x-ui.segmented wire:model.live="step" :options="$steps" />
+
+    @if ($step === 'score')
+        <x-ui.card hero>
+            <div class="flex items-center justify-between gap-2 text-xs uppercase tracking-wider">
+                <span class="opacity-85">{{ __('Matchday :number', ['number' => $md->number]) }} · {{ $md->kickoff_at ? $md->kickoff_at->translatedFormat('D j M, H:i') : __('not set yet') }}</span>
+                <x-ui.chip :variant="$statusChip[0]">{{ $statusChip[1] }}</x-ui.chip>
             </div>
-            @if ($this->isOpen)
-                <flux:badge color="green" icon="lock-open">{{ __('Open') }}</flux:badge>
-            @elseif ($played)
-                <flux:badge color="blue" icon="check-circle">{{ __('Settled') }}</flux:badge>
-            @else
-                <flux:badge color="zinc" icon="lock-closed">{{ __('Closed') }}</flux:badge>
+            @if ($md->competitionLabel())
+                <div class="mt-0.5 text-xs opacity-70">{{ $md->competitionLabel() }}</div>
             @endif
-        </div>
 
-        <div class="space-y-4 px-5 py-6 lg:px-3 lg:py-4">
-            @if (!$this->matchday->isFilled())
-                <flux:text>{{ __('The opponent and date are not set yet, so tipping is not open.') }}</flux:text>
+            @if (!$md->isFilled())
+                <p class="py-8 text-center opacity-85">{{ __('The opponent and date are not set yet, so tipping is not open.') }}</p>
             @else
-                {{--
-                    Tablica wyniku jak na stadionie (zawsze Lech : rywal). Bez wpisywania: przyciski + / − nad i pod cyfrą
-                    oraz szybkie wyniki jednym kliknięciem. Każde kliknięcie zapisuje typ.
-                --}}
-                @php
-                    $boardBtn = 'flex h-11 w-20 lg:h-8 lg:w-14 lg:text-xl items-center justify-center rounded-xl border border-zinc-300 bg-white text-2xl font-black text-lech-800 shadow-sm transition active:scale-95 hover:bg-lech-50 disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-800 dark:text-lech-200 dark:hover:bg-zinc-700';
-                    $quickScores = [[0, 0], [1, 0], [2, 0], [2, 1], [3, 1], [1, 1], [2, 2], [0, 1], [1, 2]];
-                @endphp
-                <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6 lg:gap-1">
-                    @foreach (['lech' => 'Lech Poznań', 'opponent' => $this->matchday->opponent] as $boardSide => $boardTeam)
-                        @if ($boardSide === 'opponent')
-                            <span class="pt-6 text-4xl font-black text-zinc-400 lg:text-2xl">:</span>
-                        @endif
-                        <div class="flex flex-col items-center gap-2" wire:key="board-{{ $boardSide }}">
-                            <span class="w-full truncate text-center text-sm font-bold sm:text-base lg:text-xs">{{ $boardTeam }}</span>
-                            <button type="button" wire:click="bump('{{ $boardSide }}', 1)" @disabled(!$this->isOpen) class="{{ $boardBtn }}" aria-label="{{ __('One goal more') }}">+</button>
-                            <span class="lech-banner flex h-20 w-20 lg:h-14 lg:w-14 lg:text-4xl items-center justify-center rounded-2xl text-5xl font-black tabular-nums shadow-inner">{{ $this->{$boardSide} === '' ? 0 : $this->{$boardSide} }}</span>
-                            <button type="button" wire:click="bump('{{ $boardSide }}', -1)" @disabled(!$this->isOpen || (int) $this->{$boardSide} === 0) class="{{ $boardBtn }}" aria-label="{{ __('One goal less') }}">−</button>
-                        </div>
-                    @endforeach
+                <div class="my-4 flex items-start justify-around">
+                    <x-ui.counter wire:model.live="lech" :label="mb_strtoupper(config('club.short_name'))" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
+                    <span class="pt-12 font-display text-5xl font-extrabold opacity-60">:</span>
+                    <x-ui.counter wire:model.live="opponent" :label="mb_strtoupper($md->opponent)" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
                 </div>
-
-                @if ($this->isOpen)
-                    <div class="flex flex-wrap justify-center gap-1.5">
-                        @foreach ($quickScores as [$quickLech, $quickOpp])
-                            @php
-                                $quickOn = (int) $this->lech === $quickLech && (int) $this->opponent === $quickOpp;
-                            @endphp
-                            <button type="button" wire:click="pick({{ $quickLech }}, {{ $quickOpp }})"
-                                class="{{ $quickOn ? 'border-lech-600 bg-lech-700 text-white' : 'border-zinc-300 text-zinc-700 hover:border-lech-400 dark:border-zinc-600 dark:text-zinc-200' }} rounded-full border px-3 py-1 text-sm font-bold tabular-nums transition">
-                                {{ $quickLech }}:{{ $quickOpp }}
-                            </button>
-                        @endforeach
-                    </div>
-                @endif
 
                 @if ($played)
-                    <div class="flex flex-wrap items-center justify-center gap-2 text-sm">
-                        <span class="rounded-full bg-lech-50 px-3 py-1 font-semibold text-lech-800 ring-1 ring-lech-200 dark:bg-lech-500/10 dark:text-lech-200 dark:ring-lech-500/30">
-                            {{ __('Final score: :score.', ['score' => 'Lech ' . $this->matchday->lech_goals . ':' . $this->matchday->opponent_goals . ' ' . $this->matchday->opponent]) }}
-                        </span>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <x-ui.chip variant="club">{{ __('Final score: :score.', ['score' => config('club.short_name').' '.$md->lech_goals.':'.$md->opponent_goals]) }}</x-ui.chip>
                         @if ($first = $this->scores->first())
-                            <span class="rounded-full bg-amber-100 px-3 py-1 font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
-                                {{ __('Points for the tip: :points of 3.', ['points' => $first->tip_points]) }}
-                            </span>
+                            <x-ui.chip variant="gold">{{ __('Points for the tip: :points of 3.', ['points' => $first->tip_points]) }}</x-ui.chip>
                         @endif
                     </div>
                 @endif
-
-                <div class="text-center">
-                    @if ($this->tip)
-                        <flux:text size="sm">
-                            {{ __('Saved tip: :score, last change :time.', ['score' => $this->tip->score(), 'time' => $this->tip->saved_at->translatedFormat('j F, H:i:s')]) }}
-                        </flux:text>
-                    @else
-                        <flux:text size="sm">{{ __('You have not tipped this matchday yet.') }}</flux:text>
-                    @endif
-                </div>
-
             @endif
-        </div>
-    </div>
+        </x-ui.card>
 
-    {{-- Desygnowanie zawodników: wybór (Support\Squad) --}}
-    <div class="lg:col-span-3">
-        @if ($this->matchday->isFilled())
-            <livewire:pages::home.designation-panels part="select" :matchday-id="$this->matchday->id" :key="'designation-select-' . $this->matchday->id" />
+        @if ($md->isFilled() && $this->isOpen)
+            <p class="text-center text-sm text-ui-muted">{{ __('Quick scores') }}</p>
+            <div class="flex flex-wrap justify-center gap-2">
+                @foreach ([[1, 0], [2, 0], [2, 1], [3, 1], [1, 1], [0, 0], [2, 2], [0, 1], [1, 2]] as [$quickLech, $quickOpp])
+                    <button type="button" wire:click="pick({{ $quickLech }}, {{ $quickOpp }})" @class([
+                        'ui-num rounded-xl px-3.5 py-2 text-lg font-bold transition active:scale-95',
+                        'bg-club text-club-ink' => (int) $this->lech === $quickLech && (int) $this->opponent === $quickOpp,
+                        'bg-ui-raised' => ! ((int) $this->lech === $quickLech && (int) $this->opponent === $quickOpp),
+                    ])>{{ $quickLech }}:{{ $quickOpp }}</button>
+                @endforeach
+            </div>
         @endif
-    </div>
-    </div>
 
-    @if ($this->matchday->isFilled())
-        {{-- Karty typów rozgrywek z protokołami meczów i odpoczywający --}}
-        <livewire:pages::home.designation-panels part="cards" :matchday-id="$this->matchday->id" :key="'designation-cards-' . $this->matchday->id" />
+        <p class="text-center text-sm text-ui-muted">
+            @if ($this->tip)
+                {{ __('Saved tip: :score, last change :time.', ['score' => $this->tip->score(), 'time' => $this->tip->saved_at->translatedFormat('j F, H:i:s')]) }}
+            @else
+                {{ __('You have not tipped this matchday yet.') }}
+            @endif
+        </p>
+
+        @if ($md->isFilled())
+            @php $nextStep = isset($steps['questions']) ? 'questions' : 'players'; @endphp
+            <x-ui.button wire:click="$set('step', '{{ $nextStep }}')">{{ __('Next: :step', ['step' => $steps[$nextStep]]) }}</x-ui.button>
+        @endif
+    @elseif ($step === 'questions')
+        @include('partials.tip-questions')
+        <x-ui.button wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => __('Squad picks')]) }}</x-ui.button>
+    @elseif ($step === 'players')
+        @if ($md->isFilled())
+            <livewire:pages::home.designation-panels part="select" :matchday-id="$md->id" :key="'designation-select-' . $md->id" />
+            <livewire:pages::home.designation-panels part="cards" :matchday-id="$md->id" :key="'designation-cards-' . $md->id" />
+            <x-ui.button wire:click="$set('step', 'ticket')">{{ __('Next: :step', ['step' => __('Ticket')]) }}</x-ui.button>
+        @endif
+    @else
+        {{-- Bilet: podsumowanie typu i składu. Typ zapisuje się sam przy każdej zmianie, „Skasuj bilet” tylko to potwierdza. --}}
+        @php $ticket = $this->ticket; @endphp
+        <section x-data="{ punched: false }" x-on:ticket-punched.window="punched = true"
+            class="relative flex flex-col gap-2.5 rounded-[20px] border border-ui-line bg-ui-surface p-4 [mask:radial-gradient(circle_12px_at_0_62%,transparent_98%,#000)_left/51%_100%_no-repeat,radial-gradient(circle_12px_at_100%_62%,transparent_98%,#000)_right/51%_100%_no-repeat]">
+            <div class="flex items-center gap-2">
+                <img src="{{ asset(config('club.logo')) }}" alt="" class="size-7">
+                <b class="font-display text-xl">{{ __('Your ticket') }}</b>
+                <span class="ms-auto text-xs text-ui-muted">{{ __('Matchday :number', ['number' => $md->number]) }}</span>
+            </div>
+            <div class="ui-num text-center text-[40px] font-extrabold leading-none">
+                {{ mb_strtoupper(config('club.short_name')) }} {{ $this->tip ? $this->tip->score() : '–:–' }} {{ mb_strtoupper((string) $md->opponent) }}
+            </div>
+            @if ($this->questions->isNotEmpty())
+                <div class="flex justify-between gap-3 border-t border-dashed border-ui-line pt-2 text-sm">
+                    <span class="text-ui-muted">{{ __('Questions') }}</span>
+                    <span class="text-end font-semibold">{{ __(':answered of :total', ['answered' => (string) $this->myAnswers->count(), 'total' => (string) $this->questions->count()]) }} · ⚔ {{ $this->myAnswers->where('side', 'attack')->count() }} · 🛡 {{ $this->myAnswers->where('side', 'defense')->count() }}</span>
+                </div>
+            @endif
+            @forelse ($ticket as $line)
+                <div class="flex justify-between gap-3 border-t border-dashed border-ui-line pt-2 text-sm">
+                    <span class="text-ui-muted">{{ $line['label'] }}</span>
+                    <span class="text-end font-semibold">{{ $line['players'] ?: '–' }}</span>
+                </div>
+            @empty
+                <div class="border-t border-dashed border-ui-line pt-2 text-sm text-ui-muted">{{ __('No players fielded.') }}</div>
+            @endforelse
+            <span x-show="punched || {{ $this->tip && !$this->isOpen ? 'true' : 'false' }}" x-cloak
+                class="animate-ui-stamp pointer-events-none absolute bottom-14 end-4 rounded-lg border-[3px] border-good px-2.5 py-0.5 font-display text-xl font-extrabold tracking-[.12em] text-good">{{ __('PUNCHED') }}</span>
+        </section>
+
+        @if ($this->isOpen && $this->tip)
+            <x-ui.button wire:click="punch">{{ __('Punch the ticket') }}</x-ui.button>
+        @endif
+
+        @if ($league = $this->myLeague)
+            @php $matchdaysByNumber = $this->matchdays->keyBy('number'); @endphp
+            @include('partials.my-matches-path', [
+                'title' => __('Your league matches') . ' · ' . ($league['competition']->name ?: $league['competition']->type->label()),
+                'status' => $league['status'],
+                'rounds' => \App\Models\Matchday::PER_SEASON,
+                'perRound' => 1,
+                'path' => $league['path'],
+                'entryId' => $league['entry_id'],
+                'eliminated' => null,
+                'stageLabel' => fn (int $stage) => __('Matchday :number', ['number' => $stage]) . (($matchdaysByNumber[$stage] ?? null)?->isOpenForTips() ? ' •' : ''),
+                'stageAction' => 'openMatchday',
+                'stageExtra' => fn (int $stage) => match (true) {
+                    !isset($matchdaysByNumber[$stage]) || blank($matchdaysByNumber[$stage]->opponent) => __('Match not assigned yet'),
+                    $matchdaysByNumber[$stage]->lech_goals !== null => 'Lech ' . $matchdaysByNumber[$stage]->lech_goals . ':' . $matchdaysByNumber[$stage]->opponent_goals . ' ' . $matchdaysByNumber[$stage]->opponent,
+                    default => $matchdaysByNumber[$stage]->opponent . ($matchdaysByNumber[$stage]->kickoff_at ? ', ' . $matchdaysByNumber[$stage]->kickoff_at->translatedFormat('j M H:i') : ''),
+                },
+                'current' => $this->number,
+            ])
+        @endif
+    @endif
+
+    @if ($md->isFilled() && $step === 'ticket')
 
         {{-- Premium: jak typują inni gracze (na żywo, także przed pierwszym gwizdkiem) --}}
         @if ($this->premium && $this->crowd)
@@ -699,7 +777,7 @@ new #[Layout('layouts::public')] class extends Component {
             @endphp
             <div class="space-y-2 rounded-xl border border-purple-200 bg-purple-50/60 p-3 dark:border-purple-500/30 dark:bg-purple-500/10">
                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">
-                    <span class="flex items-center gap-1"><flux:icon.sparkles variant="micro" />{{ __('How the others tip') }}</span>
+                    <span class="flex items-center gap-1"><x-ui.icon name="sparkles" variant="micro" />{{ __('How the others tip') }}</span>
                     <span class="tabular-nums">{{ trans_choice(':count tip|:count tips', $crowd['count'], ['count' => $crowd['count']]) }}</span>
                 </div>
                 @if ($crowd['count'] > 0)
@@ -710,12 +788,12 @@ new #[Layout('layouts::public')] class extends Component {
                             @endif
                         @endforeach
                     </div>
-                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-ui-muted">
                         <span>Lech {{ $crowdPct($crowd['lech']) }}% · {{ __('Draw result') }} {{ $crowdPct($crowd['draw']) }}% · {{ $this->matchday->opponent }} {{ $crowdPct($crowd['opponent']) }}%</span>
                         <span class="flex flex-wrap gap-1">
                             {{ __('Most popular') }}:
                             @foreach ($crowd['popular'] as $popular)
-                                <span class="rounded bg-white px-1.5 font-bold tabular-nums dark:bg-zinc-800">{{ $popular['score'] }} ×{{ $popular['count'] }}</span>
+                                <span class="rounded bg-ui-surface px-1.5 font-bold tabular-nums">{{ $popular['score'] }} ×{{ $popular['count'] }}</span>
                             @endforeach
                         </span>
                     </div>

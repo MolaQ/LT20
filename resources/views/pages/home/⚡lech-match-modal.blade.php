@@ -3,7 +3,6 @@
 use App\Models\Matchday;
 use App\Support\MatchdayInsights;
 use App\Support\Premium;
-use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -21,7 +20,7 @@ new class extends Component {
     {
         $this->matchdayId = $id;
         unset($this->matchday, $this->tips);
-        Flux::modal('lech-match')->show();
+        $this->dispatch('ui-sheet', name: 'lech-match');
     }
 
     #[Computed]
@@ -44,7 +43,7 @@ new class extends Component {
 }; ?>
 
 <div>
-    <flux:modal name="lech-match" class="w-full max-w-2xl">
+    <x-ui.sheet name="lech-match" wide>
         @if ($matchday = $this->matchday)
             @php
                 $played = $matchday->lech_goals !== null && $matchday->opponent_goals !== null;
@@ -80,7 +79,7 @@ new class extends Component {
                         : collect();
                 @endphp
                 @if ($protocol->isNotEmpty())
-                    <div class="rounded-xl border border-zinc-200 px-3 py-1 dark:border-zinc-700">
+                    <div class="rounded-xl border border-ui-line px-3 py-1">
                         @include('partials.match-protocol', ['events' => $protocol])
                     </div>
                 @endif
@@ -91,32 +90,32 @@ new class extends Component {
                         <x-premium-lock :title="__('Match details')"
                             :text="__('The number of tips, how the players split between a Lech win, a draw and a win for the opponent, the share of exact tips and the most popular scores.')" />
                     @elseif ($tips['count'] === 0)
-                        <flux:text>{{ __('Nobody has tipped this match yet.') }}</flux:text>
+                        <x-ui.text>{{ __('Nobody has tipped this match yet.') }}</x-ui.text>
                     @else
                         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                            <div class="rounded-xl border border-zinc-200 p-3 text-center dark:border-zinc-700">
+                            <div class="rounded-xl border border-ui-line p-3 text-center">
                                 <div class="text-2xl font-black tabular-nums">{{ $tips['count'] }}</div>
-                                <div class="text-xs text-zinc-500">{{ __('Tips') }}</div>
+                                <div class="text-xs text-ui-muted">{{ __('Tips') }}</div>
                             </div>
-                            <div class="rounded-xl border border-zinc-200 p-3 text-center dark:border-zinc-700">
+                            <div class="rounded-xl border border-ui-line p-3 text-center">
                                 <div class="text-2xl font-black tabular-nums">{{ number_format((float) $tips['avg_lech'], 1, ',', '') }}:{{ number_format((float) $tips['avg_opponent'], 1, ',', '') }}</div>
-                                <div class="text-xs text-zinc-500">{{ __('Average tip') }}</div>
+                                <div class="text-xs text-ui-muted">{{ __('Average tip') }}</div>
                             </div>
                             @if ($played)
-                                <div class="rounded-xl border border-zinc-200 p-3 text-center dark:border-zinc-700">
+                                <div class="rounded-xl border border-ui-line p-3 text-center">
                                     <div class="text-2xl font-black tabular-nums">{{ $tips['exact'] }}%</div>
-                                    <div class="text-xs text-zinc-500">{{ __('Exact score (:count)', ['count' => $tips['exact_count']]) }}</div>
+                                    <div class="text-xs text-ui-muted">{{ __('Exact score (:count)', ['count' => $tips['exact_count']]) }}</div>
                                 </div>
-                                <div class="rounded-xl border border-zinc-200 p-3 text-center dark:border-zinc-700">
+                                <div class="rounded-xl border border-ui-line p-3 text-center">
                                     <div class="text-2xl font-black tabular-nums">{{ $tips['outcome'] }}%</div>
-                                    <div class="text-xs text-zinc-500">{{ __('Correct outcome') }}</div>
+                                    <div class="text-xs text-ui-muted">{{ __('Correct outcome') }}</div>
                                 </div>
                             @endif
                         </div>
 
                         {{-- Rozkład: wygrana Lecha, remis, wygrana rywala --}}
                         <div class="space-y-1.5">
-                            <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">{{ __('How the players tipped') }}</div>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ __('How the players tipped') }}</div>
                             <div class="flex h-6 overflow-hidden rounded-full text-[11px] font-bold text-white">
                                 @foreach ([['lech', 'bg-lech-700', 'Lech'], ['draw', 'bg-zinc-400', __('Draw result')], ['opponent', 'bg-zinc-700', $matchday->opponent ?? __('Opponent')]] as [$part, $color, $label])
                                     @if ($tips[$part] > 0)
@@ -125,7 +124,7 @@ new class extends Component {
                                     @endif
                                 @endforeach
                             </div>
-                            <div class="flex justify-between text-xs text-zinc-500">
+                            <div class="flex justify-between text-xs text-ui-muted">
                                 <span>Lech: {{ $tips['lech'] }}</span>
                                 <span>{{ __('Draw result') }}: {{ $tips['draw'] }}</span>
                                 <span>{{ $matchday->opponent ?? __('Opponent') }}: {{ $tips['opponent'] }}</span>
@@ -134,23 +133,23 @@ new class extends Component {
 
                         @if ($played)
                             <div class="space-y-1.5">
-                                <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">{{ __('Most popular tips') }}</div>
+                                <div class="text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ __('Most popular tips') }}</div>
                                 <div class="flex flex-wrap gap-2">
                                     @foreach ($tips['popular'] as $popular)
-                                        <span class="{{ $popular['score'] === $matchday->lech_goals . ':' . $matchday->opponent_goals ? 'border-green-500 bg-green-50 dark:bg-green-500/10' : 'border-zinc-200 dark:border-zinc-700' }} rounded-lg border px-3 py-1.5 text-sm">
+                                        <span class="{{ $popular['score'] === $matchday->lech_goals . ':' . $matchday->opponent_goals ? 'border-green-500 bg-green-50 dark:bg-green-500/10' : 'border-ui-line' }} rounded-lg border px-3 py-1.5 text-sm">
                                             <span class="font-bold tabular-nums">{{ $popular['score'] }}</span>
-                                            <span class="text-xs text-zinc-500">× {{ $popular['count'] }}</span>
+                                            <span class="text-xs text-ui-muted">× {{ $popular['count'] }}</span>
                                         </span>
                                     @endforeach
                                 </div>
-                                <flux:text class="text-xs">{{ __('Correct goal difference: :percent%', ['percent' => $tips['diff']]) }}</flux:text>
+                                <x-ui.text class="text-xs">{{ __('Correct goal difference: :percent%', ['percent' => $tips['diff']]) }}</x-ui.text>
                             </div>
                         @else
-                            <flux:text class="text-xs italic">{{ __('Exact tips and the most popular scores appear after the result.') }}</flux:text>
+                            <x-ui.text class="text-xs italic">{{ __('Exact tips and the most popular scores appear after the result.') }}</x-ui.text>
                         @endif
                     @endif
                 </div>
             </div>
         @endif
-    </flux:modal>
+    </x-ui.sheet>
 </div>

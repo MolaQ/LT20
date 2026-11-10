@@ -11,7 +11,7 @@
     ];
 @endphp
 <button type="button" wire:click="showFixture({{ $fixture->id }})" title="{{ __('Match details') }}"
-    class="{{ $mine ? 'ring-2 ring-amber-400 dark:ring-amber-500' : '' }} group flex w-full flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white text-left text-sm shadow-xs transition hover:-translate-y-px hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900">
+    class="{{ $mine ? 'ring-2 ring-amber-400 dark:ring-amber-500' : '' }} group flex w-full flex-col overflow-hidden rounded-lg border border-ui-line bg-ui-surface text-left text-sm shadow-xs transition hover:-translate-y-px hover:shadow-md">
     @foreach ($sides as $side)
         @php
             $won = $played && $fixture->winner_entry_id && $fixture->winner_entry_id === $side['entry_id'];
@@ -23,18 +23,18 @@
             };
         @endphp
         <div class="{{ $rowClass }} flex items-center gap-2 border-l-4 px-2 py-1.5 {{ $loop->first ? 'border-b border-b-zinc-100 dark:border-b-zinc-800' : '' }}">
-            <span class="w-7 shrink-0 rounded bg-zinc-100 py-0.5 text-center text-[10px] tabular-nums text-zinc-500 dark:bg-zinc-800">{{ $side['seat'] }}</span>
+            <span class="w-7 shrink-0 rounded bg-ui-raised py-0.5 text-center text-[10px] tabular-nums text-ui-muted">{{ $side['seat'] }}</span>
             <span class="flex min-w-0 flex-1 items-center gap-1">
                 <span class="truncate {{ $side['entry']?->seasonTeam?->is_bot ? 'italic' : '' }}">{{ $side['entry']?->seasonTeam->name ?? __('Seat :number', ['number' => $side['seat']]) }}</span>
                 <x-champion-trophies :team="$side['entry']?->seasonTeam" :size="14" />
             </span>
             @if ($won)
-                <flux:icon.chevron-double-right variant="micro" class="shrink-0 text-green-600 dark:text-green-400" />
+                <x-ui.icon name="chevron-double-right" variant="micro" class="shrink-0 text-green-600 dark:text-green-400" />
             @endif
             <span class="w-5 shrink-0 text-right font-bold tabular-nums {{ $played ? '' : 'text-zinc-300 dark:text-zinc-600' }}">{{ $side['goals'] ?? '–' }}</span>
         </div>
     @endforeach
     @if ($fixture->decided_by_time)
-        <div class="bg-zinc-50 px-2 py-0.5 text-right text-[10px] italic text-zinc-500 dark:bg-zinc-800/60">{{ __('after penalties') }}</div>
+        <div class="bg-zinc-50 px-2 py-0.5 text-right text-[10px] italic text-ui-muted dark:bg-zinc-800/60">{{ __('after penalties') }}</div>
     @endif
 </button>

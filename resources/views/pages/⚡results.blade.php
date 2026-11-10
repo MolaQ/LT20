@@ -13,7 +13,6 @@ use App\Support\PlayerStats;
 use App\Support\Premium;
 use App\Support\Rivals;
 use App\Support\Standings;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -621,8 +620,8 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->teamId = $id;
         unset($this->teamCard);
-        Flux::modal('duel-details')->close();
-        Flux::modal('team-details')->show();
+        $this->dispatch('ui-sheet', name: 'duel-details', open: false);
+        $this->dispatch('ui-sheet', name: 'team-details');
     }
 
     /** Szczegóły pojedynku w uniwersalnym oknie (pages::home.duel-modal w layoucie publicznym). */
@@ -705,7 +704,7 @@ new #[Layout('layouts::public')] class extends Component {
                         @if (isset($bannerIcons[$colorKey]))
                             <img src="{{ $bannerIcons[$colorKey] }}" alt="" class="size-14 object-contain">
                         @else
-                            <flux:icon.trophy class="size-9" />
+                            <x-ui.icon name="trophy" class="size-9" />
                         @endif
                     </div>
                     <div class="min-w-0 space-y-1">
@@ -735,12 +734,12 @@ new #[Layout('layouts::public')] class extends Component {
                         <div class="flex items-center gap-1.5 rounded-full bg-black/15 px-1.5 py-1">
                             <button type="button" wire:click="{{ $navMethod }}(-1)" @disabled(!$canBack) class="{{ $arrowClass }}"
                                 aria-label="{{ $navLabel }}: {{ __('Previous') }}" title="{{ __('Previous') }}">
-                                <flux:icon.chevron-left variant="mini" />
+                                <x-ui.icon name="chevron-left" variant="mini" />
                             </button>
                             <span class="min-w-16 text-center text-[11px] font-bold uppercase tracking-wider">{{ $navLabel }}</span>
                             <button type="button" wire:click="{{ $navMethod }}(1)" @disabled(!$canForward) class="{{ $arrowClass }}"
                                 aria-label="{{ $navLabel }}: {{ __('Next') }}" title="{{ __('Next') }}">
-                                <flux:icon.chevron-right variant="mini" />
+                                <x-ui.icon name="chevron-right" variant="mini" />
                             </button>
                         </div>
                     @endforeach
@@ -757,12 +756,12 @@ new #[Layout('layouts::public')] class extends Component {
                         <button type="button" wire:click="shiftSeason(-1)" @disabled(!$older)
                             title="{{ __('Previous season') }}" aria-label="{{ __('Previous season') }}"
                             class="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-white/10">
-                            <flux:icon.chevron-left variant="mini" />
+                            <x-ui.icon name="chevron-left" variant="mini" />
                         </button>
                         <button type="button" wire:click="shiftSeason(1)" @disabled(!$newer)
                             title="{{ __('Next season') }}" aria-label="{{ __('Next season') }}"
                             class="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-white/10">
-                            <flux:icon.chevron-right variant="mini" />
+                            <x-ui.icon name="chevron-right" variant="mini" />
                         </button>
                     </div>
                 </x-slot:aside>
@@ -771,9 +770,9 @@ new #[Layout('layouts::public')] class extends Component {
     @endif
 
     @if (!$this->season || count($this->options) === 0)
-        <flux:card>
-            <flux:text>{{ __('There is no season to show yet.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('There is no season to show yet.') }}</x-ui.text>
+        </x-ui.card>
     @else
         {{--
             Wybór rozgrywek: jeden wąski pasek w kolorach strony. Ligi (Ekstraklasa … podwórkowa) zwinięte w menu,
@@ -794,33 +793,36 @@ new #[Layout('layouts::public')] class extends Component {
             $leagueActive = array_key_exists($this->key, $leagueOptions);
             $pill = 'inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold transition';
             // Aktywna opcja: tylko obwódka w kolorze strony (lech), bez ciemnego tła.
-            $pillOn = 'text-lech-800 ring-2 ring-inset ring-lech-600 dark:text-lech-200 dark:ring-lech-400';
-            $pillOff = 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white';
+            $pillOn = 'text-club ring-2 ring-inset ring-lech-600 dark:ring-lech-400';
+            $pillOff = 'text-ui-muted hover:bg-ui-raised hover:text-zinc-900 dark:hover:text-white';
         @endphp
-        <nav class="-mt-2 flex flex-wrap items-center gap-1 rounded-3xl border border-zinc-200 bg-white p-1 shadow-sm dark:border-zinc-700 dark:bg-zinc-900" aria-label="{{ __('Competition') }}">
+        <nav class="-mt-2 flex flex-wrap items-center gap-1 rounded-3xl border border-ui-line bg-ui-surface p-1 shadow-sm" aria-label="{{ __('Competition') }}">
             @if (count($leagueOptions) > 0)
-                <flux:dropdown position="bottom" align="start">
-                    <button type="button" class="{{ $pill }} {{ $leagueActive ? $pillOn : $pillOff }}">
+                {{-- Lista lig (z ligami podwórkowymi jest ich kilkadziesiąt): rozwijana, przewijana. --}}
+                <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
+                    <button type="button" @click="open = !open" :aria-expanded="open" class="{{ $pill }} {{ $leagueActive ? $pillOn : $pillOff }}">
                         @if ($leagueActive)
                             <span class="size-3 shrink-0 rounded-full" style="{{ \App\Support\CompetitionColors::dotStyle($leagueOptions[$this->key][1]) }}"></span>
                             {{ $leagueOptions[$this->key][0] }}
                         @else
                             {{ __('Leagues') }}
                         @endif
-                        <flux:icon.chevron-down variant="micro" />
+                        <x-ui.icon name="chevron-down" variant="micro" />
                     </button>
-                    <flux:menu>
+                    <div x-show="open" x-cloak x-transition.origin.top.left
+                        class="absolute start-0 top-full z-30 mt-1 max-h-[60dvh] w-64 overflow-y-auto rounded-2xl border border-ui-line bg-ui-surface p-1 shadow-xl">
                         @foreach ($leagueOptions as $optionKey => [$optionName, $optionColor])
-                            <flux:menu.item wire:click="$set('key', '{{ $optionKey }}')" wire:key="lg-opt-{{ $optionKey }}">
+                            <button type="button" @click="open = false" wire:click="$set('key', '{{ $optionKey }}')" wire:key="lg-opt-{{ $optionKey }}"
+                                class="flex w-full items-center rounded-xl px-3 py-2 text-start text-sm hover:bg-ui-raised">
                                 <span class="flex items-center gap-2">
                                     <span class="size-3 shrink-0 rounded-full" style="{{ \App\Support\CompetitionColors::dotStyle($optionColor) }}"></span>
                                     <span class="{{ $optionKey === $this->key ? 'font-bold' : '' }}">{{ $optionName }}</span>
                                 </span>
-                            </flux:menu.item>
+                            </button>
                         @endforeach
-                    </flux:menu>
-                </flux:dropdown>
-                <span class="mx-1 h-5 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700"></span>
+                    </div>
+                </div>
+                <span class="mx-1 h-5 w-px shrink-0 bg-ui-line"></span>
             @endif
             @foreach ($otherOptions as $optionKey => [$optionName, $optionColor])
                 <button type="button" wire:click="$set('key', '{{ $optionKey }}')" wire:key="opt-{{ $optionKey }}"
@@ -891,7 +893,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @if (isset($bannerIcons[$colorKey]))
                                 <img src="{{ $bannerIcons[$colorKey] }}" alt="" class="size-6 object-contain">
                             @else
-                                <flux:icon.trophy variant="micro" />
+                                <x-ui.icon name="trophy" variant="micro" />
                             @endif
                         </span>
                     </header>
@@ -908,7 +910,7 @@ new #[Layout('layouts::public')] class extends Component {
                             <label class="relative min-w-0 flex-1">
                                 <span class="sr-only">{{ __('Find a team') }}</span>
                                 <input type="search" wire:model.live.debounce.300ms="tableSearch" placeholder="{{ __('Find a team (min. 3 letters)') }}"
-                                    class="w-full rounded-lg border-0 bg-white/90 px-3 py-1.5 text-sm text-zinc-800 shadow-inner placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/70 dark:bg-zinc-900/90 dark:text-zinc-100">
+                                    class="w-full rounded-lg border-0 bg-white/90 px-3 py-1.5 text-sm text-ui-ink shadow-inner placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/70 dark:bg-zinc-900/90">
                             </label>
                             <div class="flex shrink-0 items-center gap-1 text-xs" role="group" aria-label="{{ __('Teams per page') }}">
                                 @foreach ($this::TABLE_PER_PAGE_OPTIONS as $option)
@@ -934,7 +936,7 @@ new #[Layout('layouts::public')] class extends Component {
                                     <th class="px-3 py-1.5 text-right">{{ __('Pts') }}</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                            <tbody class="bg-ui-surface text-ui-ink">
                                 @forelse ($this->tablePageRows() as $index => $row)
                                     @php
                                         // Po ostatniej kolejce belki wynikają z faktycznych awansów i spadków (razem z zamianami za boty).
@@ -957,11 +959,11 @@ new #[Layout('layouts::public')] class extends Component {
                                     <tr wire:key="row-{{ $row['entry_id'] }}"
                                         class="{{ $zoneClass }} border-b border-zinc-100 last:border-b-0 dark:border-zinc-700/50 {{ $this->highlighted($row['team']->id) ? 'bg-amber-50 font-semibold dark:bg-amber-900/20' : '' }}">
                                         {{-- Miejsce, a po prawej zmiana po kolejce: zielony trójkąt w górę, czerwony w dół (liczba miejsc w podpowiedzi) --}}
-                                        <td class="px-2 py-1.5 text-right tabular-nums text-zinc-500">
+                                        <td class="px-2 py-1.5 text-right tabular-nums text-ui-muted">
                                             <span class="inline-flex items-center justify-end gap-1">
                                                 <span>{{ $index + 1 }}.</span>
                                                 @if ($outRound !== null)
-                                                    <span title="{{ __('Knocked out after matchday :number', ['number' => $outRound]) }}" class="flex w-5 text-zinc-400"><flux:icon.arrow-right-start-on-rectangle variant="micro" class="size-3.5" /></span>
+                                                    <span title="{{ __('Knocked out after matchday :number', ['number' => $outRound]) }}" class="flex w-5 text-zinc-400"><x-ui.icon name="arrow-right-start-on-rectangle" variant="micro" class="size-3.5" /></span>
                                                 @elseif ($move > 0)
                                                     <span title="{{ __('Up :count places', ['count' => $move]) }}" class="flex w-5 items-center text-[10px] font-semibold text-green-600 dark:text-green-400"><svg class="size-2.5" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9.5 9h-9z" fill="currentColor" /></svg>{{ $move }}</span>
                                                 @elseif ($move < 0)
@@ -973,7 +975,7 @@ new #[Layout('layouts::public')] class extends Component {
                                             </span>
                                         </td>
                                         <td class="max-w-56 truncate px-2 py-1.5">
-                                            <button type="button" wire:click="showTeam({{ $row['team']->id }})" class="truncate hover:text-lech-700 hover:underline dark:hover:text-lech-300 {{ $row['team']->is_bot ? 'italic' : '' }}">{{ $row['team']->name }}</button>
+                                            <button type="button" wire:click="showTeam({{ $row['team']->id }})" class="truncate hover:text-club hover:underline {{ $row['team']->is_bot ? 'italic' : '' }}">{{ $row['team']->name }}</button>
                                             <x-champion-trophies :team="$row['team']" class="ms-1" />
                                         </td>
                                         <td class="px-1.5 py-1.5 text-right tabular-nums">{{ $row['played'] }}</td>
@@ -987,7 +989,7 @@ new #[Layout('layouts::public')] class extends Component {
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10" class="px-3 py-4 text-center text-sm text-zinc-500">{{ __('No team matches the filter.') }}</td>
+                                        <td colspan="10" class="px-3 py-4 text-center text-sm text-ui-muted">{{ __('No team matches the filter.') }}</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -999,14 +1001,14 @@ new #[Layout('layouts::public')] class extends Component {
                         <div class="flex items-center justify-between gap-2 px-1 pt-2">
                             <button type="button" wire:click="shiftTablePage(-1)" @disabled($tablePageNow <= 1)
                                 class="flex size-8 items-center justify-center rounded-full bg-black/20 transition hover:bg-black/30 disabled:opacity-30" aria-label="{{ __('Previous') }}">
-                                <flux:icon.chevron-left variant="micro" />
+                                <x-ui.icon name="chevron-left" variant="micro" />
                             </button>
                             <span class="text-xs tabular-nums opacity-85">
                                 {{ __('Page :current of :last', ['current' => $tablePageNow, 'last' => $tablePageCount]) }} &middot; {{ trans_choice(':count team|:count teams', $tableFound, ['count' => $tableFound]) }}
                             </span>
                             <button type="button" wire:click="shiftTablePage(1)" @disabled($tablePageNow >= $tablePageCount)
                                 class="flex size-8 items-center justify-center rounded-full bg-black/20 transition hover:bg-black/30 disabled:opacity-30" aria-label="{{ __('Next') }}">
-                                <flux:icon.chevron-right variant="micro" />
+                                <x-ui.icon name="chevron-right" variant="micro" />
                             </button>
                         </div>
                     @endif
@@ -1019,7 +1021,7 @@ new #[Layout('layouts::public')] class extends Component {
                                     $outCount = count($this->legendsOut);
                                 @endphp
                                 <p class="flex flex-wrap items-center gap-x-4 gap-y-1 opacity-95">
-                                    <span class="flex items-center gap-1"><flux:icon.arrow-right-start-on-rectangle variant="micro" class="size-3.5" />{{ __('Knocked out (two losses in one matchday)') }}</span>
+                                    <span class="flex items-center gap-1"><x-ui.icon name="arrow-right-start-on-rectangle" variant="micro" class="size-3.5" />{{ __('Knocked out (two losses in one matchday)') }}</span>
                                     <span class="font-semibold">{{ __('Still playing: :left of :count', ['left' => $this->table->count() - $outCount, 'count' => $this->table->count()]) }}</span>
                                 </p>
                                 <p class="italic opacity-85">
@@ -1028,9 +1030,9 @@ new #[Layout('layouts::public')] class extends Component {
                             @else
                                 {{-- Legenda tylko dla stref, które są w tej lidze: z Ekstraklasy nie ma awansu, z podwórkowej spadku --}}
                                 @php
-                                    $isSwiss = $this->competition->type === \App\Enums\CompetitionType::Swiss;
-                                    $hasPromotion = $isSwiss || (int) $this->competition->tier > 1;
-                                    $hasRelegation = !$isSwiss;
+                                    $zoneSizes = \App\Support\Standings::zoneSizes($this->competition);
+                                    $hasPromotion = $zoneSizes['up'] > 0;
+                                    $hasRelegation = $zoneSizes['down'] > 0;
                                 @endphp
                                 <p class="flex flex-wrap gap-4 opacity-90">
                                     @if ($hasPromotion)
@@ -1073,12 +1075,12 @@ new #[Layout('layouts::public')] class extends Component {
                             @php
                                 $stageClass = $stage === $round
                                     ? 'lech-bar font-semibold'
-                                    : ($stage < $round ? 'bg-lech-100 text-lech-800 hover:bg-lech-200 dark:bg-lech-900/40 dark:text-lech-200' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800');
+                                    : ($stage < $round ? 'bg-lech-100 text-club hover:bg-lech-200 dark:bg-lech-900/40' : 'bg-ui-raised text-ui-muted hover:bg-zinc-200');
                             @endphp
                             <a href="{{ $this->pageUrl($stage) }}" wire:navigate title="{{ \App\Support\CupBracket::roundName($stage) }}"
                                 class="{{ $stageClass }} rounded-full px-2.5 py-1 tabular-nums transition">{{ $stageLabel($stage) }}</a>
                             @if ($stage < $rounds)
-                                <flux:icon.chevron-right variant="micro" class="text-zinc-400" />
+                                <x-ui.icon name="chevron-right" variant="micro" class="text-zinc-400" />
                             @endif
                         @endforeach
                     </nav>
@@ -1089,7 +1091,7 @@ new #[Layout('layouts::public')] class extends Component {
                             $champion = $final->winner_entry_id === $final->home_entry_id ? $final->home : $final->away;
                         @endphp
                         <div class="lech-banner lech-bar-shadow flex items-center gap-3 rounded-xl px-4 py-3">
-                            <flux:icon.trophy class="size-8 shrink-0 text-amber-300" />
+                            <x-ui.icon name="trophy" class="size-8 shrink-0 text-amber-300" />
                             <div class="min-w-0">
                                 <div class="text-xs uppercase tracking-wide opacity-80">{{ __('Cup winner') }}</div>
                                 <button type="button" wire:click="showTeam({{ $champion?->season_team_id ?? 0 }})" class="truncate text-lg font-bold hover:underline {{ $champion?->seasonTeam?->is_bot ? 'italic' : '' }}">{{ $champion?->seasonTeam->name }}</button>
@@ -1114,10 +1116,10 @@ new #[Layout('layouts::public')] class extends Component {
                                 default => __('Through to: :round', ['round' => \App\Support\CupBracket::roundName($lastStage + 1)]),
                             };
                         @endphp
-                        <section class="lech-bar-shadow overflow-hidden rounded-2xl border border-lech-950/20 bg-white dark:border-lech-900 dark:bg-zinc-900">
+                        <section class="lech-bar-shadow overflow-hidden rounded-2xl border border-lech-950/20 bg-ui-surface dark:border-lech-900">
                             <header class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                                 <h3 class="flex items-center gap-2 font-bold">
-                                    <flux:icon.trophy class="size-5 text-lech-200" />
+                                    <x-ui.icon name="trophy" class="size-5 text-lech-200" />
                                     {{ __('Your cup path') }}
                                 </h3>
                                 <span class="text-sm font-semibold text-lech-200">{{ $pathStatus }}</span>
@@ -1133,7 +1135,7 @@ new #[Layout('layouts::public')] class extends Component {
                                             $myGoals = $fx ? ($isHome ? $fx->home_goals : $fx->away_goals) : null;
                                             $theirGoals = $fx ? ($isHome ? $fx->away_goals : $fx->home_goals) : null;
                                             [$strip, $stateClass, $stateText] = match (true) {
-                                                $fx === null => ['bg-zinc-200 dark:bg-zinc-700', 'text-zinc-400', '—'],
+                                                $fx === null => ['bg-ui-line', 'text-zinc-400', '—'],
                                                 !$fx->isPlayed() => ['bg-amber-400', 'text-amber-700 dark:text-amber-300', __('Not played yet')],
                                                 $fx->winner_entry_id === $myEntryId => ['bg-green-500', 'text-green-700 dark:text-green-400', $fx->decided_by_time ? __('Through on penalties') : __('Through')],
                                                 default => ['bg-red-500', 'text-red-600 dark:text-red-400', $fx->decided_by_time ? __('Out on penalties') : __('Out')],
@@ -1142,14 +1144,14 @@ new #[Layout('layouts::public')] class extends Component {
                                         <li>
                                             <a @if ($fx) href="{{ $this->pageUrl($stage) }}" wire:navigate @endif
                                                 title="{{ \App\Support\CupBracket::roundName($stage) }}"
-                                                class="{{ $stage === $round ? 'ring-2 ring-lech-600 dark:ring-lech-400' : '' }} {{ $fx ? 'hover:shadow-md' : 'opacity-60' }} flex h-full flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white transition dark:border-zinc-700 dark:bg-zinc-900">
+                                                class="{{ $stage === $round ? 'ring-2 ring-lech-600 dark:ring-lech-400' : '' }} {{ $fx ? 'hover:shadow-md' : 'opacity-60' }} flex h-full flex-col overflow-hidden rounded-xl border border-ui-line bg-ui-surface transition">
                                                 <span class="{{ $strip }} block h-1.5"></span>
                                                 <span class="flex flex-1 flex-col items-center gap-0.5 px-2 py-2 text-center">
-                                                    <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500">{{ $pathLabel($stage) }}</span>
+                                                    <span class="text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ $pathLabel($stage) }}</span>
                                                     <span class="text-2xl font-black tabular-nums text-lech-900 dark:text-white">
                                                         {{ $fx && $fx->isPlayed() ? $myGoals . ':' . $theirGoals : '–' }}
                                                     </span>
-                                                    <span class="w-full truncate text-xs text-zinc-600 dark:text-zinc-300 {{ $opponent?->seasonTeam?->is_bot ? 'italic' : '' }}">{{ $opponent?->seasonTeam->name ?? ($fx ? __('Opponent not known yet') : '') }}</span>
+                                                    <span class="w-full truncate text-xs text-ui-muted {{ $opponent?->seasonTeam?->is_bot ? 'italic' : '' }}">{{ $opponent?->seasonTeam->name ?? ($fx ? __('Opponent not known yet') : '') }}</span>
                                                     <span class="{{ $stateClass }} text-xs font-semibold">{{ $stateText }}</span>
                                                 </span>
                                             </a>
@@ -1159,15 +1161,15 @@ new #[Layout('layouts::public')] class extends Component {
                             </div>
                         </section>
                     @endif
-                    <flux:card class="space-y-3">
+                    <x-ui.card class="space-y-3">
                         <div class="flex flex-wrap items-baseline justify-between gap-2">
-                            <flux:heading>{{ \App\Support\CupBracket::roundName($round) }}</flux:heading>
-                            <flux:text class="text-xs tabular-nums">
+                            <x-ui.heading>{{ \App\Support\CupBracket::roundName($round) }}</x-ui.heading>
+                            <x-ui.text class="text-xs tabular-nums">
                                 {{ __(':played of :total matches played', ['played' => $this->cupPlayed, 'total' => $total]) }}
-                            </flux:text>
+                            </x-ui.text>
                         </div>
                         {{-- Pasek postępu rundy --}}
-                        <div class="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                        <div class="h-1.5 overflow-hidden rounded-full bg-ui-raised">
                             <div class="h-full rounded-full bg-lech-600" style="width: {{ $total ? round($this->cupPlayed / $total * 100) : 0 }}%"></div>
                         </div>
 
@@ -1185,22 +1187,22 @@ new #[Layout('layouts::public')] class extends Component {
 
                             @if ($this->matches->hasPages())
                                 <div class="flex items-center justify-between gap-2 pt-1">
-                                    <flux:button size="sm" variant="ghost" icon="chevron-left"
+                                    <x-ui.btn size="sm" variant="ghost" icon="chevron-left"
                                         wire:click="previousPage('matchesPage')" :disabled="$this->matches->onFirstPage()" />
-                                    <flux:text class="text-xs tabular-nums">
+                                    <x-ui.text class="text-xs tabular-nums">
                                         {{ __('Page :current of :last', ['current' => $this->matches->currentPage(), 'last' => $this->matches->lastPage()]) }}
-                                    </flux:text>
-                                    <flux:button size="sm" variant="ghost" icon="chevron-right"
+                                    </x-ui.text>
+                                    <x-ui.btn size="sm" variant="ghost" icon="chevron-right"
                                         wire:click="nextPage('matchesPage')" :disabled="!$this->matches->hasMorePages()" />
                                 </div>
                             @endif
                         @else
-                            <flux:text>{{ __('No matches yet.') }}</flux:text>
+                            <x-ui.text>{{ __('No matches yet.') }}</x-ui.text>
                         @endif
-                    </flux:card>
+                    </x-ui.card>
 
                     {{-- Objaśnienia kursywą pod drabinką i legenda kolorów --}}
-                    <div class="space-y-1 px-1 text-xs italic text-zinc-500">
+                    <div class="space-y-1 px-1 text-xs italic text-ui-muted">
                         <p>
                             {{ __('The favourite plays on the left and the winner takes the better seed of the pair. A draw goes to the team whose tip was saved first (every save gets its own number; bots and missing tips come last, then the higher seed), shown as “after penalties”.') }}
                             {{ __('The number next to the team is its seed in this round.') }}
@@ -1264,14 +1266,14 @@ new #[Layout('layouts::public')] class extends Component {
                             <div class="flex items-center justify-between gap-2 px-1 pt-1">
                                 <button type="button" wire:click="previousPage('matchesPage')" @disabled($this->matches->onFirstPage())
                                     class="flex size-8 items-center justify-center rounded-full bg-black/20 transition hover:bg-black/30 disabled:opacity-30" aria-label="{{ __('Previous') }}">
-                                    <flux:icon.chevron-left variant="micro" />
+                                    <x-ui.icon name="chevron-left" variant="micro" />
                                 </button>
                                 <span class="text-xs tabular-nums opacity-85">
                                     {{ __('Page :current of :last', ['current' => $this->matches->currentPage(), 'last' => $this->matches->lastPage()]) }}
                                 </span>
                                 <button type="button" wire:click="nextPage('matchesPage')" @disabled(!$this->matches->hasMorePages())
                                     class="flex size-8 items-center justify-center rounded-full bg-black/20 transition hover:bg-black/30 disabled:opacity-30" aria-label="{{ __('Next') }}">
-                                    <flux:icon.chevron-right variant="micro" />
+                                    <x-ui.icon name="chevron-right" variant="micro" />
                                 </button>
                             </div>
                         @endif

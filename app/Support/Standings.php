@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Actions\Seasons\BuildListFromPrevious;
 use App\Enums\CompetitionType;
 use App\Enums\League;
 use App\Models\Competition;
@@ -111,26 +112,58 @@ final class Standings
     }
 
     /**
-     * Strefa miejsca w tabeli do pokolorowania: 'up' (awans), 'down' (spadek) albo null.
-     * Ligi 2-10 i podwórkowa: 4 najlepsze awansują; ligi 1-10: 4 najgorsze spadają (regulamin, punkt 9).
+     * Strefa miejsca w tabeli do pokolorowania na bieżąco: 'up' (awans), 'down' (spadek) albo null (regulamin, punkt 9).
      */
     public static function zone(Competition $competition, int $place, int $count): ?string
     {
-        $tier = $competition->type === CompetitionType::Swiss ? League::Podworkowa->value : $competition->tier;
+        $sizes = self::zoneSizes($competition);
 
-        if (! in_array($competition->type, [CompetitionType::League, CompetitionType::Swiss], true) || $tier === null) {
-            return null;
-        }
-
-        if ($tier > 1 && $place <= Promotion::MOVES) {
+        if ($place <= $sizes['up']) {
             return 'up';
         }
 
-        if ($tier < League::Podworkowa->value && $place > $count - Promotion::MOVES) {
-            return 'down';
+        return $place > $count - $sizes['down'] ? 'down' : null;
+    }
+
+    /**
+     * Ile miejsc awansuje i spada w lidze:
+     *  - ligi 2-10: 4 w górę; ligi 1-9: 4 w dół,
+     *  - C klasa: po jednym do każdej otwartej ligi podwórkowej 1.x (najwyżej 4; przy starej podwórkowej 4),
+     *  - liga podwórkowa: zwycięzca w górę, w dół tyle, ile otwartych lig jest pod nią (Backyard),
+     *  - stara podwórkowa (system szwajcarski): 4 w górę.
+     *
+     * @return array{up: int, down: int}
+     */
+    public static function zoneSizes(Competition $competition): array
+    {
+        $open = self::backyardCount($competition->season_id);
+
+        if ($competition->isBackyard()) {
+            return ['up' => Backyard::PROMOTED, 'down' => Backyard::relegations($competition->division, $open)];
         }
 
-        return null;
+        return match ($competition->type) {
+            CompetitionType::Swiss => ['up' => Promotion::MOVES, 'down' => 0],
+            CompetitionType::League => [
+                'up' => (int) $competition->tier > 1 ? Promotion::MOVES : 0,
+                'down' => (int) $competition->tier === League::CKlasa->value && $open > 0
+                    ? Backyard::relegations(0, $open)
+                    : Promotion::MOVES,
+            ],
+            default => ['up' => 0, 'down' => 0],
+        };
+    }
+
+    /** @var array<int, int> */
+    private static array $backyardCounts = [];
+
+    /** Liczba lig nowej Ligi podwórkowej w sezonie (0 = stara podwórkowa albo jej brak). */
+    public static function backyardCount(int $seasonId): int
+    {
+        return self::$backyardCounts[$seasonId] ??= Competition::where('season_id', $seasonId)
+            ->where('type', CompetitionType::League->value)
+            ->where('tier', League::Podworkowa->value)
+            ->count();
     }
 
     /** @var array<int, array<int, string>> */
@@ -167,16 +200,20 @@ final class Standings
         }
 
         $eligible = Players::eligible()->pluck('id')->flip();
-        $tiers = [];
+        $leagues = BuildListFromPrevious::leagueTree($competitions->all());
         foreach ($competitions as $competition) {
-            $level = $competition->type === CompetitionType::Swiss ? League::Podworkowa->value : (int) $competition->tier;
+            $teams = [];
             foreach (self::for($competition) as $row) {
                 $userId = $row['team']->user_id;
-                $tiers[$level][] = ['id' => $row['team']->id, 'human' => $userId !== null && isset($eligible[$userId])];
+                $teams[] = ['id' => (int) $row['team']->id, 'human' => $userId !== null && isset($eligible[$userId])];
+            }
+            $key = BuildListFromPrevious::treeKey($competition);
+            if (isset($leagues[$key])) {
+                $leagues[$key]['teams'] = $teams;
             }
         }
 
-        return $tiers === [] ? [] : Promotion::moves($tiers);
+        return $leagues === [] ? [] : Promotion::movesTree($leagues);
     }
 
     /**

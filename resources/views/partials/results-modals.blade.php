@@ -4,7 +4,7 @@
     $formClasses = ['W' => 'bg-green-600', 'D' => 'bg-zinc-400', 'L' => 'bg-red-600'];
 @endphp
 
-<flux:modal name="team-details" class="w-full max-w-xl">
+<x-ui.sheet name="team-details" wide>
     @if ($card = $this->teamCard)
         @php
             $team = $card['team'];
@@ -44,7 +44,7 @@
 
             {{-- Podstawowe statystyki (dla wszystkich) --}}
             <div class="space-y-2">
-                <flux:heading size="sm">{{ __('Season statistics') }}</flux:heading>
+                <x-ui.heading size="sm">{{ __('Season statistics') }}</x-ui.heading>
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     @php
                         $basic = [
@@ -59,16 +59,16 @@
                         }
                     @endphp
                     @foreach ($basic as [$label, $value, $hint])
-                        <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
-                            <div class="text-xs text-zinc-500">{{ $label }}</div>
+                        <div class="rounded-lg border border-ui-line p-3">
+                            <div class="text-xs text-ui-muted">{{ $label }}</div>
                             <div class="text-lg font-semibold tabular-nums">{{ $value }}</div>
-                            <div class="text-xs text-zinc-500">{{ $hint }}</div>
+                            <div class="text-xs text-ui-muted">{{ $hint }}</div>
                         </div>
                     @endforeach
                 </div>
 
                 @if (count($stats['form']) > 0)
-                    <div class="flex items-center gap-2 text-xs text-zinc-500">
+                    <div class="flex items-center gap-2 text-xs text-ui-muted">
                         {{ __('Form') }}:
                         @foreach ($stats['form'] as $outcome)
                             <span class="{{ $formClasses[$outcome] }} flex size-5 items-center justify-center rounded text-[10px] font-bold text-white">{{ __($outcome) }}</span>
@@ -77,14 +77,14 @@
                 @endif
 
                 @if (!$team->user)
-                    <flux:text size="sm">{{ __('Bot: random tips.') }}</flux:text>
+                    <x-ui.text size="sm">{{ __('Bot: random tips.') }}</x-ui.text>
                 @endif
             </div>
 
             {{-- Statystyki premium --}}
             <div class="space-y-2">
                 <div class="flex items-center gap-2">
-                    <flux:heading size="sm">{{ __('Premium statistics') }}</flux:heading>
+                    <x-ui.heading size="sm">{{ __('Premium statistics') }}</x-ui.heading>
                     <x-premium-badge />
                 </div>
 
@@ -102,9 +102,9 @@
                     <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         @foreach ($extra as [$label, $value, $hint])
                             <div class="rounded-lg border border-purple-200 bg-purple-50/60 p-3 dark:border-purple-500/30 dark:bg-purple-500/10">
-                                <div class="text-xs text-zinc-500">{{ $label }}</div>
+                                <div class="text-xs text-ui-muted">{{ $label }}</div>
                                 <div class="text-lg font-semibold tabular-nums">{{ $value }}</div>
-                                <div class="text-xs text-zinc-500">{{ $hint }}</div>
+                                <div class="text-xs text-ui-muted">{{ $hint }}</div>
                             </div>
                         @endforeach
                     </div>
@@ -113,7 +113,7 @@
                         @php
                             $h2h = $card['h2h'];
                         @endphp
-                        <div class="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-700">
+                        <div class="rounded-lg border border-ui-line p-3 text-sm">
                             <div class="font-medium">
                                 @if (count($h2h['meetings']) === 0)
                                     {{ __('You have not met this team yet.') }}
@@ -125,7 +125,7 @@
                                 <div class="mt-1 flex items-center gap-2 text-xs">
                                     <span class="{{ $formClasses[$meeting['outcome']] }} flex size-5 items-center justify-center rounded text-[10px] font-bold text-white">{{ __($meeting['outcome']) }}</span>
                                     <span class="w-10 font-semibold tabular-nums">{{ $meeting['score'] }}</span>
-                                    <span class="text-zinc-500">{{ $meeting['season'] }} &middot; {{ $meeting['competition'] }} &middot; {{ __('Matchday :number', ['number' => $meeting['round']]) }}</span>
+                                    <span class="text-ui-muted">{{ $meeting['season'] }} &middot; {{ $meeting['competition'] }} &middot; {{ __('Matchday :number', ['number' => $meeting['round']]) }}</span>
                                 </div>
                             @endforeach
                         </div>
@@ -138,8 +138,8 @@
                             @endforeach
                         </div>
                         <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 p-4 text-center dark:bg-zinc-900/60">
-                            <flux:text size="sm">{{ __('Favourite tip, head to head and more with premium.') }}</flux:text>
-                            <flux:button size="sm" variant="primary" :href="route('support')" wire:navigate>{{ __('From 5 zł a week') }}</flux:button>
+                            <x-ui.text size="sm">{{ __('Favourite tip, head to head and more with premium.') }}</x-ui.text>
+                            <x-ui.btn size="sm" variant="primary" :href="route('support')" wire:navigate>{{ __('From 5 zł a week') }}</x-ui.btn>
                         </div>
                     </div>
                 @endif
@@ -147,12 +147,12 @@
 
             @if ($team->profileUrl())
                 <div class="flex justify-end">
-                    <flux:button size="sm" variant="ghost" icon-trailing="arrow-right" :href="$team->profileUrl()" wire:navigate>
+                    <x-ui.btn size="sm" variant="ghost" icon-trailing="arrow-right" :href="$team->profileUrl()" wire:navigate>
                         {{ __('Team profile') }}
-                    </flux:button>
+                    </x-ui.btn>
                 </div>
             @endif
         </div>
     @endif
-</flux:modal>
+</x-ui.sheet>
 

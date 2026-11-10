@@ -70,7 +70,7 @@ new #[Layout('layouts::public')] class extends Component {
             'amber' => ['bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300', 'border-l-amber-500'],
             'yellow' => ['bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300', 'border-l-yellow-500'],
             'red' => ['bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300', 'border-l-red-500'],
-            'zinc' => ['bg-zinc-100 text-zinc-700 dark:bg-zinc-500/15 dark:text-zinc-300', 'border-l-zinc-400'],
+            'zinc' => ['bg-zinc-100 text-ui-ink dark:bg-zinc-500/15', 'border-l-zinc-400'],
         ];
     @endphp
 
@@ -80,21 +80,21 @@ new #[Layout('layouts::public')] class extends Component {
     <div class="flex flex-wrap items-center gap-2">
         @foreach ($categories as $key => [$label, $icon, $color])
             <button type="button" wire:key="cat-{{ $key }}" @click="toggle('{{ $key }}')" @dblclick="only('{{ $key }}')"
-                :class="on('{{ $key }}') ? '{{ $tones[$color][0] }} ring-1 ring-black/5' : 'bg-white text-zinc-400 line-through ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-700'"
+                :class="on('{{ $key }}') ? '{{ $tones[$color][0] }} ring-1 ring-black/5' : 'bg-ui-surface text-zinc-400 line-through ring-1 ring-zinc-200 dark:ring-zinc-700'"
                 class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium shadow-xs transition">
-                <flux:icon :name="$icon" variant="micro" />
+                <x-ui.icon :name="$icon" variant="micro" />
                 {{ $label }}
                 <span class="tabular-nums text-xs opacity-70">{{ $this->counts[$key] ?? 0 }}</span>
             </button>
         @endforeach
-        <flux:button size="sm" variant="ghost" x-show="off.length > 0" x-cloak @click="showAll()">{{ __('Show all') }}</flux:button>
+        <x-ui.btn size="sm" variant="ghost" x-show="off.length > 0" x-cloak @click="showAll()">{{ __('Show all') }}</x-ui.btn>
     </div>
-    <flux:text size="sm" class="-mt-4">{{ __('Click a category to hide or show it, double-click to show only that one.') }}</flux:text>
+    <x-ui.text size="sm" class="-mt-4">{{ __('Click a category to hide or show it, double-click to show only that one.') }}</x-ui.text>
 
     @if ($this->events->isEmpty())
-        <flux:card>
-            <flux:text>{{ __('No system information yet.') }}</flux:text>
-        </flux:card>
+        <x-ui.card>
+            <x-ui.text>{{ __('No system information yet.') }}</x-ui.text>
+        </x-ui.card>
     @else
         <div class="grid gap-3 sm:grid-cols-2">
             @foreach ($this->events as $event)
@@ -104,22 +104,22 @@ new #[Layout('layouts::public')] class extends Component {
                     $url = $event->url();
                 @endphp
                 <article wire:key="ev-{{ $event->id }}" x-show="on('{{ $event->category }}')"
-                    class="{{ $tone[1] }} flex gap-3 rounded-xl border border-l-4 border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-700 dark:bg-zinc-900">
+                    class="{{ $tone[1] }} flex gap-3 rounded-xl border border-l-4 border-ui-line bg-ui-surface p-4 shadow-xs">
                     <span class="{{ $tone[0] }} flex size-9 shrink-0 items-center justify-center rounded-lg">
-                        <flux:icon :name="$icon" variant="mini" />
+                        <x-ui.icon :name="$icon" variant="mini" />
                     </span>
                     <div class="min-w-0 flex-1 space-y-1">
-                        <div class="flex items-center justify-between gap-2 text-xs text-zinc-500">
+                        <div class="flex items-center justify-between gap-2 text-xs text-ui-muted">
                             <span class="font-semibold uppercase tracking-wide">{{ $label }}</span>
                             <time datetime="{{ $event->created_at?->toIso8601String() }}" title="{{ $event->created_at?->format('d.m.Y H:i') }}">
                                 {{ $event->created_at?->diffForHumans() }}
                             </time>
                         </div>
-                        <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $event->text() }}</p>
+                        <p class="text-sm font-medium text-ui-ink">{{ $event->text() }}</p>
                         @if ($url)
-                            <a href="{{ $url }}" wire:navigate class="inline-flex items-center gap-1 text-xs font-semibold text-lech-700 hover:underline dark:text-lech-300">
+                            <a href="{{ $url }}" wire:navigate class="inline-flex items-center gap-1 text-xs font-semibold text-club hover:underline">
                                 {{ __('Show') }}
-                                <flux:icon.arrow-right variant="micro" />
+                                <x-ui.icon name="arrow-right" variant="micro" />
                             </a>
                         @endif
                     </div>
@@ -129,7 +129,7 @@ new #[Layout('layouts::public')] class extends Component {
 
         @if ($this->events->count() >= $limit)
             <div class="flex justify-center">
-                <flux:button wire:click="more" icon="arrow-down">{{ __('Load more') }}</flux:button>
+                <x-ui.btn wire:click="more" icon="arrow-down">{{ __('Load more') }}</x-ui.btn>
             </div>
         @endif
     @endif
