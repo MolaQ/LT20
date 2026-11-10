@@ -2026,5 +2026,8 @@
     "Write the news...": "Napisz newsa...",
     "Image for social media": "Obrazek na sociale",
     "Image for social media – premium option": "Obrazek na sociale – opcja premium",
-    "Could not create the image. Try again.": "Nie udało się zrobić obrazka. Spróbuj jeszcze raz."
+    "Could not create the image. Try again.": "Nie udało się zrobić obrazka. Spróbuj jeszcze raz.",
+    "Confirm your email address.": "Potwierdź adres e-mail.",
+    "Enter the 6-digit code from the email sent to :email. Until then you cannot tip.": "Wpisz 6-cyfrowy kod z maila wysłanego na :email. Do tego czasu nie możesz typować.",
+    "Your email address is confirmed. You can tip now.": "Adres e-mail potwierdzony. Możesz już typować."
 }

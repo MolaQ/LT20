@@ -19,6 +19,17 @@
         @endforeach
     </nav>
 
+    {{-- Niepotwierdzony e-mail: kod wpisuje się tutaj, bez wychodzenia ze strony. --}}
+    @if (auth()->user() && ! auth()->user()->hasVerifiedEmail())
+        <x-ui.card class="border border-amber-300 bg-amber-50/60 dark:border-amber-500/40 dark:bg-amber-500/10">
+            <livewire:pages::auth.verify-code compact :back="request()->url()" />
+        </x-ui.card>
+    @elseif (session('status') === 'email-verified')
+        <x-ui.card class="border border-green-300 bg-green-50/60 dark:border-green-500/40 dark:bg-green-500/10">
+            <x-ui.text class="font-semibold text-good">{{ __('Your email address is confirmed. You can tip now.') }}</x-ui.text>
+        </x-ui.card>
+    @endif
+
     <x-ui.card>
         <x-ui.heading size="lg">{{ $heading ?? '' }}</x-ui.heading>
         <x-ui.text class="mt-1">{{ $subheading ?? '' }}</x-ui.text>

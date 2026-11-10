@@ -18,12 +18,20 @@ test('email verification screen can be rendered', function () {
     $response->assertOk();
 });
 
-test('unverified users are redirected to the email verification prompt', function () {
+test('unverified users cannot tip and are redirected to the email verification prompt', function () {
     $user = User::factory()->unverified()->create();
 
-    $response = $this->actingAs($user)->get(route('appearance.edit'));
+    $response = $this->actingAs($user)->get(route('tips'));
 
     $response->assertRedirect(route('verification.notice'));
+});
+
+test('unverified users can open account settings with the code bar', function () {
+    $user = User::factory()->unverified()->create();
+
+    $this->actingAs($user)->get(route('security.edit'))
+        ->assertOk()
+        ->assertSee(__('Confirm your email address.'));
 });
 
 test('email can be verified', function () {

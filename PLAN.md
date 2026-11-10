@@ -25,7 +25,9 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 
 | Stan | Zadanie |
 |:----:|---------|
-| X | `settings/security` wyświetla się poza układem strony i panelu |
+| V | Ustawienia konta po samym zalogowaniu; niepotwierdzony e-mail potwierdza się kodem w pasku w ustawieniach (bez wypadania poza stronę) |
+| V | Strona „Potwierdź e-mail” w zwykłym układzie strony |
+| V | Bez potwierdzonego maila nie można typować (bez zmian, dodany test) |
 | X | `dashboard/office`: filtry jako klikalne przyciski |
 | X | Filtry jako przyciski zamiast list rozwijanych wszędzie, gdzie się da |
 
