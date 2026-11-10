@@ -329,7 +329,7 @@ new #[Layout('layouts::public')] class extends Component {
 
         {{-- Filtry --}}
         <div class="space-y-3 rounded-2xl border border-ui-line bg-ui-surface p-4">
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <div class="grid gap-3 sm:grid-cols-2">
                 <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable :placeholder="__('Search player or club (min. 2 letters)')" />
                 <x-ui.select wire:model.live="season">
                     <x-ui.select.option value="0">{{ __('All seasons') }}</x-ui.select.option>
@@ -337,16 +337,9 @@ new #[Layout('layouts::public')] class extends Component {
                         <x-ui.select.option :value="$s->id">{{ $s->title }}</x-ui.select.option>
                     @endforeach
                 </x-ui.select>
-                <x-ui.select wire:model.live="minGames">
-                    @foreach ([1, 3, 5, 10, 20] as $option)
-                        <x-ui.select.option :value="$option">{{ $option === 1 ? __('Any number of appearances') : __('At least :count appearances', ['count' => $option]) }}</x-ui.select.option>
-                    @endforeach
-                </x-ui.select>
-                <x-ui.select wire:model.live="perPage" class="lg:w-24">
-                    @foreach ([25, 50, 100] as $option)
-                        <x-ui.select.option :value="$option">{{ $option }}</x-ui.select.option>
-                    @endforeach
-                </x-ui.select>
+                <x-ui.filter-pills model="minGames" :value="$minGames" :label="__('Appearances')" class="sm:col-span-2"
+                    :options="[1 => __('Any'), 3 => __('min. :count', ['count' => 3]), 5 => __('min. :count', ['count' => 5]), 10 => __('min. :count', ['count' => 10]), 20 => __('min. :count', ['count' => 20])]" />
+                <x-ui.filter-pills model="perPage" :value="$perPage" :label="__('Per page')" class="sm:col-span-2" :options="[25 => 25, 50 => 50, 100 => 100]" />
             </div>
 
             <div class="flex flex-wrap items-center gap-3">

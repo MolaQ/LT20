@@ -52,6 +52,19 @@ new class extends Component {
         ];
     }
 
+    /** Liczba spraw każdego rodzaju w wybranym stanie ('' = wszystkie rodzaje). */
+    #[Computed]
+    public function typeCounts(): array
+    {
+        $counts = OfficeRequest::query()
+            ->when($this->status === 'pending', fn ($q) => $q->where('status', OfficeRequest::PENDING))
+            ->when($this->status === 'voting', fn ($q) => $q->where('status', OfficeRequest::VOTING))
+            ->when($this->status === 'done', fn ($q) => $q->whereNotIn('status', OfficeRequest::OPEN))
+            ->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type');
+
+        return ['' => (int) $counts->sum()] + array_map('intval', array_replace(array_fill_keys(OfficeRequest::TYPES, 0), $counts->all()));
+    }
+
     #[Computed]
     public function requests()
     {
@@ -97,7 +110,7 @@ new class extends Component {
 
         $this->dispatch('ui-sheet', name: 'office-decide', open: false);
         $this->reset('decideId', 'reply', 'botName');
-        unset($this->stats, $this->requests);
+        unset($this->stats, $this->typeCounts, $this->requests);
         $this->dispatch('ui-toast', variant: 'success', text: $this->accept ? __('Request accepted.') : __('Request rejected.'));
     }
 
@@ -124,21 +137,13 @@ new class extends Component {
             <x-ui.heading size="xl">{{ __('Complaints and requests office') }}</x-ui.heading>
             <x-ui.text>{{ __('Appeals go straight to you. Bot names come here after the players\' vote (:votes votes, at least :approval% for).', ['votes' => \App\Support\Office::VOTES_NEEDED, 'approval' => \App\Support\Office::APPROVAL]) }}</x-ui.text>
         </div>
-        <div class="w-full sm:w-64">
-        <x-ui.select wire:model.live="type">
-            @foreach ($typeLabels as $value => $label)
-                <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
-            @endforeach
-        </x-ui.select>
-        </div>
     </div>
 
-    <div class="flex flex-wrap gap-2">
-        @foreach (['pending' => __('Waiting for decision'), 'voting' => __('Players are voting'), 'done' => __('Decided')] as $value => $label)
-            <x-ui.btn size="sm" wire:click="$set('status', '{{ $value }}')" :variant="$status === $value ? 'primary' : 'outline'">
-                {{ $label }} ({{ $this->stats[$value] }})
-            </x-ui.btn>
-        @endforeach
+    {{-- Filtry jako przyciski: stan sprawy i rodzaj (liczby dla wybranego stanu). --}}
+    <div class="space-y-2">
+        <x-ui.filter-pills model="status" :value="$status" :label="__('Status')" :counts="$this->stats"
+            :options="['pending' => __('Waiting for decision'), 'voting' => __('Players are voting'), 'done' => __('Decided')]" />
+        <x-ui.filter-pills model="type" :value="$type" :label="__('Kind')" :counts="$this->typeCounts" :options="$typeLabels" />
     </div>
 
     <div class="space-y-3">

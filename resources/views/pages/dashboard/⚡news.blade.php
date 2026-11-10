@@ -200,41 +200,21 @@ new class extends Component {
         <x-ui.btn variant="primary" icon="plus" wire:click="openForm">{{ __('New news') }}</x-ui.btn>
     </div>
 
-    {{-- Filtry jako przyciski: status (z licznikami) i sortowanie; obok wyszukiwarka. --}}
-    @php
-        $pill = 'flex items-center gap-2 rounded-full border px-3 py-1 text-sm transition';
-        $pillOn = 'border-lech-600 bg-lech-50 text-club dark:bg-lech-950/50';
-        $pillOff = 'border-ui-line hover:border-zinc-300';
-        $sorts = [
-            'newest' => __('Newest first'),
-            'oldest' => __('Oldest first'),
-            'title' => __('Title A–Z'),
-            'popular' => __('Most thumbs up'),
-            'unpopular' => __('Most thumbs down'),
-        ];
-    @endphp
-    <div class="space-y-3">
+    {{-- Filtry jako przyciski: status (z licznikami) i sortowanie; nad nimi wyszukiwarka. --}}
+    <div class="space-y-2">
         <div class="w-full sm:w-80">
             <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search in title and content...')" />
         </div>
-
+        <x-ui.filter-pills model="statusFilter" :value="$statusFilter" :label="__('Status')" :counts="$this->counts"
+            :options="['' => __('All'), 'published' => __('Published'), 'draft' => __('Drafts')]" />
         <div class="flex flex-wrap items-center gap-2">
-            <span class="w-20 text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ __('Status') }}</span>
-            @foreach (['' => __('All'), 'published' => __('Published'), 'draft' => __('Drafts')] as $value => $label)
-                <button type="button" wire:click="$set('statusFilter', '{{ $value }}')" aria-pressed="{{ $statusFilter === $value ? 'true' : 'false' }}"
-                    class="{{ $pill }} {{ $statusFilter === $value ? $pillOn : $pillOff }}">
-                    <span>{{ $label }}</span>
-                    <span class="tabular-nums text-ui-muted">{{ $this->counts[$value] }}</span>
-                </button>
-            @endforeach
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-            <span class="w-20 text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ __('Sort') }}</span>
-            @foreach ($sorts as $value => $label)
-                <button type="button" wire:click="$set('sort', '{{ $value }}')" aria-pressed="{{ $sort === $value ? 'true' : 'false' }}"
-                    class="{{ $pill }} {{ $sort === $value ? $pillOn : $pillOff }}">{{ $label }}</button>
-            @endforeach
+            <x-ui.filter-pills model="sort" :value="$sort" :label="__('Sort')" :options="[
+                'newest' => __('Newest first'),
+                'oldest' => __('Oldest first'),
+                'title' => __('Title A–Z'),
+                'popular' => __('Most thumbs up'),
+                'unpopular' => __('Most thumbs down'),
+            ]" />
             @if ($search !== '' || $statusFilter !== '' || $sort !== 'newest')
                 <x-ui.btn size="sm" variant="ghost" icon="x-mark" wire:click="resetFilters">{{ __('Clear filters') }}</x-ui.btn>
             @endif

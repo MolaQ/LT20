@@ -28,8 +28,9 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Ustawienia konta po samym zalogowaniu; niepotwierdzony e-mail potwierdza się kodem w pasku w ustawieniach (bez wypadania poza stronę) |
 | V | Strona „Potwierdź e-mail” w zwykłym układzie strony |
 | V | Bez potwierdzonego maila nie można typować (bez zmian, dodany test) |
-| X | `dashboard/office`: filtry jako klikalne przyciski |
-| X | Filtry jako przyciski zamiast list rozwijanych wszędzie, gdzie się da |
+| V | `dashboard/office`: filtry stanu i rodzaju jako przyciski z licznikami |
+| V | Filtry jako przyciski (komponent `x-ui.filter-pills`): newsy, sezony, wpłaty, zmiany nazw, użytkownicy (role), kadra Lecha (pozycje), typy i wyniki w panelu (kolejki), Hall of Fame, Gwiazdy |
+| X | Wybór sezonu nadal jako lista rozwijana (sezonów przybywa); do decyzji, czy też na przyciski |
 
 ### Płatności (odłożone na później)
 

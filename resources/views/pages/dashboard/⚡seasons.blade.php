@@ -687,14 +687,8 @@ new class extends Component {
                 :placeholder="__('Search by number, slogan or sponsor...')" clearable />
         </div>
 
-        <div class="w-full sm:w-56">
-            <x-ui.select wire:model.live="status">
-                <x-ui.select.option value="">{{ __('All statuses') }}</x-ui.select.option>
-                @foreach (\App\Enums\SeasonStatus::cases() as $case)
-                    <x-ui.select.option :value="$case->value">{{ $case->label() }}</x-ui.select.option>
-                @endforeach
-            </x-ui.select>
-        </div>
+        <x-ui.filter-pills model="status" :value="$status" :label="__('Status')" class="w-full"
+            :options="['' => __('All statuses')] + collect(\App\Enums\SeasonStatus::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()" />
     </div>
 
     {{-- Tabela sezonów --}}
