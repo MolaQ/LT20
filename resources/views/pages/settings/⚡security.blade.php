@@ -6,11 +6,16 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts::public'), Title('Security settings')] class extends Component {
+new class extends Component {
+    use \App\Concerns\SettingsPage;
+
+    public function render(): \Illuminate\Contracts\View\View
+    {
+        return $this->settingsView('Security settings');
+    }
+
     use PasswordValidationRules;
 
     public string $current_password = '';
@@ -58,7 +63,7 @@ new #[Layout('layouts::public'), Title('Security settings')] class extends Compo
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <x-pages::settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
+    <x-pages::settings.layout :panel="$inPanel" :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
         <form method="POST" wire:submit="updatePassword" class="space-y-5">
             <x-ui.input wire:model="current_password" :label="__('Current password')" type="password" required autocomplete="current-password" viewable />
             <x-ui.input wire:model="password" :label="__('New password')" type="password" required autocomplete="new-password"

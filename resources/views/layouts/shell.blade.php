@@ -76,6 +76,7 @@
             @touchstart.passive="start($event)" @touchend="end($event)">
             <x-ui.toast />
             {{ $slot }}
+            <x-public.footer />
         </main>
 
         {{-- Komputer: kolumna z rywalami, newsami i premium (na telefonie jest w menu „Więcej”). --}}

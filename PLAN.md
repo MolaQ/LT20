@@ -27,6 +27,10 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 |:----:|---------|
 | V | Ustawienia konta po samym zalogowaniu; niepotwierdzony e-mail potwierdza się kodem w pasku w ustawieniach (bez wypadania poza stronę) |
 | V | Strona „Potwierdź e-mail” w zwykłym układzie strony |
+| V | Ustawienia z panelu admina zostają w układzie panelu (`/dashboard/settings/...`), ze strony w układzie strony |
+| V | Stopka na każdej stronie: teraz na stronie (zalogowani i goście), gracze, oddane typy, rozegrane kolejki, linki i Biuro skarg i wniosków |
+| V | Biuro skarg i wniosków przeniesione z dużego baneru na stronie głównej do stopki (zostaje też w menu „Więcej”) |
+| V | Klub użytkownika: oko z liczbą wyświetleń i niebieskie serduszko z liczbą polubień (migracja `team_likes`) |
 | V | Brakujące polskie tłumaczenia w ustawieniach i przy resecie hasła (Bezpieczeństwo, Wygląd, zmiana hasła, usuwanie konta) |
 | V | Bez potwierdzonego maila nie można typować (bez zmian, dodany test) |
 | V | `dashboard/office`: filtry stanu i rodzaju jako przyciski z licznikami |
@@ -54,7 +58,7 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 
 | Stan | Zadanie |
 |:----:|---------|
-| X | Statystyki odwiedzin: online, aktualnie na stronie, dzienne odwiedziny (jak w jokerpila.pl) |
+| X | Statystyki odwiedzin: dzienne odwiedziny i historia (online teraz już jest w stopce) |
 | X | Komunikacja między użytkownikami z możliwością wyłączenia |
 | X | Grupy użytkowników |
 | X | Zgłaszanie spamu |
