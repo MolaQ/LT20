@@ -1,5 +1,7 @@
 <?php
 
+use NotificationChannels\WebPush\PushSubscription;
+
 // Powiadomienia push (laravel-notification-channels/webpush). Klucze VAPID: php artisan webpush:vapid (zapisuje je w .env).
 // Bez kluczy powiadomienia są wyłączone (App\Support\Push::enabled), reszta serwisu działa normalnie.
 
@@ -12,7 +14,7 @@ return [
         'pem_file' => env('VAPID_PEM_FILE'),
     ],
 
-    'model' => \NotificationChannels\WebPush\PushSubscription::class,
+    'model' => PushSubscription::class,
 
     'table_name' => env('WEBPUSH_DB_TABLE', 'push_subscriptions'),
 
