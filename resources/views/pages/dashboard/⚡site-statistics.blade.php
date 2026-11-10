@@ -3,7 +3,7 @@
 use App\Models\PageView;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -70,13 +70,13 @@ new class extends Component {
         }
     }
 
-    private function since(): Carbon
+    private function since(): CarbonInterface
     {
         return now()->subDays($this->days - 1)->startOfDay();
     }
 
     /** @return Builder<PageView> */
-    private function views(?Carbon $from = null, ?Carbon $to = null): Builder
+    private function views(?CarbonInterface $from = null, ?CarbonInterface $to = null): Builder
     {
         return PageView::query()
             ->where('created_at', '>=', $from ?? $this->since())
@@ -84,7 +84,7 @@ new class extends Component {
     }
 
     /** @return array{views: int, visits: int, pages_per_visit: float, bounce: float} */
-    private function summary(Carbon $from, ?Carbon $to = null): array
+    private function summary(CarbonInterface $from, ?CarbonInterface $to = null): array
     {
         $totals = $this->views($from, $to)->selectRaw('COUNT(*) as views, COUNT(DISTINCT visitor_hash) as visits')->toBase()->first();
         $perVisit = $this->views($from, $to)->select('visitor_hash', DB::raw('COUNT(*) as pages'))->groupBy('visitor_hash')->toBase();
@@ -119,7 +119,7 @@ new class extends Component {
         ];
     }
 
-    /** Wizyty i odsłony dzień po dniu (dni bez wejść też, z zerami). @return array<int, array{date: Carbon, visits: int, views: int}> */
+    /** Wizyty i odsłony dzień po dniu (dni bez wejść też, z zerami). @return array<int, array{date: CarbonInterface, visits: int, views: int}> */
     #[Computed]
     public function daily(): array
     {
@@ -127,9 +127,10 @@ new class extends Component {
             ->groupBy('day')->toBase()->get()->keyBy('day');
 
         $out = [];
-        for ($date = $this->since()->copy(); $date->lte(today()); $date->addDay()) {
+        // Daty bywają niezmienne (CarbonImmutable), więc każdy dzień to nowy obiekt.
+        for ($date = $this->since()->startOfDay(); $date->lte(today()); $date = $date->addDay()) {
             $row = $rows[$date->toDateString()] ?? null;
-            $out[] = ['date' => $date->copy(), 'visits' => (int) ($row->visits ?? 0), 'views' => (int) ($row->views ?? 0)];
+            $out[] = ['date' => $date, 'visits' => (int) ($row->visits ?? 0), 'views' => (int) ($row->views ?? 0)];
         }
 
         return $out;
