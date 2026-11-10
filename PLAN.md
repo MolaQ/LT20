@@ -45,6 +45,8 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Status Inactive: 5 kolejek z rzędu bez typu (tylko kolejki z meczem gracza), sprawdzane przy zakończeniu sezonu |
 | V | Ważne premium chroni przed statusem Inactive (Admin też) |
 | V | Seria kolejek bez typu przechodzi na następny sezon (nowy sezon jej nie zeruje) |
+| V | Przywrócenie ze statusu Inactive (Biuro albo panel użytkowników) zeruje serię |
+| X | Ostrzeżenie po nieoddanym typie w formie graficznej – wybór wariantu |
 
 ### Płatności (odłożone na później)
 

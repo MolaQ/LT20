@@ -37,7 +37,8 @@ use Spatie\Permission\Models\Role;
  *     kwalifikacji do lig europejskich i Hall of Fame (punkty i trofea przyznaje AwardHallOfFame),
  *  2. gracze, którzy 5 kolejek z rzędu nie typowali, tracą rolę User i dostają rolę Inactive
  *     (regulamin, punkt 3); ich miejsca w niezakończonych sezonach przejmują boty. Seria przechodzi
- *     z poprzedniego sezonu (nowy sezon jej nie zeruje), a konta z ważnym premium (i Admin) roli nie dostają,
+ *     z poprzedniego sezonu (nowy sezon jej nie zeruje, zeruje ją przywrócenie gracza ze statusu Inactive),
+ *     a konta z ważnym premium (i Admin) roli nie dostają,
  *  3. zmienia status i zapisuje wpis w dzienniku.
  */
 class FinishSeason
@@ -230,13 +231,19 @@ class FinishSeason
             ->groupBy('user_id')
             ->map(fn ($scores) => $scores->pluck('matchday_id')->flip());
 
+        // Przywrócenie ze statusu Inactive zeruje serię: kolejki sprzed tej chwili się nie liczą.
+        $kickoffs = Matchday::whereIn('id', $all)->pluck('kickoff_at', 'id');
+        $resets = User::whereIn('id', $userIds)->whereNotNull('inactivity_reset_at')->pluck('inactivity_reset_at', 'id');
+        $counts = fn (int $userId, int $matchdayId): bool => isset($played[$userId][$matchdayId])
+            && ! (isset($resets[$userId], $kickoffs[$matchdayId]) && $kickoffs[$matchdayId] <= $resets[$userId]);
+
         $inactive = [];
 
         foreach ($userIds as $userId) {
             // Seria z końca poprzednich sezonów: kolejne kolejki bez typu, licząc od najnowszej.
             $streak = 0;
             foreach ($previous as $matchdayId) {
-                if (! isset($played[$userId][$matchdayId])) {
+                if (! $counts($userId, $matchdayId)) {
                     continue;
                 }
                 if (isset($tipped[$userId][$matchdayId])) {
@@ -247,7 +254,7 @@ class FinishSeason
 
             $best = $streak;
             foreach ($matchdays as $matchdayId) {
-                if (! isset($played[$userId][$matchdayId])) {
+                if (! $counts($userId, $matchdayId)) {
                     continue;
                 }
                 $streak = isset($tipped[$userId][$matchdayId]) ? 0 : $streak + 1;

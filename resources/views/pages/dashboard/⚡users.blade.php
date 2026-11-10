@@ -237,9 +237,15 @@ new class extends Component {
 
         $wasPlayer = \App\Support\Players::canPlay($user);
         $wasBanned = $user->hasRole(RoleName::Banned->value);
+        $wasInactive = $user->hasRole($inactive);
 
         $user->syncRoles($this->selected);
         $user->unsetRelation('roles');
+
+        // Przywrócony nieaktywny gracz zaczyna serię kolejek bez typu od zera.
+        if ($wasInactive && !$user->hasRole($inactive)) {
+            $user->forceFill(['inactivity_reset_at' => now()])->save();
+        }
 
         // Informacje systemowe: nowy gracz albo ban.
         if (!$wasPlayer && \App\Support\Players::canPlay($user)) {
