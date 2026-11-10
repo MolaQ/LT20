@@ -1,6 +1,9 @@
 // Wygląd 2.0: komponenty Alpine (Alpine przychodzi z Livewire) dla skorupy aplikacji.
 // Wszystkie animacje respektują prefers-reduced-motion.
 
+import './news-editor';
+import './share-image';
+
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Krótka wibracja przy dotknięciu (telefony, które ją obsługują).

@@ -2,10 +2,11 @@
     Panel w stylu strony (15.10.2026): biała karta z belką `lech-bar` (ikona, tytuł, podpis, slot „actions” po prawej).
     Wzór kart rozgrywek na /tips i tabel na /results. `flush` = treść bez wewnętrznego marginesu (tabele, listy).
     Użycie: <x-lech-panel :title="__('Records')" icon="trophy" :subtitle="...">...</x-lech-panel>
+    Przycisk „Obrazek na sociale” (x-share-image) jest w belce zawsze; :share="false" go wyłącza.
 --}}
-@props(['title', 'subtitle' => null, 'icon' => null, 'flush' => false])
+@props(['title', 'subtitle' => null, 'icon' => null, 'flush' => false, 'share' => true])
 
-<section {{ $attributes->class('overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm') }}>
+<section @if ($share) data-share-target @endif {{ $attributes->class('overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm') }}>
     <div class="lech-bar flex flex-wrap items-center gap-3 px-4 py-3">
         @if ($icon)
             <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-white/10 text-white">
@@ -20,6 +21,9 @@
         </div>
         @if (isset($actions) && $actions->isNotEmpty())
             <div class="flex shrink-0 items-center gap-2">{{ $actions }}</div>
+        @endif
+        @if ($share)
+            <x-share-image :title="$title" class="text-white" />
         @endif
     </div>
     <div @class(['p-4' => ! $flush])>

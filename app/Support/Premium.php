@@ -54,13 +54,17 @@ final class Premium
     }
 
     /**
-     * Czy konto ma premium: data ważności w przyszłości albo rola Premium nadana ręcznie w panelu bez daty
-     * (premium bezterminowe, np. dla admina).
+     * Czy konto ma premium: Admin zawsze, poza tym data ważności w przyszłości albo rola Premium nadana
+     * ręcznie w panelu bez daty (premium bezterminowe).
      */
     public static function isActive(?User $user, ?CarbonInterface $at = null): bool
     {
         if (! $user) {
             return false;
+        }
+
+        if ($user->hasRole(RoleName::Admin->value)) {
+            return true;
         }
 
         if ($user->premium_until !== null) {
