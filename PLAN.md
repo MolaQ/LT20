@@ -38,6 +38,14 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Filtry jako przyciski (komponent `x-ui.filter-pills`): newsy, sezony, wpłaty, zmiany nazw, użytkownicy (role), kadra Lecha (pozycje), typy i wyniki w panelu (kolejki), Hall of Fame, Gwiazdy |
 | X | Wybór sezonu nadal jako lista rozwijana (sezonów przybywa); do decyzji, czy też na przyciski |
 
+### Zasady gry
+
+| Stan | Zadanie |
+|:----:|---------|
+| V | Status Inactive: 5 kolejek z rzędu bez typu (tylko kolejki z meczem gracza), sprawdzane przy zakończeniu sezonu |
+| V | Ważne premium chroni przed statusem Inactive (Admin też) |
+| V | Seria kolejek bez typu przechodzi na następny sezon (nowy sezon jej nie zeruje) |
+
 ### Płatności (odłożone na później)
 
 | Stan | Zadanie |

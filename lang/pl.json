@@ -1370,7 +1370,6 @@
     "Status of :name: :status.": ":name: :status.",
     "The text must contain :placeholder.": "Treść musi zawierać :placeholder.",
     "e.g. Will :placeholder get a yellow card?": "np. Czy :placeholder dostanie żółtą kartkę?",
-    "5 matchdays in a row without a tip turn your team into a bot from the next season. Bots tip a random score from 0–3 : 0–3.": "5 kolejek z rzędu bez typu sprawia, że od następnego sezonu Twój zespół staje się botem. Boty typują losowy wynik od 0–3 : 0–3.",
     ":count bot name proposal waits for review|:count bot name proposals wait for review": ":count propozycja nazwy bota czeka na decyzję|:count propozycje nazw botów czekają na decyzję|:count propozycji nazw botów czeka na decyzję",
     ":matchday: enter the result": ":matchday: wpisz wynik",
     "Activate the season so players can tip.": "Aktywuj sezon, żeby gracze mogli typować.",
@@ -2138,5 +2137,6 @@
     ":count page view|:count page views": ":count odsłona|:count odsłony|:count odsłon",
     "No visits in this period yet.": "Brak wizyt w tym okresie.",
     "Hour of the day": "Godzina",
-    "Day of the week": "Dzień tygodnia"
+    "Day of the week": "Dzień tygodnia",
+    "5 matchdays in a row without a tip (only matchdays in which you had a match; the series carries over to the next season) turn your team into a bot from the next season. Accounts with valid premium are not affected. Bots tip a random score from 0–3 : 0–3.": "5 kolejek z rzędu bez typu (liczą się tylko kolejki, w których masz mecz; seria przechodzi na następny sezon) sprawia, że od następnego sezonu Twój zespół staje się botem. Nie dotyczy kont z ważnym premium. Boty typują losowy wynik od 0–3 : 0–3."
 }
