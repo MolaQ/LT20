@@ -262,7 +262,7 @@ new #[Layout('layouts::public')] class extends Component {
     $me = auth()->id();
     // Barwy pozycji (B/O/P/N): kolor kwadratu z numerem, jak w „Mojej kadrze”
     $posTone = [
-        'goalkeeper' => 'bg-amber-400 text-amber-950',
+        'goalkeeper' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200',
         'defender' => 'bg-sky-400 text-sky-950',
         'midfielder' => 'bg-emerald-400 text-emerald-950',
         'forward' => 'bg-rose-400 text-rose-950',
@@ -442,7 +442,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @endphp
                             <tr wire:key="star-{{ $row['user_id'] }}-{{ $row['player_id'] }}" class="{{ $mine ? 'bg-amber-50 dark:bg-amber-500/10' : ($rival ? 'bg-sky-50 dark:bg-sky-500/10' : '') }} transition hover:bg-lech-50/70 dark:hover:bg-white/5">
                                 <td class="ps-4 pe-2 py-2">
-                                    <span class="{{ $row['rank'] <= 3 ? 'bg-amber-400 text-amber-950' : 'bg-ui-raised text-ui-muted' }} grid size-7 place-items-center rounded-full text-[11px] font-black tabular-nums">{{ $row['rank'] }}</span>
+                                    <span class="{{ $row['rank'] <= 3 ? 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200' : 'bg-ui-raised text-ui-muted' }} grid size-7 place-items-center rounded-full text-[11px] font-black tabular-nums">{{ $row['rank'] }}</span>
                                 </td>
                                 <td class="px-1.5 py-2 text-center">
                                     <span class="{{ $posTone[$row['position']->value] }} mx-auto grid size-8 place-items-center rounded-lg text-xs font-black tabular-nums" title="{{ $row['position']->label() }}">{{ $row['number'] ?? '–' }}</span>

@@ -20,7 +20,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Te same ustawienia w panelu admina (link „Ustawienia” w menu bocznym panelu): układ panelu zamiast strony.
 Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess->value])
-    ->prefix('dashboard/settings')->name('dashboard.settings.')->group(function () {
+    ->prefix('panel/settings')->name('dashboard.settings.')->group(function () {
         Route::livewire('profile', 'pages::settings.profile')->name('profile');
         Route::livewire('security', 'pages::settings.security')->name('security');
         Route::livewire('notifications', 'pages::settings.notifications')->name('notifications');

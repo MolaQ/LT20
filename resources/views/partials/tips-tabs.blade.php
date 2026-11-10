@@ -14,7 +14,7 @@
             0 => 'border-red-300 bg-red-50 dark:border-red-500/40 dark:bg-red-500/10',
         ];
         // Forma w nagłówku: zielona W (wygrana), żółta R (remis), czerwona P (porażka).
-        $formClasses = ['W' => 'bg-green-500 text-white', 'D' => 'bg-yellow-400 text-yellow-950', 'L' => 'bg-red-600 text-white'];
+        $formClasses = ['W' => 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200', 'D' => 'bg-yellow-400 text-yellow-950', 'L' => 'bg-red-600 text-white'];
         $formLetters = ['W' => 'W', 'D' => 'R', 'L' => 'P'];
     @endphp
 
@@ -113,7 +113,7 @@
         $stats = $data['mine'];
         $extras = $this->myExtras;
         $trophyIcons = \App\Support\HallOfFame::iconUrls();
-        $formClasses = ['W' => 'bg-green-500 text-white', 'D' => 'bg-yellow-400 text-yellow-950', 'L' => 'bg-red-600 text-white'];
+        $formClasses = ['W' => 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200', 'D' => 'bg-yellow-400 text-yellow-950', 'L' => 'bg-red-600 text-white'];
         $formLetters = ['W' => 'W', 'D' => 'R', 'L' => 'P'];
     @endphp
 

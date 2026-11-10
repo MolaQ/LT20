@@ -62,7 +62,7 @@
                     style="{{ $colorStyle }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-end gap-2.5 px-3 pb-1.5 pt-2">
                         <x-share-image :title="__('Group').' '.$group" class="me-auto" />
-                        <h3 class="text-sm font-black uppercase tracking-[0.25em]">{{ __('Group') }}</h3>
+                        <h3 class="text-sm font-black uppercase tracking-wider">{{ __('Group') }}</h3>
                         <span class="comp-badge flex size-9 shrink-0 items-center justify-center rounded-full text-base font-black shadow">{{ $group }}</span>
                     </header>
 
@@ -104,7 +104,7 @@
 
                     {{-- Stopka: mecze grupy w wybranej kolejce, wynik w wyróżnionym kafelku na środku --}}
                     <footer class="space-y-1.5 px-2 pb-2 pt-2.5">
-                        <div class="comp-accent px-1 text-[11px] font-bold uppercase tracking-[0.2em]">{{ __('Matchday :number', ['number' => $round]) }}</div>
+                        <div class="comp-accent px-1 text-[11px] font-bold uppercase tracking-wider">{{ __('Matchday :number', ['number' => $round]) }}</div>
                         @forelse ($groupMatches->get($group, collect()) as $fixture)
                             @php
                                 $mine = $this->highlighted($fixture->home?->season_team_id) || $this->highlighted($fixture->away?->season_team_id);

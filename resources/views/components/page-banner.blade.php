@@ -9,7 +9,7 @@
     <div class="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div class="min-w-0 space-y-3">
             @if (filled($eyebrow))
-                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-lech-200">{{ $eyebrow }}</p>
+                <p class="text-sm font-semibold uppercase tracking-wider text-lech-200">{{ $eyebrow }}</p>
             @endif
             <h1 class="text-4xl font-black tracking-tight sm:text-5xl">{{ $title }}</h1>
             @if (filled($subtitle))

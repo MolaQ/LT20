@@ -6,7 +6,7 @@ use Illuminate\Contracts\View\View;
 
 /**
  * Ustawienia konta w dwóch miejscach: na stronie (/settings/..., układ strony) i w panelu admina
- * (/dashboard/settings/..., układ panelu, wejście z menu bocznego panelu). Układ i zakładki zależą od $inPanel,
+ * (/panel/settings/..., układ panelu, wejście z menu bocznego panelu). Układ i zakładki zależą od $inPanel,
  * ustawianego przy pierwszym wejściu (kolejne żądania Livewire nie mają już trasy strony).
  */
 trait SettingsPage

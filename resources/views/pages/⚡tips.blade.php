@@ -736,7 +736,7 @@ new #[Layout('layouts::public')] class extends Component {
                 <div class="border-t border-dashed border-ui-line pt-2 text-sm text-ui-muted">{{ __('No players fielded.') }}</div>
             @endforelse
             <span x-show="punched || {{ $this->tip && !$this->isOpen ? 'true' : 'false' }}" x-cloak
-                class="animate-ui-stamp pointer-events-none absolute bottom-14 end-4 rounded-lg border-[3px] border-good px-2.5 py-0.5 font-display text-xl font-extrabold tracking-[.12em] text-good">{{ __('PUNCHED') }}</span>
+                class="animate-ui-stamp pointer-events-none absolute bottom-14 end-4 rounded-lg border-[3px] border-good px-2.5 py-0.5 font-display text-xl font-extrabold tracking-wider text-good">{{ __('PUNCHED') }}</span>
         </section>
 
         @if ($this->isOpen && $this->tip)

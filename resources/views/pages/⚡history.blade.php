@@ -49,7 +49,7 @@ new #[Layout('layouts::public')] class extends Component {
         __('Cups') => ['cup', 'champions', 'europa', 'conference', 'legends'],
         __('Individual awards') => CompetitionHistory::AWARDS,
     ];
-    $medal = [1 => 'bg-amber-400 text-amber-950', 2 => 'bg-zinc-300 text-zinc-800', 3 => 'bg-orange-300 text-orange-950'];
+    $medal = [1 => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200', 2 => 'bg-zinc-300 text-zinc-800', 3 => 'bg-orange-300 text-orange-950'];
 @endphp
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <x-page-banner :eyebrow="__('History')" :title="__('History and records')"
@@ -82,7 +82,7 @@ new #[Layout('layouts::public')] class extends Component {
                 @endif
             </div>
             <div class="min-w-0">
-                <p class="comp-accent text-xs font-bold uppercase tracking-[0.2em]">{{ __('History and records') }}</p>
+                <p class="comp-accent text-xs font-bold uppercase tracking-wider">{{ __('History and records') }}</p>
                 <h2 class="text-3xl font-black uppercase tracking-tight sm:text-4xl">{{ $labels[$this->key] }}</h2>
                 <p class="text-sm opacity-80">{{ trans_choice(':count finished season|:count finished seasons', count($this->honours), ['count' => count($this->honours)]) }}</p>
             </div>

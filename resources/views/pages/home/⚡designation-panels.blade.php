@@ -304,7 +304,7 @@ new class extends Component {
                             @if ($open) wire:click="selectSet('{{ $setValue }}')" @endif
                             class="comp-banner {{ $isActive ? 'ring-2 ring-lech-600 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900' : '' }} {{ $open ? 'cursor-pointer' : '' }} min-w-0 rounded-2xl p-2.5">
                             <header class="relative z-10 flex items-center justify-between gap-2 px-0.5">
-                                <h2 class="min-w-0 text-xs font-black uppercase leading-tight tracking-[0.12em]">{{ $this->setNames[$setValue] ?? $set->scoreSetLabel() }}</h2>
+                                <h2 class="min-w-0 text-xs font-black uppercase leading-tight tracking-wider">{{ $this->setNames[$setValue] ?? $set->scoreSetLabel() }}</h2>
                                 <span class="comp-badge shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums">{{ $mine->count() }}/{{ $max }}</span>
                             </header>
 

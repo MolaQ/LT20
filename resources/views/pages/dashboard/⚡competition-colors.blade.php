@@ -108,7 +108,7 @@ new class extends Component {
                         @endif
                     </div>
                     <div class="relative z-10 min-w-0 flex-1">
-                        <div class="comp-accent text-[10px] font-bold uppercase tracking-[0.2em]">{{ $label }} – {{ __('Season') }}</div>
+                        <div class="comp-accent text-[10px] font-bold uppercase tracking-wider">{{ $label }} – {{ __('Season') }}</div>
                         <div class="truncate text-xl font-black">{{ $label }}</div>
                     </div>
                     <span class="comp-chip {{ $dashed }} relative z-10 rounded-full px-2 py-0.5 text-xs font-bold">{{ __('Winner') }}</span>

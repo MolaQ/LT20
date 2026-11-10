@@ -8,9 +8,9 @@
     // Pełne wypełnienie kafelka kolorem oceny.
     $toneClasses = [
         'blue' => 'bg-sky-400 text-white ring-sky-500 dark:bg-sky-500 dark:ring-sky-400',
-        'green' => 'bg-green-500 text-white ring-green-600 dark:bg-green-600 dark:ring-green-500',
-        'yellow' => 'bg-yellow-300 text-yellow-950 ring-yellow-400 dark:bg-yellow-400 dark:ring-yellow-300',
-        'red' => 'bg-red-500 text-white ring-red-600 dark:bg-red-600 dark:ring-red-500',
+        'green' => 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200 ring-green-600 dark:bg-green-600 dark:ring-green-500',
+        'yellow' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200 ring-yellow-400 dark:bg-yellow-400 dark:ring-yellow-300',
+        'red' => 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200 ring-red-600 dark:bg-red-600 dark:ring-red-500',
         'neutral' => 'bg-ui-surface text-ui-ink ring-zinc-300 dark:ring-zinc-600',
         'zinc' => 'bg-ui-line text-ui-muted ring-zinc-300 dark:text-zinc-300 dark:ring-zinc-600',
     ];

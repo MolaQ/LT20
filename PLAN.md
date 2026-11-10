@@ -25,9 +25,10 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 
 | Stan | Zadanie |
 |:----:|---------|
+| V | Adres panelu `/panel/...` zamiast `/dashboard/...` (stare linki przekierowują), nazwa „Panel” |
 | V | Ustawienia konta po samym zalogowaniu; niepotwierdzony e-mail potwierdza się kodem w pasku w ustawieniach (bez wypadania poza stronę) |
 | V | Strona „Potwierdź e-mail” w zwykłym układzie strony |
-| V | Ustawienia z panelu admina zostają w układzie panelu (`/dashboard/settings/...`), ze strony w układzie strony |
+| V | Ustawienia z panelu admina zostają w układzie panelu (`/panel/settings/...`), ze strony w układzie strony |
 | V | Stopka na każdej stronie: teraz na stronie (zalogowani i goście), gracze, oddane typy, rozegrane kolejki, linki i Biuro skarg i wniosków |
 | V | Biuro skarg i wniosków przeniesione z dużego baneru na stronie głównej do stopki (zostaje też w menu „Więcej”) |
 | V | Klub użytkownika: oko z liczbą wyświetleń i niebieskie serduszko z liczbą polubień (migracja `team_likes`) |
@@ -50,8 +51,9 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 
 | Stan | Zadanie |
 |:----:|---------|
-| X | Spokojniejsze czcionki bezszeryfowe (dziś Barlow Condensed, wersaliki, bardzo gruba waga) |
-| X | Całość pod dorosłych odbiorców (25–55 lat): stonowane kolory, mniej efektów |
+| V | Jedna spokojna czcionka bezszeryfowa Inter zamiast Barlow Condensed; najgrubsza waga 700 zamiast 900; mniejsze odstępy liter |
+| V | Menu bez wersalików; banery i belki w stonowanym niebieskim zamiast przejścia w czerń; jaskrawe plakietki (zielone, czerwone, żółte) w jasnych odcieniach |
+| X | Ocena po zmianach: co jeszcze jest za mocne (zrzuty ekranu) |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji) |
 
 ### Do zaplanowania i dyskusji
