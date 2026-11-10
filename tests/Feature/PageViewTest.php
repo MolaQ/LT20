@@ -1,7 +1,10 @@
 <?php
 
+use App\Enums\RoleName;
 use App\Models\PageView;
+use App\Models\User;
 use App\Support\SiteStats;
+use Spatie\Permission\Models\Role;
 
 // Odsłony stron do licznika w stopce: zapis zwykłych wejść, bez robotów i panelu, bez IP.
 
@@ -25,9 +28,9 @@ test('the counter shows at least the current visitor', function () {
 });
 
 test('the admin sees the visit statistics page', function () {
-    \Spatie\Permission\Models\Role::findOrCreate(\App\Enums\RoleName::Admin->value, 'web');
-    $admin = \App\Models\User::factory()->create();
-    $admin->assignRole(\App\Enums\RoleName::Admin->value);
+    Role::findOrCreate(RoleName::Admin->value, 'web');
+    $admin = User::factory()->create();
+    $admin->assignRole(RoleName::Admin->value);
     PageView::create(['path' => '/rules', 'route_name' => 'rules', 'visitor_hash' => str_repeat('a', 64), 'device' => 'mobile']);
 
     $this->actingAs($admin)->get(route('dashboard.site-statistics'))
@@ -36,5 +39,5 @@ test('the admin sees the visit statistics page', function () {
 });
 
 test('players cannot open the visit statistics', function () {
-    $this->actingAs(\App\Models\User::factory()->create())->get(route('dashboard.site-statistics'))->assertRedirect();
+    $this->actingAs(User::factory()->create())->get(route('dashboard.site-statistics'))->assertRedirect();
 });
