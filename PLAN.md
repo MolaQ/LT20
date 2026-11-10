@@ -46,7 +46,8 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Ważne premium chroni przed statusem Inactive (Admin też) |
 | V | Seria kolejek bez typu przechodzi na następny sezon (nowy sezon jej nie zeruje) |
 | V | Przywrócenie ze statusu Inactive (Biuro albo panel użytkowników) zeruje serię |
-| X | Ostrzeżenie po nieoddanym typie w formie graficznej – wybór wariantu |
+| V | Ostrzeżenie „kartki” po kolejkach bez typu (strona główna i typowanie): żółte kartki, od 4 „Ostatnia szansa”, premium widzi tarczę |
+| V | Push po rozliczeniu kolejki bez typu: od 3 kolejek ostrzeżenie zamiast zwykłego wyniku |
 
 ### Płatności (odłożone na później)
 

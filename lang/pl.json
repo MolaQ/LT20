@@ -587,7 +587,7 @@
     "Log in to tip": "Zaloguj się, aby typować",
     "Your tip: :score": "Twój typ: :score",
     "Change tip": "Zmień typ",
-    "Tip now": "Typuj",
+    "Tip now": "Typuj teraz",
     "Coming soon": "Wkrótce start",
     ":place. place": ":place. miejsce",
     ":points pts": ":points pkt",
@@ -2138,5 +2138,14 @@
     "No visits in this period yet.": "Brak wizyt w tym okresie.",
     "Hour of the day": "Godzina",
     "Day of the week": "Dzień tygodnia",
-    "5 matchdays in a row without a tip (only matchdays in which you had a match; the series carries over to the next season) turn your team into a bot from the next season. Accounts with valid premium are not affected. Bots tip a random score from 0–3 : 0–3.": "5 kolejek z rzędu bez typu (liczą się tylko kolejki, w których masz mecz; seria przechodzi na następny sezon) sprawia, że od następnego sezonu Twój zespół staje się botem. Nie dotyczy kont z ważnym premium. Boty typują losowy wynik od 0–3 : 0–3."
+    "5 matchdays in a row without a tip (only matchdays in which you had a match; the series carries over to the next season) turn your team into a bot from the next season. Accounts with valid premium are not affected. Bots tip a random score from 0–3 : 0–3.": "5 kolejek z rzędu bez typu (liczą się tylko kolejki, w których masz mecz; seria przechodzi na następny sezon) sprawia, że od następnego sezonu Twój zespół staje się botem. Nie dotyczy kont z ważnym premium. Boty typują losowy wynik od 0–3 : 0–3.",
+    "Premium protects your team": "Premium chroni Twój zespół",
+    ":count matchday without a tip – with valid premium your team will not become a bot.|:count matchdays without a tip – with valid premium your team will not become a bot.": ":count kolejka bez typu – z ważnym premium zespół nie stanie się botem.|:count kolejki bez typu – z ważnym premium zespół nie stanie się botem.|:count kolejek bez typu – z ważnym premium zespół nie stanie się botem.",
+    "Last chance!": "Ostatnia szansa!",
+    ":count matchday in a row without a tip. One more and from the next season a bot takes over your team.|:count matchdays in a row without a tip. One more and from the next season a bot takes over your team.": ":count kolejka z rzędu bez typu. Jeszcze jedna i od nowego sezonu Twój zespół przejmie bot.|:count kolejki z rzędu bez typu. Jeszcze jedna i od nowego sezonu Twój zespół przejmie bot.|:count kolejek z rzędu bez typu. Jeszcze jedna i od nowego sezonu Twój zespół przejmie bot.",
+    ":count matchday in a row without a tip|:count matchdays in a row without a tip": ":count kolejka z rzędu bez typu|:count kolejki z rzędu bez typu|:count kolejek z rzędu bez typu",
+    "One more and from the next season a bot takes over your team.|:count more and from the next season a bot takes over your team.": "Jeszcze jedna i od nowego sezonu Twój zespół przejmie bot.|Jeszcze :count i od nowego sezonu Twój zespół przejmie bot.|Jeszcze :count i od nowego sezonu Twój zespół przejmie bot.",
+    ":count matchdays without a tip": "Kolejki bez typu: :count",
+    "Last chance! One more matchday without a tip and from the next season a bot takes over your team.": "Ostatnia szansa! Jeszcze jedna kolejka bez typu i od nowego sezonu Twój zespół przejmie bot.",
+    ":left more and from the next season a bot takes over your team. Tip the next matchday!": "Jeszcze :left i od nowego sezonu Twój zespół przejmie bot. Wytypuj następną kolejkę!"
 }
