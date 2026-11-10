@@ -27,6 +27,7 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 |:----:|---------|
 | V | Ustawienia konta po samym zalogowaniu; niepotwierdzony e-mail potwierdza się kodem w pasku w ustawieniach (bez wypadania poza stronę) |
 | V | Strona „Potwierdź e-mail” w zwykłym układzie strony |
+| V | Brakujące polskie tłumaczenia w ustawieniach i przy resecie hasła (Bezpieczeństwo, Wygląd, zmiana hasła, usuwanie konta) |
 | V | Bez potwierdzonego maila nie można typować (bez zmian, dodany test) |
 | V | `dashboard/office`: filtry stanu i rodzaju jako przyciski z licznikami |
 | V | Filtry jako przyciski (komponent `x-ui.filter-pills`): newsy, sezony, wpłaty, zmiany nazw, użytkownicy (role), kadra Lecha (pozycje), typy i wyniki w panelu (kolejki), Hall of Fame, Gwiazdy |
