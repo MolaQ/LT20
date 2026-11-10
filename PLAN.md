@@ -68,6 +68,11 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | X | Kolejne kolory do panelu (ciemny motyw, przyciski, tabele) – w miarę potrzeb |
 | V | Powrót do granatu „Bułgarska nocą” na belkach i banerach (czcionka Inter zostaje) |
 | V | /tips: wybór typu rozgrywek i zawodnicy bez wersalików i grubej czcionki |
+| V | Stopka jak w jokerpila.pl: ciemny granat na całą szerokość, „Na skróty”, Biuro skarg i wniosków, „Projekt i wykonanie”, licznik odwiedzin (osoby teraz, goście dziś, wizyty, odsłony; co 15 s) |
+| V | Zapisywanie odsłon stron bez IP i ciasteczek (`page_views`, 400 dni, bez robotów, panelu i adminów) |
+| V | Klapki tablicy: osobne połówki, szczelina i zawiasy |
+| V | Dymek (toast) nad menu zamiast pod nim; błąd „Udostępnij” pokazuje przyczynę |
+| X | „Udostępnij” u Marcina pokazuje błąd – czekam na komunikat z konsoli (F12) |
 | X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
 | X | Nowoczesny i spójny wygląd panelu administratora |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji); kolory już są („Kolory strony”) |
@@ -78,7 +83,7 @@ Pytania z propozycjami: `DYSKUSJA.md`.
 
 | Stan | Zadanie |
 |:----:|---------|
-| X | Statystyki odwiedzin: dzienne odwiedziny i historia (online teraz już jest w stopce) |
+| X | Statystyki odwiedzin w panelu: wykresy dni i tygodni, popularne strony (licznik w stopce i zapis odsłon już są) |
 | X | Komunikacja między użytkownikami z możliwością wyłączenia |
 | X | Grupy użytkowników |
 | X | Zgłaszanie spamu |

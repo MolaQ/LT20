@@ -70,13 +70,14 @@
         </div>
     </header>
 
+    {{-- Dymek poza <main>: main ma view-transition-name (osobny kontekst warstw), więc dymek chował się pod nagłówkiem. --}}
+    <x-ui.toast />
+
     <div class="mx-auto flex max-w-6xl gap-6 px-3.5 lg:px-6">
-        <main class="flex min-w-0 flex-1 flex-col gap-3.5 pb-32 pt-1 lg:pb-12 lg:pt-6 [view-transition-name:ui-main]"
+        <main class="flex min-w-0 flex-1 flex-col gap-3.5 pb-6 pt-1 lg:pb-8 lg:pt-6 [view-transition-name:ui-main]"
             x-data="uiSwipeNav(@js($swipe->pluck('href')), @js($current === false ? -1 : $current))"
             @touchstart.passive="start($event)" @touchend="end($event)">
-            <x-ui.toast />
             {{ $slot }}
-            <x-public.footer />
         </main>
 
         {{-- Komputer: kolumna z rywalami, newsami i premium (na telefonie jest w menu „Więcej”). --}}
@@ -84,6 +85,9 @@
             <aside class="sticky top-20 hidden w-72 shrink-0 self-start pt-6 xl:block">{{ $aside }}</aside>
         @endif
     </div>
+
+    {{-- Stopka na całą szerokość, pod treścią i prawą kolumną. --}}
+    <x-public.footer />
 
     <div class="lg:hidden">
         <x-ui.bottom-nav :items="$items" />

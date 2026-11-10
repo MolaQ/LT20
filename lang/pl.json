@@ -2090,5 +2090,15 @@
     "Digits": "Cyfry",
     "Colors of the whole site and the panel. Changes show in the preview right away and on the site after saving.": "Kolory całej strony i panelu. Zmiany widać od razu w podglądzie, a na stronie po zapisaniu.",
     "Restore all defaults": "Przywróć wszystkie domyślne",
-    "Site colors changed": "Zmiana kolorów strony"
+    "Site colors changed": "Zmiana kolorów strony",
+    "person now|people now": "osoba teraz|osoby teraz|osób teraz",
+    "guest today|guests today": "gość dziś|gości dziś|gości dziś",
+    "visit|visits": "wizyta|wizyty|wizyt",
+    "page view|page views": "odsłona|odsłony|odsłon",
+    "People on the site in the last :minutes minutes": "Osoby na stronie w ostatnich :minutes minutach",
+    "Visitors today": "Goście dzisiaj",
+    "All visits (a visitor counts once a day)": "Wszystkie wizyty (odwiedzający liczony raz dziennie)",
+    "All page views": "Wszystkie odsłony strony",
+    "Shortcuts": "Na skróty",
+    "Design and development": "Projekt i wykonanie"
 }
