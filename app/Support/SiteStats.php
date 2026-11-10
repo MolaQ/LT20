@@ -2,61 +2,39 @@
 
 namespace App\Support;
 
-use App\Enums\MatchdayStatus;
-use App\Models\Matchday;
-use App\Models\Season;
-use App\Models\Tip;
+use App\Models\PageView;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
- * Statystyki w stopce strony. „Teraz na stronie” liczy aktywne sesje z ostatnich ONLINE_MINUTES minut
- * (tabela sessions, SESSION_DRIVER=database), z podziałem na zalogowanych i gości. Liczby gry (gracze, typy,
- * kolejki) są w cache na kilka minut, żeby stopka nie obciążała bazy przy każdym wejściu.
+ * Licznik odwiedzin w stopce (wzór z jokerpila.pl), z odsłon zapisanych przez TrackPageView:
+ * osoby na stronie w ostatnich ONLINE_MINUTES minutach, goście dziś, wszystkie wizyty (odwiedzający raz dziennie)
+ * i wszystkie odsłony. Liczby w cache na kilka sekund, wizyty rzadziej (cięższe zapytanie).
  */
 final class SiteStats
 {
     public const ONLINE_MINUTES = 5;
 
-    /** @return array{online: int, members: int, guests: int}|null null, gdy sesje nie są w bazie */
-    public static function online(): ?array
+    /** @return array{online: int, today: int, visits: int, total: int} */
+    public static function visits(): array
     {
-        if (config('session.driver') !== 'database') {
-            return null;
+        try {
+            $counts = Cache::remember('site-stats:visits', 10, fn () => [
+                'online' => PageView::where('created_at', '>=', now()->subMinutes(self::ONLINE_MINUTES))->distinct()->count('visitor_hash'),
+                'today' => PageView::where('created_at', '>=', today())->distinct()->count('visitor_hash'),
+                'total' => PageView::count(),
+            ]);
+            $visits = Cache::remember('site-stats:all-visits', 120, fn () => PageView::distinct()->count('visitor_hash'));
+        } catch (Throwable) {
+            return ['online' => 1, 'today' => 1, 'visits' => 1, 'total' => 0];
         }
 
-        return Cache::remember('site-stats:online', 60, function () {
-            try {
-                $table = config('session.table', 'sessions');
-                if (! Schema::hasTable($table)) {
-                    return null;
-                }
-                $active = DB::table($table)->where('last_activity', '>=', now()->subMinutes(self::ONLINE_MINUTES)->getTimestamp());
-                $members = (clone $active)->whereNotNull('user_id')->distinct()->count('user_id');
-                $guests = (clone $active)->whereNull('user_id')->count();
-
-                return ['online' => $members + $guests, 'members' => $members, 'guests' => $guests];
-            } catch (Throwable) {
-                return null;
-            }
-        });
-    }
-
-    /** @return array{players: int, tips: int, played: int, matchdays: int, season: ?string} */
-    public static function game(): array
-    {
-        return Cache::remember('site-stats:game', 600, function () {
-            $season = Season::current();
-
-            return [
-                'players' => Players::eligible()->count(),
-                'tips' => Tip::count(),
-                'played' => $season ? Matchday::where('season_id', $season->id)->where('status', MatchdayStatus::Played->value)->count() : 0,
-                'matchdays' => Matchday::PER_SEASON,
-                'season' => $season?->title,
-            ];
-        });
+        // Oglądający sam jest na stronie, choć jego wejście mogło się jeszcze nie zapisać.
+        return [
+            'online' => max(1, (int) $counts['online']),
+            'today' => max(1, (int) $counts['today']),
+            'visits' => max(1, (int) $visits),
+            'total' => (int) $counts['total'],
+        ];
     }
 }

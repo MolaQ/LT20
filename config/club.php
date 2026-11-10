@@ -28,6 +28,10 @@ return [
         'accent' => env('CLUB_COLOR_ACCENT', '#f0c45a'),
     ],
 
+    // Stopka: podpis autora strony („Projekt i wykonanie”) i link do niego; puste = bez podpisu.
+    'footer_author' => env('CLUB_FOOTER_AUTHOR', 'Marcin Molak'),
+    'footer_author_url' => env('CLUB_FOOTER_AUTHOR_URL'),
+
     // Języki serwisu. Pierwszy z listy jest domyślny dla gości bez pasującego języka przeglądarki.
     'locales' => ['pl' => 'Polski', 'en' => 'English'],
 ];

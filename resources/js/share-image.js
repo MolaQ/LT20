@@ -125,6 +125,8 @@ document.addEventListener('alpine:init', () => {
 
                 const options = {
                     pixelRatio: 2,
+                    // Obrazek, który się nie wczyta (np. z innej domeny), zamienia się w przezroczysty zamiast przerywać zdjęcie.
+                    imagePlaceholder: 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
                     backgroundColor: getComputedStyle(document.body).backgroundColor,
                     filter: (node) => !(node instanceof HTMLElement && node.hasAttribute('data-share-hide')),
                 };
@@ -142,8 +144,10 @@ document.addEventListener('alpine:init', () => {
 
                 showPreview(blob, new File([blob], slug(title) + '.png', { type: 'image/png' }), { ...labels, title });
             } catch (e) {
-                console.error(e);
-                toast(labels.error);
+                // Szczegóły błędu w konsoli (F12) i w dymku, żeby łatwiej było zgłosić problem.
+                console.error('share-image', e);
+                const reason = e instanceof Error ? e.message : e?.type ?? String(e);
+                toast(labels.error + (reason ? ' (' + reason + ')' : ''));
             } finally {
                 footer.remove();
                 target.classList.remove('is-sharing');

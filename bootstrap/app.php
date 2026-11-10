@@ -3,6 +3,7 @@
 use App\Enums\Permission;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SiteMaintenance;
+use App\Http\Middleware\TrackPageView;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Tryb konserwacji z panelu admina (App\Support\Maintenance): admini widzą stronę, reszta przerwę techniczną.
         // Język strony (konto, sesja, przeglądarka) ustawiamy przed resztą, żeby komunikaty były w dobrym języku.
         $middleware->web(append: [SetLocale::class, SiteMaintenance::class]);
+
+        // Odsłony stron publicznych do licznika w stopce (bez IP i ciasteczek).
+        $middleware->web(append: [TrackPageView::class]);
 
         $middleware->alias([
             'role' => RoleMiddleware::class,
