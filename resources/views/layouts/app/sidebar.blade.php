@@ -127,7 +127,7 @@
                 <a href="{{ route('home') }}" @class($link(false))>
                     <x-ui.icon name="globe-alt" class="size-5" />{{ __('Public site') }}
                 </a>
-                <a href="{{ route('profile.edit') }}" wire:navigate @class($link(false))>
+                <a href="{{ route('dashboard.settings.profile') }}" wire:navigate @class($link(request()->routeIs('dashboard.settings.*')))>
                     <x-ui.icon name="cog" class="size-5" />{{ __('Settings') }}
                 </a>
                 <div class="flex items-center gap-2.5 rounded-xl px-2.5 py-2">

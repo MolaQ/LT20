@@ -708,7 +708,7 @@ new #[Layout('layouts::public')] class extends Component {
                         @endif
                     </div>
                     <div class="min-w-0 space-y-1">
-                        <p class="comp-accent text-xs font-bold uppercase tracking-[0.2em]">
+                        <p class="comp-accent text-xs font-bold uppercase tracking-wider">
                             {{ $this->season->title }} – {{ $this->competition->type->stageLabel($round) }}
                             @if ($archived) · {{ __('Season archive') }} @endif
                         </p>
@@ -882,13 +882,14 @@ new #[Layout('layouts::public')] class extends Component {
                 @php
                     $tableStyle = \App\Support\CompetitionColors::style($colorKey);
                 @endphp
-                <section class="self-start overflow-hidden rounded-2xl p-1 shadow-md"
+                <section data-share-target class="self-start overflow-hidden rounded-2xl p-1 shadow-md"
                     style="{{ $tableStyle }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-between gap-2.5 px-3 pb-1.5 pt-2">
                         <div>
-                            <h3 class="text-sm font-black uppercase tracking-[0.25em]">{{ __('Table') }}</h3>
+                            <h3 class="text-sm font-black uppercase tracking-wider">{{ __('Table') }}</h3>
                             <p class="text-[11px] opacity-80">{{ __('After matchday :number', ['number' => max(1, $round)]) }}</p>
                         </div>
+                        <x-share-image :title="__('Table').' '.($this->competition->name ?: $this->competition->type->label()).' '.$this->season->title" class="ms-auto" />
                         <span class="comp-badge {{ $dashed }} flex size-9 shrink-0 items-center justify-center rounded-full shadow">
                             @if (isset($bannerIcons[$colorKey]))
                                 <img src="{{ $bannerIcons[$colorKey] }}" alt="" class="size-6 object-contain">
@@ -1161,12 +1162,15 @@ new #[Layout('layouts::public')] class extends Component {
                             </div>
                         </section>
                     @endif
-                    <x-ui.card class="space-y-3">
-                        <div class="flex flex-wrap items-baseline justify-between gap-2">
+                    <x-ui.card data-share-target class="space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
                             <x-ui.heading>{{ \App\Support\CupBracket::roundName($round) }}</x-ui.heading>
-                            <x-ui.text class="text-xs tabular-nums">
-                                {{ __(':played of :total matches played', ['played' => $this->cupPlayed, 'total' => $total]) }}
-                            </x-ui.text>
+                            <div class="flex items-center gap-2">
+                                <x-ui.text class="text-xs tabular-nums">
+                                    {{ __(':played of :total matches played', ['played' => $this->cupPlayed, 'total' => $total]) }}
+                                </x-ui.text>
+                                <x-share-image :title="\App\Support\CupBracket::roundName($round).' '.($this->competition->name ?: $this->competition->type->label())" class="text-ui-muted" />
+                            </div>
                         </div>
                         {{-- Pasek postępu rundy --}}
                         <div class="h-1.5 overflow-hidden rounded-full bg-ui-raised">
@@ -1224,13 +1228,16 @@ new #[Layout('layouts::public')] class extends Component {
             {{-- ============ Mecze kolejki (ligi, podwórkowa, Liga Legend) ============ --}}
             {{-- Karta w barwach rozgrywek jak stopka grupy pucharów europejskich: wynik w wyróżnionym kafelku na środku. --}}
             @if (!$this->isCup && !$this->isEuropean)
-                <section class="self-start space-y-1.5 overflow-hidden rounded-2xl p-2 shadow-md"
+                <section data-share-target class="self-start space-y-1.5 overflow-hidden rounded-2xl p-2 shadow-md"
                     style="{{ \App\Support\CompetitionColors::style($colorKey) }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-between gap-2 px-1 pb-1">
-                        <h3 class="text-sm font-black uppercase tracking-[0.25em]">{{ __('Matchday :number', ['number' => $round]) }}</h3>
-                        @if ($this->matches && $this->matches->total() > 0)
-                            <span class="comp-accent text-[11px] font-bold tabular-nums">{{ trans_choice(':count match|:count matches', $this->matches->total(), ['count' => $this->matches->total()]) }}</span>
-                        @endif
+                        <h3 class="text-sm font-black uppercase tracking-wider">{{ __('Matchday :number', ['number' => $round]) }}</h3>
+                        <div class="flex items-center gap-2">
+                            @if ($this->matches && $this->matches->total() > 0)
+                                <span class="comp-accent text-[11px] font-bold tabular-nums">{{ trans_choice(':count match|:count matches', $this->matches->total(), ['count' => $this->matches->total()]) }}</span>
+                            @endif
+                            <x-share-image :title="__('Matchday :number', ['number' => $round]).' '.($this->competition->name ?: $this->competition->type->label())" />
+                        </div>
                     </header>
 
                     @if ($this->matches && $this->matches->isNotEmpty())

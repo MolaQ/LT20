@@ -37,6 +37,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $verification_code_expires_at
  * @property string|null $locale
  * @property array<string, bool>|null $push_prefs
+ * @property int $profile_views
  */
 #[Fillable(['name', 'email', 'password', 'team_name', 'locale'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'verification_code'])]

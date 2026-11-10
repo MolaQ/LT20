@@ -238,12 +238,8 @@ new class extends Component {
         <div class="w-full sm:w-64">
             <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search player...')" />
         </div>
-        <x-ui.select wire:model.live="positionFilter" class="sm:max-w-48">
-            <x-ui.select.option value="">{{ __('All positions') }}</x-ui.select.option>
-            @foreach (\App\Enums\PlayerPosition::cases() as $case)
-                <x-ui.select.option :value="$case->value">{{ $case->label() }}</x-ui.select.option>
-            @endforeach
-        </x-ui.select>
+        <x-ui.filter-pills model="positionFilter" :value="$positionFilter" :label="__('Position')" class="w-full"
+            :options="['' => __('All positions')] + collect(\App\Enums\PlayerPosition::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()" />
     </div>
 
     @php

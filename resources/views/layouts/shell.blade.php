@@ -52,13 +52,13 @@
                 @foreach ($items as $item)
                     @if ($item['href'])
                         <a href="{{ $item['href'] }}" wire:navigate @class([
-                            'rounded-xl px-3 py-2 font-display text-[15px] font-bold uppercase tracking-wide',
+                            'rounded-xl px-3 py-2 text-[15px] font-semibold',
                             'bg-club text-club-ink' => $item['active'],
                             'text-ui-muted hover:bg-ui-raised hover:text-ui-ink' => ! $item['active'],
                         ]) @if ($item['active']) aria-current="page" @endif>{{ $item['label'] }}</a>
                     @else
                         <button type="button" @click="$dispatch('ui-sheet', { name: 'more' })"
-                            class="rounded-xl px-3 py-2 font-display text-[15px] font-bold uppercase tracking-wide text-ui-muted hover:bg-ui-raised hover:text-ui-ink">{{ $item['label'] }}</button>
+                            class="rounded-xl px-3 py-2 text-[15px] font-semibold text-ui-muted hover:bg-ui-raised hover:text-ui-ink">{{ $item['label'] }}</button>
                     @endif
                 @endforeach
             </nav>
@@ -76,6 +76,7 @@
             @touchstart.passive="start($event)" @touchend="end($event)">
             <x-ui.toast />
             {{ $slot }}
+            <x-public.footer />
         </main>
 
         {{-- Komputer: kolumna z rywalami, newsami i premium (na telefonie jest w menu „Więcej”). --}}

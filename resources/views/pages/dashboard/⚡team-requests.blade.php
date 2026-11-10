@@ -296,14 +296,8 @@ new class extends Component {
                 :placeholder="__('Search by user or team...')" clearable />
         </div>
 
-        <div class="w-full sm:w-56">
-            <x-ui.select wire:model.live="status">
-                <x-ui.select.option value="">{{ __('All statuses') }}</x-ui.select.option>
-                <x-ui.select.option value="pending">{{ __('Pending') }}</x-ui.select.option>
-                <x-ui.select.option value="approved">{{ __('Approved') }}</x-ui.select.option>
-                <x-ui.select.option value="rejected">{{ __('Rejected') }}</x-ui.select.option>
-            </x-ui.select>
-        </div>
+        <x-ui.filter-pills model="status" :value="$status" :label="__('Status')" class="w-full"
+            :options="['' => __('All statuses'), 'pending' => __('Pending'), 'approved' => __('Approved'), 'rejected' => __('Rejected')]" />
     </div>
 
     {{-- Tabela --}}

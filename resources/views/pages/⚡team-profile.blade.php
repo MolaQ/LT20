@@ -5,9 +5,11 @@ use App\Models\Competition;
 use App\Models\FinalStanding;
 use App\Models\HallOfFameAward;
 use App\Models\Season;
+use App\Models\TeamLike;
 use App\Models\User;
 use App\Support\HallOfFame;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -15,6 +17,7 @@ use Livewire\Component;
 /**
  * Strona zespołu (etap 14): punkty Hall of Fame i miejsce w rankingu wszech czasów, gablota z trofeami
  * oraz historia zakończonych sezonów (miejsca w rozgrywkach i zdobyte punkty).
+ * W banerze licznik wyświetleń (oko, raz na sesję odwiedzającego, bez właściciela) i polubienia (niebieskie serduszko).
  */
 new #[Layout('layouts::public')] class extends Component {
     public User $user;
@@ -22,6 +25,46 @@ new #[Layout('layouts::public')] class extends Component {
     public function mount(User $user): void
     {
         $this->user = $user;
+        $this->countView();
+    }
+
+    /** Wyświetlenie klubu: raz na sesję odwiedzającego; wejścia właściciela się nie liczą. */
+    private function countView(): void
+    {
+        $key = 'team-viewed.'.$this->user->id;
+        if (auth()->id() === $this->user->id || session()->has($key)) {
+            return;
+        }
+
+        session()->put($key, true);
+        // Bez zmiany updated_at użytkownika.
+        DB::table('users')->where('id', $this->user->id)->increment('profile_views');
+        $this->user->profile_views++;
+    }
+
+    #[Computed]
+    public function likes(): int
+    {
+        return TeamLike::where('user_id', $this->user->id)->count();
+    }
+
+    #[Computed]
+    public function likedByMe(): bool
+    {
+        return auth()->check() && TeamLike::where('user_id', $this->user->id)->where('liker_id', auth()->id())->exists();
+    }
+
+    /** Serduszko: polubienie albo jego cofnięcie (zalogowani, nie swój klub). */
+    public function toggleLike(): void
+    {
+        abort_unless(auth()->check() && auth()->id() !== $this->user->id, 403);
+
+        $deleted = TeamLike::where('user_id', $this->user->id)->where('liker_id', auth()->id())->delete();
+        if (! $deleted) {
+            TeamLike::create(['user_id' => $this->user->id, 'liker_id' => auth()->id()]);
+        }
+
+        unset($this->likes, $this->likedByMe);
     }
 
     public function render(): View
@@ -176,6 +219,31 @@ new #[Layout('layouts::public')] class extends Component {
         <a href="{{ route('hall-of-fame') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-lech-100 hover:text-white hover:underline">
             <x-ui.icon name="arrow-left" variant="micro" /> {{ __('Full ranking') }}
         </a>
+
+        {{-- Wyświetlenia i polubienia klubu. --}}
+        @php
+            $canLike = auth()->check() && auth()->id() !== $user->id;
+        @endphp
+        <div class="flex items-center gap-4 text-sm font-semibold">
+            <span class="inline-flex items-center gap-1.5 text-lech-100" title="{{ __('Views') }}">
+                <x-ui.icon name="eye" variant="mini" class="size-5" />
+                <span class="tabular-nums">{{ number_format($user->profile_views, 0, ',', ' ') }}</span>
+                <span class="sr-only">{{ __('Views') }}</span>
+            </span>
+            @if ($canLike)
+                <button type="button" wire:click="toggleLike" aria-pressed="{{ $this->likedByMe ? 'true' : 'false' }}"
+                    title="{{ $this->likedByMe ? __('Unlike') : __('Like this club') }}"
+                    class="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-sky-300 transition hover:scale-105 hover:bg-white/10">
+                    <x-ui.icon name="heart" :variant="$this->likedByMe ? 'solid' : 'outline'" class="size-5" />
+                    <span class="tabular-nums">{{ $this->likes }}</span>
+                </button>
+            @else
+                <span class="inline-flex items-center gap-1.5 text-sky-300" title="{{ auth()->check() ? __('Likes') : __('Log in to like') }}">
+                    <x-ui.icon name="heart" variant="solid" class="size-5" />
+                    <span class="tabular-nums">{{ $this->likes }}</span>
+                </span>
+            @endif
+        </div>
 
         <x-slot:aside>
             <div class="flex flex-wrap gap-6 rounded-xl bg-white/10 px-5 py-3">

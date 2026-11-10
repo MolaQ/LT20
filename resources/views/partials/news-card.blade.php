@@ -11,9 +11,9 @@
     $upClass = $mine === 1 ? 'border-green-500 bg-green-600 text-white' : $white;
     $downClass = $mine === -1 ? 'border-red-500 bg-red-600 text-white' : $white;
 @endphp
-<article id="news-{{ $news->id }}" wire:key="news-card-{{ $news->id }}"
+<article id="news-{{ $news->id }}" wire:key="news-card-{{ $news->id }}" data-share-target
     class="lech-bar-shadow flex scroll-mt-20 flex-col overflow-hidden rounded-2xl border border-lech-950/20 bg-ui-surface dark:border-lech-900">
-    <header class="lech-bar px-5 py-3">
+    <header class="lech-bar flex items-start justify-between gap-3 px-5 py-3">
         @if ($full)
             <h1 class="text-xl font-bold leading-snug">{{ $news->title }}</h1>
         @else
@@ -21,12 +21,14 @@
                 <a href="{{ route('news.show', $news) }}" wire:navigate class="text-white decoration-lech-300 underline-offset-4 hover:text-lech-200 hover:underline">{{ $news->title }}</a>
             </h3>
         @endif
+        <x-share-image :title="$news->title" class="text-white" />
     </header>
 
-    <div class="{{ $full ? '' : 'line-clamp-5' }} flex-1 whitespace-pre-line px-5 py-4 text-sm text-ui-ink">{{ $news->body }}</div>
+    {{-- Treść z edytora po białej liście (NewsHtml); w skrócie na liście bez obrazków. --}}
+    <div class="news-content {{ $full ? '' : 'line-clamp-5 [&_img]:hidden' }} flex-1 px-5 py-4 text-sm text-ui-ink">{!! \App\Support\NewsHtml::render($news->body) !!}</div>
 
     @if (!$full)
-        <div class="px-5 pb-3">
+        <div class="px-5 pb-3" data-share-hide>
             <a href="{{ route('news.show', $news) }}" wire:navigate class="text-xs font-semibold text-club hover:underline">{{ __('Read more') }}</a>
         </div>
     @endif
@@ -40,7 +42,7 @@
             <time datetime="{{ $news->published_at->toIso8601String() }}">{{ $news->published_at->format('d.m.Y H:i') }}</time>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2" data-share-hide>
             @if ($mine !== 0)
                 <span class="tabular-nums text-lech-100">
                     <span class="font-semibold text-green-400">{{ $news->up_count }}</span> {{ __('up') }},

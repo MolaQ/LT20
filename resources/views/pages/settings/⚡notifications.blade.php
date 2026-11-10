@@ -3,15 +3,20 @@
 use App\Notifications\PushMessage;
 use App\Support\Push;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
 /**
  * Powiadomienia push na telefon: włączenie w tej przeglądarce (subskrypcja z service workera) i wybór rodzajów
  * (users.push_prefs). Wysyłka: App\Support\Push.
  */
-new #[Layout('layouts::public'), Title('Notification settings')] class extends Component {
+new class extends Component {
+    use \App\Concerns\SettingsPage;
+
+    public function render(): \Illuminate\Contracts\View\View
+    {
+        return $this->settingsView('Notification settings');
+    }
+
     /** @var array<string, bool> */
     public array $prefs = [];
 
@@ -78,7 +83,7 @@ new #[Layout('layouts::public'), Title('Notification settings')] class extends C
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <x-pages::settings.layout :heading="__('Notifications')" :subheading="__('Push notifications on your phone or computer.')">
+    <x-pages::settings.layout :panel="$inPanel" :heading="__('Notifications')" :subheading="__('Push notifications on your phone or computer.')">
         @if (! \App\Support\Push::enabled())
             <x-ui.callout icon="information-circle">{{ __('Notifications are not configured on this server yet.') }}</x-ui.callout>
         @else

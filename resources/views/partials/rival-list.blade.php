@@ -14,7 +14,7 @@
     $podium = array_slice($rivals, 0, 3);
     $rest = count($rivals) > 3 ? $rivals : [];
     $medal = [
-        0 => ['ring' => 'ring-amber-400', 'badge' => 'bg-amber-400 text-amber-950', 'order' => 'sm:order-2 sm:-translate-y-3'],
+        0 => ['ring' => 'ring-amber-400', 'badge' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200', 'order' => 'sm:order-2 sm:-translate-y-3'],
         1 => ['ring' => 'ring-zinc-300', 'badge' => 'bg-zinc-300 text-zinc-800', 'order' => 'sm:order-1'],
         2 => ['ring' => 'ring-orange-300', 'badge' => 'bg-orange-300 text-orange-950', 'order' => 'sm:order-3'],
     ];

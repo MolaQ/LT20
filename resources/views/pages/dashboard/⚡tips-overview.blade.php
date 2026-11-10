@@ -157,15 +157,8 @@ new class extends Component {
             @endif
 
             @if ($this->matchdays->isNotEmpty())
-                <div class="w-full sm:w-64">
-                    <x-ui.select wire:model.live="number" :label="__('Matchday')">
-                        @foreach ($this->matchdays as $option)
-                            <x-ui.select.option :value="$option->number">
-                                {{ $option->number }}. {{ filled($option->opponent) ? $option->fixture : __('not set yet') }}
-                            </x-ui.select.option>
-                        @endforeach
-                    </x-ui.select>
-                </div>
+                <x-ui.filter-pills model="number" :value="$number" :label="__('Matchday')" class="w-full"
+                    :options="$this->matchdays->mapWithKeys(fn ($o) => [$o->number => $o->number.'. '.(filled($o->opponent) ? $o->opponent : '–')])->all()" />
             @endif
 
             <div class="w-full sm:w-44">

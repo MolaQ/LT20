@@ -11,16 +11,10 @@ export default defineConfig({
                 'resources/js/app.js',
             ],
             refresh: true,
+            // Jedna spokojna czcionka bezszeryfowa (Inter) do tekstu, nagłówków i liczb; pliki z naszego serwera.
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
-                }),
-                // Wygląd 2.0: Barlow do tekstu i Barlow Condensed do liczb i nagłówków (pliki serwowane z naszego serwera).
-                bunny('Barlow', {
+                bunny('Inter', {
                     weights: [400, 500, 600, 700],
-                }),
-                bunny('Barlow Condensed', {
-                    weights: [600, 700, 800],
                 }),
             ],
         }),

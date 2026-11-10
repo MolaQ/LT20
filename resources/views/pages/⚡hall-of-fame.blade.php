@@ -196,7 +196,7 @@ new #[Layout('layouts::public')] class extends Component {
     $me = auth()->id();
     $podium = $this->ranking->take(3)->values();
     $medal = [
-        1 => ['ring' => 'ring-amber-400', 'badge' => 'bg-amber-400 text-amber-950', 'order' => 'sm:order-2 sm:-translate-y-3'],
+        1 => ['ring' => 'ring-amber-400', 'badge' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200', 'order' => 'sm:order-2 sm:-translate-y-3'],
         2 => ['ring' => 'ring-zinc-300', 'badge' => 'bg-zinc-300 text-zinc-800', 'order' => 'sm:order-1'],
         3 => ['ring' => 'ring-orange-300', 'badge' => 'bg-orange-300 text-orange-950', 'order' => 'sm:order-3'],
     ];
@@ -280,7 +280,7 @@ new #[Layout('layouts::public')] class extends Component {
         @endunless
 
         {{-- Filtry --}}
-        <div class="grid gap-3 rounded-2xl border border-ui-line bg-ui-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto]">
+        <div class="grid gap-3 rounded-2xl border border-ui-line bg-ui-surface p-4 sm:grid-cols-2">
             <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable :placeholder="__('Search team (min. 2 letters)')" />
             <x-ui.select wire:model.live="trophy">
                 <x-ui.select.option value="">{{ __('All teams') }}</x-ui.select.option>
@@ -289,18 +289,11 @@ new #[Layout('layouts::public')] class extends Component {
                     <x-ui.select.option :value="$key">{{ $label }}</x-ui.select.option>
                 @endforeach
             </x-ui.select>
-            <x-ui.select wire:model.live="sort">
-                <x-ui.select.option value="points">{{ __('Sort: points') }}</x-ui.select.option>
-                <x-ui.select.option value="trophies">{{ __('Sort: trophies') }}</x-ui.select.option>
-                <x-ui.select.option value="seasons">{{ __('Sort: seasons') }}</x-ui.select.option>
-            </x-ui.select>
-            <x-ui.select wire:model.live="perPage" class="lg:w-24">
-                @foreach ([25, 50, 100] as $option)
-                    <x-ui.select.option :value="$option">{{ $option }}</x-ui.select.option>
-                @endforeach
-            </x-ui.select>
+            <x-ui.filter-pills model="sort" :value="$sort" :label="__('Sort')" class="sm:col-span-2"
+                :options="['points' => __('Points'), 'trophies' => __('Trophies'), 'seasons' => __('Seasons')]" />
+            <x-ui.filter-pills model="perPage" :value="$perPage" :label="__('Per page')" class="sm:col-span-2" :options="[25 => 25, 50 => 50, 100 => 100]" />
             @if ($this->isFiltered())
-                <div class="flex items-center justify-between gap-2 text-sm sm:col-span-2 lg:col-span-4">
+                <div class="flex items-center justify-between gap-2 text-sm sm:col-span-2">
                     <span class="text-ui-muted">{{ trans_choice(':count team found|:count teams found', $this->filtered->count(), ['count' => $this->filtered->count()]) }}</span>
                     <x-ui.btn size="xs" variant="ghost" icon="x-mark" wire:click="clearFilters">{{ __('Clear filters') }}</x-ui.btn>
                 </div>

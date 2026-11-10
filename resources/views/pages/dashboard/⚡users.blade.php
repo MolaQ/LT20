@@ -365,16 +365,8 @@ new class extends Component {
                 :placeholder="__('Search by name, email or team...')" clearable />
         </div>
 
-        <div class="w-full sm:w-56">
-            <x-ui.select wire:model.live="roleFilter">
-                <x-ui.select.option value="">{{ __('All roles') }}</x-ui.select.option>
-                <x-ui.select.option value="__none">{{ __('Without a role') }}</x-ui.select.option>
-                <x-ui.select.option value="__unverified">{{ __('Email not confirmed') }}</x-ui.select.option>
-                @foreach ($this->roles as $role)
-                    <x-ui.select.option :value="$role->name">{{ $role->name }}</x-ui.select.option>
-                @endforeach
-            </x-ui.select>
-        </div>
+        <x-ui.filter-pills model="roleFilter" :value="$roleFilter" :label="__('Role')" class="w-full"
+            :options="['' => __('All roles'), '__none' => __('Without a role'), '__unverified' => __('Email not confirmed')] + $this->roles->pluck('name', 'name')->all()" />
     </div>
 
     {{-- Akcje zbiorcze: zdjęcie bana i statusu Inactive z zaznaczonych kont --}}

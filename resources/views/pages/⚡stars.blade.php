@@ -262,7 +262,7 @@ new #[Layout('layouts::public')] class extends Component {
     $me = auth()->id();
     // Barwy pozycji (B/O/P/N): kolor kwadratu z numerem, jak w „Mojej kadrze”
     $posTone = [
-        'goalkeeper' => 'bg-amber-400 text-amber-950',
+        'goalkeeper' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200',
         'defender' => 'bg-sky-400 text-sky-950',
         'midfielder' => 'bg-emerald-400 text-emerald-950',
         'forward' => 'bg-rose-400 text-rose-950',
@@ -329,7 +329,7 @@ new #[Layout('layouts::public')] class extends Component {
 
         {{-- Filtry --}}
         <div class="space-y-3 rounded-2xl border border-ui-line bg-ui-surface p-4">
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <div class="grid gap-3 sm:grid-cols-2">
                 <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable :placeholder="__('Search player or club (min. 2 letters)')" />
                 <x-ui.select wire:model.live="season">
                     <x-ui.select.option value="0">{{ __('All seasons') }}</x-ui.select.option>
@@ -337,16 +337,9 @@ new #[Layout('layouts::public')] class extends Component {
                         <x-ui.select.option :value="$s->id">{{ $s->title }}</x-ui.select.option>
                     @endforeach
                 </x-ui.select>
-                <x-ui.select wire:model.live="minGames">
-                    @foreach ([1, 3, 5, 10, 20] as $option)
-                        <x-ui.select.option :value="$option">{{ $option === 1 ? __('Any number of appearances') : __('At least :count appearances', ['count' => $option]) }}</x-ui.select.option>
-                    @endforeach
-                </x-ui.select>
-                <x-ui.select wire:model.live="perPage" class="lg:w-24">
-                    @foreach ([25, 50, 100] as $option)
-                        <x-ui.select.option :value="$option">{{ $option }}</x-ui.select.option>
-                    @endforeach
-                </x-ui.select>
+                <x-ui.filter-pills model="minGames" :value="$minGames" :label="__('Appearances')" class="sm:col-span-2"
+                    :options="[1 => __('Any'), 3 => __('min. :count', ['count' => 3]), 5 => __('min. :count', ['count' => 5]), 10 => __('min. :count', ['count' => 10]), 20 => __('min. :count', ['count' => 20])]" />
+                <x-ui.filter-pills model="perPage" :value="$perPage" :label="__('Per page')" class="sm:col-span-2" :options="[25 => 25, 50 => 50, 100 => 100]" />
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
@@ -449,7 +442,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @endphp
                             <tr wire:key="star-{{ $row['user_id'] }}-{{ $row['player_id'] }}" class="{{ $mine ? 'bg-amber-50 dark:bg-amber-500/10' : ($rival ? 'bg-sky-50 dark:bg-sky-500/10' : '') }} transition hover:bg-lech-50/70 dark:hover:bg-white/5">
                                 <td class="ps-4 pe-2 py-2">
-                                    <span class="{{ $row['rank'] <= 3 ? 'bg-amber-400 text-amber-950' : 'bg-ui-raised text-ui-muted' }} grid size-7 place-items-center rounded-full text-[11px] font-black tabular-nums">{{ $row['rank'] }}</span>
+                                    <span class="{{ $row['rank'] <= 3 ? 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200' : 'bg-ui-raised text-ui-muted' }} grid size-7 place-items-center rounded-full text-[11px] font-black tabular-nums">{{ $row['rank'] }}</span>
                                 </td>
                                 <td class="px-1.5 py-2 text-center">
                                     <span class="{{ $posTone[$row['position']->value] }} mx-auto grid size-8 place-items-center rounded-lg text-xs font-black tabular-nums" title="{{ $row['position']->label() }}">{{ $row['number'] ?? '–' }}</span>

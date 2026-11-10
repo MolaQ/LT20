@@ -5,13 +5,17 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-new #[Layout('layouts::public'), Title('Profile settings')]
-    class extends Component {
+new class extends Component {
+    use \App\Concerns\SettingsPage;
+
+    public function render(): \Illuminate\Contracts\View\View
+    {
+        return $this->settingsView('Profile settings');
+    }
+
     use ProfileValidationRules;
 
     public string $name = '';
@@ -86,7 +90,7 @@ new #[Layout('layouts::public'), Title('Profile settings')]
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your account details and your team')">
+    <x-pages::settings.layout :panel="$inPanel" :heading="__('Profile')" :subheading="__('Update your account details and your team')">
         {{-- Zakładki --}}
         <x-ui.segmented wire:model.live="tab" class="mb-5" :options="['account' => __('Account'), 'team' => __('Team')]" />
 

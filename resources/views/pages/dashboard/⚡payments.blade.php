@@ -304,14 +304,8 @@ new class extends Component {
                     <x-ui.input wire:model.live.debounce.300ms="search" icon="magnifying-glass" clearable
                         :placeholder="__('Search by player...')" />
                 </div>
-                <div class="w-full sm:w-44">
-                    <x-ui.select wire:model.live="status">
-                        <x-ui.select.option value="">{{ __('All statuses') }}</x-ui.select.option>
-                        <x-ui.select.option value="paid">{{ __('Paid') }}</x-ui.select.option>
-                        <x-ui.select.option value="pending">{{ __('Pending') }}</x-ui.select.option>
-                        <x-ui.select.option value="failed">{{ __('Failed') }}</x-ui.select.option>
-                    </x-ui.select>
-                </div>
+                <x-ui.filter-pills model="status" :value="$status" :label="__('Status')" class="w-full"
+                    :options="['' => __('All statuses'), 'paid' => __('Paid'), 'pending' => __('Pending'), 'failed' => __('Failed')]" />
             </div>
 
             <x-ui.table :paginate="$this->payments">

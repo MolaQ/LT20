@@ -152,14 +152,14 @@ new #[Layout('layouts::public')] class extends Component {
                 <div class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                     <div class="flex items-center gap-2">
                         <x-ui.icon :name="$played ? 'flag' : 'clock'" variant="mini" class="text-lech-200" />
-                        <span class="text-sm font-bold uppercase tracking-[0.15em]">{{ $played ? __('Last matchday') : __('Next matchday') }}</span>
+                        <span class="text-sm font-bold uppercase tracking-wider">{{ $played ? __('Last matchday') : __('Next matchday') }}</span>
                     </div>
                     <div class="flex items-center gap-2 text-xs">
                         <span class="rounded-full bg-white/15 px-2.5 py-1 font-semibold">{{ __('Matchday :number', ['number' => $matchday->number]) }}</span>
                         @if ($matchday->competitionLabel())
                             <span class="rounded-full bg-white/10 px-2.5 py-1 text-lech-100">{{ $matchday->competitionLabel() }}</span>
                         @endif
-                        <span class="{{ $played ? 'bg-zinc-200 text-zinc-800' : ($open ? 'bg-green-500 text-white' : 'bg-amber-400 text-amber-950') }} rounded-full px-2.5 py-1 font-bold uppercase">
+                        <span class="{{ $played ? 'bg-zinc-200 text-zinc-800' : ($open ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200' : 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200') }} rounded-full px-2.5 py-1 font-bold uppercase">
                             {{ $played ? __('Full time') : ($open ? __('Tipping open') : __('Tipping closed')) }}
                         </span>
                     </div>
@@ -172,7 +172,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @if ($index === 1)
                                 <div class="flex flex-col items-center gap-1">
                                     @if ($played)
-                                        <div class="{{ $lechWon ? 'bg-green-500 text-white' : ($lechLost ? 'bg-red-500 text-white' : 'bg-yellow-300 text-yellow-950') }} flex items-center gap-2 rounded-xl px-4 py-2 text-4xl font-black tabular-nums sm:text-5xl">
+                                        <div class="{{ $lechWon ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200' : ($lechLost ? 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200' : 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200') }} flex items-center gap-2 rounded-xl px-4 py-2 text-4xl font-black tabular-nums sm:text-5xl">
                                             <span>{{ $sides[0]['goals'] }}</span><span class="opacity-60">:</span><span>{{ $sides[1]['goals'] }}</span>
                                         </div>
                                     @else
@@ -214,7 +214,7 @@ new #[Layout('layouts::public')] class extends Component {
                                     this.parts = [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60];
                                 },
                             }" x-init="tick(); setInterval(() => tick(), 1000)" class="space-y-2 text-center">
-                            <div class="text-xs font-semibold uppercase tracking-[0.2em] text-ui-muted">{{ __('Tipping closes in') }}</div>
+                            <div class="text-xs font-semibold uppercase tracking-wider text-ui-muted">{{ __('Tipping closes in') }}</div>
                             <div class="flex justify-center gap-2 sm:gap-3">
                                 @foreach ([__('days'), __('hours'), __('min'), __('sec')] as $unit)
                                     <div class="lech-bar w-16 rounded-xl py-2 sm:w-20">
@@ -258,7 +258,7 @@ new #[Layout('layouts::public')] class extends Component {
                 @endphp
                 <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-ui-line px-5 py-3">
-                        <span class="text-xs font-bold uppercase tracking-[0.15em] text-ui-muted">{{ __('Last matchday') }} · {{ __('Matchday :number', ['number' => $last->number]) }}</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Last matchday') }} · {{ __('Matchday :number', ['number' => $last->number]) }}</span>
                         <span class="text-sm font-bold">
                             {{ $last->is_home ? 'Lech Poznań' : $last->opponent }}
                             <span class="lech-bar mx-1.5 rounded-md px-2 py-0.5 tabular-nums">{{ $lastScore }}</span>
@@ -286,7 +286,7 @@ new #[Layout('layouts::public')] class extends Component {
                         {{ $this->upcoming->title }} · {{ __('Coming soon') }}
                     </span>
                 @else
-                    <p class="text-sm font-semibold uppercase tracking-[0.25em] text-lech-200">#LechTYPER</p>
+                    <p class="text-sm font-semibold uppercase tracking-wider text-lech-200">#LechTYPER</p>
                 @endif
                 <h1 class="text-4xl font-black leading-tight tracking-tight sm:text-6xl">{{ __('Tip Lech. Pick your squad. Win trophies.') }}</h1>
                 <p class="text-lg text-lech-100 sm:text-xl">{{ __('One tip per Lech match decides your games in a league, the Polish Cup, European cups and Liga Legend. Pick Lech players, collect experience and climb from Liga podwórkowa to Ekstraklasa.') }}</p>
@@ -344,7 +344,7 @@ new #[Layout('layouts::public')] class extends Component {
         <section class="space-y-3">
             <div class="flex flex-wrap items-end justify-between gap-2">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-club">{{ $this->champions['season']->title }}</p>
+                    <p class="text-xs font-bold uppercase tracking-wider text-club">{{ $this->champions['season']->title }}</p>
                     <h2 class="text-2xl font-black">{{ __('Latest champions') }}</h2>
                 </div>
                 <a href="{{ route('history') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">
@@ -376,32 +376,6 @@ new #[Layout('layouts::public')] class extends Component {
         </section>
     @endif
 
-    {{-- Biuro skarg i wniosków (/office): odwołania, wnioski o nazwy botów z głosowaniem graczy, inne sprawy --}}
-    @php
-        $voting = \App\Models\OfficeRequest::where('status', \App\Models\OfficeRequest::VOTING)->count();
-    @endphp
-    <section class="lech-banner relative overflow-hidden rounded-2xl p-5 text-white shadow-lg sm:p-6">
-        <x-ui.icon name="inbox" class="pointer-events-none absolute -right-6 -top-6 size-40 text-white/5" />
-        <div class="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-            <div class="space-y-3">
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-lech-200">{{ __('Contact the administrator') }}</p>
-                <h2 class="text-2xl font-black tracking-tight">{{ __('Complaints and requests office') }}</h2>
-                <div class="grid gap-2 sm:grid-cols-3">
-                    @foreach ([['no-symbol', __('Ban appeal')], ['moon', __('Inactive status appeal')], ['cpu-chip', __('New bot name (premium, players vote)')]] as [$icon, $label])
-                        <div class="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm">
-                            <x-ui.icon :name="$icon" variant="mini" class="shrink-0 text-lech-200" />{{ $label }}
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-            <div class="flex flex-col items-start gap-2 lg:items-end">
-                <x-ui.btn variant="primary" icon="inbox" :href="route('office')" wire:navigate>{{ __('Go to the office') }}</x-ui.btn>
-                @if ($voting > 0)
-                    <span class="text-xs text-lech-100">{{ trans_choice(':count bot name is being voted on|:count bot names are being voted on', $voting, ['count' => $voting]) }}</span>
-                @endif
-            </div>
-        </div>
-    </section>
 
     {{-- Newsy z panelu z ocenami kciukami: siatka 3 x 5 z paginacją --}}
     <livewire:pages::home.news />
