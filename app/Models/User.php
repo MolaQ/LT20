@@ -14,6 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -34,13 +35,15 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $premium_until
  * @property string|null $verification_code
  * @property Carbon|null $verification_code_expires_at
+ * @property string|null $locale
+ * @property array<string, bool>|null $push_prefs
  */
 #[Fillable(['name', 'email', 'password', 'team_name', 'locale'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'verification_code'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, HasPushSubscriptions, HasRoles, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -64,7 +67,14 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'premium_until' => 'datetime',
             'verification_code_expires_at' => 'datetime',
+            'push_prefs' => 'array',
         ];
+    }
+
+    /** Czy gracz chce powiadomienie push danego rodzaju (App\Support\Push::KINDS). Domyślnie wszystkie włączone. */
+    public function wantsPush(string $kind): bool
+    {
+        return (bool) ($this->push_prefs[$kind] ?? true);
     }
 
     /**

@@ -208,6 +208,65 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // Powiadomienia push (ustawienia konta): zgoda przeglądarki, subskrypcja w service workerze i zapis na serwerze.
+    // key: publiczny klucz VAPID; save(sub) i remove(endpoint) to metody Livewire.
+    Alpine.data('uiPush', (key) => ({
+        supported: 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window,
+        permission: 'Notification' in window ? Notification.permission : 'denied',
+        subscribed: false,
+        busy: false,
+        async init() {
+            if (!this.supported) {
+                return;
+            }
+            const reg = await navigator.serviceWorker.getRegistration();
+            this.subscribed = Boolean(reg && (await reg.pushManager.getSubscription()));
+        },
+        // Klucz VAPID w base64url na bajty (format applicationServerKey).
+        keyBytes() {
+            const pad = '='.repeat((4 - (key.length % 4)) % 4);
+            const raw = atob((key + pad).replace(/-/g, '+').replace(/_/g, '/'));
+            return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+        },
+        async enable() {
+            this.busy = true;
+            try {
+                this.permission = await Notification.requestPermission();
+                if (this.permission !== 'granted') {
+                    return;
+                }
+                const reg = await navigator.serviceWorker.register('/sw.js');
+                await navigator.serviceWorker.ready;
+                const sub = (await reg.pushManager.getSubscription())
+                    || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: this.keyBytes() }));
+                await this.$wire.save(sub.toJSON());
+                this.subscribed = true;
+                vibrate();
+            } catch (e) {
+                window.dispatchEvent(new CustomEvent('ui-toast', { detail: { text: e.message, variant: 'danger' } }));
+            } finally {
+                this.busy = false;
+            }
+        },
+        async disable() {
+            this.busy = true;
+            try {
+                const reg = await navigator.serviceWorker.getRegistration();
+                const sub = reg && (await reg.pushManager.getSubscription());
+                if (sub) {
+                    await this.$wire.remove(sub.endpoint);
+                    await sub.unsubscribe();
+                }
+                this.subscribed = false;
+            } finally {
+                this.busy = false;
+            }
+        },
+        async test() {
+            await this.$wire.test();
+        },
+    }));
+
     // Przełącznik motywu: system / light / dark.
     Alpine.data('uiTheme', () => ({
         mode: localStorage.getItem(THEME_KEY) ?? 'system',

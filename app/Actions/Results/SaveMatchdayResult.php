@@ -10,6 +10,7 @@ use App\Models\Matchday;
 use App\Support\Audit;
 use App\Support\LegendsLeague;
 use App\Support\MatchReport;
+use App\Support\Push;
 use App\Support\SystemFeed;
 use App\Support\TipRules;
 use Closure;
@@ -96,8 +97,9 @@ class SaveMatchdayResult
             throw new DomainException(__('Enter the result of the Lech match first.'));
         }
 
-        return DB::transaction(function () use ($matchday, $progress): array {
-            $wasPlayed = $matchday->status === MatchdayStatus::Played;
+        $wasPlayed = $matchday->status === MatchdayStatus::Played;
+
+        $stats = DB::transaction(function () use ($matchday, $progress, $wasPlayed): array {
             $matchday->update(['status' => MatchdayStatus::Played]);
 
             $progress(15, __('Scoring teams and matches'));
@@ -138,6 +140,13 @@ class SaveMatchdayResult
 
             return $stats;
         });
+
+        // Pierwsze przeliczenie: wynik i punkty na telefony graczy (po zapisie w bazie, w kolejce zadań).
+        if (! $wasPlayed) {
+            Push::results($matchday->refresh());
+        }
+
+        return $stats;
     }
 
     private function label(Matchday $matchday): string

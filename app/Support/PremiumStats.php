@@ -6,7 +6,6 @@ use App\Enums\CompetitionType;
 use App\Enums\MatchdayStatus;
 use App\Models\BotTip;
 use App\Models\CompetitionEntry;
-use App\Models\Fixture;
 use App\Models\Matchday;
 use App\Models\Season;
 use App\Models\SeasonTeam;
@@ -176,23 +175,9 @@ final class PremiumStats
      */
     public static function rival(User $user, Matchday $matchday): ?array
     {
-        $team = SeasonTeam::where('season_id', $matchday->season_id)->where('user_id', $user->id)->first();
-        if (! $team) {
-            return null;
-        }
+        $other = LeagueRival::team($user, $matchday);
 
-        $entries = CompetitionEntry::where('season_team_id', $team->id)
-            ->whereHas('competition', fn ($q) => $q->whereIn('type', [CompetitionType::League->value, CompetitionType::Swiss->value]))
-            ->pluck('id');
-
-        $fixture = Fixture::where('round', $matchday->number)
-            ->where(fn ($q) => $q->whereIn('home_entry_id', $entries)->orWhereIn('away_entry_id', $entries))
-            ->first();
-
-        $otherEntry = $fixture ? ($entries->contains($fixture->home_entry_id) ? $fixture->away_entry_id : $fixture->home_entry_id) : null;
-        $other = $otherEntry ? CompetitionEntry::with('seasonTeam.user:id,name,team_name', 'seasonTeam.bot:id,name')->find($otherEntry)?->seasonTeam : null;
-
-        if (! $other instanceof SeasonTeam) {
+        if (! $other) {
             return null;
         }
 
