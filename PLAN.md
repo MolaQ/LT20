@@ -56,6 +56,8 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | X | Ocena po zmianach: co jeszcze jest za mocne (zrzuty ekranu) |
 | V | „Aktualności” w prawej kolumnie: jedna karta, miniatura (obrazek z newsa albo data), tytuł, „x dni temu” |
 | V | Przycisk „Udostępnij” wyraźniejszy (ikona z napisem) i na stronie głównej: najbliższa i ostatnia kolejka, ostatni mistrzowie |
+| V | Kafelek newsa klikalny w całości (otwiera pełną wiadomość), dyskretne uniesienie, cień i strzałka „Czytaj dalej” po najechaniu |
+| V | „Udostępnij”: podgląd obrazka z przyciskami Pobierz i Udostępnij (naprawa: przeglądarka blokowała udostępnianie) |
 | X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
 | X | Nowoczesny i spójny wygląd panelu administratora |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji) |

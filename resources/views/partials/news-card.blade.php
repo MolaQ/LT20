@@ -11,38 +11,48 @@
     $upClass = $mine === 1 ? 'border-green-500 bg-green-600 text-white' : $white;
     $downClass = $mine === -1 ? 'border-red-500 bg-red-600 text-white' : $white;
 @endphp
+{{--
+    Na liście cała karta otwiera pełną wiadomość (link tytułu rozciągnięty na kartę przez ::after); przyciski
+    (Udostępnij, autor, kciuki) leżą nad nim (relative z-10) i działają osobno. Dyskretne uniesienie i cień po najechaniu.
+--}}
 <article id="news-{{ $news->id }}" wire:key="news-card-{{ $news->id }}" data-share-target
-    class="lech-bar-shadow flex scroll-mt-20 flex-col overflow-hidden rounded-2xl border border-lech-950/20 bg-ui-surface dark:border-lech-900">
+    @class([
+        'lech-bar-shadow relative flex scroll-mt-20 flex-col overflow-hidden rounded-2xl border border-lech-950/20 bg-ui-surface dark:border-lech-900',
+        'group transition duration-200 ease-out hover:border-lech-400/50 hover:shadow-lg motion-safe:hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-club/40' => ! $full,
+    ])>
     <header class="lech-bar flex items-start justify-between gap-3 px-5 py-3">
         @if ($full)
             <h1 class="text-xl font-bold leading-snug">{{ $news->title }}</h1>
         @else
             <h3 class="text-base font-bold leading-snug">
-                <a href="{{ route('news.show', $news) }}" wire:navigate class="text-white decoration-lech-300 underline-offset-4 hover:text-lech-200 hover:underline">{{ $news->title }}</a>
+                <a href="{{ route('news.show', $news) }}" wire:navigate class="text-white outline-none after:absolute after:inset-0 after:content-['']">{{ $news->title }}</a>
             </h3>
         @endif
-        <x-share-image :title="$news->title" class="text-white" />
+        <x-share-image :title="$news->title" class="relative z-10 text-white" />
     </header>
 
     {{-- Treść z edytora po białej liście (NewsHtml); w skrócie na liście bez obrazków. --}}
     <div class="news-content {{ $full ? '' : 'line-clamp-5 [&_img]:hidden' }} flex-1 px-5 py-4 text-sm text-ui-ink">{!! \App\Support\NewsHtml::render($news->body) !!}</div>
 
     @if (!$full)
-        <div class="px-5 pb-3" data-share-hide>
-            <a href="{{ route('news.show', $news) }}" wire:navigate class="text-xs font-semibold text-club hover:underline">{{ __('Read more') }}</a>
+        <div class="px-5 pb-3" data-share-hide aria-hidden="true">
+            <span class="inline-flex items-center gap-1 text-xs font-semibold text-club">
+                {{ __('Read more') }}
+                <x-ui.icon name="arrow-long-right" variant="micro" class="size-3.5 transition-transform duration-200 motion-safe:group-hover:translate-x-1" />
+            </span>
         </div>
     @endif
 
     <footer class="lech-bar flex flex-wrap items-center justify-between gap-3 px-5 py-2.5 text-xs">
         <div class="flex min-w-0 items-center gap-1.5 text-lech-100">
             @if ($news->author)
-                <a href="{{ route('team.show', $news->author) }}" wire:navigate class="truncate font-semibold text-white hover:text-lech-200 hover:underline">{{ $news->author->name }}</a>
+                <a href="{{ route('team.show', $news->author) }}" wire:navigate class="relative z-10 truncate font-semibold text-white hover:text-lech-200 hover:underline">{{ $news->author->name }}</a>
                 <span aria-hidden="true">·</span>
             @endif
             <time datetime="{{ $news->published_at->toIso8601String() }}">{{ $news->published_at->format('d.m.Y H:i') }}</time>
         </div>
 
-        <div class="flex items-center gap-2" data-share-hide>
+        <div class="relative z-10 flex items-center gap-2" data-share-hide>
             @if ($mine !== 0)
                 <span class="tabular-nums text-lech-100">
                     <span class="font-semibold text-green-400">{{ $news->up_count }}</span> {{ __('up') }},
