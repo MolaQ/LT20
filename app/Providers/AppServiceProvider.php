@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\Seo;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // Opis i obrazek strony (App\Support\Seo) nie przechodzą na następne żądanie (kolejka, testy).
+        $this->app->terminating(fn () => Seo::reset());
     }
 
     /**

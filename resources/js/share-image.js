@@ -76,6 +76,20 @@ const showPreview = (blob, file, labels) => {
         a.click();
         a.remove();
     });
+    // X (główny kanał gry): zapis obrazka i okno nowego posta z tekstem, adresem strony i hashtagiem.
+    // X nie przyjmuje obrazka z linku, więc obrazek dołącza się z pobranego pliku (podpowiedź w dymku).
+    button(labels.x, false, () => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        const text = labels.title + (labels.hashtag ? ' #' + labels.hashtag : '') + (labels.via ? ' ' + labels.via : '');
+        const intent = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(location.href.split('#')[0]);
+        window.open(intent, '_blank', 'noopener');
+        toast(labels.xHint, 'success');
+    });
     if (navigator.canShare?.({ files: [file] })) {
         button(labels.share, true, async () => {
             try {

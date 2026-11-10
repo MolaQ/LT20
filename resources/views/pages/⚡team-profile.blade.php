@@ -26,6 +26,7 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->user = $user;
         $this->countView();
+        \App\Support\Seo::description(__(':team in #LechTYPER: trophies, Hall of Fame points and season history.', ['team' => $user->team_name ?: $user->name]));
     }
 
     /** Wyświetlenie klubu: raz na sesję odwiedzającego; wejścia właściciela się nie liczą. */

@@ -55,7 +55,9 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 |:----:|---------|
 | V | Sponsor sezonu: nazwa, logo i link w banerze sezonu (panel „Sezony”) |
 | V | Sponsorzy rozgrywek: logo i link w banerze rozgrywek na /results (panel „Sponsorzy”) |
-| X | Pozycjonowanie (SEO): opisy stron (meta description), podgląd linków na Facebooku i X (Open Graph z obrazkiem), mapa strony `sitemap.xml`, `robots.txt`, dane strukturalne (np. wydarzenia sportowe) |
+| V | SEO: opisy stron, karta X i Open Graph z obrazkiem (newsy z własnym opisem i zdjęciem), `sitemap.xml`, `robots.txt` bez panelu, `noindex` w panelu i ustawieniach |
+| V | „Opublikuj na X” w podglądzie obrazka na sociale (post z tekstem, adresem i #LechTYPER) |
+| X | SEO: dane strukturalne (wydarzenia sportowe), obrazki podglądu generowane dla kolejek i tabel |
 | X | Przyjazne adresy i tytuły stron pod wyszukiwarki (częściowo już są: /results/sezon-13/ekstraklasa/kolejka-9) |
 | X | Reklamy: wyznaczone miejsca (baner na stronie głównej, w wynikach, w stopce), bez reklam dla premium; do decyzji: własne reklamy z panelu czy sieć (np. Google AdSense) |
 | X | Płatny sponsoring: pakiety (sezon, liga, puchar, Liga Legend, kolejka, nagrody Hall of Fame), cennik, czas trwania, co sponsor dostaje (logo, link, nazwa rozgrywek „… powered by”, wzmianki w newsach i na obrazkach na sociale) |

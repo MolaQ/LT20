@@ -2147,5 +2147,9 @@
     "One more and from the next season a bot takes over your team.|:count more and from the next season a bot takes over your team.": "Jeszcze jedna i od nowego sezonu Twój zespół przejmie bot.|Jeszcze :count i od nowego sezonu Twój zespół przejmie bot.|Jeszcze :count i od nowego sezonu Twój zespół przejmie bot.",
     ":count matchdays without a tip": "Kolejki bez typu: :count",
     "Last chance! One more matchday without a tip and from the next season a bot takes over your team.": "Ostatnia szansa! Jeszcze jedna kolejka bez typu i od nowego sezonu Twój zespół przejmie bot.",
-    ":left more and from the next season a bot takes over your team. Tip the next matchday!": "Jeszcze :left i od nowego sezonu Twój zespół przejmie bot. Wytypuj następną kolejkę!"
+    ":left more and from the next season a bot takes over your team. Tip the next matchday!": "Jeszcze :left i od nowego sezonu Twój zespół przejmie bot. Wytypuj następną kolejkę!",
+    "Tip the score of every Lech Poznań match, build your squad and play in leagues and cups with other fans. Free, a few minutes per matchday.": "Typuj wynik każdego meczu Lecha Poznań, wystawiaj zawodników i graj z kibicami w ligach i pucharach. Za darmo, kilka minut na kolejkę.",
+    ":team in #LechTYPER: trophies, Hall of Fame points and season history.": ":team w #LechTYPER: trofea, punkty Hall of Fame i historia sezonów.",
+    "Post on X": "Opublikuj na X",
+    "The image is saved: attach it to the post on X.": "Obrazek zapisany: dołącz go do posta na X."
 }
