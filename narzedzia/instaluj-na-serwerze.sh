@@ -36,6 +36,13 @@ if [ -n "$(find "$APP" -maxdepth 2 -perm -o+w ! -type l -print -quit 2>/dev/null
     echo "$(date '+%Y-%m-%d %H:%M:%S') Poprawiono uprawnienia plików (foldery 755, pliki 644)." >>"$APP/storage/logs/instalacja.log"
 fi
 
+# Widoki z popsutymi nazwami (błyskawica z nazw komponentów Livewire po rozpakowaniu starej paczki).
+# Paczka ma te pliki już bez błyskawicy, więc w resources/views nie powinno być nazw spoza ASCII.
+if [ -n "$(LC_ALL=C find "$APP/resources/views" -type f -name '*[! -~]*' -print -quit 2>/dev/null)" ]; then
+    LC_ALL=C find "$APP/resources/views" -type f -name '*[! -~]*' -delete
+    echo "$(date '+%Y-%m-%d %H:%M:%S') Usunięto widoki z nazwami spoza ASCII (stare pliki z błyskawicą)." >>"$APP/storage/logs/instalacja.log"
+fi
+
 mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views storage/app/public bootstrap/cache
 
 # PHP 8.3 lub nowszy (Laravel 13): domyślne polecenie php bywa starsze niż wersja wybrana dla strony w panelu.

@@ -72,6 +72,10 @@ del /q "%ROBOCZY%\typer\bootstrap\cache\*.php" 2>nul
 rem Numer paczki: po nim instalator na serwerze rozpoznaje nowa paczke (daty plikow po rozpakowaniu bywaja stare).
 powershell -NoProfile -Command "[IO.File]::WriteAllText('%ROBOCZY%\typer\bootstrap\wersja-paczki.txt', (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))"
 for %%F in (app\public framework\cache\data framework\sessions framework\views logs) do if not exist "%ROBOCZY%\typer\storage\%%F" mkdir "%ROBOCZY%\typer\storage\%%F"
+rem Komponenty Livewire maja w nazwie znak blyskawicy, np. resources\views\pages\home\(blyskawica)welcome.blade.php.
+rem Menedzer plikow na serwerze psuje takie nazwy przy rozpakowaniu (strona daje blad 500 "Unable to find component").
+rem Livewire znajduje komponent takze bez blyskawicy, wiec w paczce nazwy sa bez niej (pliki na tym komputerze zostaja bez zmian).
+powershell -NoProfile -Command "Get-ChildItem -LiteralPath '%ROBOCZY%\typer\resources\views' -Recurse -File | Where-Object { $_.Name[0] -eq [char]0x26A1 } | ForEach-Object { Rename-Item -LiteralPath $_.FullName -NewName ($_.Name.Substring(1).TrimStart([char]0xFE0E, [char]0xFE0F)) }"
 
 echo [3/5] Pobieram biblioteki bez narzedzi programisty (composer install --no-dev) ...
 pushd "%ROBOCZY%\typer"
