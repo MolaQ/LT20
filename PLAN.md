@@ -58,6 +58,8 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Przycisk „Udostępnij” wyraźniejszy (ikona z napisem) i na stronie głównej: najbliższa i ostatnia kolejka, ostatni mistrzowie |
 | V | Kafelek newsa klikalny w całości (otwiera pełną wiadomość), dyskretne uniesienie, cień i strzałka „Czytaj dalej” po najechaniu |
 | V | „Udostępnij”: podgląd obrazka z przyciskami Pobierz i Udostępnij (naprawa: przeglądarka blokowała udostępnianie) |
+| V | Menu „Więcej”: kafelki z ikonami w siatce (bez przewijania), skromny baner instalacji, motyw jako ikony, język na dole jako przyciski z flagami; „Panel” tylko dla osób z dostępem do panelu |
+| V | Duże przyciski (Zmień typ, Zainstaluj…) bez wersalików i bardzo grubej czcionki |
 | X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
 | X | Nowoczesny i spójny wygląd panelu administratora |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji) |
