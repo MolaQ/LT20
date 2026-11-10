@@ -813,7 +813,7 @@ new #[Layout('layouts::public')] class extends Component {
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     @foreach ($crowdPlayers as $crowdSet => $crowdBlock)
                         <div class="comp-banner rounded-lg p-2" style="{{ \App\Support\CompetitionColors::style($crowdColors[$crowdSet]) }}">
-                            <div class="relative z-10 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wide">
+                            <div class="relative z-10 flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide">
                                 <span class="truncate">{{ $crowdBlock['label'] }}</span>
                                 <span class="shrink-0 font-semibold opacity-80" title="{{ __('Clubs with a line-up') }}">{{ $crowdBlock['clubs'] }}</span>
                             </div>

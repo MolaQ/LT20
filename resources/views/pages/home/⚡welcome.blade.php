@@ -177,7 +177,7 @@ new #[Layout('layouts::public')] class extends Component {
                                             <span>{{ $sides[0]['goals'] }}</span><span class="opacity-60">:</span><span>{{ $sides[1]['goals'] }}</span>
                                         </div>
                                     @else
-                                        <div class="lech-bar rounded-xl px-4 py-2 text-2xl font-black uppercase tracking-widest sm:text-3xl">vs</div>
+                                        <div class="lech-bar rounded-xl px-4 py-2 text-2xl font-semibold uppercase tracking-widest sm:text-3xl">vs</div>
                                     @endif
                                 </div>
                             @endif
@@ -315,9 +315,9 @@ new #[Layout('layouts::public')] class extends Component {
                 <p class="text-lg text-lech-100 sm:text-xl">{{ __('One tip per Lech match decides your games in a league, the Polish Cup, European cups and Liga Legend. Pick Lech players, collect experience and climb from Liga podwórkowa to Ekstraklasa.') }}</p>
                 <div class="flex flex-wrap gap-3 pt-2">
                     @guest
-                        <a href="{{ route('register') }}" class="rounded-full bg-white px-6 py-3 text-sm font-black uppercase tracking-wide text-lech-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{{ __('Join the game') }}</a>
+                        <a href="{{ route('register') }}" class="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-wide text-lech-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{{ __('Join the game') }}</a>
                     @else
-                        <a href="{{ route('tips') }}" wire:navigate class="rounded-full bg-white px-6 py-3 text-sm font-black uppercase tracking-wide text-lech-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{{ __('My LechTYPER') }}</a>
+                        <a href="{{ route('tips') }}" wire:navigate class="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-wide text-lech-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{{ __('My LechTYPER') }}</a>
                     @endguest
                     <a href="{{ route('rules') }}" wire:navigate class="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">{{ __('Rules of the game') }}</a>
                     <a href="{{ route('history') }}" wire:navigate class="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">{{ __('History and records') }}</a>

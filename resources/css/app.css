@@ -65,8 +65,8 @@
 
 /* Banery LechTYPER: zawsze gradient z niebieskiego do granatowego (jak sidebar i belki) z delikatnym cieniem. */
 @utility lech-banner {
-    /* Stonowany niebieski klubu (bez przejścia w czerń). */
-    background-image: linear-gradient(to bottom right, var(--theme-bar-from, var(--color-lech-700)) 0%, var(--theme-bar-to, var(--color-lech-800)) 100%);
+    /* Granat „Bułgarska nocą”: z granatu w głęboki granat i prawie czerń (kolory z panelu „Kolory strony”). */
+    background-image: linear-gradient(to bottom right, var(--theme-bar-from, var(--color-lech-900)) 0%, var(--theme-bar-to, var(--color-lech-950)) 55%, color-mix(in srgb, var(--theme-bar-to, var(--color-lech-950)) 35%, #000) 100%);
     color: var(--theme-bar-ink, var(--color-white));
     box-shadow: 0 14px 28px -14px rgb(6 19 49 / 0.55);
 }
@@ -74,7 +74,7 @@
 /* Delikatny cień pod belkami (nagłówek, pasek informacji). */
 /* Belka tytułowa karty: gradient sidebara, biały tekst. */
 @utility lech-bar {
-    background-image: linear-gradient(to right, var(--theme-bar-from, var(--color-lech-700)) 0%, var(--theme-bar-to, var(--color-lech-800)) 100%);
+    background-image: linear-gradient(to right, var(--theme-bar-from, var(--color-lech-900)) 0%, var(--theme-bar-to, var(--color-lech-950)) 60%, color-mix(in srgb, var(--theme-bar-to, var(--color-lech-950)) 35%, #000) 100%);
     color: var(--theme-bar-ink, var(--color-white));
 }
 
@@ -175,7 +175,7 @@
         --ui-bad: #c2410c;
         --ui-bad-soft: #fde5d8;
         --ui-nav: rgb(255 255 255 / 0.93);
-        --ui-hero: linear-gradient(160deg, var(--club-primary), color-mix(in srgb, var(--club-primary) 80%, var(--club-deep)));
+        --ui-hero: linear-gradient(160deg, var(--club-primary), color-mix(in srgb, var(--club-primary) 45%, var(--club-deep)));
     }
 
     .dark {
