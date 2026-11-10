@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\Premium;
+use App\Support\Push;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -26,3 +27,10 @@ if (config('queue.via_scheduler') && config('queue.default') !== 'sync') {
         ->withoutOverlapping()
         ->runInBackground();
 }
+
+// Powiadomienia push (App\Support\Push): „typowanie otwarte” i przypomnienie 2 godziny przed pierwszym gwizdkiem.
+Artisan::command('push:matchdays', function () {
+    $this->info('Push notifications sent: '.Push::tick());
+})->purpose('Send matchday push notifications (tipping open, last call)');
+
+Schedule::command('push:matchdays')->everyFiveMinutes()->withoutOverlapping();

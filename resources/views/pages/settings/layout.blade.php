@@ -3,6 +3,7 @@
     $tabs = [
         ['profile.edit', __('Profile')],
         ['security.edit', __('Security')],
+        ['notifications.edit', __('Notifications')],
         ['appearance.edit', __('Appearance')],
     ];
 @endphp

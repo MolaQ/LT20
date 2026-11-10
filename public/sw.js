@@ -63,3 +63,40 @@ self.addEventListener('fetch', (event) => {
         );
     }
 });
+
+// Powiadomienia push (App\Support\Push): pokazanie dymka i otwarcie strony po stuknięciu.
+self.addEventListener('push', (event) => {
+    let data = {};
+    try {
+        data = event.data ? event.data.json() : {};
+    } catch (e) {
+        data = { title: '#LechTYPER', body: event.data ? event.data.text() : '' };
+    }
+
+    event.waitUntil(
+        self.registration.showNotification(data.title || '#LechTYPER', {
+            body: data.body || '',
+            icon: data.icon || '/images/lechtyper-logo.png',
+            badge: data.badge || '/images/lechtyper-logo.png',
+            tag: data.tag,
+            renotify: Boolean(data.tag),
+            data: data.data || {},
+        }),
+    );
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const url = new URL(event.notification.data?.url || '/', self.location.origin).href;
+
+    // Otwarta karta z serwisem: przejdź na adres i pokaż ją, inaczej otwórz nową.
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+            const tab = list.find((c) => new URL(c.url).origin === self.location.origin);
+            if (tab) {
+                return tab.navigate(url).then((c) => (c || tab).focus());
+            }
+            return self.clients.openWindow(url);
+        }),
+    );
+});

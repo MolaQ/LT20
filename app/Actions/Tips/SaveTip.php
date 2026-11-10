@@ -8,6 +8,7 @@ use App\Models\SeasonTeam;
 use App\Models\Tip;
 use App\Models\User;
 use App\Support\Players;
+use App\Support\Push;
 use App\Support\TipRules;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -57,8 +58,11 @@ class SaveTip
             throw new DomainException(__('Enter the score as numbers from 0 to :max.', ['max' => TipRules::MAX_GOALS]));
         }
 
-        return DB::transaction(function () use ($user, $matchday, $lech, $opponent) {
+        $first = false;
+
+        $saved = DB::transaction(function () use ($user, $matchday, $lech, $opponent, &$first) {
             $tip = Tip::where('matchday_id', $matchday->id)->where('user_id', $user->id)->lockForUpdate()->first();
+            $first = ! $tip;
 
             $changed = ! $tip
                 || $tip->lech_goals !== $lech
@@ -80,5 +84,12 @@ class SaveTip
 
             return $tip;
         });
+
+        // Pierwszy typ w kolejce: rywal w lidze dostaje powiadomienie, że już typowaliśmy (App\Support\Push).
+        if ($first) {
+            Push::rivalTipped($user, $matchday);
+        }
+
+        return $saved;
     }
 }
