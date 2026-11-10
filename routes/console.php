@@ -34,3 +34,6 @@ Artisan::command('push:matchdays', function () {
 })->purpose('Send matchday push notifications (tipping open, last call)');
 
 Schedule::command('push:matchdays')->everyFiveMinutes()->withoutOverlapping();
+
+// Stare odsłony stron (App\Models\PageView, ok. 13 miesięcy) i inne modele z Prunable.
+Schedule::command('model:prune')->daily();

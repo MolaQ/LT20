@@ -16,3 +16,9 @@ parameters:
 
     # Baseline powstał na Windowsie, a CI działa na Linuksie z inną wersją PHP: nie zgłaszaj wpisów, które tam nie wystąpią.
     reportUnmatchedIgnoredErrors: false
+
+    ignoreErrors:
+        # Trait ustawień konta jest używany tylko w komponentach Blade (resources/views/pages/settings), których PHPStan nie analizuje.
+        -
+            identifier: trait.unused
+            path: app/Concerns/SettingsPage.php

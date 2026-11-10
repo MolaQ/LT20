@@ -147,7 +147,7 @@ new #[Layout('layouts::public')] class extends Component {
                 $lechWon = $played && $matchday->lech_goals > $matchday->opponent_goals;
                 $lechLost = $played && $matchday->lech_goals < $matchday->opponent_goals;
             @endphp
-            <section class="lech-bar-shadow overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+            <section data-share-target class="lech-bar-shadow overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
                 {{-- Belka: rodzaj kolejki, numer i rozgrywki, stan --}}
                 <div class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                     <div class="flex items-center gap-2">
@@ -162,6 +162,7 @@ new #[Layout('layouts::public')] class extends Component {
                         <span class="{{ $played ? 'bg-zinc-200 text-zinc-800' : ($open ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200' : 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200') }} rounded-full px-2.5 py-1 font-bold uppercase">
                             {{ $played ? __('Full time') : ($open ? __('Tipping open') : __('Tipping closed')) }}
                         </span>
+                        <x-share-image :title="__('Matchday :number', ['number' => $matchday->number])" class="text-white" />
                     </div>
                 </div>
 
@@ -176,7 +177,7 @@ new #[Layout('layouts::public')] class extends Component {
                                             <span>{{ $sides[0]['goals'] }}</span><span class="opacity-60">:</span><span>{{ $sides[1]['goals'] }}</span>
                                         </div>
                                     @else
-                                        <div class="lech-bar rounded-xl px-4 py-2 text-2xl font-black uppercase tracking-widest sm:text-3xl">vs</div>
+                                        <div class="lech-bar rounded-xl px-4 py-2 text-2xl font-semibold uppercase tracking-widest sm:text-3xl">vs</div>
                                     @endif
                                 </div>
                             @endif
@@ -215,11 +216,32 @@ new #[Layout('layouts::public')] class extends Component {
                                 },
                             }" x-init="tick(); setInterval(() => tick(), 1000)" class="space-y-2 text-center">
                             <div class="text-xs font-semibold uppercase tracking-wider text-ui-muted">{{ __('Tipping closes in') }}</div>
-                            <div class="flex justify-center gap-2 sm:gap-3">
+                            {{-- Tablica klapkowa jak na dworcu: każda cyfra na osobnej klapce (uiFlap), przy zmianie się przewraca. --}}
+                            @php
+                                $dayDigits = max(2, strlen((string) intdiv(max(0, $matchday->kickoff_at->getTimestamp() - now()->getTimestamp()), 86400)));
+                            @endphp
+                            <div class="flex flex-wrap justify-center gap-3 sm:gap-5">
                                 @foreach ([__('days'), __('hours'), __('min'), __('sec')] as $unit)
-                                    <div class="lech-bar w-16 rounded-xl py-2 sm:w-20">
-                                        <div class="text-2xl font-black tabular-nums sm:text-3xl" x-text="String(parts[{{ $loop->index }}]).padStart(2, '0')"></div>
-                                        <div class="text-[10px] uppercase tracking-wider text-lech-200">{{ $unit }}</div>
+                                    @php
+                                        $part = $loop->index;
+                                        $width = $part === 0 ? $dayDigits : 2;
+                                    @endphp
+                                    <div class="flex flex-col items-center gap-1.5">
+                                        <div class="flex gap-[3px] text-4xl sm:text-5xl" role="timer" aria-label="{{ $unit }}">
+                                            @for ($d = 0; $d < $width; $d++)
+                                                <span class="flap" x-data="uiFlap('0')" x-effect="set(String(parts[{{ $part }}]).padStart({{ $width }}, '0').slice(-{{ $width }})[{{ $d }}])">
+                                                    <span class="flap-half flap-top"><span x-text="cur"></span></span>
+                                                    <span class="flap-half flap-bottom"><span x-text="flipping ? prev : cur"></span></span>
+                                                    <template x-if="flipping">
+                                                        <span>
+                                                            <span class="flap-half flap-top flap-leaf-top"><span x-text="prev"></span></span>
+                                                            <span class="flap-half flap-bottom flap-leaf-bottom" @animationend="flipping = false"><span x-text="cur"></span></span>
+                                                        </span>
+                                                    </template>
+                                                </span>
+                                            @endfor
+                                        </div>
+                                        <div class="text-[11px] font-medium uppercase tracking-wider text-ui-muted">{{ $unit }}</div>
                                     </div>
                                 @endforeach
                             </div>
@@ -256,9 +278,10 @@ new #[Layout('layouts::public')] class extends Component {
                     $lastProtocol = $this->protocolOf($last);
                     $lastScore = $last->is_home ? $last->lech_goals . ':' . $last->opponent_goals : $last->opponent_goals . ':' . $last->lech_goals;
                 @endphp
-                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                <section data-share-target class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-ui-line px-5 py-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Last matchday') }} · {{ __('Matchday :number', ['number' => $last->number]) }}</span>
+                        <span class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Last matchday') }} · {{ __('Matchday :number', ['number' => $last->number]) }}
+                            <x-share-image :title="__('Last matchday').' '.$last->number" class="normal-case tracking-normal" /></span>
                         <span class="text-sm font-bold">
                             {{ $last->is_home ? 'Lech Poznań' : $last->opponent }}
                             <span class="lech-bar mx-1.5 rounded-md px-2 py-0.5 tabular-nums">{{ $lastScore }}</span>
@@ -292,9 +315,9 @@ new #[Layout('layouts::public')] class extends Component {
                 <p class="text-lg text-lech-100 sm:text-xl">{{ __('One tip per Lech match decides your games in a league, the Polish Cup, European cups and Liga Legend. Pick Lech players, collect experience and climb from Liga podwórkowa to Ekstraklasa.') }}</p>
                 <div class="flex flex-wrap gap-3 pt-2">
                     @guest
-                        <a href="{{ route('register') }}" class="rounded-full bg-white px-6 py-3 text-sm font-black uppercase tracking-wide text-lech-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{{ __('Join the game') }}</a>
+                        <a href="{{ route('register') }}" class="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-wide text-lech-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{{ __('Join the game') }}</a>
                     @else
-                        <a href="{{ route('tips') }}" wire:navigate class="rounded-full bg-white px-6 py-3 text-sm font-black uppercase tracking-wide text-lech-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{{ __('My LechTYPER') }}</a>
+                        <a href="{{ route('tips') }}" wire:navigate class="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-wide text-lech-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{{ __('My LechTYPER') }}</a>
                     @endguest
                     <a href="{{ route('rules') }}" wire:navigate class="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">{{ __('Rules of the game') }}</a>
                     <a href="{{ route('history') }}" wire:navigate class="rounded-full border border-white/30 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">{{ __('History and records') }}</a>
@@ -341,11 +364,14 @@ new #[Layout('layouts::public')] class extends Component {
         @php
             $trophyIcons = \App\Support\HallOfFame::iconUrls();
         @endphp
-        <section class="space-y-3">
+        <section data-share-target class="space-y-3">
             <div class="flex flex-wrap items-end justify-between gap-2">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-club">{{ $this->champions['season']->title }}</p>
-                    <h2 class="text-2xl font-black">{{ __('Latest champions') }}</h2>
+                <div class="flex items-end gap-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-club">{{ $this->champions['season']->title }}</p>
+                        <h2 class="text-2xl font-black">{{ __('Latest champions') }}</h2>
+                    </div>
+                    <x-share-image :title="__('Latest champions').' '.$this->champions['season']->title" class="text-ui-muted" />
                 </div>
                 <a href="{{ route('history') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">
                     {{ __('Full history') }} <x-ui.icon name="arrow-right" variant="micro" />

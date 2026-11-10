@@ -712,7 +712,7 @@ new #[Layout('layouts::public')] class extends Component {
                             {{ $this->season->title }} – {{ $this->competition->type->stageLabel($round) }}
                             @if ($archived) · {{ __('Season archive') }} @endif
                         </p>
-                        <h1 class="text-3xl font-black uppercase tracking-tight sm:text-4xl">
+                        <h1 class="text-3xl font-semibold uppercase tracking-tight sm:text-4xl">
                             {{ $this->competition->name ?: $this->competition->type->label() }}
                         </h1>
                         @if ($sponsor)
@@ -886,7 +886,7 @@ new #[Layout('layouts::public')] class extends Component {
                     style="{{ $tableStyle }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-between gap-2.5 px-3 pb-1.5 pt-2">
                         <div>
-                            <h3 class="text-sm font-black uppercase tracking-wider">{{ __('Table') }}</h3>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider">{{ __('Table') }}</h3>
                             <p class="text-[11px] opacity-80">{{ __('After matchday :number', ['number' => max(1, $round)]) }}</p>
                         </div>
                         <x-share-image :title="__('Table').' '.($this->competition->name ?: $this->competition->type->label()).' '.$this->season->title" class="ms-auto" />
@@ -1231,7 +1231,7 @@ new #[Layout('layouts::public')] class extends Component {
                 <section data-share-target class="self-start space-y-1.5 overflow-hidden rounded-2xl p-2 shadow-md"
                     style="{{ \App\Support\CompetitionColors::style($colorKey) }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-between gap-2 px-1 pb-1">
-                        <h3 class="text-sm font-black uppercase tracking-wider">{{ __('Matchday :number', ['number' => $round]) }}</h3>
+                        <h3 class="text-sm font-semibold uppercase tracking-wider">{{ __('Matchday :number', ['number' => $round]) }}</h3>
                         <div class="flex items-center gap-2">
                             @if ($this->matches && $this->matches->total() > 0)
                                 <span class="comp-accent text-[11px] font-bold tabular-nums">{{ trans_choice(':count match|:count matches', $this->matches->total(), ['count' => $this->matches->total()]) }}</span>

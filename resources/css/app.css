@@ -65,17 +65,17 @@
 
 /* Banery LechTYPER: zawsze gradient z niebieskiego do granatowego (jak sidebar i belki) z delikatnym cieniem. */
 @utility lech-banner {
-    /* Stonowany niebieski klubu (bez przejścia w czerń). */
-    background-image: linear-gradient(to bottom right, var(--color-lech-700) 0%, var(--color-lech-800) 100%);
-    color: var(--color-white);
+    /* Granat „Bułgarska nocą”: z granatu w głęboki granat i prawie czerń (kolory z panelu „Kolory strony”). */
+    background-image: linear-gradient(to bottom right, var(--theme-bar-from, var(--color-lech-900)) 0%, var(--theme-bar-to, var(--color-lech-950)) 55%, color-mix(in srgb, var(--theme-bar-to, var(--color-lech-950)) 35%, #000) 100%);
+    color: var(--theme-bar-ink, var(--color-white));
     box-shadow: 0 14px 28px -14px rgb(6 19 49 / 0.55);
 }
 
 /* Delikatny cień pod belkami (nagłówek, pasek informacji). */
 /* Belka tytułowa karty: gradient sidebara, biały tekst. */
 @utility lech-bar {
-    background-image: linear-gradient(to right, var(--color-lech-700) 0%, var(--color-lech-800) 100%);
-    color: var(--color-white);
+    background-image: linear-gradient(to right, var(--theme-bar-from, var(--color-lech-900)) 0%, var(--theme-bar-to, var(--color-lech-950)) 60%, color-mix(in srgb, var(--theme-bar-to, var(--color-lech-950)) 35%, #000) 100%);
+    color: var(--theme-bar-ink, var(--color-white));
 }
 
 @utility lech-bar-shadow {
@@ -175,7 +175,7 @@
         --ui-bad: #c2410c;
         --ui-bad-soft: #fde5d8;
         --ui-nav: rgb(255 255 255 / 0.93);
-        --ui-hero: linear-gradient(160deg, var(--club-primary), color-mix(in srgb, var(--club-primary) 80%, var(--club-deep)));
+        --ui-hero: linear-gradient(160deg, var(--club-primary), color-mix(in srgb, var(--club-primary) 45%, var(--club-deep)));
     }
 
     .dark {
@@ -390,4 +390,114 @@
     font-size: 12px;
     font-weight: 600;
     opacity: 0.75;
+}
+
+/*
+ * Odliczanie jak tablica klapkowa na dworcu (uiFlap w app.js): dwie osobne połówki klapki z wąską szczeliną
+ * i zawiasami po bokach; górna jaśniejsza, dolna ciemniejsza. Przy zmianie przewracają się listki .flap-leaf-*.
+ * Kolory z panelu „Kolory strony”: --flap-bg (klapka) i --flap-ink (cyfry).
+ */
+.flap {
+    --flap-h: 1.3em;
+    position: relative;
+    display: inline-block;
+    width: 0.86em;
+    height: var(--flap-h);
+    border-radius: 0.1em;
+    background: color-mix(in srgb, var(--flap-bg, #1d1f24) 55%, #000);
+    color: var(--flap-ink, #f4f1e8);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: var(--flap-h);
+    text-align: center;
+    perspective: 5em;
+    box-shadow: 0 0.06em 0.12em rgb(0 0 0 / 0.35);
+}
+/* Zawiasy po bokach na wysokości szczeliny. */
+.flap::after {
+    content: '';
+    position: absolute;
+    inset-inline: -0.03em;
+    top: calc(50% - 0.07em);
+    height: 0.14em;
+    background: linear-gradient(to right, #0b0c0e 0 0.09em, transparent 0.09em calc(100% - 0.09em), #0b0c0e calc(100% - 0.09em));
+    border-radius: 0.03em;
+    z-index: 3;
+}
+.flap-half {
+    position: absolute;
+    inset-inline: 0;
+    height: calc(50% - 0.02em);
+    overflow: hidden;
+}
+.flap-half > span {
+    position: absolute;
+    inset-inline: 0;
+    height: var(--flap-h);
+    line-height: var(--flap-h);
+}
+.flap-top {
+    top: 0;
+    border-radius: 0.1em 0.1em 0.03em 0.03em;
+    background: linear-gradient(color-mix(in srgb, var(--flap-bg, #1d1f24) 82%, #fff), color-mix(in srgb, var(--flap-bg, #1d1f24) 94%, #fff));
+}
+.flap-top > span {
+    top: 0;
+}
+.flap-bottom {
+    bottom: 0;
+    border-radius: 0.03em 0.03em 0.1em 0.1em;
+    background: linear-gradient(var(--flap-bg, #1d1f24), color-mix(in srgb, var(--flap-bg, #1d1f24) 80%, #000));
+    box-shadow: inset 0 0.04em 0.05em rgb(0 0 0 / 0.45);
+}
+.flap-bottom > span {
+    bottom: 0;
+}
+.flap-leaf-top {
+    z-index: 2;
+    transform-origin: bottom;
+    animation: flap-top 0.26s ease-in forwards;
+}
+.flap-leaf-bottom {
+    z-index: 2;
+    transform-origin: top;
+    transform: rotateX(90deg);
+    animation: flap-bottom 0.26s 0.26s ease-out forwards;
+}
+@keyframes flap-top {
+    to {
+        transform: rotateX(-90deg);
+    }
+}
+@keyframes flap-bottom {
+    to {
+        transform: rotateX(0deg);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .flap-leaf-top,
+    .flap-leaf-bottom {
+        display: none;
+    }
+}
+
+/* Licznik odwiedzin w stopce: zmieniona liczba wjeżdża od dołu i na chwilę się podświetla. */
+.stat-tick {
+    animation: stat-tick 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes stat-tick {
+    from {
+        opacity: 0;
+        transform: translateY(0.6em);
+        color: var(--color-emerald-300);
+    }
+    60% {
+        opacity: 1;
+        color: var(--color-emerald-300);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .stat-tick {
+        animation: none;
+    }
 }
