@@ -15,8 +15,16 @@
     @endphp
 
     @if ($premium)
-        <button type="button" data-share-hide x-data="shareImage(@js($title), @js($brand), @js(__('Could not create the image. Try again.')))"
-            @click="make()" :disabled="busy" title="{{ __('Image for social media') }}" aria-label="{{ __('Image for social media') }}"
+        @php
+            $labels = [
+                'error' => __('Could not create the image. Try again.'),
+                'download' => __('Download'),
+                'share' => __('Share'),
+                'close' => __('Close'),
+            ];
+        @endphp
+        <button type="button" data-share-hide x-data="shareImage(@js($title), @js($brand), @js($labels))"
+            @mouseenter.once="prepare()" @touchstart.passive.once="prepare()" @click="make()" :disabled="busy" title="{{ __('Image for social media') }}" aria-label="{{ __('Image for social media') }}"
             {{ $attributes->class($base) }}>
             <x-ui.icon name="share" variant="micro" class="size-4" x-show="!busy" />
             <span class="hidden sm:inline">{{ __('Share') }}</span>
