@@ -107,7 +107,7 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 
 ### Do zaplanowania i dyskusji
 
-Pytania z propozycjami: `DYSKUSJA.md`.
+Pytania z propozycjami: `DYSKUSJA.md`. Plan rozwoju i monetyzacji: `STRATEGIA.md`.
 
 | Stan | Zadanie |
 |:----:|---------|
