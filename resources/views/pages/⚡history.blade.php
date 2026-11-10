@@ -83,7 +83,7 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
             <div class="min-w-0">
                 <p class="comp-accent text-xs font-bold uppercase tracking-wider">{{ __('History and records') }}</p>
-                <h2 class="text-3xl font-black uppercase tracking-tight sm:text-4xl">{{ $labels[$this->key] }}</h2>
+                <h2 class="text-3xl font-semibold uppercase tracking-tight sm:text-4xl">{{ $labels[$this->key] }}</h2>
                 <p class="text-sm opacity-80">{{ trans_choice(':count finished season|:count finished seasons', count($this->honours), ['count' => count($this->honours)]) }}</p>
             </div>
         </div>
@@ -97,7 +97,7 @@ new #[Layout('layouts::public')] class extends Component {
                 <article class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm" wire:key="honour-{{ $honour['season']->id }}">
                     <div class="flex flex-col sm:flex-row">
                         <div class="comp-banner {{ $dashed }} flex shrink-0 items-center justify-center px-4 py-3 sm:w-28" style="{{ CompetitionColors::style($colorKey) }}">
-                            <span class="relative z-10 text-center text-sm font-black uppercase tracking-wide">{{ $honour['season']->title }}</span>
+                            <span class="relative z-10 text-center text-sm font-semibold uppercase tracking-wide">{{ $honour['season']->title }}</span>
                         </div>
                         <ol class="flex-1 divide-y divide-ui-line">
                             @foreach ($honour['podium'] as $row)

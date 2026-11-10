@@ -7,12 +7,13 @@
     $game = \App\Support\SiteStats::game();
     $voting = \Illuminate\Support\Facades\Cache::remember('site-stats:office-voting', 300,
         fn () => \App\Models\OfficeRequest::where('status', \App\Models\OfficeRequest::VOTING)->count());
-    $stats = array_filter([
-        $online ? [__('Online now'), $online['online'], __(':members logged in, :guests guests', ['members' => $online['members'], 'guests' => $online['guests']])] : null,
-        [__('Players'), $game['players'], null],
-        [__('Tips placed'), $game['tips'], null],
-        $game['season'] ? [__('Matchdays played'), $game['played'].' / '.$game['matchdays'], $game['season']] : null,
-    ]);
+    // Kafelki: [ikona, etykieta, liczba, podpis, kolor ikony, dodatki]; liczby „nabijają się” po pokazaniu (uiCountUp).
+    $stats = array_values(array_filter([
+        $online ? ['users', __('Online now'), $online['online'], __(':members logged in, :guests guests', ['members' => $online['members'], 'guests' => $online['guests']]), 'text-green-600 bg-green-500/10', ['live' => true]] : null,
+        ['user-group', __('Players'), $game['players'], null, 'text-club bg-club/10', []],
+        ['pencil-square', __('Tips placed'), $game['tips'], null, 'text-amber-600 bg-amber-500/10', []],
+        $game['season'] ? ['calendar-days', __('Matchdays played'), $game['played'], $game['season'], 'text-purple-600 bg-purple-500/10', ['of' => $game['matchdays']]] : null,
+    ]));
     $links = [
         [route('rules'), __('Rules')],
         [route('faq'), __('FAQ')],
@@ -24,12 +25,40 @@
 
 <footer class="mt-8 border-t border-ui-line pt-6 text-sm">
     <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        @foreach ($stats as [$label, $value, $hint])
-            <div class="rounded-xl bg-ui-raised/60 px-3 py-2.5">
-                <dt class="text-xs text-ui-muted">{{ $label }}</dt>
-                <dd class="text-lg font-semibold tabular-nums text-ui-ink">{{ is_int($value) ? number_format($value, 0, ',', ' ') : $value }}</dd>
+        @foreach ($stats as [$icon, $label, $value, $hint, $tone, $extra])
+            <div class="group relative overflow-hidden rounded-2xl border border-ui-line bg-gradient-to-br from-ui-surface to-ui-raised/60 p-4 transition duration-200 hover:border-club/30 hover:shadow-md motion-safe:hover:-translate-y-0.5">
+                <div class="flex items-center gap-3">
+                    <span class="{{ $tone }} grid size-10 shrink-0 place-items-center rounded-xl transition-transform duration-300 motion-safe:group-hover:scale-110">
+                        <x-ui.icon :name="$icon" variant="mini" class="size-5" />
+                    </span>
+                    <dt class="flex items-center gap-1.5 text-xs font-medium text-ui-muted">
+                        {{ $label }}
+                        @if ($extra['live'] ?? false)
+                            {{-- Pulsująca kropka „na żywo” (bez ruchu przy ograniczonych animacjach). --}}
+                            <span class="relative flex size-2" title="{{ __('Live') }}">
+                                <span class="absolute inline-flex size-full rounded-full bg-green-500 opacity-60 motion-safe:animate-ping"></span>
+                                <span class="relative inline-flex size-2 rounded-full bg-green-500"></span>
+                            </span>
+                        @endif
+                    </dt>
+                </div>
+                <dd class="mt-3 text-2xl font-semibold leading-none tabular-nums text-ui-ink">
+                    <span x-data="uiCountUp({{ (int) $value }})" x-text="shown">{{ number_format($value, 0, ',', ' ') }}</span>
+                    @isset($extra['of'])
+                        <span class="text-base font-medium text-ui-muted">/ {{ $extra['of'] }}</span>
+                    @endisset
+                </dd>
+                @isset($extra['of'])
+                    {{-- Postęp sezonu: pasek rośnie po pokazaniu kafelka. --}}
+                    @php
+                        $percent = $extra['of'] > 0 ? (int) round(100 * $value / $extra['of']) : 0;
+                    @endphp
+                    <div class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ui-line/70" x-data="{ on: false }" x-intersect.once="on = true">
+                        <div class="h-full rounded-full bg-purple-500 transition-[width] duration-1000 ease-out" :style="`width: ${on ? {{ $percent }} : 0}%`" style="width: {{ $percent }}%"></div>
+                    </div>
+                @endisset
                 @if ($hint)
-                    <dd class="truncate text-xs text-ui-muted">{{ $hint }}</dd>
+                    <dd class="mt-1.5 truncate text-xs text-ui-muted">{{ $hint }}</dd>
                 @endif
             </div>
         @endforeach

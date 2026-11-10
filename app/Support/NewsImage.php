@@ -4,6 +4,7 @@ namespace App\Support;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 /**
  * Obrazek do treści newsa: zapis w storage/app/public/news (adres /storage/news/...). Zdjęcia szersze niż
@@ -17,6 +18,9 @@ final class NewsImage
     public static function store(UploadedFile $file): string
     {
         $path = $file->store('news', 'public');
+        if ($path === false) {
+            throw new RuntimeException('The news image could not be stored.');
+        }
         self::shrink(Storage::disk('public')->path($path));
 
         return asset('storage/'.$path);
@@ -39,7 +43,7 @@ final class NewsImage
             return;
         }
 
-        $height = (int) round($info[1] * self::MAX_WIDTH / $info[0]);
+        $height = max(1, (int) round($info[1] * self::MAX_WIDTH / $info[0]));
         $target = imagecreatetruecolor(self::MAX_WIDTH, $height);
         imagealphablending($target, false);
         imagesavealpha($target, true);

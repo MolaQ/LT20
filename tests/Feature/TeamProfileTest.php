@@ -11,7 +11,10 @@ test('a team view is counted once per session and not for the owner', function (
     $visitor = User::factory()->create();
 
     $this->actingAs($visitor)->get(route('team.show', $owner))->assertOk();
-    $this->actingAs($visitor)->get(route('team.show', $owner))->assertOk();
+    expect($owner->fresh()->profile_views)->toBe(1);
+
+    // Ta sama sesja (klub już oglądany) nie liczy się drugi raz.
+    $this->actingAs($visitor)->withSession(['team-viewed.'.$owner->id => true])->get(route('team.show', $owner))->assertOk();
     expect($owner->fresh()->profile_views)->toBe(1);
 
     $this->actingAs($owner)->get(route('team.show', $owner))->assertOk();

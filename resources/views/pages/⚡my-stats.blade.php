@@ -76,14 +76,14 @@ new #[Layout('layouts::shell')] class extends Component {
 
 <div class="flex flex-col gap-3.5">
     <div class="flex items-center justify-between">
-        <h1 class="font-display text-[28px] font-extrabold uppercase tracking-tight">{{ __('My stats') }}</h1>
+        <h1 class="font-display text-[28px] font-semibold uppercase tracking-tight">{{ __('My stats') }}</h1>
         <x-ui.chip variant="gold">★ {{ __('Premium') }}</x-ui.chip>
     </div>
 
     @if (!$this->premium)
         {{-- Bez premium: rozmyty podgląd i zachęta. --}}
         <x-ui.card hero class="text-center">
-            <p class="font-display text-2xl font-extrabold uppercase">{{ __('The joy of numbers') }}</p>
+            <p class="font-display text-2xl font-semibold uppercase">{{ __('The joy of numbers') }}</p>
             <p class="mt-1 text-sm opacity-90">{{ __('Form, streaks, badges, what-if with your rival and the map of everyone\'s tips. All in Premium.') }}</p>
             <div class="pointer-events-none my-4 grid select-none grid-cols-3 gap-2 blur-[3px]" aria-hidden="true">
                 <x-ui.ring :value="67" color="gold" :label="__('form')" />
@@ -153,7 +153,7 @@ new #[Layout('layouts::shell')] class extends Component {
                     'border-gold bg-gold-soft animate-ui-stamp' => $badge['earned'],
                     'border-ui-line bg-ui-surface opacity-60' => !$badge['earned'],
                 ])>
-                    <p class="font-display text-[17px] font-extrabold uppercase">{{ $badge['earned'] ? '★' : '☆' }} {{ $badge['label'] }}</p>
+                    <p class="font-display text-[17px] font-semibold uppercase">{{ $badge['earned'] ? '★' : '☆' }} {{ $badge['label'] }}</p>
                     <p class="text-xs text-ui-muted">{{ $badge['hint'] }}</p>
                 </div>
             @endforeach

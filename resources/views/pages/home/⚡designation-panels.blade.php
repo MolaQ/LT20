@@ -218,7 +218,7 @@ new class extends Component {
                 {{-- Wybór typu rozgrywek, do którego trafia kliknięty zawodnik --}}
                 @if ($open)
                     <div class="space-y-1.5">
-                        <div class="text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ __('Add players to') }}</div>
+                        <div class="text-xs font-medium text-ui-muted">{{ __('Add players to') }}</div>
                         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                             @foreach ($sets as $setValue => $set)
                                 @php
@@ -227,9 +227,9 @@ new class extends Component {
                                 @endphp
                                 <button type="button" wire:click="selectSet('{{ $setValue }}')" wire:key="pick-set-{{ $setValue }}"
                                     style="{{ \App\Support\CompetitionColors::style($colors[$setValue] ?? 'league_1') }}"
-                                    class="{{ $isActive ? 'comp-chip shadow-md ring-2 ring-offset-2 ring-lech-600 ring-offset-white dark:ring-offset-zinc-900' : 'comp-chip opacity-60 hover:opacity-100' }} flex items-center justify-between gap-2 rounded-lg px-2.5 py-1 text-left transition">
-                                    <span class="truncate text-xs font-black uppercase tracking-wide">{{ $set->scoreSetLabel() }}</span>
-                                    <span class="shrink-0 text-xs font-bold tabular-nums">{{ $count }}/{{ $max }}</span>
+                                    class="{{ $isActive ? 'comp-chip shadow-sm ring-1 ring-club/60' : 'comp-chip opacity-60 hover:opacity-100' }} flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left transition">
+                                    <span class="truncate text-xs font-medium">{{ $set->scoreSetLabel() }}</span>
+                                    <span class="shrink-0 text-xs font-semibold tabular-nums">{{ $count }}/{{ $max }}</span>
                                 </button>
                             @endforeach
                         </div>
@@ -242,11 +242,11 @@ new class extends Component {
                         <x-ui.heading>{{ __('Available players') }} <span class="font-normal text-ui-muted">({{ $available->count() }})</span></x-ui.heading>
                         <div class="flex gap-1">
                             <button type="button" x-on:click="pos = ''" x-bind:class="pos === '' ? 'bg-club text-club-ink' : 'bg-ui-raised text-ui-muted '"
-                                class="rounded-full px-2.5 py-0.5 text-xs font-bold">{{ __('All') }}</button>
+                                class="rounded-full px-2.5 py-0.5 text-xs font-medium">{{ __('All') }}</button>
                             @foreach (\App\Enums\PlayerPosition::cases() as $position)
                                 <button type="button" x-on:click="pos = '{{ $position->value }}'" title="{{ $position->label() }}"
                                     x-bind:class="pos === '{{ $position->value }}' ? 'bg-club text-club-ink' : 'bg-ui-raised text-ui-muted '"
-                                    class="rounded-full px-2.5 py-0.5 text-xs font-bold">{{ $position->short() }}</button>
+                                    class="rounded-full px-2.5 py-0.5 text-xs font-medium">{{ $position->short() }}</button>
                             @endforeach
                         </div>
                     </div>
@@ -262,7 +262,7 @@ new class extends Component {
                             <button type="button" wire:click="toggle({{ $player->id }})" wire:key="avail-{{ $player->id }}" @disabled(!$open || $full)
                                 x-show="pos === '' || pos === '{{ $player->position->value }}'" title="{{ $title }}"
                                 @if ($in) style="{{ \App\Support\CompetitionColors::style($colors[$in] ?? 'league_1') }}" @endif
-                                class="{{ $in ? 'comp-chip font-bold shadow-sm' : 'border border-ui-line hover:border-lech-400 hover:bg-lech-50 dark:hover:bg-white/5' }} {{ $full && !$in ? 'opacity-50' : '' }} flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition disabled:cursor-default">
+                                class="{{ $in ? 'comp-chip font-medium shadow-sm' : 'border border-ui-line hover:border-lech-400 hover:bg-lech-50 dark:hover:bg-white/5' }} {{ $full && !$in ? 'opacity-50' : '' }} flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition disabled:cursor-default">
                                 <span class="w-4 shrink-0 text-[10px] font-semibold uppercase opacity-70">{{ $player->position->short() }}</span>
                                 <span class="w-4 shrink-0 text-right text-[10px] tabular-nums opacity-60">{{ $player->number }}</span>
                                 <span class="min-w-0 flex-1 truncate">
@@ -304,7 +304,7 @@ new class extends Component {
                             @if ($open) wire:click="selectSet('{{ $setValue }}')" @endif
                             class="comp-banner {{ $isActive ? 'ring-2 ring-lech-600 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900' : '' }} {{ $open ? 'cursor-pointer' : '' }} min-w-0 rounded-2xl p-2.5">
                             <header class="relative z-10 flex items-center justify-between gap-2 px-0.5">
-                                <h2 class="min-w-0 text-xs font-black uppercase leading-tight tracking-wider">{{ $this->setNames[$setValue] ?? $set->scoreSetLabel() }}</h2>
+                                <h2 class="min-w-0 text-xs font-semibold uppercase leading-tight tracking-wider">{{ $this->setNames[$setValue] ?? $set->scoreSetLabel() }}</h2>
                                 <span class="comp-badge shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums">{{ $mine->count() }}/{{ $max }}</span>
                             </header>
 

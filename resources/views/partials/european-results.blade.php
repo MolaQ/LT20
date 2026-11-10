@@ -62,7 +62,7 @@
                     style="{{ $colorStyle }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-end gap-2.5 px-3 pb-1.5 pt-2">
                         <x-share-image :title="__('Group').' '.$group" class="me-auto" />
-                        <h3 class="text-sm font-black uppercase tracking-wider">{{ __('Group') }}</h3>
+                        <h3 class="text-sm font-semibold uppercase tracking-wider">{{ __('Group') }}</h3>
                         <span class="comp-badge flex size-9 shrink-0 items-center justify-center rounded-full text-base font-black shadow">{{ $group }}</span>
                     </header>
 

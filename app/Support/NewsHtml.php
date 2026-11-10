@@ -65,6 +65,17 @@ final class NewsHtml
         return trim(preg_replace("/\n{3,}/", "\n\n", preg_replace('/[ \t]+/', ' ', $text) ?? '') ?? '');
     }
 
+    /** Adres pierwszego obrazka z treści (miniatura na listach) albo null. */
+    public static function firstImage(string $body): ?string
+    {
+        if (! preg_match('/<img[^>]+src="([^"]+)"/i', $body, $m)) {
+            return null;
+        }
+        $src = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return preg_match('#/storage/news/[A-Za-z0-9._-]+$#', (string) parse_url($src, PHP_URL_PATH)) ? $src : null;
+    }
+
     /** Biała lista znaczników i atrybutów. */
     public static function clean(string $html): string
     {

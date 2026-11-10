@@ -617,27 +617,37 @@ new #[Layout('layouts::public')] class extends Component {
         }
     @endphp
 
-    <div class="-mx-3.5 flex snap-x gap-2 overflow-x-auto px-3.5 pb-1 [scrollbar-width:none]" data-no-swipe
-        x-init="$el.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' })">
+    {{--
+        Kolejki sezonu. Telefon: pasek przesuwany palcem (bez widocznego suwaka), wybrana kolejka na środku.
+        Komputer: wszystkie kolejki w jednym rzędzie bez przewijania; wybrana jest szersza (pełna nazwa rywala),
+        pozostałe zwarte: numer, wynik albo data, skrót rywala (pełna nazwa w podpowiedzi).
+    --}}
+    <div class="-mx-3.5 flex snap-x gap-2 overflow-x-auto px-3.5 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-10 sm:gap-1.5 sm:overflow-visible sm:px-0 sm:pb-0" data-no-swipe
+        x-init="if (window.innerWidth < 640) $el.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' })">
         @foreach ($this->matchdays as $option)
             @php
                 $hasResult = $option->status === \App\Enums\MatchdayStatus::Played && $option->lech_goals !== null;
                 $selected = $option->number === $this->number;
+                $opponent = filled($option->opponent) ? $option->opponent : '…';
             @endphp
             <button type="button" wire:click="openMatchday({{ $option->number }})" wire:key="md-{{ $option->id }}" @if ($selected) aria-current="true" @endif
+                title="{{ __('Matchday :number', ['number' => $option->number]) }}: {{ $opponent }}"
                 @class([
-                    'flex w-28 shrink-0 snap-center flex-col items-start gap-0.5 rounded-2xl border px-3 py-2 text-start transition',
-                    'border-club bg-club text-club-ink' => $selected,
-                    'border-ui-line bg-ui-surface' => ! $selected,
+                    'flex w-28 shrink-0 snap-center flex-col items-start gap-0.5 rounded-xl border px-3 py-2 text-start transition sm:w-auto sm:min-w-0 sm:px-2.5',
+                    'border-club bg-club text-club-ink shadow-sm sm:col-span-2' => $selected,
+                    'border-ui-line bg-ui-surface hover:border-club/40 hover:bg-ui-raised/60' => ! $selected,
                 ])>
-                <span class="flex w-full items-center justify-between font-display text-xs font-bold uppercase tracking-wider opacity-80">
-                    {{ __('Matchday :number', ['number' => $option->number]) }}
+                <span class="flex w-full items-center justify-between gap-1 text-xs font-medium opacity-80">
+                    <span @class(['truncate', 'sm:hidden' => ! $selected])>{{ __('Matchday :number', ['number' => $option->number]) }}</span>
+                    @unless ($selected)
+                        <span class="hidden tabular-nums sm:inline">{{ $option->number }}.</span>
+                    @endunless
                     @if (!$hasResult && $option->isOpenForTips())
-                        <span class="size-2 rounded-full bg-good" title="{{ __('Tipping open') }}"></span>
+                        <span class="size-2 shrink-0 rounded-full bg-good" title="{{ __('Tipping open') }}"></span>
                     @endif
                 </span>
-                <span class="w-full truncate text-sm font-semibold">{{ filled($option->opponent) ? $option->opponent : '…' }}</span>
-                <span class="ui-num text-lg font-extrabold leading-none">{{ $hasResult ? $option->lech_goals.':'.$option->opponent_goals : ($option->kickoff_at?->translatedFormat('j M') ?? '?:?') }}</span>
+                <span @class(['w-full truncate font-medium', 'text-sm' => $selected, 'text-sm sm:text-xs' => ! $selected])>{{ $opponent }}</span>
+                <span class="text-base font-semibold leading-tight tabular-nums">{{ $hasResult ? $option->lech_goals.':'.$option->opponent_goals : ($option->kickoff_at?->translatedFormat('j M') ?? '?:?') }}</span>
             </button>
         @endforeach
     </div>
@@ -803,7 +813,7 @@ new #[Layout('layouts::public')] class extends Component {
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     @foreach ($crowdPlayers as $crowdSet => $crowdBlock)
                         <div class="comp-banner rounded-lg p-2" style="{{ \App\Support\CompetitionColors::style($crowdColors[$crowdSet]) }}">
-                            <div class="relative z-10 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wide">
+                            <div class="relative z-10 flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide">
                                 <span class="truncate">{{ $crowdBlock['label'] }}</span>
                                 <span class="shrink-0 font-semibold opacity-80" title="{{ __('Clubs with a line-up') }}">{{ $crowdBlock['clubs'] }}</span>
                             </div>

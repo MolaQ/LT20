@@ -1,14 +1,16 @@
-{{-- Barwy klubu z config/club.php jako zmienne CSS (--club-*). Inna drużyna = inne wartości w .env. --}}
-@php($colors = config('club.colors'))
+{{--
+    Kolory strony jako zmienne CSS: barwy klubu z config/club.php, zmienione w panelu „Kolory strony” (App\Support\SiteColors).
+    Kolory jasnego motywu tylko dla :root:not(.dark), bo ciemny motyw ma własne (app.css).
+--}}
+@php
+    $siteColors = \App\Support\SiteColors::all();
+    $siteCss = \App\Support\SiteColors::css($siteColors);
+@endphp
 <style>
-    :root {
-        --club-primary: {{ $colors['primary'] }};
-        --club-primary-dark: {{ $colors['primary_dark'] }};
-        --club-deep: {{ $colors['deep'] }};
-        --club-accent: {{ $colors['accent'] }};
-    }
+    :root { {{ $siteCss[':root'] }} }
+    :root:not(.dark) { {{ $siteCss[':root:not(.dark)'] }} }
 </style>
-<meta name="theme-color" content="{{ $colors['deep'] }}">
+<meta name="theme-color" content="{{ $siteColors['deep'] }}">
 <link rel="manifest" href="{{ route('manifest') }}">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">

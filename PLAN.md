@@ -54,9 +54,27 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Jedna spokojna czcionka bezszeryfowa Inter zamiast Barlow Condensed; najgrubsza waga 700 zamiast 900; mniejsze odstępy liter |
 | V | Menu bez wersalików; banery i belki w stonowanym niebieskim zamiast przejścia w czerń; jaskrawe plakietki (zielone, czerwone, żółte) w jasnych odcieniach |
 | X | Ocena po zmianach: co jeszcze jest za mocne (zrzuty ekranu) |
-| X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji) |
+| V | „Aktualności” w prawej kolumnie: jedna karta, miniatura (obrazek z newsa albo data), tytuł, „x dni temu” |
+| V | Przycisk „Udostępnij” wyraźniejszy (ikona z napisem) i na stronie głównej: najbliższa i ostatnia kolejka, ostatni mistrzowie |
+| V | Kafelek newsa klikalny w całości (otwiera pełną wiadomość), dyskretne uniesienie, cień i strzałka „Czytaj dalej” po najechaniu |
+| V | „Udostępnij”: podgląd obrazka z przyciskami Pobierz i Udostępnij (naprawa: przeglądarka blokowała udostępnianie) |
+| V | Menu „Więcej”: kafelki z ikonami w siatce (bez przewijania), skromny baner instalacji, motyw jako ikony, język na dole jako przyciski z flagami; „Panel” tylko dla osób z dostępem do panelu |
+| V | Duże przyciski (Zmień typ, Zainstaluj…) bez wersalików i bardzo grubej czcionki |
+| V | Kolejki na /tips: na komputerze wszystkie w jednym rzędzie bez suwaka (wybrana szersza), na telefonie przesuwane palcem bez widocznego paska |
+| V | Statystyki w stopce: ikony, liczby nabijające się od zera, pulsująca kropka „na żywo”, pasek postępu sezonu, uniesienie po najechaniu |
+| X | Statystyki w stopce: szczegóły do ustalenia |
+| V | Odliczanie na stronie głównej jak tablica klapkowa na dworcu (cyfry się przewracają) |
+| V | Panel „Kolory strony” (`/panel/site-colors`, tylko Admin): barwy klubu, belki i banery, jasny motyw, dobrze/źle, klapki tablicy; podgląd na żywo, przywracanie domyślnych |
+| X | Kolejne kolory do panelu (ciemny motyw, przyciski, tabele) – w miarę potrzeb |
+| V | Powrót do granatu „Bułgarska nocą” na belkach i banerach (czcionka Inter zostaje) |
+| V | /tips: wybór typu rozgrywek i zawodnicy bez wersalików i grubej czcionki |
+| X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
+| X | Nowoczesny i spójny wygląd panelu administratora |
+| X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji); kolory już są („Kolory strony”) |
 
 ### Do zaplanowania i dyskusji
+
+Pytania z propozycjami: `DYSKUSJA.md`.
 
 | Stan | Zadanie |
 |:----:|---------|
