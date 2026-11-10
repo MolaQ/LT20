@@ -31,6 +31,15 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | X | `dashboard/office`: filtry jako klikalne przyciski |
 | X | Filtry jako przyciski zamiast list rozwijanych wszędzie, gdzie się da |
 
+### Płatności
+
+| Stan | Zadanie |
+|:----:|---------|
+| V | Kod Przelewy24, cennik premium, cegiełki i panel „Wpłaty” (etap 15) |
+| X | Konto Przelewy24: dane sprzedawcy (Merchant ID, POS ID, CRC, klucz API) w `.env` na serwerze |
+| X | Test płatności w trybie sandbox na lechtyper.pl, potem przełączenie na produkcję |
+| X | Ustalić, czego jeszcze brakuje w płatnościach (do dyskusji) |
+
 ### Wygląd (do zaplanowania i dyskusji)
 
 | Stan | Zadanie |
