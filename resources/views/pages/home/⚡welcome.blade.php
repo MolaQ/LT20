@@ -147,7 +147,7 @@ new #[Layout('layouts::public')] class extends Component {
                 $lechWon = $played && $matchday->lech_goals > $matchday->opponent_goals;
                 $lechLost = $played && $matchday->lech_goals < $matchday->opponent_goals;
             @endphp
-            <section class="lech-bar-shadow overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+            <section data-share-target class="lech-bar-shadow overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
                 {{-- Belka: rodzaj kolejki, numer i rozgrywki, stan --}}
                 <div class="lech-bar flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                     <div class="flex items-center gap-2">
@@ -162,6 +162,7 @@ new #[Layout('layouts::public')] class extends Component {
                         <span class="{{ $played ? 'bg-zinc-200 text-zinc-800' : ($open ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200' : 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200') }} rounded-full px-2.5 py-1 font-bold uppercase">
                             {{ $played ? __('Full time') : ($open ? __('Tipping open') : __('Tipping closed')) }}
                         </span>
+                        <x-share-image :title="__('Matchday :number', ['number' => $matchday->number])" class="text-white" />
                     </div>
                 </div>
 
@@ -256,9 +257,10 @@ new #[Layout('layouts::public')] class extends Component {
                     $lastProtocol = $this->protocolOf($last);
                     $lastScore = $last->is_home ? $last->lech_goals . ':' . $last->opponent_goals : $last->opponent_goals . ':' . $last->lech_goals;
                 @endphp
-                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                <section data-share-target class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-ui-line px-5 py-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Last matchday') }} · {{ __('Matchday :number', ['number' => $last->number]) }}</span>
+                        <span class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Last matchday') }} · {{ __('Matchday :number', ['number' => $last->number]) }}
+                            <x-share-image :title="__('Last matchday').' '.$last->number" class="normal-case tracking-normal" /></span>
                         <span class="text-sm font-bold">
                             {{ $last->is_home ? 'Lech Poznań' : $last->opponent }}
                             <span class="lech-bar mx-1.5 rounded-md px-2 py-0.5 tabular-nums">{{ $lastScore }}</span>
@@ -341,11 +343,14 @@ new #[Layout('layouts::public')] class extends Component {
         @php
             $trophyIcons = \App\Support\HallOfFame::iconUrls();
         @endphp
-        <section class="space-y-3">
+        <section data-share-target class="space-y-3">
             <div class="flex flex-wrap items-end justify-between gap-2">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-club">{{ $this->champions['season']->title }}</p>
-                    <h2 class="text-2xl font-black">{{ __('Latest champions') }}</h2>
+                <div class="flex items-end gap-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-club">{{ $this->champions['season']->title }}</p>
+                        <h2 class="text-2xl font-black">{{ __('Latest champions') }}</h2>
+                    </div>
+                    <x-share-image :title="__('Latest champions').' '.$this->champions['season']->title" class="text-ui-muted" />
                 </div>
                 <a href="{{ route('history') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">
                     {{ __('Full history') }} <x-ui.icon name="arrow-right" variant="micro" />

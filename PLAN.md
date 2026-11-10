@@ -54,6 +54,10 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Jedna spokojna czcionka bezszeryfowa Inter zamiast Barlow Condensed; najgrubsza waga 700 zamiast 900; mniejsze odstępy liter |
 | V | Menu bez wersalików; banery i belki w stonowanym niebieskim zamiast przejścia w czerń; jaskrawe plakietki (zielone, czerwone, żółte) w jasnych odcieniach |
 | X | Ocena po zmianach: co jeszcze jest za mocne (zrzuty ekranu) |
+| V | „Aktualności” w prawej kolumnie: jedna karta, miniatura (obrazek z newsa albo data), tytuł, „x dni temu” |
+| V | Przycisk „Udostępnij” wyraźniejszy (ikona z napisem) i na stronie głównej: najbliższa i ostatnia kolejka, ostatni mistrzowie |
+| X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
+| X | Nowoczesny i spójny wygląd panelu administratora |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji) |
 
 ### Do zaplanowania i dyskusji
