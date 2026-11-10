@@ -38,6 +38,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $locale
  * @property array<string, bool>|null $push_prefs
  * @property int $profile_views
+ * @property Carbon|null $inactivity_reset_at
  */
 #[Fillable(['name', 'email', 'password', 'team_name', 'locale'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'verification_code'])]
@@ -67,6 +68,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'premium_until' => 'datetime',
+            'inactivity_reset_at' => 'datetime',
             'verification_code_expires_at' => 'datetime',
             'push_prefs' => 'array',
         ];

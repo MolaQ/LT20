@@ -124,6 +124,9 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
         ->middleware('role:Admin')
         ->name('dashboard.office');
 
+    Route::livewire('panel/statistics', 'pages::dashboard.site-statistics')
+        ->middleware('role:Admin')
+        ->name('dashboard.site-statistics');
     Route::livewire('panel/site-colors', 'pages::dashboard.site-colors')
         ->middleware('role:Admin')
         ->name('dashboard.site-colors');

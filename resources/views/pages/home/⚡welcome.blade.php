@@ -134,6 +134,11 @@ new #[Layout('layouts::public')] class extends Component {
             </x-slot:aside>
         </x-page-banner>
 
+        {{-- Ostrzeżenie „kartki” po kolejkach bez typu (App\Support\Inactivity). --}}
+        @auth
+            <x-inactivity-warning />
+        @endauth
+
         {{-- Najbliższa kolejka (albo ostatnia, gdy wszystkie rozegrane): tablica wyników z odliczaniem do pierwszego gwizdka --}}
         @if ($this->matchday)
             @php
