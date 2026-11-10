@@ -82,7 +82,8 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Dymek (toast) nad menu zamiast pod nim; błąd „Udostępnij” pokazuje przyczynę |
 | V | „Udostępnij”: błąd „error” naprawiony (atrybuty Livewire i Alpine w kopii do zdjęcia); sam znaczek bez napisu |
 | X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
-| X | Nowoczesny i spójny wygląd panelu administratora |
+| V | Panel: menu boczne w granacie „Bułgarska nocą”, górny pasek z bieżącym działem i linkiem do strony, treść w stałej szerokości |
+| X | Panel: dalsze ujednolicenie stron (nagłówki, tabele) – po zrzutach ekranu |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji); kolory już są („Kolory strony”) |
 
 ### Do zaplanowania i dyskusji

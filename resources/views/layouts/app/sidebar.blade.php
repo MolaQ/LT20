@@ -75,10 +75,15 @@
     <x-maintenance-notice />
 
     @php
+        // Menu boczne w granacie „Bułgarska nocą” (te same kolory co belki strony, z panelu „Kolory strony”).
         $link = fn (bool $active) => [
             'flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium transition',
-            $active ? 'bg-ui-raised font-semibold text-ui-ink' : 'text-ui-muted hover:bg-ui-raised hover:text-ui-ink',
+            $active ? 'bg-white/15 font-semibold text-white shadow-sm ring-1 ring-white/10' : 'text-white/70 hover:bg-white/10 hover:text-white',
         ];
+        // Nazwa bieżącego działu do górnego paska (pozycja menu z aktywną trasą).
+        $current = collect($groups)->flatMap(fn ($g) => $g[2])->first(fn ($i) => $i['show'] && $isActive($i));
+        $currentLabel = $current['label'] ?? (request()->routeIs('dashboard.settings.*') ? __('Settings') : __('Dashboard'));
+        $currentIcon = $current['icon'] ?? (request()->routeIs('dashboard.settings.*') ? 'cog' : 'home');
     @endphp
 
     {{-- Tło pod wysuniętym menu (telefon) --}}
@@ -86,10 +91,11 @@
 
     <div class="lg:flex">
         <aside :class="nav ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'"
-            class="fixed inset-y-0 start-0 z-50 flex w-72 -translate-x-full flex-col gap-3 overflow-y-auto border-e border-ui-line bg-ui-surface p-3 transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:translate-x-0">
+            style="background-image: linear-gradient(180deg, var(--theme-bar-from, #0b1f4d), var(--theme-bar-to, #061331) 70%, color-mix(in srgb, var(--theme-bar-to, #061331) 40%, #000)); color: #fff;"
+            class="fixed inset-y-0 start-0 z-50 flex w-72 -translate-x-full flex-col gap-3 overflow-y-auto p-3 transition-transform duration-200 [scrollbar-width:thin] lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:translate-x-0">
             <div class="flex items-center justify-between px-1 pt-1">
-                <x-lechtyper-logo :href="route('dashboard')" />
-                <button type="button" class="grid size-9 place-items-center rounded-xl text-ui-muted hover:bg-ui-raised lg:hidden" @click="nav = false" aria-label="{{ __('Close') }}">
+                <x-lechtyper-logo :href="route('dashboard')" class="[&_.text-blue-500]:text-blue-300" />
+                <button type="button" class="grid size-9 place-items-center rounded-xl text-white/70 hover:bg-white/10 lg:hidden" @click="nav = false" aria-label="{{ __('Close') }}">
                     <x-ui.icon name="x-mark" class="size-5" />
                 </button>
             </div>
@@ -108,7 +114,7 @@
                         $open = $loop->first || collect($items)->contains(fn ($i) => $isActive($i));
                     @endphp
                     <details class="group mt-1" @if ($open) open @endif>
-                        <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-ui-muted hover:text-ui-ink [&::-webkit-details-marker]:hidden">
+                        <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/45 hover:text-white/80 [&::-webkit-details-marker]:hidden">
                             {{ $heading }}
                             <x-ui.icon name="chevron-down" variant="micro" class="size-3.5 transition group-open:rotate-180" />
                         </summary>
@@ -125,7 +131,7 @@
                 @endforeach
             </nav>
 
-            <div class="mt-auto flex flex-col gap-1 border-t border-ui-line pt-3">
+            <div class="mt-auto flex flex-col gap-1 border-t border-white/10 pt-3">
                 <a href="{{ route('home') }}" @class($link(false))>
                     <x-ui.icon name="globe-alt" class="size-5" />{{ __('Public site') }}
                 </a>
@@ -136,11 +142,11 @@
                     <x-ui.avatar :name="$user->name" :initials="$user->initials()" size="sm" />
                     <div class="grid min-w-0 flex-1 text-sm leading-tight">
                         <span class="truncate font-semibold">{{ $user->name }}</span>
-                        <span class="truncate text-xs text-ui-muted">{{ $user->email }}</span>
+                        <span class="truncate text-xs text-white/55">{{ $user->email }}</span>
                     </div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="grid size-8 place-items-center rounded-lg text-ui-muted hover:bg-ui-raised hover:text-ui-ink" data-test="logout-button"
+                        <button type="submit" class="grid size-8 place-items-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white" data-test="logout-button"
                             title="{{ __('Log out') }}" aria-label="{{ __('Log out') }}">
                             <x-ui.icon name="arrow-right-start-on-rectangle" variant="mini" class="size-4" />
                         </button>
@@ -158,7 +164,23 @@
                 <x-lechtyper-logo :href="route('dashboard')" />
             </header>
 
-            <main class="w-full p-4 sm:p-6 lg:p-8">
+            {{-- Górny pasek na komputerze: bieżący dział, strona publiczna, konto. --}}
+            <div class="sticky top-0 z-30 hidden items-center gap-3 border-b border-ui-line bg-ui-bg/90 px-8 py-3 backdrop-blur lg:flex">
+                <span class="grid size-8 place-items-center rounded-lg bg-club/10 text-club"><x-ui.icon :name="$currentIcon" variant="mini" class="size-4" /></span>
+                <div class="min-w-0 flex-1 text-sm">
+                    <span class="text-ui-muted">{{ __('Dashboard') }}</span>
+                    <span class="mx-1 text-ui-muted" aria-hidden="true">/</span>
+                    <span class="font-semibold">{{ $currentLabel }}</span>
+                </div>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 rounded-full border border-ui-line px-3 py-1.5 text-xs font-medium text-ui-muted transition hover:bg-ui-raised hover:text-ui-ink">
+                    <x-ui.icon name="globe-alt" variant="micro" class="size-4" />{{ __('Public site') }}
+                </a>
+                <a href="{{ route('dashboard.settings.profile') }}" wire:navigate title="{{ $user->name }}">
+                    <x-ui.avatar :name="$user->name" :initials="$user->initials()" size="sm" />
+                </a>
+            </div>
+
+            <main class="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
                 {{ $slot }}
             </main>
         </div>
