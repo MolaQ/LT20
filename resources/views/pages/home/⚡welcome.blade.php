@@ -216,11 +216,32 @@ new #[Layout('layouts::public')] class extends Component {
                                 },
                             }" x-init="tick(); setInterval(() => tick(), 1000)" class="space-y-2 text-center">
                             <div class="text-xs font-semibold uppercase tracking-wider text-ui-muted">{{ __('Tipping closes in') }}</div>
-                            <div class="flex justify-center gap-2 sm:gap-3">
+                            {{-- Tablica klapkowa jak na dworcu: każda cyfra na osobnej klapce (uiFlap), przy zmianie się przewraca. --}}
+                            @php
+                                $dayDigits = max(2, strlen((string) intdiv(max(0, $matchday->kickoff_at->getTimestamp() - now()->getTimestamp()), 86400)));
+                            @endphp
+                            <div class="flex flex-wrap justify-center gap-3 sm:gap-5">
                                 @foreach ([__('days'), __('hours'), __('min'), __('sec')] as $unit)
-                                    <div class="lech-bar w-16 rounded-xl py-2 sm:w-20">
-                                        <div class="text-2xl font-black tabular-nums sm:text-3xl" x-text="String(parts[{{ $loop->index }}]).padStart(2, '0')"></div>
-                                        <div class="text-[10px] uppercase tracking-wider text-lech-200">{{ $unit }}</div>
+                                    @php
+                                        $part = $loop->index;
+                                        $width = $part === 0 ? $dayDigits : 2;
+                                    @endphp
+                                    <div class="flex flex-col items-center gap-1.5">
+                                        <div class="flex gap-[3px] text-4xl sm:text-5xl" role="timer" aria-label="{{ $unit }}">
+                                            @for ($d = 0; $d < $width; $d++)
+                                                <span class="flap" x-data="uiFlap('0')" x-effect="set(String(parts[{{ $part }}]).padStart({{ $width }}, '0').slice(-{{ $width }})[{{ $d }}])">
+                                                    <span class="flap-half flap-top"><span x-text="cur"></span></span>
+                                                    <span class="flap-half flap-bottom"><span x-text="flipping ? prev : cur"></span></span>
+                                                    <template x-if="flipping">
+                                                        <span>
+                                                            <span class="flap-half flap-top flap-leaf-top"><span x-text="prev"></span></span>
+                                                            <span class="flap-half flap-bottom flap-leaf-bottom" @animationend="flipping = false"><span x-text="cur"></span></span>
+                                                        </span>
+                                                    </template>
+                                                </span>
+                                            @endfor
+                                        </div>
+                                        <div class="text-[11px] font-medium uppercase tracking-wider text-ui-muted">{{ $unit }}</div>
                                     </div>
                                 @endforeach
                             </div>

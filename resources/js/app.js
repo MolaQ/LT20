@@ -194,6 +194,26 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // Klapka tablicy jak na starym dworcu (odliczanie na stronie głównej): przy zmianie cyfry górna połówka
+    // ze starą cyfrą opada, a dolna z nową dochodzi do końca. CSS: .flap w app.css.
+    Alpine.data('uiFlap', (initial) => ({
+        cur: initial,
+        prev: initial,
+        flipping: false,
+        set(value) {
+            if (value === this.cur) {
+                return;
+            }
+            this.prev = this.cur;
+            this.cur = value;
+            if (reducedMotion()) {
+                return;
+            }
+            this.flipping = false;
+            requestAnimationFrame(() => (this.flipping = true));
+        },
+    }));
+
     // Przycisk „Zainstaluj aplikację”. Na iPhonie zamiast przycisku podpowiedź z „Udostępnij”.
     Alpine.data('uiInstall', () => ({
         canInstall: !!installPrompt,

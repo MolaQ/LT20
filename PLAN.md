@@ -63,9 +63,12 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Kolejki na /tips: na komputerze wszystkie w jednym rzędzie bez suwaka (wybrana szersza), na telefonie przesuwane palcem bez widocznego paska |
 | V | Statystyki w stopce: ikony, liczby nabijające się od zera, pulsująca kropka „na żywo”, pasek postępu sezonu, uniesienie po najechaniu |
 | X | Statystyki w stopce: szczegóły do ustalenia |
+| V | Odliczanie na stronie głównej jak tablica klapkowa na dworcu (cyfry się przewracają) |
+| V | Panel „Kolory strony” (`/panel/site-colors`, tylko Admin): barwy klubu, belki i banery, jasny motyw, dobrze/źle, klapki tablicy; podgląd na żywo, przywracanie domyślnych |
+| X | Kolejne kolory do panelu (ciemny motyw, przyciski, tabele) – w miarę potrzeb |
 | X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
 | X | Nowoczesny i spójny wygląd panelu administratora |
-| X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji) |
+| X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji); kolory już są („Kolory strony”) |
 
 ### Do zaplanowania i dyskusji
 

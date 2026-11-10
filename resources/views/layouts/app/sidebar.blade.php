@@ -52,6 +52,7 @@
             $item('cpu-chip', 'dashboard.bots', __('Bots'), show: $canSeasons),
             $item('megaphone', 'dashboard.sponsors', __('Sponsors'), show: $canSeasons),
             $item('swatch', 'dashboard.competition-colors', __('Competition colors'), show: $canSeasons),
+            $item('paint-brush', 'dashboard.site-colors', __('Site colors'), show: $canRoles),
             $item('wrench-screwdriver', 'dashboard.maintenance', __('Maintenance mode'), show: $canRoles),
             $item('shield-check', 'dashboard.roles', __('Roles and permissions'), show: $canRoles),
             $item('clipboard-document-list', 'dashboard.logs', __('Change log'), show: $canLogs),
