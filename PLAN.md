@@ -9,7 +9,7 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Narzędzia do wgrywania bez SSH (`narzedzia/paczka-na-serwer.bat`, cron `instaluj-na-serwerze.sh`) |
 | V | Pierwsza instalacja na serwerze (baza MariaDB 10.11 na porcie 3308, migracje, dane startowe) |
 | X | Błąd 500 „Unable to find component”: paczka bez ⚡ w nazwach plików (poprawka gotowa, czeka na wgranie i potwierdzenie) |
-| X | Scalić poprawkę ⚡ do `master` |
+| V | Scalić poprawkę ⚡ do `master` |
 
 ### W trakcie
 
@@ -83,7 +83,7 @@ Pytania z propozycjami: `DYSKUSJA.md`.
 
 | Stan | Zadanie |
 |:----:|---------|
-| X | Statystyki odwiedzin w panelu: wykresy dni i tygodni, popularne strony (licznik w stopce i zapis odsłon już są) |
+| V | Statystyki odwiedzin w panelu (`/panel/statistics`): wizyty, odsłony, porównanie z poprzednim okresem, wizyty dzień po dniu, działy, źródła wejść, urządzenia, godziny i dni tygodnia |
 | X | Komunikacja między użytkownikami z możliwością wyłączenia |
 | X | Grupy użytkowników |
 | X | Zgłaszanie spamu |

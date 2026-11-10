@@ -23,3 +23,18 @@ test('bots are not counted', function () {
 test('the counter shows at least the current visitor', function () {
     expect(SiteStats::visits())->toBe(['online' => 1, 'today' => 1, 'visits' => 1, 'total' => 0]);
 });
+
+test('the admin sees the visit statistics page', function () {
+    \Spatie\Permission\Models\Role::findOrCreate(\App\Enums\RoleName::Admin->value, 'web');
+    $admin = \App\Models\User::factory()->create();
+    $admin->assignRole(\App\Enums\RoleName::Admin->value);
+    PageView::create(['path' => '/rules', 'route_name' => 'rules', 'visitor_hash' => str_repeat('a', 64), 'device' => 'mobile']);
+
+    $this->actingAs($admin)->get(route('dashboard.site-statistics'))
+        ->assertOk()
+        ->assertSee('/rules');
+});
+
+test('players cannot open the visit statistics', function () {
+    $this->actingAs(\App\Models\User::factory()->create())->get(route('dashboard.site-statistics'))->assertRedirect();
+});
