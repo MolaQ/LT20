@@ -10,8 +10,8 @@
     @php
         $premium = \App\Support\Premium::isActive(auth()->user());
         $brand = parse_url((string) config('app.url'), PHP_URL_HOST) ?: config('app.name');
-        // Wyraźny przycisk: ikona i napis „Udostępnij” (na wąskim ekranie sama ikona).
-        $base = 'inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-current/30 px-2.5 text-xs font-semibold transition hover:bg-current/10';
+        // Sam znaczek w kółku (napis „Udostępnij” w podpowiedzi i dla czytników ekranu).
+        $base = 'inline-flex size-8 shrink-0 items-center justify-center gap-1 rounded-full border border-current/30 text-xs transition hover:bg-current/10';
     @endphp
 
     @if ($premium)
@@ -27,7 +27,6 @@
             @mouseenter.once="prepare()" @touchstart.passive.once="prepare()" @click="make()" :disabled="busy" title="{{ __('Image for social media') }}" aria-label="{{ __('Image for social media') }}"
             {{ $attributes->class($base) }}>
             <x-ui.icon name="share" variant="micro" class="size-4" x-show="!busy" />
-            <span class="hidden sm:inline">{{ __('Share') }}</span>
             <svg x-show="busy" x-cloak class="size-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".25" />
                 <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
@@ -35,10 +34,9 @@
         </button>
     @else
         <a href="{{ route('support') }}" wire:navigate data-share-hide title="{{ __('Image for social media – premium option') }}"
-            aria-label="{{ __('Image for social media – premium option') }}" {{ $attributes->class($base.' opacity-80') }}>
+            aria-label="{{ __('Image for social media – premium option') }}" {{ $attributes->class($base.' relative opacity-80') }}>
             <x-ui.icon name="share" variant="micro" class="size-4" />
-            <span class="hidden sm:inline">{{ __('Share') }}</span>
-            <x-ui.icon name="lock-closed" variant="micro" class="size-3.5 rounded-full bg-purple-600 p-0.5 text-white" />
+            <x-ui.icon name="lock-closed" variant="micro" class="absolute -bottom-1 -right-1 size-3.5 rounded-full bg-purple-600 p-0.5 text-white" />
         </a>
     @endif
 @endauth

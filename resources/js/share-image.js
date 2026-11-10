@@ -1,6 +1,6 @@
 // Obrazek na sociale (premium, Admin zawsze): przycisk x-share-image robi PNG z najbliższego elementu
-// z atrybutem data-share-target (tabela, wyniki, kolejka, news...). Na czas zdjęcia element dostaje klasę
-// is-sharing, elementy z [data-share-hide] są pomijane, a na dole dochodzi stopka z adresem strony.
+// z atrybutem data-share-target (tabela, wyniki, kolejka, news...). Zdjęcie robi się z oczyszczonej kopii
+// (cleanCopy) z klasą is-sharing, bez elementów [data-share-hide] i ze stopką z adresem strony.
 // Gotowy obrazek pokazuje się w podglądzie z przyciskami „Pobierz” i „Udostępnij”. Udostępnianie jest
 // osobnym kliknięciem, bo przeglądarka otwiera systemowe „Udostępnij” tylko zaraz po kliknięciu, a zdjęcie
 // trwa chwilę. Biblioteka html-to-image ładuje się przy najechaniu na przycisk (osobny plik po npm run build).
@@ -98,6 +98,34 @@ const showPreview = (blob, file, labels) => {
     buttons.lastChild.focus();
 };
 
+// Kopia elementu do zdjęcia. Biblioteka zapisuje element jako obrazek SVG, a w SVG nie wolno używać atrybutów
+// o nazwach z „:” i „@” (wire:click, @click, :class z Livewire i Alpine): przeglądarka odrzucała wtedy cały obrazek
+// („error”). Kopia bez nich, bez [data-share-hide] i <template>, leży poza ekranem obok oryginału, więc dziedziczy
+// te same kolory i zmienne CSS.
+const cleanCopy = (target) => {
+    const copy = target.cloneNode(true);
+    copy.querySelectorAll('[data-share-hide], template, script').forEach((node) => node.remove());
+    for (const el of [copy, ...copy.querySelectorAll('*')]) {
+        for (const attr of [...el.attributes]) {
+            if (!/^[a-zA-Z_][a-zA-Z0-9_.-]*$/.test(attr.name)) {
+                el.removeAttribute(attr.name);
+            }
+        }
+    }
+    copy.removeAttribute('id');
+    copy.classList.add('is-sharing');
+    copy.style.width = target.getBoundingClientRect().width + 'px';
+    copy.style.margin = '0';
+
+    const holder = document.createElement('div');
+    holder.setAttribute('aria-hidden', 'true');
+    holder.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none';
+    holder.appendChild(copy);
+    target.parentNode.appendChild(holder);
+
+    return { holder, copy };
+};
+
 document.addEventListener('alpine:init', () => {
     window.Alpine.data('shareImage', (title, brand, labels) => ({
         busy: false,
@@ -118,25 +146,27 @@ document.addEventListener('alpine:init', () => {
             footer.className = 'share-footer';
             footer.textContent = brand + ' · ' + new Date().toLocaleDateString('pl-PL');
 
+            let holder = null;
             try {
                 const { toBlob } = await loadLibrary();
-                target.classList.add('is-sharing');
-                target.appendChild(footer);
+                const prepared = cleanCopy(target);
+                holder = prepared.holder;
+                const copy = prepared.copy;
+                copy.appendChild(footer);
 
                 const options = {
                     pixelRatio: 2,
                     // Obrazek, który się nie wczyta (np. z innej domeny), zamienia się w przezroczysty zamiast przerywać zdjęcie.
                     imagePlaceholder: 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
                     backgroundColor: getComputedStyle(document.body).backgroundColor,
-                    filter: (node) => !(node instanceof HTMLElement && node.hasAttribute('data-share-hide')),
                 };
                 let blob = null;
                 try {
-                    blob = await toBlob(target, options);
+                    blob = await toBlob(copy, options);
                 } catch (e) {
                     // Czcionki, których nie da się wczytać, nie mogą blokować obrazka: druga próba bez nich.
                     console.warn(e);
-                    blob = await toBlob(target, { ...options, skipFonts: true });
+                    blob = await toBlob(copy, { ...options, skipFonts: true });
                 }
                 if (!blob) {
                     throw new Error('empty image');
@@ -149,8 +179,7 @@ document.addEventListener('alpine:init', () => {
                 const reason = e instanceof Error ? e.message : e?.type ?? String(e);
                 toast(labels.error + (reason ? ' (' + reason + ')' : ''));
             } finally {
-                footer.remove();
-                target.classList.remove('is-sharing');
+                holder?.remove();
                 this.busy = false;
             }
         },
