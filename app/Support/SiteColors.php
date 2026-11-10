@@ -82,7 +82,7 @@ final class SiteColors
     {
         $out = [];
         foreach (self::DEFAULTS as $key => [, $default]) {
-            $out[$key] = strtolower($default ?? (string) config('club.colors.'.self::CLUB[$key]));
+            $out[$key] = strtolower($default ?? (string) config('club.colors.'.(self::CLUB[$key] ?? $key)));
         }
 
         return $out;
@@ -112,7 +112,11 @@ final class SiteColors
         }
     }
 
-    /** Zapis z panelu: kolory równe domyślnym nie są przechowywane. */
+    /**
+     * Zapis z panelu: kolory równe domyślnym nie są przechowywane.
+     *
+     * @param  array<string, mixed>  $colors
+     */
     public static function save(array $colors): void
     {
         $defaults = self::defaults();
