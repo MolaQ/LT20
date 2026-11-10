@@ -31,7 +31,7 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | X | `dashboard/office`: filtry jako klikalne przyciski |
 | X | Filtry jako przyciski zamiast list rozwijanych wszędzie, gdzie się da |
 
-### Płatności
+### Płatności (odłożone na później)
 
 | Stan | Zadanie |
 |:----:|---------|
