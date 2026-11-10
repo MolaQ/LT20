@@ -15,6 +15,10 @@ new #[Layout('layouts::public')] class extends Component {
     {
         abort_unless($news->published_at && $news->published_at->isPast(), 404);
         $this->newsId = $news->id;
+
+        // Podgląd linku na X i Facebooku: początek treści i pierwsze zdjęcie newsa.
+        \App\Support\Seo::description(\App\Support\NewsHtml::plain($news->body));
+        \App\Support\Seo::image(\App\Support\NewsHtml::firstImage($news->body));
     }
 
     #[Computed]

@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\Przelewy24Controller;
+use App\Support\Sitemap;
 use Illuminate\Support\Facades\Route;
 
 // Strona publiczna
@@ -146,6 +147,10 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
         ->middleware('permission:'.Permission::LogView->value)
         ->name('dashboard.logs');
 });
+
+// Wyszukiwarki: robots.txt z adresem mapy strony i mapa stron publicznych (App\Support\Sitemap).
+Route::get('robots.txt', fn () => response(Sitemap::robots(), 200, ['Content-Type' => 'text/plain; charset=UTF-8']))->name('robots');
+Route::get('sitemap.xml', fn () => response(Sitemap::xml(), 200, ['Content-Type' => 'application/xml; charset=UTF-8']))->name('sitemap');
 
 // Stare adresy panelu (/dashboard/...) prowadzą do nowych (/panel/...); nazwy tras zostały dashboard.*.
 Route::get('dashboard/{path?}', fn (?string $path = null) => redirect(url('panel'.($path ? '/'.$path : '')), 301))

@@ -21,6 +21,10 @@
                 'download' => __('Download'),
                 'share' => __('Share'),
                 'close' => __('Close'),
+                'x' => __('Post on X'),
+                'xHint' => __('The image is saved: attach it to the post on X.'),
+                'hashtag' => config('club.hashtag'),
+                'via' => config('club.x_handle'),
             ];
         @endphp
         <button type="button" data-share-hide x-data="shareImage(@js($title), @js($brand), @js($labels))"
