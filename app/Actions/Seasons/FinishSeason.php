@@ -22,6 +22,7 @@ use App\Support\EuropeanCup;
 use App\Support\HallOfFame;
 use App\Support\PageCache;
 use App\Support\PlayerStats;
+use App\Support\Premium;
 use App\Support\Roster;
 use App\Support\SeasonArchive;
 use App\Support\Standings;
@@ -35,7 +36,9 @@ use Spatie\Permission\Models\Role;
  *  1. zapisuje tabele końcowe wszystkich rozgrywek (final_standings): podstawa listy na nowy sezon,
  *     kwalifikacji do lig europejskich i Hall of Fame (punkty i trofea przyznaje AwardHallOfFame),
  *  2. gracze, którzy 5 kolejek z rzędu nie typowali, tracą rolę User i dostają rolę Inactive
- *     (regulamin, punkt 3); ich miejsca w niezakończonych sezonach przejmują boty,
+ *     (regulamin, punkt 3); ich miejsca w niezakończonych sezonach przejmują boty. Seria przechodzi
+ *     z poprzedniego sezonu (nowy sezon jej nie zeruje, zeruje ją przywrócenie gracza ze statusu Inactive),
+ *     a konta z ważnym premium (i Admin) roli nie dostają,
  *  3. zmienia status i zapisuje wpis w dzienniku.
  */
 class FinishSeason
@@ -204,27 +207,54 @@ class FinishSeason
     {
         $matchdays = Matchday::where('season_id', $season->id)->where('status', MatchdayStatus::Played->value)->orderBy('number')->pluck('id');
 
-        if ($matchdays->count() < self::INACTIVE_STREAK) {
+        $userIds = SeasonTeam::where('season_id', $season->id)->whereNotNull('user_id')->pluck('user_id');
+        if ($matchdays->isEmpty() || $userIds->isEmpty()) {
             return [];
         }
 
-        $userIds = SeasonTeam::where('season_id', $season->id)->whereNotNull('user_id')->pluck('user_id');
-        $tipped = Tip::whereIn('matchday_id', $matchdays)->get(['matchday_id', 'user_id'])
+        // Ostatnie rozegrane kolejki poprzednich sezonów (od najnowszej): z nich liczy się seria przeniesiona
+        // na ten sezon. Wystarczy tyle kolejek, ile brakuje do progu.
+        $previous = Matchday::query()
+            ->join('seasons', 'seasons.id', '=', 'matchdays.season_id')
+            ->where('seasons.number', '<', $season->number)
+            ->where('matchdays.status', MatchdayStatus::Played->value)
+            ->orderByDesc('seasons.number')->orderByDesc('matchdays.number')
+            ->limit(self::INACTIVE_STREAK * 2)
+            ->pluck('matchdays.id');
+
+        $all = $matchdays->merge($previous);
+        $tipped = Tip::whereIn('matchday_id', $all)->whereIn('user_id', $userIds)->get(['matchday_id', 'user_id'])
             ->groupBy('user_id')
             ->map(fn ($tips) => $tips->pluck('matchday_id')->flip());
-
-        $played = TeamScore::whereIn('matchday_id', $matchdays)->whereIn('user_id', $userIds)->get(['matchday_id', 'user_id'])
+        // Liczą się tylko kolejki, w których gracz miał mecz.
+        $played = TeamScore::whereIn('matchday_id', $all)->whereIn('user_id', $userIds)->get(['matchday_id', 'user_id'])
             ->groupBy('user_id')
             ->map(fn ($scores) => $scores->pluck('matchday_id')->flip());
+
+        // Przywrócenie ze statusu Inactive zeruje serię: kolejki sprzed tej chwili się nie liczą.
+        $kickoffs = Matchday::whereIn('id', $all)->pluck('kickoff_at', 'id');
+        $resets = User::whereIn('id', $userIds)->whereNotNull('inactivity_reset_at')->pluck('inactivity_reset_at', 'id');
+        $counts = fn (int $userId, int $matchdayId): bool => isset($played[$userId][$matchdayId])
+            && ! (isset($resets[$userId], $kickoffs[$matchdayId]) && $kickoffs[$matchdayId] <= $resets[$userId]);
 
         $inactive = [];
 
         foreach ($userIds as $userId) {
+            // Seria z końca poprzednich sezonów: kolejne kolejki bez typu, licząc od najnowszej.
             $streak = 0;
-            $best = 0;
+            foreach ($previous as $matchdayId) {
+                if (! $counts($userId, $matchdayId)) {
+                    continue;
+                }
+                if (isset($tipped[$userId][$matchdayId])) {
+                    break;
+                }
+                $streak++;
+            }
 
+            $best = $streak;
             foreach ($matchdays as $matchdayId) {
-                if (! isset($played[$userId][$matchdayId])) {
+                if (! $counts($userId, $matchdayId)) {
                     continue;
                 }
                 $streak = isset($tipped[$userId][$matchdayId]) ? 0 : $streak + 1;
@@ -236,7 +266,7 @@ class FinishSeason
             }
         }
 
-        // Admin nie traci roli przez brak typów (konto techniczne).
-        return User::whereIn('id', $inactive)->get()->reject(fn (User $user) => $user->hasRole(RoleName::Admin->value))->values()->all();
+        // Ważne premium chroni przed statusem Inactive; Admin ma premium zawsze (konto techniczne).
+        return User::whereIn('id', $inactive)->get()->reject(fn (User $user) => Premium::isActive($user))->values()->all();
     }
 }

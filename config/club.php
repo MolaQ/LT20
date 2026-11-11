@@ -28,6 +28,12 @@ return [
         'accent' => env('CLUB_COLOR_ACCENT', '#f0c45a'),
     ],
 
+    // Konto na X (np. @LechTYPER): podpis w kartach X przy linkach do strony i w postach z przycisku „Opublikuj na X”.
+    'x_handle' => env('CLUB_X_HANDLE'),
+
+    // Hashtag gry w postach na X.
+    'hashtag' => env('CLUB_HASHTAG', 'LechTYPER'),
+
     // Stopka: podpis autora strony („Projekt i wykonanie”) i link do niego; puste = bez podpisu.
     'footer_author' => env('CLUB_FOOTER_AUTHOR', 'Marcin Molak'),
     'footer_author_url' => env('CLUB_FOOTER_AUTHOR_URL'),

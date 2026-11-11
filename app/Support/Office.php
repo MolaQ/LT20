@@ -206,6 +206,10 @@ final class Office
 
         $user->removeRole($role);
         $user->unsetRelation('roles');
+        // Przywrócony nieaktywny gracz zaczyna serię kolejek bez typu od zera.
+        if ($role === RoleName::Inactive->value) {
+            $user->forceFill(['inactivity_reset_at' => now()])->save();
+        }
         if (! $user->roles()->exists()) {
             $user->assignRole(RoleName::User->value);
             $user->unsetRelation('roles');

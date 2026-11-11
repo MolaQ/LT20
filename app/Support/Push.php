@@ -120,6 +120,23 @@ final class Push
             $points = $row ? (int) $row->tip_points : 0;
             $bonus = $row ? (int) $row->offense_bonus + (int) $row->defense_bonus : 0;
 
+            // Bez typu i seria od 3 kolejek: ostrzeżenie „kartki” zamiast zwykłego wyniku (premium jest chronione).
+            if (! ($row && $row->has_tip)) {
+                $streak = Inactivity::streak($user);
+                if ($streak >= 3 && ! Premium::isActive($user)) {
+                    return new PushMessage(
+                        ':count matchdays without a tip',
+                        $streak >= Inactivity::LIMIT - 1
+                            ? 'Last chance! One more matchday without a tip and from the next season a bot takes over your team.'
+                            : ':left more and from the next season a bot takes over your team. Tip the next matchday!',
+                        route('tips'),
+                        'inactivity-'.$matchday->id,
+                        ['count' => $streak],
+                        ['left' => Inactivity::LIMIT - $streak],
+                    );
+                }
+            }
+
             return new PushMessage(
                 'Matchday :number settled',
                 $row && $row->has_tip ? ':score. Your tip: :points pts, bonus :bonus.' : ':score. You did not tip this time.',

@@ -588,6 +588,9 @@ new #[Layout('layouts::public')] class extends Component {
     @endphp
 
     {{-- Zakładki: segmentowy przełącznik --}}
+    {{-- Ostrzeżenie „kartki” po kolejkach bez typu (App\Support\Inactivity); przycisk niepotrzebny, bo to już typowanie. --}}
+    <x-inactivity-warning :tip-link="false" />
+
     <nav class="flex gap-1 overflow-x-auto rounded-2xl bg-ui-raised p-1 [scrollbar-width:none]" data-no-swipe>
         @foreach ($tabs as $key => [$icon, $label])
             <button type="button" wire:click="$set('tab', '{{ $key }}')"

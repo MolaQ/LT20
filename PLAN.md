@@ -9,7 +9,7 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Narzędzia do wgrywania bez SSH (`narzedzia/paczka-na-serwer.bat`, cron `instaluj-na-serwerze.sh`) |
 | V | Pierwsza instalacja na serwerze (baza MariaDB 10.11 na porcie 3308, migracje, dane startowe) |
 | X | Błąd 500 „Unable to find component”: paczka bez ⚡ w nazwach plików (poprawka gotowa, czeka na wgranie i potwierdzenie) |
-| X | Scalić poprawkę ⚡ do `master` |
+| V | Scalić poprawkę ⚡ do `master` |
 
 ### W trakcie
 
@@ -37,6 +37,33 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | `dashboard/office`: filtry stanu i rodzaju jako przyciski z licznikami |
 | V | Filtry jako przyciski (komponent `x-ui.filter-pills`): newsy, sezony, wpłaty, zmiany nazw, użytkownicy (role), kadra Lecha (pozycje), typy i wyniki w panelu (kolejki), Hall of Fame, Gwiazdy |
 | X | Wybór sezonu nadal jako lista rozwijana (sezonów przybywa); do decyzji, czy też na przyciski |
+
+### Zasady gry
+
+| Stan | Zadanie |
+|:----:|---------|
+| V | Status Inactive: 5 kolejek z rzędu bez typu (tylko kolejki z meczem gracza), sprawdzane przy zakończeniu sezonu |
+| V | Ważne premium chroni przed statusem Inactive (Admin też) |
+| V | Seria kolejek bez typu przechodzi na następny sezon (nowy sezon jej nie zeruje) |
+| V | Przywrócenie ze statusu Inactive (Biuro albo panel użytkowników) zeruje serię |
+| V | Ostrzeżenie „kartki” po kolejkach bez typu (strona główna i typowanie): żółte kartki, od 4 „Ostatnia szansa”, premium widzi tarczę |
+| V | Push po rozliczeniu kolejki bez typu: od 3 kolejek ostrzeżenie zamiast zwykłego wyniku |
+
+### Biznes: pozycjonowanie, reklamy, sponsoring
+
+| Stan | Zadanie |
+|:----:|---------|
+| V | Sponsor sezonu: nazwa, logo i link w banerze sezonu (panel „Sezony”) |
+| V | Sponsorzy rozgrywek: logo i link w banerze rozgrywek na /results (panel „Sponsorzy”) |
+| V | SEO: opisy stron, karta X i Open Graph z obrazkiem (newsy z własnym opisem i zdjęciem), `sitemap.xml`, `robots.txt` bez panelu, `noindex` w panelu i ustawieniach |
+| V | „Opublikuj na X” w podglądzie obrazka na sociale (post z tekstem, adresem i #LechTYPER) |
+| X | SEO: dane strukturalne (wydarzenia sportowe), obrazki podglądu generowane dla kolejek i tabel |
+| X | Przyjazne adresy i tytuły stron pod wyszukiwarki (częściowo już są: /results/sezon-13/ekstraklasa/kolejka-9) |
+| X | Reklamy: wyznaczone miejsca (baner na stronie głównej, w wynikach, w stopce), bez reklam dla premium; do decyzji: własne reklamy z panelu czy sieć (np. Google AdSense) |
+| X | Płatny sponsoring: pakiety (sezon, liga, puchar, Liga Legend, kolejka, nagrody Hall of Fame), cennik, czas trwania, co sponsor dostaje (logo, link, nazwa rozgrywek „… powered by”, wzmianki w newsach i na obrazkach na sociale) |
+| X | Strona „Zostań sponsorem”: oferta pakietów, statystyki zasięgu (odwiedziny, gracze), przykłady ekspozycji, formularz kontaktowy do Biura albo maila, regulamin sponsoringu |
+| X | Panel sponsorów: okres obowiązywania, automatyczne zdjęcie logo po wygaśnięciu, raport dla sponsora (wyświetlenia banerów i kliknięcia w logo) |
+| X | Płatność za sponsoring online (po wdrożeniu Przelewy24) albo faktura |
 
 ### Płatności (odłożone na później)
 
@@ -74,16 +101,17 @@ V = zrobione, X = do zrobienia. Lista rośnie w trakcie pracy.
 | V | Dymek (toast) nad menu zamiast pod nim; błąd „Udostępnij” pokazuje przyczynę |
 | V | „Udostępnij”: błąd „error” naprawiony (atrybuty Livewire i Alpine w kopii do zdjęcia); sam znaczek bez napisu |
 | X | Optymalizacja pod telefony (do przejrzenia na zrzutach z telefonu) |
-| X | Nowoczesny i spójny wygląd panelu administratora |
+| V | Panel: menu boczne w granacie „Bułgarska nocą”, górny pasek z bieżącym działem i linkiem do strony, treść w stałej szerokości |
+| X | Panel: dalsze ujednolicenie stron (nagłówki, tabele) – po zrzutach ekranu |
 | X | Każdy element strony konfigurowalny (w panelu: widoczność, kolejność, teksty sekcji); kolory już są („Kolory strony”) |
 
 ### Do zaplanowania i dyskusji
 
-Pytania z propozycjami: `DYSKUSJA.md`.
+Pytania z propozycjami: `DYSKUSJA.md`. Plan rozwoju i monetyzacji: `STRATEGIA.md`.
 
 | Stan | Zadanie |
 |:----:|---------|
-| X | Statystyki odwiedzin w panelu: wykresy dni i tygodni, popularne strony (licznik w stopce i zapis odsłon już są) |
+| V | Statystyki odwiedzin w panelu (`/panel/statistics`): wizyty, odsłony, porównanie z poprzednim okresem, wizyty dzień po dniu, działy, źródła wejść, urządzenia, godziny i dni tygodnia |
 | X | Komunikacja między użytkownikami z możliwością wyłączenia |
 | X | Grupy użytkowników |
 | X | Zgłaszanie spamu |
