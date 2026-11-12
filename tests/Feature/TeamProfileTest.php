@@ -1,5 +1,10 @@
 <?php
 
+use App\Enums\SeasonStatus;
+use App\Models\Competition;
+use App\Models\CompetitionEntry;
+use App\Models\Season;
+use App\Models\SeasonTeam;
 use App\Models\TeamLike;
 use App\Models\User;
 use Livewire\Livewire;
@@ -44,14 +49,14 @@ test('nobody can like their own team', function () {
 
 test('competitions the team does not play in this season still get a tile', function () {
     $owner = User::factory()->create();
-    $season = \App\Models\Season::create(['number' => 1, 'status' => \App\Enums\SeasonStatus::Active->value]);
-    $team = \App\Models\SeasonTeam::create(['season_id' => $season->id, 'position' => 1, 'user_id' => $owner->id]);
-    $league = \App\Models\Competition::create(['season_id' => $season->id, 'type' => 'league', 'tier' => 1]);
-    $cup = \App\Models\Competition::create(['season_id' => $season->id, 'type' => 'cup']);
-    \App\Models\Competition::create(['season_id' => $season->id, 'type' => 'champions']);
-    \App\Models\Competition::create(['season_id' => $season->id, 'type' => 'legends']);
-    \App\Models\CompetitionEntry::create(['competition_id' => $league->id, 'season_team_id' => $team->id, 'seed' => 1]);
-    \App\Models\CompetitionEntry::create(['competition_id' => $cup->id, 'season_team_id' => $team->id, 'seed' => 1]);
+    $season = Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
+    $team = SeasonTeam::create(['season_id' => $season->id, 'position' => 1, 'user_id' => $owner->id]);
+    $league = Competition::create(['season_id' => $season->id, 'type' => 'league', 'tier' => 1]);
+    $cup = Competition::create(['season_id' => $season->id, 'type' => 'cup']);
+    Competition::create(['season_id' => $season->id, 'type' => 'champions']);
+    Competition::create(['season_id' => $season->id, 'type' => 'legends']);
+    CompetitionEntry::create(['competition_id' => $league->id, 'season_team_id' => $team->id, 'seed' => 1]);
+    CompetitionEntry::create(['competition_id' => $cup->id, 'season_team_id' => $team->id, 'seed' => 1]);
 
     $tiles = Livewire::test('pages::team-profile', ['user' => $owner])->instance()->seasonCompetitions;
 
