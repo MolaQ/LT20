@@ -125,7 +125,7 @@
                 <x-ui.text>{{ __('Available after the first settled matchday.') }}</x-ui.text>
             @elseif ($isPremium)
                 <div class="flex items-baseline gap-2">
-                    <span class="text-4xl font-black tabular-nums text-club">{{ $data['rank']['place'] }}.</span>
+                    <span class="font-display text-3xl font-bold tabular-nums text-club">{{ $data['rank']['place'] }}.</span>
                     <span class="text-sm text-ui-muted">{{ __('of :count', ['count' => $data['rank']['count']]) }}</span>
                 </div>
             @else
@@ -172,7 +172,7 @@
 
         <x-lech-panel :title="__('Best season')" icon="star">
             @if ($extras['best_season'])
-                <p class="text-3xl font-black text-club">{{ $extras['best_season']['season']?->title }}</p>
+                <p class="font-display text-2xl font-bold text-club">{{ $extras['best_season']['season']?->title }}</p>
                 <x-ui.text size="sm">{{ __(':points pts for tips', ['points' => $extras['best_season']['points']]) }}</x-ui.text>
             @else
                 <x-ui.text>{{ __('Available after the first settled matchday.') }}</x-ui.text>

@@ -36,7 +36,7 @@
     <div class="lech-banner grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl px-4 py-5">
         @foreach ([$home, null, $away] as $side)
             @if ($side === null)
-                <div class="text-center text-3xl font-bold tabular-nums">{{ $card['score'] ?? '–' }}</div>
+                <div class="text-center font-display text-2xl font-bold tabular-nums">{{ $card['score'] ?? '–' }}</div>
             @else
                 <div class="min-w-0 space-y-1 {{ $loop->first ? 'text-right' : '' }}">
                     @if ($side['profile'] ?? null)

@@ -2230,5 +2230,10 @@
     "A coffee is a voluntary support for the creator. It changes nothing in the game: premium is free for everyone.": "Kawka to dobrowolne wsparcie twórcy. Niczego nie zmienia w grze: premium jest za darmo dla wszystkich.",
     "To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message: :email.": "Jeśli chcesz trafić do rankingu wspierających, wpisz w wiadomości e-mail swojego konta w LechTYPER: :email.",
     "To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message.": "Jeśli chcesz trafić do rankingu wspierających, wpisz w wiadomości e-mail swojego konta w LechTYPER.",
-    "Free for everyone": "Za darmo dla wszystkich"
+    "Free for everyone": "Za darmo dla wszystkich",
+    "Players: :count/:max": "Zawodnicy: :count/:max",
+    "Resting: :count": "Odpoczywa: :count",
+    "Full table": "Cała tabela",
+    "Questions: :answered/:count": "Pytania: :answered/:count",
+    "Players: :count": "Zawodnicy: :count"
 }

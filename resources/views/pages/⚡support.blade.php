@@ -147,7 +147,7 @@ new #[Layout('layouts::public')] class extends Component {
     }
 }; ?>
 
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<div class="flex w-full flex-col gap-6">
     <x-page-banner :title="$this->free ? __('Support LechTYPER') : __('Premium and support')"
         :subtitle="$this->free ? __('Tipping and premium are free for everyone. A coffee supports the development of LechTYPER.') : __('Tipping is always free. Premium gives extras and supports the development of LechTYPER.')" />
 
