@@ -357,43 +357,6 @@ new #[Layout('layouts::public')] class extends Component {
                 </div>
             @endauth
 
-            {{-- Tabela ligi gracza (cała liga, w Lidze podwórkowej miejsca wokół gracza) --}}
-            @if ($league = $this->myLeague)
-                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
-                    <div class="flex items-center justify-between gap-2 px-5 pb-2 pt-4">
-                        <x-ui.heading>{{ $league['name'] }}</x-ui.heading>
-                        <a href="{{ $league['url'] }}" wire:navigate class="text-xs font-semibold text-club hover:underline">{{ __('Full table') }}</a>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm tabular-nums">
-                            <thead>
-                                <tr class="text-left text-[11px] text-ui-muted">
-                                    <th class="px-5 py-1.5 font-medium">#</th>
-                                    <th class="py-1.5 font-medium">{{ __('Team') }}</th>
-                                    <th class="px-2 py-1.5 text-right font-medium">{{ __('M') }}</th>
-                                    <th class="px-2 py-1.5 text-right font-medium">{{ __('Goals') }}</th>
-                                    <th class="px-5 py-1.5 text-right font-medium">{{ __('Pts') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($league['rows'] as $row)
-                                    <tr wire:key="league-row-{{ $row['place'] }}" @class([
-                                        'border-t border-ui-line',
-                                        'bg-club/10 shadow-[inset_2px_0_0_var(--ui-club)]' => $row['me'],
-                                    ])>
-                                        <td class="px-5 py-2 text-ui-muted">{{ $row['place'] }}</td>
-                                        <td @class(['max-w-0 truncate py-2 font-medium', 'italic' => $row['bot']])>{{ $row['name'] }}</td>
-                                        <td class="px-2 py-2 text-right text-ui-muted">{{ $row['played'] }}</td>
-                                        <td class="px-2 py-2 text-right text-ui-muted">{{ $row['goals'] }}</td>
-                                        <td class="px-5 py-2 text-right font-semibold">{{ $row['points'] }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            @endif
-
             {{-- Ostatni mecz Lecha (gdy w tablicy jest już następna kolejka): wynik i protokół --}}
             @if ($last = $this->lastPlayed)
                 @php
@@ -417,6 +380,43 @@ new #[Layout('layouts::public')] class extends Component {
                     @endif
                 </section>
             @endif
+        @endif
+
+        {{-- Tabela ligi gracza (cała liga, w Lidze podwórkowej miejsca wokół gracza) --}}
+        @if ($league = $this->myLeague)
+            <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                <div class="flex items-center justify-between gap-2 px-5 pb-2 pt-4">
+                    <x-ui.heading>{{ $league['name'] }}</x-ui.heading>
+                    <a href="{{ $league['url'] }}" wire:navigate class="text-xs font-semibold text-club hover:underline">{{ __('Full table') }}</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm tabular-nums">
+                        <thead>
+                            <tr class="text-left text-[11px] text-ui-muted">
+                                <th class="px-5 py-1.5 font-medium">#</th>
+                                <th class="py-1.5 font-medium">{{ __('Team') }}</th>
+                                <th class="px-2 py-1.5 text-right font-medium">{{ __('M') }}</th>
+                                <th class="px-2 py-1.5 text-right font-medium">{{ __('Goals') }}</th>
+                                <th class="px-5 py-1.5 text-right font-medium">{{ __('Pts') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($league['rows'] as $row)
+                                <tr wire:key="league-row-{{ $row['place'] }}" @class([
+                                    'border-t border-ui-line',
+                                    'bg-club/10 shadow-[inset_2px_0_0_var(--ui-club)]' => $row['me'],
+                                ])>
+                                    <td class="px-5 py-2 text-ui-muted">{{ $row['place'] }}</td>
+                                    <td @class(['max-w-0 truncate py-2 font-medium', 'italic' => $row['bot']])>{{ $row['name'] }}</td>
+                                    <td class="px-2 py-2 text-right text-ui-muted">{{ $row['played'] }}</td>
+                                    <td class="px-2 py-2 text-right text-ui-muted">{{ $row['goals'] }}</td>
+                                    <td class="px-5 py-2 text-right font-semibold">{{ $row['points'] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         @endif
     @else
         {{-- Bez aktywnego sezonu: duży baner zapraszający do gry (z zapowiedzią sezonu w przygotowaniu) --}}
