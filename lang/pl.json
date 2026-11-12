@@ -1715,9 +1715,7 @@
     "Save message": "Zapisz komunikat",
     "How to update the site safely": "Jak bezpiecznie zaktualizować stronę",
     "Close the site here, so nobody saves tips while the update runs.": "Zamknij tu stronę, żeby nikt nie zapisywał typów w trakcie aktualizacji.",
-    "Upload the code and run the migrations (php artisan migrate --force), then php artisan optimize.": "Wgraj kod i uruchom migracje (php artisan migrate --force), potem php artisan optimize.",
     "Check the site as admin, then open it again.": "Sprawdź stronę jako admin i otwórz ją ponownie.",
-    "If the update can break the panel itself, use php artisan down --secret=word instead: the site is closed for everybody and you enter it with the address /word.": "Jeśli aktualizacja może zepsuć sam panel, użyj zamiast tego php artisan down --secret=hasło: strona jest zamknięta dla wszystkich, a wchodzisz adresem /hasło.",
     "Maintenance mode: only admins see the site": "Tryb konserwacji: stronę widzą tylko admini",
     "The list already has :count teams.": "Lista ma już :count zespołów.",
     ":count bots are missing to fill the list up to 512 teams. Add them now (this also happens when the season is approved).": "Do 512 zespołów brakuje :count botów. Dodaj je teraz (to dzieje się też przy zatwierdzeniu sezonu).",
@@ -2217,5 +2215,7 @@
     "Package :version: :count files unpacked.": "Paczka :version: rozpakowano plików: :count.",
     "ERROR in the package from the panel:": "BŁĄD paczki z panelu:",
     "Did not qualify": "Brak awansu",
-    "Not taking part": "Nie bierze udziału"
+    "Not taking part": "Nie bierze udziału",
+    "Upload the package in Site update and approve it with your password. The server cron installs it within a minute, migrations included.": "Wgraj paczkę w „Aktualizacji strony” i zatwierdź ją swoim hasłem. Cron na serwerze instaluje ją w ciągu minuty, razem z migracjami.",
+    "While the installer replaces the files, the site shows a short technical break for everybody and opens again by itself.": "Na czas podmiany plików instalator pokazuje wszystkim krótką przerwę techniczną i sam ją potem zdejmuje."
 }

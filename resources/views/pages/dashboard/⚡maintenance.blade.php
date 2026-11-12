@@ -113,9 +113,12 @@ new class extends Component {
         <x-ui.heading>{{ __('How to update the site safely') }}</x-ui.heading>
         <ol class="list-decimal space-y-1 pl-5 text-sm text-ui-muted">
             <li>{{ __('Close the site here, so nobody saves tips while the update runs.') }}</li>
-            <li>{{ __('Upload the code and run the migrations (php artisan migrate --force), then php artisan optimize.') }}</li>
+            <li>{{ __('Upload the package in Site update and approve it with your password. The server cron installs it within a minute, migrations included.') }}</li>
             <li>{{ __('Check the site as admin, then open it again.') }}</li>
         </ol>
-        <x-ui.text class="text-xs">{{ __('If the update can break the panel itself, use php artisan down --secret=word instead: the site is closed for everybody and you enter it with the address /word.') }}</x-ui.text>
+        <x-ui.text class="text-xs">{{ __('While the installer replaces the files, the site shows a short technical break for everybody and opens again by itself.') }}</x-ui.text>
+        <div class="flex justify-end">
+            <x-ui.btn size="sm" icon="arrow-up-tray" :href="route('dashboard.site-update')" wire:navigate>{{ __('Site update') }}</x-ui.btn>
+        </div>
     </x-ui.card>
 </div>

@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Route;
 
 // Strona publiczna
 Route::livewire('/', 'pages::home.welcome')->name('home');
-Route::livewire('/permission', 'pages::home.permissiontest')->name('permission'); // tymczasowy test
 
 // Strefa gracza na stronie głównej (bez panelu admina): typowanie i wyniki.
 // Typowanie z przyjaznym adresem: /tips/kolejka-3/statystyki (obie części opcjonalne).
@@ -44,8 +43,6 @@ Route::post('locale/{locale}', LocaleController::class)->name('locale.switch');
 Route::get('manifest.webmanifest', ManifestController::class)->name('manifest');
 Route::view('offline', 'offline')->name('offline');
 
-// Podgląd nowego wyglądu (przebudowa 2.0): skorupa aplikacji i komponenty bez Flux.
-Route::livewire('preview', 'pages::app-preview')->name('preview');
 Route::post('payments/przelewy24/status', [Przelewy24Controller::class, 'status'])->name('przelewy24.status');
 
 // Panel: wejście tylko z uprawnieniem dashboard-access (Admin ma je zawsze)
