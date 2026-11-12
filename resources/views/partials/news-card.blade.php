@@ -17,8 +17,8 @@
 --}}
 <article id="news-{{ $news->id }}" wire:key="news-card-{{ $news->id }}" data-share-target
     @class([
-        'lech-bar-shadow relative flex scroll-mt-20 flex-col overflow-hidden rounded-2xl border border-lech-950/20 bg-ui-surface dark:border-lech-900',
-        'group transition duration-200 ease-out hover:border-lech-400/50 hover:shadow-lg motion-safe:hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-club/40' => ! $full,
+        'relative flex scroll-mt-20 flex-col overflow-hidden rounded-2xl border border-ui-line bg-ui-surface',
+        'group transition duration-200 ease-out hover:border-club/40 focus-within:ring-2 focus-within:ring-club/40' => ! $full,
     ])>
     <header class="lech-bar flex items-start justify-between gap-3 px-5 py-3">
         @if ($full)

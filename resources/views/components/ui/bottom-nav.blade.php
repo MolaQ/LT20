@@ -8,16 +8,16 @@
             <{{ $tag }} @if ($item['href']) href="{{ $item['href'] }}" wire:navigate @click="window.ui.vibrate()" @else type="button" @click="window.ui.vibrate(); $dispatch('ui-sheet', { name: 'more' })" @endif
                 @if ($item['active']) aria-current="page" @endif
                 @class([
-                    'relative flex w-16 flex-col items-center gap-0.5 text-[11px] font-bold',
+                    'relative flex w-16 flex-col items-center gap-0.5 text-[11px] font-semibold',
                     'text-club' => $item['active'],
                     'text-ui-muted' => ! $item['active'],
                 ])>
                 @if ($item['key'] === 'tip')
-                    <span class="-mt-9 grid size-[62px] place-items-center rounded-full bg-club text-club-ink shadow-[0_8px_22px_var(--ui-glow),0_0_0_6px_var(--ui-bg)]">
-                        <x-ui.icon :name="$item['key']" class="size-8" />
+                    <span class="-mt-7 grid size-[52px] place-items-center rounded-full bg-club text-club-ink shadow-[0_0_0_5px_var(--ui-bg)]">
+                        <x-ui.icon :name="$item['key']" class="size-7" />
                     </span>
                     @if ($item['badge'] ?? false)
-                        <span class="absolute -top-8 end-1.5 size-3.5 rounded-full border-2 border-ui-bg bg-bad" aria-label="{{ __('Tip missing') }}"></span>
+                        <span class="absolute -top-6 end-2 size-3.5 rounded-full border-2 border-ui-bg bg-bad" aria-label="{{ __('Tip missing') }}"></span>
                     @endif
                 @else
                     <x-ui.icon :name="$item['key']" class="size-6" />

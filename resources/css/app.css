@@ -63,23 +63,22 @@
     }
 }
 
-/* Banery LechTYPER: zawsze gradient z niebieskiego do granatowego (jak sidebar i belki) z delikatnym cieniem. */
+/* Banery LechTYPER (baner strony, zaproszenie do gry). */
 @utility lech-banner {
-    /* Granat „Bułgarska nocą”: z granatu w głęboki granat i prawie czerń (kolory z panelu „Kolory strony”). */
-    background-image: linear-gradient(to bottom right, var(--theme-bar-from, var(--color-lech-900)) 0%, var(--theme-bar-to, var(--color-lech-950)) 55%, color-mix(in srgb, var(--theme-bar-to, var(--color-lech-950)) 35%, #000) 100%);
+    /* Nowy wygląd: płaski głęboki granat z jednym delikatnym światłem w rogu, bez ciężkiego cienia (kolory z panelu „Kolory strony”). */
+    background-image: radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--club-primary) 38%, transparent), transparent 60%);
+    background-color: var(--theme-bar-to, var(--color-lech-950));
     color: var(--theme-bar-ink, var(--color-white));
-    box-shadow: 0 14px 28px -14px rgb(6 19 49 / 0.55);
 }
 
-/* Delikatny cień pod belkami (nagłówek, pasek informacji). */
-/* Belka tytułowa karty: gradient sidebara, biały tekst. */
 @utility lech-bar {
-    background-image: linear-gradient(to right, var(--theme-bar-from, var(--color-lech-900)) 0%, var(--theme-bar-to, var(--color-lech-950)) 60%, color-mix(in srgb, var(--theme-bar-to, var(--color-lech-950)) 35%, #000) 100%);
+    /* Belka tytułowa karty: płaska, w kolorze belek, biały tekst. */
+    background-color: var(--theme-bar-to, var(--color-lech-950));
     color: var(--theme-bar-ink, var(--color-white));
 }
 
 @utility lech-bar-shadow {
-    box-shadow: 0 6px 18px -10px rgb(6 19 49 / 0.45);
+    box-shadow: none;
 }
 
 /* \[:where(&)\]:size-4 {

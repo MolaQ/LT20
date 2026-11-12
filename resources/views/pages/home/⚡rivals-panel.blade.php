@@ -90,9 +90,9 @@ new class extends Component {
             <div class="space-y-2">
                 @foreach ($this->rivals as $rival)
                     <details wire:key="rp-{{ $this->matchday->id }}-{{ $loop->index }}"
-                        class="group overflow-hidden rounded-xl border border-ui-line bg-ui-surface shadow-xs transition open:shadow-md">
+                        class="group overflow-hidden rounded-xl border border-ui-line bg-ui-surface transition open:border-club/30">
                         <summary class="flex cursor-pointer list-none items-center gap-3 p-3 [&::-webkit-details-marker]:hidden">
-                            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-lech-50 dark:bg-lech-500/15">
+                            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ui-raised">
                                 @if (isset($trophyIcons[$rival['trophy']]))
                                     <img src="{{ $trophyIcons[$rival['trophy']] }}" alt="" class="size-6 object-contain">
                                 @else
@@ -116,10 +116,10 @@ new class extends Component {
                                     <x-ui.badge size="sm" color="zinc">{{ __('No tip') }}</x-ui.badge>
                                 @endif
                             </span>
-                            <x-ui.icon name="chevron-down" variant="micro" class="shrink-0 text-zinc-400 transition group-open:rotate-180" />
+                            <x-ui.icon name="chevron-down" variant="micro" class="shrink-0 text-ui-muted transition group-open:rotate-180" />
                         </summary>
 
-                        <div class="space-y-3 border-t border-zinc-100 bg-zinc-50/60 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-800/40">
+                        <div class="space-y-3 border-t border-ui-line bg-ui-raised/40 p-3 text-sm">
                             @if ($rival['virtual'])
                                 <x-ui.text size="sm">{{ __('Scores as many as Lech in the real match.') }}</x-ui.text>
                             @elseif ($rival['bot'] && $phase !== \App\Support\Rivals::PLAYED)
@@ -154,7 +154,7 @@ new class extends Component {
                             @endif
 
                             @if ($rival['score'])
-                                <div class="flex items-center justify-between gap-2 rounded-lg bg-lech-50 px-3 py-1.5 text-club ring-1 ring-lech-200 dark:bg-lech-500/10 dark:ring-lech-500/30">
+                                <div class="flex items-center justify-between gap-2 rounded-lg bg-ui-raised px-3 py-1.5 text-club">
                                     <span class="text-xs">{{ __('Match') }}</span>
                                     <span class="font-bold tabular-nums">{{ $rival['score'] }}</span>
                                 </div>

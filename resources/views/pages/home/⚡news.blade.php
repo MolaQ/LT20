@@ -64,13 +64,13 @@ new class extends Component {
 }; ?>
 
 <section class="space-y-4">
-    {{-- Belka sekcji newsów: „Aktualności #LechTYPER” w gradiencie sidebara --}}
-    <header class="lech-bar lech-bar-shadow flex items-center justify-between gap-3 rounded-2xl px-5 py-3">
-        <h2 class="flex items-center gap-2 text-lg font-bold tracking-tight">
-            <x-ui.icon name="newspaper" class="size-5 text-lech-200" />
+    {{-- Nagłówek sekcji newsów: „Aktualności #LechTYPER” --}}
+    <header class="flex items-center justify-between gap-3 px-1">
+        <h2 class="flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
+            <x-ui.icon name="newspaper" class="size-5 text-club" />
             {{ __('News') }}
         </h2>
-        <span class="text-sm font-semibold tracking-wide text-lech-200">#LechTYPER</span>
+        <span class="text-sm font-semibold tracking-wide text-ui-muted">#LechTYPER</span>
     </header>
 
     @if (!$this->items || $this->items->isEmpty())
@@ -78,7 +78,7 @@ new class extends Component {
             <x-ui.text>{{ __('No news yet.') }}</x-ui.text>
         </x-ui.card>
     @else
-        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             @foreach ($this->items as $news)
                 @include('partials.news-card', ['news' => $news, 'mine' => (int) ($this->myVotes[$news->id] ?? 0)])
             @endforeach
