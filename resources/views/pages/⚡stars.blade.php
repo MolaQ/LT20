@@ -285,7 +285,7 @@ new #[Layout('layouts::public')] class extends Component {
     $compareName = $this->compareUser ? ($this->compareUser->team_name ?: $this->compareUser->name) : null;
 @endphp
 
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<div class="flex w-full flex-col gap-6">
     <x-page-banner :eyebrow="__('Lech players in the clubs')" :title="__('Game stars')"
         :subtitle="__('Compare your Lech players with those of other clubs: every club has its own numbers, counted from the matchdays in which it fielded the player.')">
         <x-slot:aside>

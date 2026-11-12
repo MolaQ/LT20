@@ -672,7 +672,7 @@ new #[Layout('layouts::public')] class extends Component {
     }
 }; ?>
 
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<div class="flex w-full flex-col gap-6">
     @php
         $older = $this->neighbourSeason(-1);
         $newer = $this->neighbourSeason(1);

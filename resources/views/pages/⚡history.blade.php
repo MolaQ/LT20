@@ -51,7 +51,7 @@ new #[Layout('layouts::public')] class extends Component {
     ];
     $medal = [1 => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200', 2 => 'bg-zinc-300 text-zinc-800', 3 => 'bg-orange-300 text-orange-950'];
 @endphp
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<div class="flex w-full flex-col gap-6">
     <x-page-banner :eyebrow="__('History')" :title="__('History and records')"
         :subtitle="__('Champions season by season and all-time records of every competition.')" />
 

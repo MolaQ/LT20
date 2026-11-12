@@ -20,7 +20,7 @@
 
 <footer class="relative mt-10 overflow-hidden text-sm text-white/70"
     style="background-image: linear-gradient(160deg, var(--theme-bar-from, #0b1f4d), var(--theme-bar-to, #061331) 60%, color-mix(in srgb, var(--theme-bar-to, #061331) 35%, #000))">
-    <div class="mx-auto max-w-6xl px-3.5 pb-28 pt-10 lg:px-6 lg:pb-8">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[1680px] min-[2400px]:max-w-[2200px] px-3.5 pb-28 pt-10 lg:px-6 lg:pb-8">
         <div class="grid gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
             <div class="flex items-center gap-4">
                 <img src="{{ asset(config('club.logo')) }}" alt="" width="56" height="56" loading="lazy" class="size-14 object-contain">

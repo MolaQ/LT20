@@ -177,7 +177,7 @@ new #[Layout('layouts::public')] class extends Component {
     ];
 @endphp
 
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<div class="flex w-full flex-col gap-6">
     <x-page-banner :eyebrow="__('Contact the administrator')" :title="__('Complaints and requests office')"
         :subtitle="__('Appeal a ban or the Inactive status, ask for a new bot name (premium) or send any other request. Bot names are voted on by the players first.')" />
 
