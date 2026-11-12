@@ -41,3 +41,22 @@ test('nobody can like their own team', function () {
         ->call('toggleLike')
         ->assertForbidden();
 });
+
+test('competitions the team does not play in this season still get a tile', function () {
+    $owner = User::factory()->create();
+    $season = \App\Models\Season::create(['number' => 1, 'status' => \App\Enums\SeasonStatus::Active->value]);
+    $team = \App\Models\SeasonTeam::create(['season_id' => $season->id, 'position' => 1, 'user_id' => $owner->id]);
+    $league = \App\Models\Competition::create(['season_id' => $season->id, 'type' => 'league', 'tier' => 1]);
+    $cup = \App\Models\Competition::create(['season_id' => $season->id, 'type' => 'cup']);
+    \App\Models\Competition::create(['season_id' => $season->id, 'type' => 'champions']);
+    \App\Models\Competition::create(['season_id' => $season->id, 'type' => 'legends']);
+    \App\Models\CompetitionEntry::create(['competition_id' => $league->id, 'season_team_id' => $team->id, 'seed' => 1]);
+    \App\Models\CompetitionEntry::create(['competition_id' => $cup->id, 'season_team_id' => $team->id, 'seed' => 1]);
+
+    $tiles = Livewire::test('pages::team-profile', ['user' => $owner])->instance()->seasonCompetitions;
+
+    // Zawsze cztery miejsca: liga, puchar, puchary europejskie i Liga Legend (dwa ostatnie bez udziału zespołu).
+    expect(array_column($tiles, 'missing'))->toBe([false, false, true, true])
+        ->and($tiles[2]['status'])->toBe(__('Did not qualify'))
+        ->and($tiles[3]['status'])->toBe(__('Not taking part'));
+});
