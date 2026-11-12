@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\Przelewy24Controller;
+use App\Http\Controllers\SiteUpdateChunkController;
 use App\Support\Sitemap;
 use Illuminate\Support\Facades\Route;
 
@@ -134,6 +135,13 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('panel/maintenance', 'pages::dashboard.maintenance')
         ->middleware('role:Admin')
         ->name('dashboard.maintenance');
+    // Aktualizacja strony z paczki zip: wgranie w kawałkach, zatwierdzenie hasłem, instalacja przez cron.
+    Route::livewire('panel/site-update', 'pages::dashboard.site-update')
+        ->middleware('role:Admin')
+        ->name('dashboard.site-update');
+    Route::post('panel/site-update/chunk', SiteUpdateChunkController::class)
+        ->middleware('role:Admin')
+        ->name('dashboard.site-update.chunk');
 
     Route::livewire('panel/payments', 'pages::dashboard.payments')
         ->middleware('role:Admin')
