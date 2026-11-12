@@ -89,7 +89,9 @@ test('only an admin can open the update screen and send a package', function () 
     siteUpdateSend($this->actingAs($editor), siteUpdateZip($this->valid))->assertForbidden();
     expect(SiteUpdate::package())->toBeNull();
 
-    $this->actingAs($this->admin)->get(route('dashboard.site-update'))->assertOk()->assertSee('typer-kod.zip');
+    // Skrypt wgrywania musi dostać gotowe teksty i adres (nie surowe dyrektywy Blade), inaczej wybór pliku nic nie robi.
+    $this->actingAs($this->admin)->get(route('dashboard.site-update'))->assertOk()->assertSee('typer-kod.zip')
+        ->assertDontSee('@js(', false)->assertSee(route('dashboard.site-update.chunk'), false);
 });
 
 test('an uploaded package is checked and waits for a password confirmed install', function () {
