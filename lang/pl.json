@@ -2215,5 +2215,7 @@
     "No valid flag file: nobody approved the install in the panel.": "Brak poprawnego pliku flagi: instalacji nikt nie zatwierdził w panelu.",
     "The package on the server differs from the one approved in the panel (different checksum). Upload it again.": "Paczka na serwerze różni się od tej, którą zatwierdzono w panelu (inna suma kontrolna). Wgraj ją ponownie.",
     "Package :version: :count files unpacked.": "Paczka :version: rozpakowano plików: :count.",
-    "ERROR in the package from the panel:": "BŁĄD paczki z panelu:"
+    "ERROR in the package from the panel:": "BŁĄD paczki z panelu:",
+    "Did not qualify": "Brak awansu",
+    "Not taking part": "Nie bierze udziału"
 }

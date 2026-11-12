@@ -98,7 +98,7 @@ new #[Layout('layouts::public')] class extends Component {
         }
 
         $league = \App\Enums\League::forPosition((int) $team->position);
-        $row = collect($this->seasonCompetitions)->first(fn ($r) => in_array($r['type'], [CompetitionType::League, CompetitionType::Swiss], true));
+        $row = collect($this->seasonCompetitions)->first(fn ($r) => ! $r['missing'] && in_array($r['type'], [CompetitionType::League, CompetitionType::Swiss], true));
 
         return ['label' => $row['name'] ?? $league->label(), 'url' => $row['url'] ?? null];
     }
@@ -117,7 +117,7 @@ new #[Layout('layouts::public')] class extends Component {
             return [];
         }
 
-        return array_map(function (array $row) use ($season) {
+        $rows = array_map(function (array $row) use ($season) {
             $lastMatch = end($row['matches']);
             $round = $row['eliminated_round'] ?? ($lastMatch ? $lastMatch['round'] : null);
             $params = ['season_slug' => 'sezon-' . $season->number, 'competition_slug' => $row['slug']];
@@ -126,9 +126,41 @@ new #[Layout('layouts::public')] class extends Component {
             }
             $row['url'] = route('results', $params) . '?team=' . $row['team_id'];
             $row['out'] = (bool) $row['eliminated_round'];
+            $row['missing'] = false;
 
             return $row;
         }, \App\Support\PlayerStats::competitions($this->user, $season));
+
+        // Zawsze cztery miejsca (liga, puchar, puchary europejskie, Liga Legend): rozgrywki sezonu, w których zespół
+        // nie gra, też mają kafel z informacją, że go tam nie ma. Miejsca, których w sezonie nie ma wcale, pomijamy.
+        $slot = fn (CompetitionType $type) => match (true) {
+            in_array($type, [CompetitionType::League, CompetitionType::Swiss], true) => 'league',
+            $type->isEuropean() => 'european',
+            default => $type->value,
+        };
+        $bySlot = collect($rows)->groupBy(fn ($row) => $slot($row['type']));
+        $existing = Competition::where('season_id', $season->id)->get()->groupBy(fn ($c) => $slot($c->type));
+        $tiles = [];
+
+        foreach (['league', CompetitionType::Cup->value, 'european', CompetitionType::Legends->value] as $key) {
+            if ($bySlot->has($key)) {
+                array_push($tiles, ...$bySlot[$key]);
+            } elseif ($existing->has($key)) {
+                $competition = $existing[$key]->sortBy('tier')->first();
+                $tiles[] = [
+                    'name' => $key === 'european' ? __('European cups') : ($key === 'league' ? __('League') : $competition->type->label()),
+                    'type' => $competition->type,
+                    'trophy' => $key === 'european' ? CompetitionType::Champions->value : $competition->trophyKey(),
+                    'status' => $key === 'european' ? __('Did not qualify') : __('Not taking part'),
+                    'points' => null,
+                    'url' => null,
+                    'out' => true,
+                    'missing' => true,
+                ];
+            }
+        }
+
+        return $tiles;
     }
 
     /** Statystyki sezonu: swoje widzi każdy, cudze tylko premium (null = zablokowane albo brak sezonu). */
@@ -280,10 +312,21 @@ new #[Layout('layouts::public')] class extends Component {
                 <x-ui.heading size="lg">{{ __('Competitions this season') }}</x-ui.heading>
                 <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
             </div>
-            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {{-- Cztery kafle po dwa w rzędzie, trzy i mniej w jednym rzędzie --}}
+            <div @class([
+                'grid grid-cols-1 gap-2',
+                'sm:grid-cols-2' => in_array(count($this->seasonCompetitions), [2, 4], true) || count($this->seasonCompetitions) > 4,
+                'sm:grid-cols-3' => count($this->seasonCompetitions) === 3,
+            ])>
                 @foreach ($this->seasonCompetitions as $row)
-                    <a href="{{ $row['url'] }}" wire:navigate wire:key="sc-{{ $loop->index }}"
-                        class="{{ $row['out'] ? 'border-zinc-500 bg-ui-raised' : 'border-lech-200 bg-lech-50/60 hover:border-lech-400 dark:border-lech-800 dark:bg-lech-950/40' }} flex items-center gap-3 rounded-xl border p-3 text-sm transition hover:shadow-md">
+                    <{{ $row['url'] ? 'a' : 'div' }} @if ($row['url']) href="{{ $row['url'] }}" wire:navigate @endif wire:key="sc-{{ $loop->index }}"
+                        @class([
+                            'flex items-center gap-3 rounded-xl border p-3 text-sm transition',
+                            'hover:shadow-md' => $row['url'],
+                            'border-dashed border-ui-line bg-ui-raised' => $row['missing'],
+                            'border-zinc-500 bg-ui-raised' => $row['out'] && ! $row['missing'],
+                            'border-lech-200 bg-lech-50/60 hover:border-lech-400 dark:border-lech-800 dark:bg-lech-950/40' => ! $row['out'],
+                        ])>
                         @if (isset($this->icons[$row['trophy']]))
                             <img src="{{ $this->icons[$row['trophy']] }}" alt="" class="{{ $row['out'] ? 'opacity-40 grayscale' : '' }} size-10 shrink-0 object-contain">
                         @else
@@ -293,7 +336,7 @@ new #[Layout('layouts::public')] class extends Component {
                             <div class="truncate font-semibold">{{ $row['name'] }}</div>
                             <div class="{{ $row['out'] ? 'text-ui-muted' : 'text-club' }} flex items-center gap-1 text-xs font-medium">
                                 @if ($row['out'])
-                                    <x-ui.icon name="x-circle" variant="micro" />
+                                    <x-ui.icon :name="$row['missing'] ? 'minus-circle' : 'x-circle'" variant="micro" />
                                 @endif
                                 <span class="truncate">{{ $row['status'] }}</span>
                             </div>
@@ -301,8 +344,10 @@ new #[Layout('layouts::public')] class extends Component {
                         @if ($row['points'] !== null)
                             <span class="shrink-0 font-bold tabular-nums">{{ __(':points pts', ['points' => $row['points']]) }}</span>
                         @endif
-                        <x-ui.icon name="chevron-right" variant="micro" class="shrink-0 text-zinc-400" />
-                    </a>
+                        @if ($row['url'])
+                            <x-ui.icon name="chevron-right" variant="micro" class="shrink-0 text-zinc-400" />
+                        @endif
+                    </{{ $row['url'] ? 'a' : 'div' }}>
                 @endforeach
             </div>
         </x-ui.card>
