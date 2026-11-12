@@ -124,6 +124,10 @@ class Audit
             // Ustawienia
             'maintenance.enabled' => __('Maintenance mode on'),
             'maintenance.disabled' => __('Maintenance mode off'),
+            'site_update.uploaded' => __('Site update package uploaded'),
+            'site_update.approved' => __('Site update approved'),
+            'site_update.rollback' => __('Previous site version requested'),
+            'site_update.cancelled' => __('Site update package removed'),
 
             // Desygnowanie zawodników
             'designation.settings' => __('Designation settings changed'),

@@ -17,7 +17,16 @@ Skrypt sam: poprawia uprawnienia (foldery 755, pliki 644), podpina `public_html`
 
 Admin z danych startowych: `marcin.molak@gmail.com`, hasło `password`. **Zmień je od razu po zalogowaniu.**
 
-## Aktualizacja
+## Aktualizacja z panelu (najprościej)
+1. `git pull`, potem dwuklik `paczka-na-serwer.bat`.
+2. Na stronie: **Panel → Ustawienia gry → Aktualizacja strony**, wybierz albo przeciągnij `typer-kod.zip`. Plik wgrywa się w kawałkach po 1 MB, więc limit wielkości pliku na hostingu nie przeszkadza.
+3. Panel sprawdza paczkę (czy to paczka strony, numer wersji, nowe migracje bazy, suma SHA-256) i pokazuje opis. Instalację zatwierdzasz swoim hasłem.
+4. Zatwierdzenie zostawia plik `storage/app/aktualizacja/flaga.json` z sumą SHA-256 paczki. Cron w ciągu minuty sprawdza flagę i sumę, rozpakowuje paczkę (bez `.env`, `storage` i `public/storage`), zapisuje poprzednią wersję kodu w `domains/DOMENA/kopie-typer/kod-poprzedni.tar.gz`, na czas podmiany plików włącza przerwę techniczną, potem robi migracje i `optimize`.
+5. Przebieg i ostatnie linie logu widać na tym samym ekranie. Gdyby nowa wersja się nie sprawdziła, przycisk **Przywróć poprzednią wersję** (też z hasłem) cofa kod; baza zostaje bez zmian.
+
+Bez flagi z sumą tej samej paczki cron niczego nie rozpakuje, więc niepełna albo podmieniona paczka nie trafi na stronę.
+
+## Aktualizacja przez menedżer plików
 1. `git pull`, potem dwuklik `paczka-na-serwer.bat`.
 2. Wgraj `typer-kod.zip` do `domains/DOMENA/typer` i rozpakuj z nadpisaniem. Nie importuj `typer.sql`, bo nadpisałby typy i wyniki graczy.
 3. Cron w ciągu minuty zauważy nową paczkę (numer w `bootstrap/wersja-paczki.txt`) i sam uruchomi migracje oraz `optimize`.
