@@ -175,7 +175,8 @@ new class extends Component {
             'amount' => $amount,
             'status' => Payment::PENDING,
             'source' => $this->source,
-            'premium_days' => $isPremium ? Premium::PLANS[$this->plan][1] : Premium::daysFor($amount),
+            // Przy premium dla wszystkich wpłata jest tylko wsparciem i nie nalicza dni premium.
+            'premium_days' => Premium::free() ? 0 : ($isPremium ? Premium::PLANS[$this->plan][1] : Premium::daysFor($amount)),
             // Dzisiejsza data z bieżącą godziną, wcześniejsza na koniec dnia (kolejność w rankingu wspierających).
             'paid_at' => Carbon::parse($this->paidAt)->isToday() ? now() : Carbon::parse($this->paidAt)->endOfDay(),
             'note' => $this->note ?: null,

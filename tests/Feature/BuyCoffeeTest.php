@@ -60,3 +60,34 @@ test('an admin records a buycoffee.to payment and premium follows the price list
         ->call('openPayment')->set('userId', $player->id)->set('source', 'p24')->set('amount', '15')
         ->call('savePayment')->assertHasErrors('source');
 });
+
+test('with premium free for everyone every player has premium and the page offers only a coffee', function () {
+    config(['premium.free' => true, 'services.buycoffee.url' => 'https://buycoffee.to/lechtyper']);
+    $user = User::factory()->create();
+
+    expect(\App\Support\Premium::isActive($user))->toBeTrue()
+        ->and(\App\Support\Premium::isActive(null))->toBeFalse();
+
+    $this->actingAs($user)->get(route('support'))->assertOk()
+        ->assertSee(__('Buy us a coffee'))
+        ->assertSee('href="https://buycoffee.to/lechtyper"', false)
+        ->assertDontSee(__('Half a year'))
+        ->assertDontSee(__('Online payments are not available yet.'));
+});
+
+test('with premium free for everyone a recorded coffee gives no premium days', function () {
+    config(['premium.free' => true]);
+    Role::findOrCreate(RoleName::Admin->value, 'web');
+    PermissionModel::findOrCreate(Permission::DashboardAccess->value, 'web');
+    $admin = User::factory()->create();
+    $admin->givePermissionTo(Permission::DashboardAccess->value);
+    $admin->assignRole(RoleName::Admin->value);
+    $player = User::factory()->create();
+
+    Livewire::actingAs($admin)->test('pages::dashboard.payments')
+        ->call('openPayment')->set('userId', $player->id)->set('source', 'buycoffee')->set('amount', '20')
+        ->call('savePayment')->assertHasNoErrors();
+
+    expect(Payment::firstOrFail()->premium_days)->toBe(0)
+        ->and($player->fresh()->premium_until)->toBeNull();
+});

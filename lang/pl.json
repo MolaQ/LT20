@@ -2223,5 +2223,12 @@
     "In the message on buycoffee.to write the e-mail of your LechTYPER account.": "W wiadomości na buycoffee.to wpisz e-mail swojego konta w LechTYPER.",
     "We grant premium by hand after checking the payment. It shows up in your payments below.": "Premium nadajemy ręcznie po sprawdzeniu wpłaty. Zobaczysz ją poniżej w swoich wpłatach.",
     "Go to buycoffee.to": "Przejdź do buycoffee.to",
-    "For example a bank transfer or a coffee on buycoffee.to. The payment is saved as paid and extends premium.": "Na przykład przelew na konto albo kawa na buycoffee.to. Wpłata zapisuje się jako opłacona i przedłuża premium."
+    "For example a bank transfer or a coffee on buycoffee.to. The payment is saved as paid and extends premium.": "Na przykład przelew na konto albo kawa na buycoffee.to. Wpłata zapisuje się jako opłacona i przedłuża premium.",
+    "Support LechTYPER": "Wesprzyj LechTYPER",
+    "Tipping and premium are free for everyone. A coffee supports the development of LechTYPER.": "Typowanie i premium są za darmo dla wszystkich. Kawka wspiera rozwój LechTYPER.",
+    "Buy us a coffee": "Postaw kawkę",
+    "A coffee is a voluntary support for the creator. It changes nothing in the game: premium is free for everyone.": "Kawka to dobrowolne wsparcie twórcy. Niczego nie zmienia w grze: premium jest za darmo dla wszystkich.",
+    "To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message: :email.": "Jeśli chcesz trafić do rankingu wspierających, wpisz w wiadomości e-mail swojego konta w LechTYPER: :email.",
+    "To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message.": "Jeśli chcesz trafić do rankingu wspierających, wpisz w wiadomości e-mail swojego konta w LechTYPER.",
+    "Free for everyone": "Za darmo dla wszystkich"
 }
