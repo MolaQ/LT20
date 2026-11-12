@@ -2,6 +2,8 @@
 @php
     $user = auth()->user();
     $active = \App\Support\Premium::isActive($user);
+    // Premium dla wszystkich: karta mówi, że dodatki są za darmo, a przycisk prowadzi do kawki.
+    $free = \App\Support\Premium::free();
     $benefits = [
         ['eye', __('Rival preview: their outcome while tipping is open, the exact tip after it closes')],
         ['chart-bar', __('While you tip: how the other players tip the score')],
@@ -17,7 +19,9 @@
         <x-ui.heading>{{ __('Premium') }}</x-ui.heading>
     </div>
 
-    @if ($active)
+    @if ($free)
+        <x-ui.text class="text-sm">{{ __('Free for everyone') }}</x-ui.text>
+    @elseif ($active)
         <x-ui.text class="text-sm">
             {{ $user->premium_until ? __('Active until :date', ['date' => $user->premium_until->format('d.m.Y')]) : __('Active without an end date') }}
         </x-ui.text>
@@ -35,6 +39,6 @@
     <x-ui.text class="text-xs">{{ __('Tipping is always free.') }}</x-ui.text>
 
     <x-ui.btn size="sm" class="w-full" variant="primary" :href="route('support')" wire:navigate>
-        {{ $active ? __('Extend premium') : __('From 5 zł a week') }}
+        {{ $free ? __('Buy us a coffee') : ($active ? __('Extend premium') : __('From 5 zł a week')) }}
     </x-ui.btn>
 </div>

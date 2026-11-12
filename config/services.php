@@ -45,4 +45,10 @@ return [
         'sandbox' => (bool) env('P24_SANDBOX', true),
     ],
 
+    // buycoffee.to: adres profilu twórcy (np. https://buycoffee.to/lechtyper). Wpłaty stamtąd admin wpisuje
+    // ręcznie w panelu (Wpłaty), a premium nalicza się według cennika. Pusty adres ukrywa przycisk.
+    'buycoffee' => [
+        'url' => env('BUYCOFFEE_URL'),
+    ],
+
 ];

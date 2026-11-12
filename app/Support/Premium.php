@@ -10,6 +10,7 @@ use Carbon\CarbonInterface;
  * Premium (regulamin, punkt 11): rola z datą wygaśnięcia. Typowanie jest zawsze darmowe, premium daje
  * tylko dodatki (np. podgląd rywali i statystyki typów). Nowa wpłata przedłuża premium. Cegiełka (wsparcie dowolną kwotą) daje
  * premium według najwyższej opcji cennika, na którą wystarcza kwoty. Admin może nadać premium ręcznie.
+ * Tryb „premium dla wszystkich” (config premium.free) daje dodatki każdemu zalogowanemu graczowi.
  */
 final class Premium
 {
@@ -27,6 +28,12 @@ final class Premium
 
     /** Największa wpłata online w groszach (ochrona przed pomyłką w kwocie). */
     public const MAX_SUPPORT = 100000;
+
+    /** Premium za darmo dla wszystkich zalogowanych (config/premium.php); wpłaty są wtedy tylko wsparciem. */
+    public static function free(): bool
+    {
+        return (bool) config('premium.free', false);
+    }
 
     /** @return array<string, string> klucz => nazwa planu */
     public static function labels(): array
@@ -61,6 +68,10 @@ final class Premium
     {
         if (! $user) {
             return false;
+        }
+
+        if (self::free()) {
+            return true;
         }
 
         if ($user->hasRole(RoleName::Admin->value)) {
