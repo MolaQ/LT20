@@ -285,15 +285,11 @@ new class extends Component {
             @php
                 $resting = $squad->filter(fn ($p) => isset($locks[$p->id]))->sortBy(fn ($p) => $locks[$p->id]);
                 $sheets = $this->sheets;
-                $cols = match (true) {
-                    $sets->count() >= 4 => 'sm:grid-cols-2 lg:grid-cols-4',
-                    $sets->count() === 3 => 'sm:grid-cols-3',
-                    default => 'sm:grid-cols-2',
-                };
             @endphp
             <div class="space-y-4">
                 {{-- Karty typów rozgrywek: wystawieni (klik w kartę wybiera typ, klik w zawodnika zdejmuje), po rozliczeniu protokoły meczów --}}
-                <div class="{{ $cols }} grid items-start gap-3">
+                {{-- Dwie kolumny: na komputerze panel stoi w połowie ekranu typowania, obok biletu --}}
+                <div class="grid items-start gap-3 sm:grid-cols-2">
                     @foreach ($sets as $setValue => $set)
                         @php
                             $mine = $squad->whereIn('id', $picks[$setValue] ?? [])->sortBy(fn ($p) => array_search($p->position, \App\Enums\PlayerPosition::cases(), true));
