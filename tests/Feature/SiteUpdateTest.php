@@ -85,7 +85,7 @@ afterEach(function () {
 test('only an admin can open the update screen and send a package', function () {
     $editor = siteUpdatePanelUser(admin: false);
 
-    $this->actingAs($editor)->get(route('dashboard.site-update'))->assertForbidden();
+    $this->actingAs($editor)->get(route('dashboard.site-update'))->assertRedirect(route('dashboard'));
     siteUpdateSend($this->actingAs($editor), siteUpdateZip($this->valid))->assertForbidden();
     expect(SiteUpdate::package())->toBeNull();
 
