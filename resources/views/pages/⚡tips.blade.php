@@ -598,7 +598,7 @@ new #[Layout('layouts::public')] class extends Component {
                 <x-ui.icon :name="$icon" variant="micro" />
                 {{ $label }}
                 @if (in_array($key, ['scalps', 'blacklist'], true))
-                    <x-ui.icon name="sparkles" variant="micro" class="text-purple-500" />
+                    <x-ui.icon name="sparkles" variant="micro" class="text-ui-muted" />
                 @endif
             </button>
         @endforeach
@@ -788,8 +788,8 @@ new #[Layout('layouts::public')] class extends Component {
                 $crowdPlayers = \App\Support\MatchdayInsights::players($this->matchday);
                 $crowdColors = ['league' => 'league_1', 'cup' => 'cup', 'champions' => 'champions', 'legends' => 'legends'];
             @endphp
-            <div class="space-y-2 rounded-xl border border-purple-200 bg-purple-50/60 p-3 dark:border-purple-500/30 dark:bg-purple-500/10">
-                <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">
+            <div class="space-y-2 rounded-2xl border border-ui-line bg-ui-raised/50 p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-ui-muted">
                     <span class="flex items-center gap-1"><x-ui.icon name="sparkles" variant="micro" />{{ __('How the others tip') }}</span>
                     <span class="tabular-nums">{{ trans_choice(':count tip|:count tips', $crowd['count'], ['count' => $crowd['count']]) }}</span>
                 </div>
