@@ -3,10 +3,10 @@
 use App\Models\User;
 use App\Support\RecalcProgress;
 
-// Wygląd 2.0: podgląd skorupy aplikacji i przełącznik języka.
+// Wygląd 2.0: skorupa aplikacji na stronie publicznej i przełącznik języka.
 
-test('the preview page renders the app shell with the bottom menu', function () {
-    $this->get(route('preview'))
+test('a public page renders the app shell with the bottom menu', function () {
+    $this->get(route('rules'))
         ->assertOk()
         ->assertSee(config('club.brand.prefix').config('club.brand.suffix'))
         ->assertSee('--club-primary', false);
@@ -15,7 +15,7 @@ test('the preview page renders the app shell with the bottom menu', function () 
 test('a guest can switch the language for the session', function () {
     $this->post(route('locale.switch', 'en'))->assertRedirect();
 
-    $this->get(route('preview'))->assertSee('lang="en"', false);
+    $this->get(route('rules'))->assertSee('lang="en"', false);
 });
 
 test('a logged in player keeps the chosen language in the account', function () {
@@ -31,7 +31,7 @@ test('an unsupported language is rejected', function () {
 });
 
 test('the browser language is used when nothing was chosen', function () {
-    $this->get(route('preview'), ['Accept-Language' => 'en-GB,en;q=0.9'])->assertSee('lang="en"', false);
+    $this->get(route('rules'), ['Accept-Language' => 'en-GB,en;q=0.9'])->assertSee('lang="en"', false);
 });
 
 test('the web app manifest uses the club configuration', function () {
