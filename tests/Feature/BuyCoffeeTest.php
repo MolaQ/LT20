@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Enums\RoleName;
 use App\Models\Payment;
 use App\Models\User;
+use App\Support\Premium;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission as PermissionModel;
 use Spatie\Permission\Models\Role;
@@ -65,8 +66,8 @@ test('with premium free for everyone every player has premium and the page offer
     config(['premium.free' => true, 'services.buycoffee.url' => 'https://buycoffee.to/lechtyper']);
     $user = User::factory()->create();
 
-    expect(\App\Support\Premium::isActive($user))->toBeTrue()
-        ->and(\App\Support\Premium::isActive(null))->toBeFalse();
+    expect(Premium::isActive($user))->toBeTrue()
+        ->and(Premium::isActive(null))->toBeFalse();
 
     $this->actingAs($user)->get(route('support'))->assertOk()
         ->assertSee(__('Buy us a coffee'))
