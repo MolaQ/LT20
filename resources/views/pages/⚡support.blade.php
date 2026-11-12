@@ -35,6 +35,13 @@ new #[Layout('layouts::public')] class extends Component {
         return Przelewy24::configured();
     }
 
+    /** Profil na buycoffee.to: działa, gdy płatności online (P24) nie są ustawione. */
+    #[Computed]
+    public function coffeeUrl(): ?string
+    {
+        return $this->configured ? null : Payment::buyCoffeeUrl();
+    }
+
     #[Computed]
     public function isPremium(): bool
     {
@@ -153,7 +160,24 @@ new #[Layout('layouts::public')] class extends Component {
         </div>
     @endif
 
-    @if (!$this->configured)
+    @if ($this->coffeeUrl)
+        {{-- Wpłata przez buycoffee.to: admin wpisuje ją w panelu i nadaje premium według cennika --}}
+        <x-ui.card class="space-y-3">
+            <x-ui.heading size="lg">{{ __('Pay with buycoffee.to') }}</x-ui.heading>
+            <ol class="list-decimal space-y-1 ps-5 text-sm text-ui-muted">
+                <li>{{ __('Choose an amount from the price list below or any amount from 5 zł.') }}</li>
+                @auth
+                    <li>{{ __('In the message on buycoffee.to write the e-mail of your LechTYPER account: :email.', ['email' => auth()->user()->email]) }}</li>
+                @else
+                    <li>{{ __('In the message on buycoffee.to write the e-mail of your LechTYPER account.') }}</li>
+                @endauth
+                <li>{{ __('We grant premium by hand after checking the payment. It shows up in your payments below.') }}</li>
+            </ol>
+            <div>
+                <x-ui.btn variant="primary" icon="heart" :href="$this->coffeeUrl" target="_blank" rel="noopener">{{ __('Go to buycoffee.to') }}</x-ui.btn>
+            </div>
+        </x-ui.card>
+    @elseif (!$this->configured)
         <x-ui.callout variant="warning" icon="exclamation-triangle">
             <p>{{ __('Online payments are not available yet.') }}</p>
         </x-ui.callout>
@@ -196,13 +220,15 @@ new #[Layout('layouts::public')] class extends Component {
                     <x-ui.heading>{{ \App\Support\Premium::labels()[$plan] }}</x-ui.heading>
                     <p class="text-3xl font-black tabular-nums">{{ \App\Models\Payment::money($price) }}</p>
                     <x-ui.text class="text-sm">{{ trans_choice(':count day|:count days', $days, ['count' => $days]) }}</x-ui.text>
-                    @auth
+                    @if ($this->coffeeUrl)
+                        <x-ui.btn class="w-full" :href="$this->coffeeUrl" target="_blank" rel="noopener">buycoffee.to</x-ui.btn>
+                    @elseif (auth()->check())
                         <x-ui.btn variant="primary" class="w-full" wire:click="buy('{{ $plan }}')" :disabled="!$this->configured">
                             {{ __('Buy') }}
                         </x-ui.btn>
                     @else
                         <x-ui.btn class="w-full" :href="route('login')">{{ __('Log in') }}</x-ui.btn>
-                    @endauth
+                    @endif
                 </x-ui.card>
             @endforeach
         </div>
@@ -215,7 +241,11 @@ new #[Layout('layouts::public')] class extends Component {
             {{ __('Any amount from 5 zł. You get premium for the highest price list option the amount covers.') }}
         </x-ui.text>
 
-        @auth
+        @if ($this->coffeeUrl)
+            <div>
+                <x-ui.btn icon="heart" :href="$this->coffeeUrl" target="_blank" rel="noopener">{{ __('Go to buycoffee.to') }}</x-ui.btn>
+            </div>
+        @elseif (auth()->check())
             <div class="flex flex-wrap items-end gap-2">
                 <div class="w-40">
                     <x-ui.input type="number" min="5" step="1" wire:model="supportAmount" :label="__('Amount')" suffix="zł" />
@@ -229,7 +259,7 @@ new #[Layout('layouts::public')] class extends Component {
             <div>
                 <x-ui.btn :href="route('login')">{{ __('Log in') }}</x-ui.btn>
             </div>
-        @endauth
+        @endif
     </x-ui.card>
 
     {{-- Historia wpłat --}}

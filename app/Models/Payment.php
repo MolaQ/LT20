@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $plan
  * @property int $amount
  * @property string $status pending|paid|failed
- * @property string $source p24|manual
+ * @property string $source p24|manual|buycoffee
  * @property string|null $session_id
  * @property int|null $p24_order_id
  * @property int $premium_days
@@ -32,6 +32,9 @@ class Payment extends Model
     public const KIND_PREMIUM = 'premium';
 
     public const KIND_SUPPORT = 'support';
+
+    /** Skąd przyszła wpłata wpisana w panelu: ręcznie (np. przelew) albo z buycoffee.to. */
+    public const MANUAL_SOURCES = ['manual', 'buycoffee'];
 
     protected $fillable = [
         'user_id', 'kind', 'plan', 'amount', 'currency', 'status', 'source', 'session_id', 'p24_order_id',
@@ -90,6 +93,24 @@ class Payment extends Model
             self::FAILED => __('Failed'),
             default => __('Pending'),
         };
+    }
+
+    /** Źródło wpłaty do wyświetlenia: „Ręcznie”, „buycoffee.to” albo „Przelewy24”. */
+    public function sourceLabel(): string
+    {
+        return match ($this->source) {
+            'manual' => __('By hand'),
+            'buycoffee' => 'buycoffee.to',
+            default => 'Przelewy24',
+        };
+    }
+
+    /** Adres profilu na buycoffee.to z konfiguracji albo null (brak albo adres spoza buycoffee.to). */
+    public static function buyCoffeeUrl(): ?string
+    {
+        $url = trim((string) config('services.buycoffee.url'));
+
+        return str_starts_with($url, 'https://buycoffee.to/') ? $url : null;
     }
 
     public function kindLabel(): string

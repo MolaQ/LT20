@@ -39,6 +39,9 @@ new class extends Component {
     public string $paidAt = '';
     public string $note = '';
 
+    /** Źródło wpłaty wpisywanej w panelu (Payment::MANUAL_SOURCES). */
+    public string $source = 'manual';
+
     // Premium ręcznie.
     public string $premiumUntil = '';
 
@@ -124,7 +127,7 @@ new class extends Component {
 
     public function openPayment(): void
     {
-        $this->reset('userSearch', 'userId', 'amount', 'note');
+        $this->reset('userSearch', 'userId', 'amount', 'note', 'source');
         $this->kind = Payment::KIND_SUPPORT;
         $this->plan = 'month';
         $this->paidAt = now()->format('Y-m-d');
@@ -155,6 +158,7 @@ new class extends Component {
             'amount' => ['required', 'numeric', 'min:1', 'max:100000'],
             'paidAt' => ['required', 'date', 'before_or_equal:today'],
             'note' => ['nullable', 'string', 'max:255'],
+            'source' => ['required', 'in:' . implode(',', Payment::MANUAL_SOURCES)],
         ], [], [
             'userId' => __('Player'),
             'amount' => __('Amount'),
@@ -170,7 +174,7 @@ new class extends Component {
             'plan' => $isPremium ? $this->plan : null,
             'amount' => $amount,
             'status' => Payment::PENDING,
-            'source' => 'manual',
+            'source' => $this->source,
             'premium_days' => $isPremium ? Premium::PLANS[$this->plan][1] : Premium::daysFor($amount),
             // Dzisiejsza data z bieżącą godziną, wcześniejsza na koniec dnia (kolejność w rankingu wspierających).
             'paid_at' => Carbon::parse($this->paidAt)->isToday() ? now() : Carbon::parse($this->paidAt)->endOfDay(),
@@ -334,7 +338,7 @@ new class extends Component {
                                     ({{ \App\Support\Premium::labels()[$payment->plan] ?? $payment->plan }})
                                 @endif
                                 <div class="text-xs text-ui-muted">
-                                    {{ $payment->source === 'manual' ? __('By hand') . ($payment->creator ? ': ' . $payment->creator->name : '') : 'Przelewy24' }}
+                                    {{ $payment->sourceLabel() }}{{ $payment->source !== 'p24' && $payment->creator ? ': ' . $payment->creator->name : '' }}
                                     @if ($payment->premium_days > 0)
                                         &middot; {{ trans_choice(':count day|:count days', $payment->premium_days, ['count' => $payment->premium_days]) }}
                                     @endif
@@ -404,9 +408,14 @@ new class extends Component {
     <x-ui.modal name="payment-form" class="w-full md:w-[30rem]">
         <div class="space-y-4">
             <x-ui.heading size="lg">{{ __('Add payment') }}</x-ui.heading>
-            <x-ui.text class="text-sm">{{ __('For example a bank transfer. The payment is saved as paid and extends premium.') }}</x-ui.text>
+            <x-ui.text class="text-sm">{{ __('For example a bank transfer or a coffee on buycoffee.to. The payment is saved as paid and extends premium.') }}</x-ui.text>
 
             @include('partials.payments-user-picker')
+
+            <x-ui.radio.group wire:model="source" :label="__('Source')" variant="segmented">
+                <x-ui.radio value="manual" :label="__('By hand')" />
+                <x-ui.radio value="buycoffee" label="buycoffee.to" />
+            </x-ui.radio.group>
 
             <x-ui.radio.group wire:model.live="kind" :label="__('Type')" variant="segmented">
                 <x-ui.radio value="support" :label="__('Support')" />

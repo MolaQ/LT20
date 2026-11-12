@@ -652,7 +652,6 @@
     "Date": "Data",
     "Failed": "Nieudana",
     "Fill from payments": "Uzupełnij z wpłat",
-    "For example a bank transfer. The payment is saved as paid and extends premium.": "Na przykład przelew na konto. Wpłata zapisuje się jako opłacona i przedłuża premium.",
     "Grant premium": "Nadaj premium",
     "Half a year": "Pół roku",
     "Inactive": "Nieaktywne",
@@ -2217,5 +2216,12 @@
     "Did not qualify": "Brak awansu",
     "Not taking part": "Nie bierze udziału",
     "Upload the package in Site update and approve it with your password. The server cron installs it within a minute, migrations included.": "Wgraj paczkę w „Aktualizacji strony” i zatwierdź ją swoim hasłem. Cron na serwerze instaluje ją w ciągu minuty, razem z migracjami.",
-    "While the installer replaces the files, the site shows a short technical break for everybody and opens again by itself.": "Na czas podmiany plików instalator pokazuje wszystkim krótką przerwę techniczną i sam ją potem zdejmuje."
+    "While the installer replaces the files, the site shows a short technical break for everybody and opens again by itself.": "Na czas podmiany plików instalator pokazuje wszystkim krótką przerwę techniczną i sam ją potem zdejmuje.",
+    "Pay with buycoffee.to": "Wpłać przez buycoffee.to",
+    "Choose an amount from the price list below or any amount from 5 zł.": "Wybierz kwotę z cennika poniżej albo dowolną od 5 zł.",
+    "In the message on buycoffee.to write the e-mail of your LechTYPER account: :email.": "W wiadomości na buycoffee.to wpisz e-mail swojego konta w LechTYPER: :email.",
+    "In the message on buycoffee.to write the e-mail of your LechTYPER account.": "W wiadomości na buycoffee.to wpisz e-mail swojego konta w LechTYPER.",
+    "We grant premium by hand after checking the payment. It shows up in your payments below.": "Premium nadajemy ręcznie po sprawdzeniu wpłaty. Zobaczysz ją poniżej w swoich wpłatach.",
+    "Go to buycoffee.to": "Przejdź do buycoffee.to",
+    "For example a bank transfer or a coffee on buycoffee.to. The payment is saved as paid and extends premium.": "Na przykład przelew na konto albo kawa na buycoffee.to. Wpłata zapisuje się jako opłacona i przedłuża premium."
 }
