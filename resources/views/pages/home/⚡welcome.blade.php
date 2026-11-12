@@ -95,6 +95,72 @@ new #[Layout('layouts::public')] class extends Component {
         return \App\Support\CompetitionHistory::latestChampions();
     }
 
+    /**
+     * Stan typu zalogowanego gracza w tej kolejce: odpowiedzi na pytania i wystawieni zawodnicy (wszystkie typy rozgrywek).
+     *
+     * @return array{answered: int, questions: int, players: int}|null
+     */
+    #[Computed]
+    public function myTipStatus(): ?array
+    {
+        if (!$this->matchday || !auth()->check()) {
+            return null;
+        }
+
+        $questionIds = \App\Models\MatchdayQuestion::where('matchday_id', $this->matchday->id)->pluck('id');
+
+        return [
+            'answered' => $questionIds->isEmpty() ? 0 : \App\Models\QuestionAnswer::whereIn('matchday_question_id', $questionIds)->where('user_id', auth()->id())->count(),
+            'questions' => $questionIds->count(),
+            'players' => \App\Models\DesignatedPlayer::where('matchday_id', $this->matchday->id)->where('user_id', auth()->id())->count(),
+        ];
+    }
+
+    /**
+     * Tabela ligi zalogowanego gracza w bieżącym sezonie: cała liga (10 zespołów), w Lidze podwórkowej
+     * tylko dwa miejsca nad i pod graczem (tam zespołów są setki).
+     *
+     * @return array{name: string, url: string, rows: array<int, array<string, mixed>>}|null
+     */
+    #[Computed]
+    public function myLeague(): ?array
+    {
+        if (!$this->season || !auth()->check()) {
+            return null;
+        }
+
+        $team = \App\Models\SeasonTeam::where('season_id', $this->season->id)->where('user_id', auth()->id())->first();
+        $entry = $team ? \App\Models\CompetitionEntry::with('competition')->where('season_team_id', $team->id)
+            ->whereHas('competition', fn($q) => $q->where('season_id', $this->season->id)->whereIn('type', [\App\Enums\CompetitionType::League->value, \App\Enums\CompetitionType::Swiss->value]))
+            ->first() : null;
+
+        if (!$entry) {
+            return null;
+        }
+
+        $competition = $entry->competition;
+        $rows = \App\Support\Standings::for($competition)->values()->map(fn($row, $index) => [
+            'place' => $index + 1,
+            'name' => $row['team']?->name ?? '—',
+            'bot' => (bool) $row['team']?->is_bot,
+            'played' => $row['played'],
+            'goals' => $row['for'] . ':' . $row['against'],
+            'points' => $row['points'],
+            'me' => $row['entry_id'] === $entry->id,
+        ]);
+
+        if ($competition->type === \App\Enums\CompetitionType::Swiss) {
+            $mine = $rows->search(fn($row) => $row['me']);
+            $rows = $rows->slice(max(0, $mine - 2), 5);
+        }
+
+        return [
+            'name' => $competition->name ?: $competition->type->label(),
+            'url' => route('results', ['season_slug' => 'sezon-' . $this->season->number, 'competition_slug' => $competition->slug()]) . '?team=' . $team->id,
+            'rows' => $rows->values()->all(),
+        ];
+    }
+
     /** Typ zalogowanego gracza na tę kolejkę (null, gdy brak albo gość). */
     #[Computed]
     public function myTip(): ?Tip
@@ -263,6 +329,13 @@ new #[Layout('layouts::public')] class extends Component {
                             @if ($this->myTip)
                                 <x-ui.badge color="green">{{ __('Your tip: :score', ['score' => $this->myTip->score()]) }}</x-ui.badge>
                             @endif
+                            {{-- Czego jeszcze brakuje w typie: pytania i zawodnicy --}}
+                            @if ($status = $this->myTipStatus)
+                                @if ($status['questions'] > 0)
+                                    <x-ui.badge :color="$status['answered'] >= $status['questions'] ? 'green' : 'amber'">{{ __('Questions: :answered/:count', ['answered' => $status['answered'], 'count' => $status['questions']]) }}</x-ui.badge>
+                                @endif
+                                <x-ui.badge :color="$status['players'] > 0 ? 'green' : 'zinc'">{{ __('Players: :count', ['count' => $status['players']]) }}</x-ui.badge>
+                            @endif
                             <x-ui.btn variant="primary" icon="pencil-square"
                                 :href="route('tips', ['matchday_slug' => 'kolejka-' . $matchday->number])" wire:navigate>
                                 {{ $this->myTip ? __('Change tip') : __('Tip now') }}
@@ -276,6 +349,50 @@ new #[Layout('layouts::public')] class extends Component {
                     </div>
                 </div>
             </section>
+
+            {{-- Rywale w kolejce: na komputerze są w prawej kolumnie, na telefonie i tablecie tutaj, zamiast w menu „Więcej” --}}
+            @auth
+                <div class="xl:hidden">
+                    <livewire:pages::home.rivals-panel />
+                </div>
+            @endauth
+
+            {{-- Tabela ligi gracza (cała liga, w Lidze podwórkowej miejsca wokół gracza) --}}
+            @if ($league = $this->myLeague)
+                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                    <div class="flex items-center justify-between gap-2 px-5 pb-2 pt-4">
+                        <x-ui.heading>{{ $league['name'] }}</x-ui.heading>
+                        <a href="{{ $league['url'] }}" wire:navigate class="text-xs font-semibold text-club hover:underline">{{ __('Full table') }}</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm tabular-nums">
+                            <thead>
+                                <tr class="text-left text-[11px] text-ui-muted">
+                                    <th class="px-5 py-1.5 font-medium">#</th>
+                                    <th class="py-1.5 font-medium">{{ __('Team') }}</th>
+                                    <th class="px-2 py-1.5 text-right font-medium">{{ __('M') }}</th>
+                                    <th class="px-2 py-1.5 text-right font-medium">{{ __('Goals') }}</th>
+                                    <th class="px-5 py-1.5 text-right font-medium">{{ __('Pts') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($league['rows'] as $row)
+                                    <tr wire:key="league-row-{{ $row['place'] }}" @class([
+                                        'border-t border-ui-line',
+                                        'bg-club/10 shadow-[inset_2px_0_0_var(--ui-club)]' => $row['me'],
+                                    ])>
+                                        <td class="px-5 py-2 text-ui-muted">{{ $row['place'] }}</td>
+                                        <td @class(['max-w-0 truncate py-2 font-medium', 'italic' => $row['bot']])>{{ $row['name'] }}</td>
+                                        <td class="px-2 py-2 text-right text-ui-muted">{{ $row['played'] }}</td>
+                                        <td class="px-2 py-2 text-right text-ui-muted">{{ $row['goals'] }}</td>
+                                        <td class="px-5 py-2 text-right font-semibold">{{ $row['points'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            @endif
 
             {{-- Ostatni mecz Lecha (gdy w tablicy jest już następna kolejka): wynik i protokół --}}
             @if ($last = $this->lastPlayed)

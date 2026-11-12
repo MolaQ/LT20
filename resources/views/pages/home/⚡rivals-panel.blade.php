@@ -102,6 +102,17 @@ new class extends Component {
                             <span class="min-w-0 flex-1">
                                 <span class="block truncate text-[11px] font-semibold uppercase tracking-wide text-club">{{ $rival['competition'] }}</span>
                                 <span class="block truncate text-sm font-medium {{ $rival['bot'] ? 'italic' : '' }}">{{ $rival['rival'] }}</span>
+                                {{-- Premium: ilu zawodników rywal wystawił (bez nazwisk) i ilu mu odpoczywa --}}
+                                @if ($rival['players'] !== null || $rival['resting'])
+                                    <span class="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-ui-muted">
+                                        @if ($rival['players'] !== null)
+                                            <span>{{ __('Players: :count/:max', ['count' => $rival['players'], 'max' => \App\Support\Designation::value('max_players')]) }}</span>
+                                        @endif
+                                        @if ($rival['resting'])
+                                            <span>{{ __('Resting: :count', ['count' => $rival['resting']]) }}</span>
+                                        @endif
+                                    </span>
+                                @endif
                             </span>
                             <span class="shrink-0">
                                 @if ($rival['virtual'])
