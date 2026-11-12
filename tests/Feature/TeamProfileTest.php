@@ -51,10 +51,10 @@ test('competitions the team does not play in this season still get a tile', func
     $owner = User::factory()->create();
     $season = Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
     $team = SeasonTeam::create(['season_id' => $season->id, 'position' => 1, 'user_id' => $owner->id]);
-    $league = Competition::create(['season_id' => $season->id, 'type' => 'league', 'tier' => 1]);
-    $cup = Competition::create(['season_id' => $season->id, 'type' => 'cup']);
-    Competition::create(['season_id' => $season->id, 'type' => 'champions']);
-    Competition::create(['season_id' => $season->id, 'type' => 'legends']);
+    $league = Competition::create(['season_id' => $season->id, 'type' => 'league', 'tier' => 1, 'name' => 'Ekstraklasa']);
+    $cup = Competition::create(['season_id' => $season->id, 'type' => 'cup', 'name' => 'Puchar Polski']);
+    Competition::create(['season_id' => $season->id, 'type' => 'champions', 'name' => 'Liga Mistrzów']);
+    Competition::create(['season_id' => $season->id, 'type' => 'legends', 'name' => 'Liga Legend']);
     CompetitionEntry::create(['competition_id' => $league->id, 'season_team_id' => $team->id, 'seed' => 1]);
     CompetitionEntry::create(['competition_id' => $cup->id, 'season_team_id' => $team->id, 'seed' => 1]);
 
