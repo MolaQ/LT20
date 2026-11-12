@@ -12,6 +12,10 @@ parameters:
         - database/
         - routes/
 
+    # Funkcje sprawdzania paczki (narzedzia/rozpakuj-paczke.php) wczytuje App\Support\SiteUpdate przez require_once.
+    scanFiles:
+        - narzedzia/rozpakuj-paczke.php
+
     level: 7
 
     # Baseline powstał na Windowsie, a CI działa na Linuksie z inną wersją PHP: nie zgłaszaj wpisów, które tam nie wystąpią.

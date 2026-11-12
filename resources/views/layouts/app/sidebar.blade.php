@@ -55,6 +55,7 @@
             $item('swatch', 'dashboard.competition-colors', __('Competition colors'), show: $canSeasons),
             $item('paint-brush', 'dashboard.site-colors', __('Site colors'), show: $canRoles),
             $item('wrench-screwdriver', 'dashboard.maintenance', __('Maintenance mode'), show: $canRoles),
+            $item('arrow-up-tray', 'dashboard.site-update', __('Site update'), show: $canRoles),
             $item('shield-check', 'dashboard.roles', __('Roles and permissions'), show: $canRoles),
             $item('clipboard-document-list', 'dashboard.logs', __('Change log'), show: $canLogs),
         ]],
