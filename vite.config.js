@@ -11,10 +11,13 @@ export default defineConfig({
                 'resources/js/app.js',
             ],
             refresh: true,
-            // Jedna spokojna czcionka bezszeryfowa (Inter) do tekstu, nagłówków i liczb; pliki z naszego serwera.
+            // Inter do tekstu, Space Grotesk do nagłówków i liczb; pliki z naszego serwera.
             fonts: [
                 bunny('Inter', {
                     weights: [400, 500, 600, 700],
+                }),
+                bunny('Space Grotesk', {
+                    weights: [500, 600, 700],
                 }),
             ],
         }),

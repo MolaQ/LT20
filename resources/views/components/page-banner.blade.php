@@ -5,15 +5,15 @@
 --}}
 @props(['title', 'subtitle' => null, 'eyebrow' => '#LechTYPER'])
 
-<section {{ $attributes->class('lech-banner relative overflow-hidden rounded-2xl px-6 py-10 sm:px-10') }}>
-    <div class="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <div class="min-w-0 space-y-3">
+<section {{ $attributes->class('lech-banner relative overflow-hidden rounded-2xl px-5 py-6 sm:px-8 sm:py-7') }}>
+    <div class="relative flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div class="min-w-0 space-y-2">
             @if (filled($eyebrow))
-                <p class="text-sm font-semibold uppercase tracking-wider text-lech-200">{{ $eyebrow }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-lech-200">{{ $eyebrow }}</p>
             @endif
-            <h1 class="text-4xl font-black tracking-tight sm:text-5xl">{{ $title }}</h1>
+            <h1 class="font-display text-2xl font-bold tracking-tight sm:text-[28px]">{{ $title }}</h1>
             @if (filled($subtitle))
-                <p class="max-w-2xl text-lg text-lech-100 sm:text-xl">{{ $subtitle }}</p>
+                <p class="max-w-3xl text-sm text-lech-100 sm:text-[15px]">{{ $subtitle }}</p>
             @endif
             {{ $slot }}
         </div>

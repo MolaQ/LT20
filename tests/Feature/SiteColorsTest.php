@@ -19,7 +19,7 @@ test('light theme colors go only to the light theme', function () {
     $css = SiteColors::css();
 
     expect($css[':root'])->toContain('--flap-bg: #1d1f24;')->not->toContain('--ui-bg')
-        ->and($css[':root:not(.dark)'])->toContain('--ui-bg: #f7f9fd;');
+        ->and($css[':root:not(.dark)'])->toContain('--ui-bg: #f3f5f9;');
 });
 
 test('invalid colors are ignored when saving', function () {
