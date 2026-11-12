@@ -175,7 +175,9 @@ new class extends Component {
         </x-ui.card>
     @else
         {{-- Wgrywanie w kawałkach: omija limit wielkości pliku na hostingu, a każdy kawałek ponawia się przy błędzie sieci --}}
-        <x-ui.card class="space-y-3" wire:key="site-update-upload"
+        <x-ui.card wire:key="site-update-upload">
+            {{-- Alpine w zwykłym div, nie w atrybutach komponentu: tam @js i {{ }} nie są zamieniane i skrypt się nie uruchamiał --}}
+            <div class="space-y-3"
             x-data="{ busy: false, done: 0, total: 0, error: '', name: '',
                 async send(file) {
                     if (! file) { return; }
@@ -214,6 +216,7 @@ new class extends Component {
                 <div class="mt-1 h-2 overflow-hidden rounded-full bg-ui-raised"><div class="h-full rounded-full bg-club transition-all" :style="'width:' + (done * 100 / Math.max(1, total)) + '%'"></div></div>
             </div>
             <p x-show="error" x-cloak class="rounded-xl bg-bad-soft p-3 text-sm text-bad" x-text="error" role="alert"></p>
+            </div>
         </x-ui.card>
 
         @if ($canRollback)
