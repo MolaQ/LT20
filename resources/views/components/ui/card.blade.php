@@ -2,7 +2,7 @@
 @props(['hero' => false])
 
 <section {{ $attributes->class([
-    'relative overflow-hidden rounded-[20px] p-4',
+    'relative overflow-hidden rounded-2xl p-4 sm:p-5',
     'ui-hero' => $hero,
     'border border-ui-line bg-ui-surface' => ! $hero,
 ]) }}>

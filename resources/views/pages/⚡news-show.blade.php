@@ -50,7 +50,7 @@ new #[Layout('layouts::public')] class extends Component {
     }
 }; ?>
 
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<div class="flex w-full flex-col gap-6">
     <div>
         <a href="{{ route('home') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">
             <x-ui.icon name="arrow-left" variant="micro" /> {{ __('All news') }}

@@ -11,9 +11,9 @@
     ];
 @endphp
 
-<div class="space-y-3 rounded-xl border border-purple-200 bg-purple-50 p-4 dark:border-purple-500/30 dark:bg-purple-500/10">
+<div class="space-y-3 rounded-2xl border border-gold/30 bg-ui-surface p-4">
     <div class="flex items-center gap-2">
-        <x-ui.icon name="sparkles" class="size-5 text-purple-600 dark:text-purple-300" />
+        <x-ui.icon name="sparkles" class="size-5 text-gold" />
         <x-ui.heading>{{ __('Premium') }}</x-ui.heading>
     </div>
 
@@ -26,7 +26,7 @@
     <ul class="space-y-2 text-sm">
         @foreach ($benefits as [$icon, $text])
             <li class="flex gap-2">
-                <x-ui.icon :name="$icon" variant="micro" class="mt-0.5 shrink-0 text-purple-600 dark:text-purple-300" />
+                <x-ui.icon :name="$icon" variant="micro" class="mt-0.5 shrink-0 text-gold" />
                 <span>{{ $text }}</span>
             </li>
         @endforeach

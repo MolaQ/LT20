@@ -6,6 +6,6 @@
 @endphp
 
 <{{ $tag }} {{ $attributes->class([
-    'font-display font-extrabold tracking-tight text-ui-ink',
-    match ($size) { 'xl' => 'text-[26px] uppercase leading-tight', 'lg' => 'text-xl', default => 'text-[17px]' },
+    'font-display font-semibold tracking-tight text-ui-ink',
+    match ($size) { 'xl' => 'text-2xl font-bold leading-tight', 'lg' => 'text-lg', default => 'text-[15px]' },
 ]) }}>{{ $slot }}</{{ $tag }}>

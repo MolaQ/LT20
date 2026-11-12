@@ -44,8 +44,11 @@ final class Rivals
     }
 
     /**
+     * Premium widzi też, ilu zawodników rywal wystawił w tym typie rozgrywek (bez nazwisk, tylko człowiek, bo bot
+     * wystawia skład przy przeliczeniu) i ilu jego zawodników odpoczywa w tej kolejce (Squad::locks).
+     *
      * @return array<int, array{competition: string, rival: string, bot: bool, virtual: bool, tipped: ?bool,
-     *   outcome: ?string, tip: ?string, bonus: ?string, score: ?string}>
+     *   outcome: ?string, tip: ?string, bonus: ?string, score: ?string, players: ?int, resting: ?int}>
      */
     public static function forUser(User $viewer, Matchday $matchday): array
     {
@@ -100,6 +103,10 @@ final class Rivals
                 'bonus' => null, 'score' => $fixture->isPlayed() ? $fixture->score() : null,
                 // Bilans bezpośredni to dodatek premium.
                 'h2h' => $rival && $premium ? self::headToHead($viewer, $rival) : null,
+                'players' => $rival && $premium && ! $rival->is_bot
+                    ? DesignatedPlayer::where('matchday_id', $matchday->id)->where('score_set', $set)->where('user_id', $rival->user_id)->count()
+                    : null,
+                'resting' => $rival && $premium ? count(Squad::locks($rival->user_id, $rival->bot_id, $matchday)) : null,
             ];
 
             if ($rival && ! $rival->is_bot) {
