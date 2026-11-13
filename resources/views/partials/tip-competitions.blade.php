@@ -22,7 +22,7 @@
                 $questions = count($line['questions'] ?? []);
             @endphp
             <button type="button" @if ($playing) wire:click="pickSet('{{ $setValue }}')" @else disabled @endif wire:key="tip-comp-{{ $entry['competition_id'] }}"
-                style="{{ \App\Support\CompetitionColors::style($entry['color']) }}" @if ($isActive) aria-current="true" @endif
+                style="{{ \App\Support\CompetitionColors::style($entry['trophy']) }}" @if ($isActive) aria-current="true" @endif
                 @class([
                     'comp-chip flex min-w-0 flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-start transition duration-200',
                     'shadow-md ring-2 ring-club/70' => $isActive,

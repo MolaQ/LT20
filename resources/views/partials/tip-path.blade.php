@@ -20,7 +20,7 @@
                             'bg-club text-club-ink shadow-sm' => $selected,
                             'bg-ui-raised text-ui-muted hover:text-ui-ink' => !$selected,
                         ])>
-                        <span class="size-2.5 shrink-0 rounded-full" style="{{ \App\Support\CompetitionColors::dotStyle($entryOption['color']) }}"></span>
+                        <span class="size-2.5 shrink-0 rounded-full" style="{{ \App\Support\CompetitionColors::dotStyle($entryOption['trophy']) }}"></span>
                         {{ $entryOption['name'] }}
                     </button>
                 @endforeach
