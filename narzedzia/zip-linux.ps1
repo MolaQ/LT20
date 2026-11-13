@@ -31,7 +31,17 @@ function Escape-Mtree([string]$text) {
 
 try {
     $base = (Resolve-Path -LiteralPath (Join-Path $Root $Folder)).Path.TrimEnd('\')
+    # Folder TEMP bywa zapisany krotka nazwa (np. C:\Users\MARCIN~1\...), a Get-ChildItem podaje pelna, wiec dlugosci sie
+    # nie zgadzaja i w zipie wychodzil folder nadrzedny w rodzaju "yper". Podstawe bierzemy z tego, jak Get-ChildItem
+    # pisze sciezke pierwszego wpisu, a na koniec sprawdzamy, ze kazdy wpis naprawde lezy pod nia.
+    $first = Get-ChildItem -LiteralPath $base -Force | Select-Object -First 1
+    if ($first) { $base = (Split-Path -LiteralPath $first.FullName -Parent).TrimEnd('\') }
     $items = Get-ChildItem -LiteralPath $base -Recurse -Force | Where-Object { -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) }
+    $obcy = $items | Where-Object { -not $_.FullName.StartsWith($base + '\', [StringComparison]::OrdinalIgnoreCase) } | Select-Object -First 1
+    if ($obcy) {
+        Write-Host ('Sciezka ' + $obcy.FullName + ' nie lezy pod ' + $base + ' - robie zwykly zip.')
+        exit 5
+    }
 
     # Polskie litery w nazwach plikow tar w Windows czyta w innym kodowaniu: wtedy bezpieczniej zwykly zip.
     if ($items | Where-Object { $_.FullName -match '[^\x20-\x7e]' } | Select-Object -First 1) {
