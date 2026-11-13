@@ -80,6 +80,7 @@ class Audit
             'season_list.built' => __('Team list built'),
             'season_list.players_added' => __('Players added to the list'),
             'season_list.moved' => __('Team moved to another league'),
+            'season_list.swapped' => __('Player swapped with a bot'),
             'season_list.reordered' => __('Team order changed'),
             'season_list.reset' => __('Team list cleared'),
             'season_list.bots_added' => __('Bots added to the list'),
