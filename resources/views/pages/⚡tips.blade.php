@@ -41,6 +41,9 @@ new #[Layout('layouts::public')] class extends Component {
     /** Wybrane rozgrywki (score_set): do nich trafiają zawodnicy i odpowiedzi na pytania; pusty = pierwsze z rozgrywek gracza. */
     public string $questionSet = '';
 
+    /** Rozgrywki w pasku „Twoje mecze” (id rozgrywek); 0 = pierwsze z rozgrywek gracza (liga). */
+    public int $pathCompetition = 0;
+
     /** Godzina ostatniego automatycznego zapisu (do napisu „Zapisano” w pasku na dole). */
     public string $savedTime = '';
 
@@ -82,6 +85,11 @@ new #[Layout('layouts::public')] class extends Component {
     private function syncUrl(): void
     {
         $this->js('history.replaceState(history.state, "", '.json_encode($this->pageUrl()).')');
+    }
+
+    public function updatedPathCompetition(): void
+    {
+        unset($this->myPath);
     }
 
     public function updatedTab(): void
@@ -291,43 +299,43 @@ new #[Layout('layouts::public')] class extends Component {
     }
 
     /**
-     * „Twoje ligowe mecze” pod typowaniem: liga zespołu (1-10 albo podwórkowa) w sezonie i jego mecze w kolejkach,
-     * w formacie jak „Twoja droga w pucharze” (partials/my-matches-path).
+     * Rozgrywki gracza w bieżącym sezonie (Support\PlayerStats::competitions): nazwa, typ, etap albo miejsce,
+     * odpadnięcie, barwy. Do kafelków „Twoje rozgrywki” i wyboru paska meczów.
      *
-     * @return array{competition: \App\Models\Competition, entry_id: int, path: array<int, list<\App\Models\Fixture>>, status: string}|null
+     * @return list<array<string, mixed>>
      */
     #[Computed]
-    public function myLeague(): ?array
+    public function myEntries(): array
     {
-        $teamId = $this->season ? SeasonTeam::where('season_id', $this->season->id)->where('user_id', auth()->id())->value('id') : null;
+        return $this->season && auth()->check() ? array_values(\App\Support\PlayerStats::competitions(auth()->user(), $this->season)) : [];
+    }
 
-        $entry = $teamId ? \App\Models\CompetitionEntry::with('competition')
-            ->where('season_team_id', $teamId)
-            ->whereHas('competition', fn ($q) => $q->whereIn('type', [\App\Enums\CompetitionType::League->value, \App\Enums\CompetitionType::Swiss->value]))
-            ->first() : null;
+    /**
+     * „Twoje mecze” pod paskiem kolejek: mecze zespołu gracza w wybranych rozgrywkach (domyślnie pierwsze, czyli liga),
+     * po kolejkach, w formacie partials/my-matches-path (Liga Legend: dwa mecze w kolejce).
+     *
+     * @return array{entry: array<string, mixed>, path: array<int, list<\App\Models\Fixture>>}|null
+     */
+    #[Computed]
+    public function myPath(): ?array
+    {
+        $entries = collect($this->myEntries);
+        $entry = $entries->firstWhere('competition_id', $this->pathCompetition) ?? $entries->first();
 
-        if (!$entry || !$entry->competition) {
+        if (!$entry) {
             return null;
         }
 
         $path = [];
         foreach (\App\Models\Fixture::with(['home.seasonTeam.user:id,name,team_name', 'home.seasonTeam.bot:id,name', 'away.seasonTeam.user:id,name,team_name', 'away.seasonTeam.bot:id,name'])
-            ->where('competition_id', $entry->competition_id)
-            ->where(fn ($q) => $q->where('home_entry_id', $entry->id)->orWhere('away_entry_id', $entry->id))
+            ->where('competition_id', $entry['competition_id'])
+            ->where(fn ($q) => $q->where('home_entry_id', $entry['entry_id'])->orWhere('away_entry_id', $entry['entry_id']))
             ->orderBy('round')
             ->get() as $fixture) {
             $path[$fixture->round][] = $fixture;
         }
 
-        $table = \App\Support\Standings::for($entry->competition)->values();
-        $index = $table->search(fn ($row) => $row['entry_id'] === $entry->id);
-
-        return [
-            'competition' => $entry->competition,
-            'entry_id' => (int) $entry->id,
-            'path' => $path,
-            'status' => $index === false ? '' : __(':place. place of :count', ['place' => $index + 1, 'count' => $table->count()]),
-        ];
+        return ['entry' => $entry, 'path' => $path];
     }
 
     /** Czarna lista (premium): rywale, z którymi gracz ma ujemny bilans bezpośredni. */
@@ -741,11 +749,14 @@ new #[Layout('layouts::public')] class extends Component {
         @endforeach
     </div>
 
+    {{-- Twoje mecze w wybranych rozgrywkach: zaznaczona kolejka, na telefonie przesuwanie w bok --}}
+    @include('partials.tip-path')
+
     <div class="lg:hidden"><x-ui.segmented wire:model.live="step" :options="$steps" /></div>
 
     {{--
-        Telefon: jeden krok naraz. Komputer: wszystko na jednym ekranie: na górze wynik i bilet obok siebie,
-        niżej wybór rozgrywek, a pod nim skład i pytania wybranych rozgrywek, na końcu karty składów.
+        Telefon: jeden krok naraz. Komputer: wszystko na jednym ekranie: wynik i obok wybór rozgrywek,
+        pod nimi skład i pytania wybranych rozgrywek, karty składów, a na końcu bilet i to, jak typują inni.
     --}}
     <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
         <div @class(['flex min-w-0 flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
@@ -804,40 +815,14 @@ new #[Layout('layouts::public')] class extends Component {
         @endif
         </div>
 
-        <div @class(['flex min-w-0 flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
-        @include('partials.tip-ticket')
-
-        @if ($this->isOpen && $this->tip)
-            <x-ui.button wire:click="punch">{{ __('Punch the ticket') }}</x-ui.button>
-        @endif
-
-        @if ($league = $this->myLeague)
-            @php $matchdaysByNumber = $this->matchdays->keyBy('number'); @endphp
-            @include('partials.my-matches-path', [
-                'title' => __('Your league matches') . ' · ' . ($league['competition']->name ?: $league['competition']->type->label()),
-                'status' => $league['status'],
-                'rounds' => \App\Models\Matchday::PER_SEASON,
-                'perRound' => 1,
-                'path' => $league['path'],
-                'entryId' => $league['entry_id'],
-                'eliminated' => null,
-                'stageLabel' => fn (int $stage) => __('Matchday :number', ['number' => $stage]) . (($matchdaysByNumber[$stage] ?? null)?->isOpenForTips() ? ' •' : ''),
-                'stageAction' => 'openMatchday',
-                'stageExtra' => fn (int $stage) => match (true) {
-                    !isset($matchdaysByNumber[$stage]) || blank($matchdaysByNumber[$stage]->opponent) => __('Match not assigned yet'),
-                    $matchdaysByNumber[$stage]->lech_goals !== null => 'Lech ' . $matchdaysByNumber[$stage]->lech_goals . ':' . $matchdaysByNumber[$stage]->opponent_goals . ' ' . $matchdaysByNumber[$stage]->opponent,
-                    default => $matchdaysByNumber[$stage]->opponent . ($matchdaysByNumber[$stage]->kickoff_at ? ', ' . $matchdaysByNumber[$stage]->kickoff_at->translatedFormat('j M H:i') : ''),
-                },
-                'current' => $this->number,
-            ])
-        @endif
+        <div @class(['flex min-w-0 flex-col', 'hidden lg:flex' => $step !== 'players'])>
+            @include('partials.tip-competitions')
         </div>
     </div>
 
-    {{-- Rozgrywki gracza: wybór rozgrywek, potem skład i pytania właśnie tych rozgrywek --}}
+    {{-- Skład i pytania wybranych rozgrywek --}}
     @if ($md->isFilled() && count($this->questionSets) > 0)
     <div @class(['flex flex-col gap-4', 'hidden lg:flex' => $step !== 'players'])>
-        @include('partials.tip-competitions')
         <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
             <div class="min-w-0">
                 <livewire:pages::home.designation-panels part="select" :chooser="false" :active="$this->activeQuestionSet()" :matchday-id="$md->id" :key="'designation-select-' . $md->id" />
@@ -853,6 +838,10 @@ new #[Layout('layouts::public')] class extends Component {
 
     @if ($md->isFilled())
     <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
+        {{-- Bilet nad tym, jak typują inni --}}
+        <div class="flex flex-col gap-3">
+            @include('partials.tip-ticket')
+        </div>
 
         {{-- Premium: jak typują inni gracze (na żywo, także przed pierwszym gwizdkiem) --}}
         @if ($this->premium && $this->crowd)

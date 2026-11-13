@@ -62,7 +62,7 @@ final class PlayerStats
     /**
      * Postęp w rozgrywkach sezonu: miejsce w tabeli albo etap (puchar, Liga Legend).
      *
-     * @return array<int, array{name: string, type: CompetitionType, status: string, played: int, won: int, drawn: int, lost: int, points: ?int}>
+     * @return array<int, array{name: string, type: CompetitionType, competition_id: int, entry_id: int, color: string, status: string, played: int, won: int, drawn: int, lost: int, points: ?int}>
      */
     public static function competitions(User $user, Season $season): array
     {
@@ -88,6 +88,10 @@ final class PlayerStats
             $row = [
                 'name' => $competition->name ?: $competition->type->label(),
                 'type' => $competition->type,
+                // Na /tips: pasek meczów wybranych rozgrywek i barwy kafelka.
+                'competition_id' => (int) $competition->id,
+                'entry_id' => (int) $entry->id,
+                'color' => $competition->trophyKey(),
                 // Do linków na stronę wyników (/results/sezon-N/{slug}?team=id zespołu).
                 'slug' => $competition instanceof Competition ? $competition->slug() : '',
                 'team_id' => $team->id,

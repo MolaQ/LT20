@@ -17,14 +17,16 @@
         </h3>
         <span class="text-sm font-semibold text-lech-200">{{ $status }}</span>
     </header>
-    <div class="overflow-x-auto p-4">
+    {{-- Telefon: pasek przesuwany w bok, wybrana kolejka przewinięta na środek --}}
+    <div class="relative overflow-x-auto p-4" data-no-swipe wire:key="path-scroll-{{ $current ?? 0 }}"
+        x-init="const c = $el.querySelector('[data-current]'); if (c && $el.scrollWidth > $el.clientWidth) $el.scrollLeft = c.offsetLeft - ($el.clientWidth - c.clientWidth) / 2">
         <ol class="grid gap-2" style="grid-template-columns: repeat({{ $rounds }}, minmax(6.5rem, 1fr));">
             @foreach (range(1, $rounds) as $stage)
                 @php
                     $stageFixtures = $path[$stage] ?? [];
                     $gone = $eliminated !== null && $stage > $eliminated;
                 @endphp
-                <li class="flex flex-col gap-1.5" wire:key="path-{{ $stage }}">
+                <li class="flex flex-col gap-1.5" wire:key="path-{{ $stage }}" @if ($stage === ($current ?? null)) data-current @endif>
                     @php
                         $stageClass = ($stage === $current ? 'text-club' : 'text-ui-muted hover:text-lech-700') . ' truncate text-center text-xs font-semibold uppercase tracking-wide';
                     @endphp
