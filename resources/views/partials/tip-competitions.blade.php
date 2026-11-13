@@ -24,9 +24,9 @@
             <button type="button" @if ($playing) wire:click="pickSet('{{ $setValue }}')" @else disabled @endif wire:key="tip-comp-{{ $entry['competition_id'] }}"
                 style="{{ \App\Support\CompetitionColors::style($entry['color']) }}" @if ($isActive) aria-current="true" @endif
                 @class([
-                    'comp-chip flex min-w-0 flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-start transition',
+                    'comp-chip flex min-w-0 flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-start transition duration-200',
                     'shadow-md ring-2 ring-club/70' => $isActive,
-                    'opacity-70 hover:opacity-100 active:scale-[.98]' => $playing && !$isActive,
+                    'opacity-70 hover:-translate-y-0.5 hover:opacity-100 hover:shadow-md active:scale-[.98]' => $playing && !$isActive,
                     'cursor-default opacity-40 grayscale' => !$playing,
                 ])>
                 <span class="w-full truncate text-sm font-semibold">{{ $entry['name'] }}</span>

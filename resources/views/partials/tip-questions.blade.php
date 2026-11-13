@@ -1,7 +1,7 @@
 {{--
     Pytania wybranych rozgrywek w kreatorze typowania (Support\Questions): każde rozgrywki mają własny zestaw do 5 pytań.
     Gracz odpowiada Tak albo Nie (ponowny klik cofa odpowiedź, czyli pominięcie) i przy każdej odpowiedzi wybiera OF albo DEF.
-    Zwarte wiersze: treść, pod nią przyciski odpowiedzi i strony bonusu.
+    Zwarte wiersze: na szerszym ekranie treść i przyciski w jednej linii, na telefonie przyciski pod treścią.
 --}}
 @php
     $active = $this->activeQuestionSet();
@@ -50,11 +50,11 @@
                 };
             @endphp
             <div wire:key="q-{{ $active }}-{{ $question->id }}" @class([
-                'rounded-xl border px-3 py-2 transition',
+                'flex flex-col gap-1.5 rounded-xl border px-3 py-1.5 transition duration-200 hover:shadow-sm sm:flex-row sm:items-center sm:gap-3',
                 'border-club/40 bg-club/5' => $mine,
                 'border-ui-line' => !$mine,
             ])>
-                <div class="flex items-start gap-2 text-sm">
+                <div class="flex min-w-0 flex-1 items-start gap-2 text-[13px]">
                     <span class="w-4 shrink-0 font-semibold tabular-nums text-ui-muted">{{ $loop->iteration }}.</span>
                     <span class="min-w-0 flex-1 font-medium leading-snug">{{ $question->text }}</span>
                     @if ($result)
@@ -63,22 +63,22 @@
                         <x-ui.chip>{{ $question->correct ? __('Yes') : __('No') }}</x-ui.chip>
                     @endif
                 </div>
-                <div class="mt-1.5 flex items-center gap-1.5 ps-6">
+                <div class="flex shrink-0 items-center gap-1.5 ps-6 sm:ps-0">
                     @foreach (['yes' => __('Yes'), 'no' => __('No')] as $option => $label)
                         <button type="button" wire:click="answerQuestion({{ $question->id }}, '{{ $value === $option ? '' : $option }}')" @disabled(!$open) aria-pressed="{{ $value === $option ? 'true' : 'false' }}"
                             @class([
-                                'h-8 min-w-12 rounded-lg px-3 text-xs font-bold transition active:scale-95 disabled:cursor-default',
+                                'h-7 min-w-11 rounded-lg px-2.5 text-xs font-bold transition duration-150 active:scale-95 disabled:cursor-default',
                                 'bg-club text-club-ink shadow-sm' => $value === $option,
                                 'bg-ui-raised hover:bg-ui-raised/70' => $value !== $option,
                             ])>{{ $label }}</button>
                     @endforeach
                     {{-- Strona bonusu: OF (atak) albo DEF (obrona), tylko przy pytaniu z odpowiedzią --}}
-                    <div @class(['ms-auto flex gap-1', 'pointer-events-none opacity-35' => !$mine])>
+                    <div @class(['ms-auto flex gap-1 transition-opacity duration-200 sm:ms-2', 'pointer-events-none opacity-35' => !$mine])>
                         @foreach (['attack' => ['OF', __('Offensive')], 'defense' => ['DEF', __('Defensive')]] as $side => [$short, $label])
                             @php $on = $mine && $mine->side === $side; @endphp
                             <button type="button" wire:click="questionSide({{ $question->id }}, '{{ $side }}')" @disabled(!$open || !$mine) title="{{ $label }}" aria-pressed="{{ $on ? 'true' : 'false' }}"
                                 @class([
-                                    'h-8 rounded-lg border px-2.5 font-display text-xs font-bold tracking-wider transition disabled:cursor-default',
+                                    'h-7 rounded-lg border px-2 font-display text-[11px] font-bold tracking-wider transition duration-150 active:scale-95 disabled:cursor-default',
                                     'border-transparent bg-gold-soft text-gold' => $on && $side === 'attack',
                                     'border-transparent bg-good-soft text-good' => $on && $side === 'defense',
                                     'border-dashed border-ui-line text-ui-muted' => !$on,

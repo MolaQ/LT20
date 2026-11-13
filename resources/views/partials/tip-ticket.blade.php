@@ -22,7 +22,7 @@
     @forelse ($ticket as $line)
         <button type="button" wire:click="openSet('{{ $line['set'] }}')" wire:key="stub-{{ $line['set'] }}" style="{{ $line['style'] }}"
             x-on:click="if (window.innerWidth >= 1024) document.getElementById('tip-competitions')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
-            class="comp-chip flex w-full flex-col gap-1 rounded-xl px-3 py-2 text-start transition hover:shadow-md active:scale-[.99]">
+            class="comp-chip flex w-full flex-col gap-1 rounded-xl px-3 py-2 text-start transition duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[.99]">
             <span class="flex w-full items-center justify-between gap-2">
                 <span class="truncate font-display text-sm font-bold">{{ $line['label'] }}</span>
                 <span class="flex shrink-0 items-center gap-0.5 text-xs font-semibold tabular-nums"><x-ui.icon name="user-group" variant="micro" />{{ count($line['players']) }}/{{ $line['max'] }}</span>
