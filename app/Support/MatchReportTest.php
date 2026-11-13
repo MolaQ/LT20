@@ -113,3 +113,14 @@ it('reads the appearances from the protocol', function () {
         ->and($r[12])->toMatchArray(['on' => 2, 'off' => 4, 'own_goals' => 1])
         ->and($r[13]['on'])->toBeNull();
 });
+
+it('gives an academy graduate twice the experience', function () {
+    $settings = reportSettings();
+    $regular = MatchReport::compute([reportAppearance(1, PlayerPosition::Forward, goals: 1)], 0, false, $settings)[1];
+    $academy = MatchReport::compute([['academy' => true] + reportAppearance(1, PlayerPosition::Forward, goals: 1)], 0, false, $settings)[1];
+    $bench = MatchReport::compute([['academy' => true] + reportAppearance(2, PlayerPosition::Defender, started: false, on: null)], 0, false, $settings)[2];
+
+    expect($academy['experience'])->toBe($regular['experience'] * 2)
+        ->and($academy['play_time'])->toBe($regular['play_time'])
+        ->and($bench['experience'])->toBe(1.0);
+});
