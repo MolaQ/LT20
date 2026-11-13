@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Enums\SeasonStatus;
 use App\Models\Matchday;
 use App\Models\MatchdayQuestion;
 use App\Models\QuestionTemplate;
@@ -16,15 +17,43 @@ use Livewire\Component;
  * Pytania kolejki (przebudowa 2.0): admin klika pytania z banku (najwyżej 5 na kolejkę), a po meczu
  * zaznacza prawidłową odpowiedź (tak / nie / unieważnione). Bank pytań: dopisywanie i wyłączanie szablonów.
  * Podgląd: season-list, zmiany: season-edit. Zmiana odpowiedzi po rozliczeniu wymaga przeliczenia kolejki w Wynikach.
+ * Pytania można układać także w sezonie w przygotowaniu (szkic, zatwierdzony), zanim wystartuje,
+ * a treść pytań z banku poprawiać (zmiana trafia też do pytań kolejek, na które nikt jeszcze nie odpowiedział).
  */
 new class extends Component {
+    /** Sezon: trwający albo w przygotowaniu (pytania można ułożyć przed startem). */
+    #[Url(as: 'sezon', except: 0)]
+    public int $seasonNumber = 0;
+
     #[Url(as: 'kolejka', except: 0)]
     public int $number = 0;
+
+    /** Pytanie z banku w trakcie poprawiania i jego nowa treść. */
+    public ?int $editingId = null;
+
+    public string $editText = '';
 
     /** Nowe pytanie do banku (jedyne pole tekstowe na tej stronie). */
     public string $newText = '';
 
     public function mount(): void
+    {
+        if (!$this->seasons->firstWhere('number', $this->seasonNumber)) {
+            $this->seasonNumber = Season::current()?->number ?? $this->seasons->first()?->number ?? 0;
+        }
+
+        $this->pickMatchday();
+    }
+
+    public function updatedSeasonNumber(): void
+    {
+        unset($this->season, $this->matchdays, $this->matchday, $this->questions);
+        $this->number = 0;
+        $this->pickMatchday();
+    }
+
+    /** Wybrana kolejka albo pierwsza otwarta do typowania, albo pierwsza w sezonie. */
+    private function pickMatchday(): void
     {
         if (!$this->matchdays->firstWhere('number', $this->number)) {
             $this->number = $this->matchdays->first(fn ($m) => $m->isOpenForTips())?->number
@@ -37,12 +66,24 @@ new class extends Component {
         return $this->view()->title(__('Questions'));
     }
 
+    /** Sezony do wyboru: trwający i w przygotowaniu. */
+    #[Computed]
+    public function seasons()
+    {
+        return Season::whereIn('status', [SeasonStatus::Active->value, SeasonStatus::Approved->value, SeasonStatus::Draft->value])
+            ->orderBy('number')->get();
+    }
+
+    #[Computed]
+    public function season(): ?Season
+    {
+        return $this->seasons->firstWhere('number', $this->seasonNumber);
+    }
+
     #[Computed]
     public function matchdays()
     {
-        $season = Season::current();
-
-        return $season ? Matchday::where('season_id', $season->id)->orderBy('number')->get() : collect();
+        return $this->season ? Matchday::where('season_id', $this->season->id)->orderBy('number')->get() : collect();
     }
 
     #[Computed]
@@ -116,6 +157,42 @@ new class extends Component {
         unset($this->templates);
     }
 
+    public function editTemplate(int $templateId): void
+    {
+        $this->authorizeEdit();
+
+        $this->editingId = $templateId;
+        $this->editText = (string) QuestionTemplate::findOrFail($templateId)->text;
+        $this->resetValidation();
+    }
+
+    public function cancelEdit(): void
+    {
+        $this->editingId = null;
+        $this->editText = '';
+    }
+
+    /** Nowa treść pytania z banku; trafia też do pytań kolejek bez odpowiedzi graczy i bez rozstrzygnięcia. */
+    public function saveTemplate(): void
+    {
+        $this->authorizeEdit();
+
+        $data = $this->validate(['editText' => ['required', 'string', 'min:8', 'max:160']]);
+        $template = QuestionTemplate::findOrFail($this->editingId);
+        $old = $template->text;
+        $text = trim($data['editText']);
+        $template->update(['text' => $text]);
+
+        MatchdayQuestion::where('question_template_id', $template->id)
+            ->whereNull('correct')->where('voided', false)
+            ->whereDoesntHave('answers')
+            ->update(['text' => $text]);
+
+        Audit::log('questions.template_edited', null, ['text' => $old], ['text' => $text], $text);
+        $this->cancelEdit();
+        unset($this->templates, $this->questions);
+    }
+
     public function toggleActive(int $templateId): void
     {
         $this->authorizeEdit();
@@ -131,6 +208,21 @@ new class extends Component {
         <x-ui.heading size="xl">{{ __('Questions') }}</x-ui.heading>
         <x-ui.text>{{ __('Pick up to :count yes/no questions for the matchday with a click. After the match, mark the right answer.', ['count' => \App\Support\Questions::PER_MATCHDAY]) }}</x-ui.text>
     </div>
+
+    {{-- Sezon trwający albo w przygotowaniu: pytania można ułożyć przed startem sezonu --}}
+    @if ($this->seasons->count() > 1)
+        <div class="flex flex-wrap gap-2">
+            @foreach ($this->seasons as $seasonOption)
+                <button type="button" wire:click="$set('seasonNumber', {{ $seasonOption->number }})" wire:key="qs-{{ $seasonOption->id }}"
+                    class="{{ $seasonOption->number === $seasonNumber ? 'bg-club text-club-ink' : 'bg-ui-raised' }} rounded-xl px-3 py-2 text-sm font-semibold">
+                    {{ $seasonOption->title }}
+                    @if ($seasonOption->status !== \App\Enums\SeasonStatus::Active)
+                        <span class="ms-1 text-xs font-normal opacity-80">· {{ __('in preparation') }}</span>
+                    @endif
+                </button>
+            @endforeach
+        </div>
+    @endif
 
     @if ($this->matchdays->isEmpty())
         <x-ui.callout icon="information-circle">{{ __('No matchdays yet.') }}</x-ui.callout>
@@ -193,16 +285,29 @@ new class extends Component {
                     <x-ui.btn type="submit" variant="primary">{{ __('Add') }}</x-ui.btn>
                 </form>
 
-                <details class="text-sm">
-                    <summary class="cursor-pointer text-ui-muted">{{ __('Turn questions in the bank on or off') }}</summary>
-                    <div class="mt-2 space-y-1">
+                <details class="text-sm" @if ($editingId) open @endif>
+                    <summary class="cursor-pointer text-ui-muted">{{ __('Edit the question bank') }}</summary>
+                    <div class="mt-2 divide-y divide-ui-line">
                         @foreach ($this->templates as $template)
-                            <label class="flex items-center gap-2" wire:key="qta-{{ $template->id }}">
-                                <input type="checkbox" @checked($template->is_active) wire:click="toggleActive({{ $template->id }})">
-                                <span class="{{ $template->is_active ? '' : 'text-zinc-400 line-through' }}">{{ $template->text }}</span>
-                            </label>
+                            <div class="flex items-center gap-2 py-1.5" wire:key="qta-{{ $template->id }}">
+                                <input type="checkbox" @checked($template->is_active) wire:click="toggleActive({{ $template->id }})" title="{{ __('Active in the bank') }}">
+                                @if ($editingId === $template->id)
+                                    <form wire:submit="saveTemplate" class="flex flex-1 flex-wrap items-start gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <x-ui.input wire:model="editText" />
+                                            <x-ui.error name="editText" />
+                                        </div>
+                                        <x-ui.btn type="submit" variant="primary" size="sm">{{ __('Save') }}</x-ui.btn>
+                                        <x-ui.btn type="button" size="sm" wire:click="cancelEdit">{{ __('Cancel') }}</x-ui.btn>
+                                    </form>
+                                @else
+                                    <span class="{{ $template->is_active ? '' : 'text-zinc-400 line-through' }} min-w-0 flex-1">{{ $template->text }}</span>
+                                    <button type="button" wire:click="editTemplate({{ $template->id }})" class="shrink-0 rounded-lg bg-ui-raised px-2.5 py-1 text-xs font-semibold">{{ __('Edit') }}</button>
+                                @endif
+                            </div>
                         @endforeach
                     </div>
+                    <x-ui.text class="mt-2 text-xs">{{ __('A changed question also changes in matchdays where nobody has answered it yet.') }}</x-ui.text>
                 </details>
             @endif
         </x-ui.card>

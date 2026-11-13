@@ -2235,5 +2235,9 @@
     "Resting: :count": "Odpoczywa: :count",
     "Full table": "Cała tabela",
     "Questions: :answered/:count": "Pytania: :answered/:count",
-    "Players: :count": "Zawodnicy: :count"
+    "Players: :count": "Zawodnicy: :count",
+    "in preparation": "w przygotowaniu",
+    "Edit the question bank": "Popraw bank pytań",
+    "Active in the bank": "Aktywne w banku",
+    "A changed question also changes in matchdays where nobody has answered it yet.": "Poprawione pytanie zmienia się też w kolejkach, w których nikt jeszcze na nie nie odpowiedział."
 }
