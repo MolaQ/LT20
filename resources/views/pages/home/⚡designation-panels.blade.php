@@ -28,12 +28,19 @@ new class extends Component {
     #[Locked]
     public string $part = 'select';
 
+    /** Czy część 'select' pokazuje własny wybór rozgrywek (na /tips wybór rozgrywek jest nad składem i pytaniami). */
+    #[Locked]
+    public bool $chooser = true;
+
     /** Typ rozgrywek, do którego dodajemy kliknięciem (wartość CompetitionType). */
     public string $active = '';
 
     public function mount(): void
     {
-        $this->active = ($this->sets[0] ?? null)?->value ?? '';
+        // Rozgrywki podane przez stronę (np. wybrane na /tips) albo pierwsze z rozgrywek gracza.
+        if (!in_array(CompetitionType::tryFrom($this->active), $this->sets, true)) {
+            $this->active = ($this->sets[0] ?? null)?->value ?? '';
+        }
     }
 
     #[Computed]
@@ -199,8 +206,13 @@ new class extends Component {
                     @endif
                 </div>
 
-                {{-- Wybór typu rozgrywek, do którego trafia kliknięty zawodnik --}}
-                @if ($open)
+                {{-- Wybór typu rozgrywek, do którego trafia kliknięty zawodnik (albo tylko nazwa, gdy wybór jest wyżej na stronie) --}}
+                @if ($open && !$chooser && $active)
+                    <div class="comp-chip inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold" style="{{ \App\Support\CompetitionColors::style($colors[$this->active] ?? 'league_1') }}">
+                        {{ __('Adding to: :set', ['set' => $active->scoreSetLabel()]) }}
+                        <span class="tabular-nums">{{ count($picks[$this->active] ?? []) }}/{{ $max }}</span>
+                    </div>
+                @elseif ($open)
                     <div class="space-y-1.5">
                         <div class="text-xs font-medium text-ui-muted">{{ __('Add players to') }}</div>
                         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -34,6 +34,21 @@ test('questions can be set for a season that has not started yet', function () {
     expect(MatchdayQuestion::where('matchday_id', $matchday->id)->pluck('text')->all())->toBe(['Czy Lech strzeli pierwszy?']);
 });
 
+test('each set is built in its own tab and a question used in one set is refused in another', function () {
+    $season = Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
+    $matchday = Matchday::create(['season_id' => $season->id, 'number' => 1, 'status' => MatchdayStatus::Planned->value]);
+    $template = QuestionTemplate::create(['text' => 'Czy Lech strzeli pierwszy?']);
+
+    Livewire::actingAs(qaAdmin())->test('pages::dashboard.questions')
+        ->set('set', 'cup')
+        ->call('toggleTemplate', $template->id)
+        ->set('set', 'league')
+        ->call('toggleTemplate', $template->id)
+        ->assertDispatched('ui-toast');
+
+    expect(MatchdayQuestion::where('matchday_id', $matchday->id)->pluck('score_set')->all())->toBe(['cup']);
+});
+
 test('a bank question can be corrected and the change reaches unanswered matchday questions', function () {
     $season = Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
     $matchday = Matchday::create(['season_id' => $season->id, 'number' => 1, 'status' => MatchdayStatus::Planned->value]);

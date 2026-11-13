@@ -28,7 +28,7 @@ final class MatchdayWizard
             'match' => [$matchday->isFilled(), $matchday->isFilled()
                 ? ($matchday->opponent.' · '.$matchday->kickoff_at?->format('d.m H:i'))
                 : __('Opponent and kick-off missing')],
-            'questions' => [$questions->isNotEmpty() ? true : null, __(':count of :max', ['count' => $questions->count(), 'max' => Questions::PER_MATCHDAY])],
+            'questions' => [$questions->isNotEmpty() ? true : null, __(':count of :max', ['count' => $questions->count(), 'max' => Questions::PER_SET * count(Questions::sets())])],
             'tips' => [$kickoffPassed || $played, trans_choice(':count tip|:count tips', $tips, ['count' => $tips])],
             'result' => [$hasScore, $hasScore ? $matchday->lech_goals.':'.$matchday->opponent_goals : __('No result yet')],
             'answers' => [$questions->isEmpty() ? null : $unsettled === 0, $questions->isEmpty()
