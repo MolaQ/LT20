@@ -14,6 +14,7 @@ use App\Models\Fixture;
 use App\Models\Matchday;
 use App\Models\Season;
 use App\Models\SeasonTeam;
+use App\Models\TeamScore;
 use App\Models\Tip;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -247,6 +248,59 @@ class Roster
         }
 
         return false;
+    }
+
+    /**
+     * Czy w sezonie po zatwierdzeniu można jeszcze zamieniać graczy z botami: sezon zatwierdzony albo aktywny
+     * i żadna kolejka nie jest rozliczona (przed pierwszym gwizdkiem nikt nie ma jeszcze punktów).
+     */
+    public static function canSwap(?Season $season): bool
+    {
+        if (! $season || ! in_array($season->status, [SeasonStatus::Approved, SeasonStatus::Active], true)) {
+            return false;
+        }
+
+        $matchdays = Matchday::where('season_id', $season->id);
+
+        return ! (clone $matchdays)->where('status', MatchdayStatus::Played->value)->exists()
+            && ! TeamScore::whereIn('matchday_id', $matchdays->select('id'))->exists();
+    }
+
+    /**
+     * Zamiana gracza z botem przed pierwszą rozliczoną kolejką: zmienia się tylko właściciel miejsc. Gracz przejmuje
+     * miejsce bota (ligę, terminarz, drabinkę pucharu, Ligę podwórkową), a bot dostaje dawne miejsce gracza.
+     * Wpis gracza w Lidze Legend przechodzi razem z nim na nowe miejsce, więc jego pary w LL zostają.
+     * Działa w transakcji wołającego. Zwraca false, gdy miejsca nie pasują (to nie gracz i bot z jednego sezonu).
+     */
+    public static function swapWithBot(SeasonTeam $player, SeasonTeam $bot): bool
+    {
+        self::lockSeason($player->season_id);
+
+        $player = SeasonTeam::whereKey($player->id)->lockForUpdate()->first();
+        $bot = SeasonTeam::whereKey($bot->id)->lockForUpdate()->first();
+
+        if (! $player || ! $bot || (int) $player->season_id !== (int) $bot->season_id
+            || ! $player->user_id || $bot->user_id || ! $bot->bot_id) {
+            return false;
+        }
+
+        $userId = $player->user_id;
+        $botId = $bot->bot_id;
+
+        // Kolejność zapisów pilnuje unikalności (sezon, gracz) i (sezon, bot).
+        $bot->update(['bot_id' => null]);
+        $player->update(['user_id' => null, 'bot_id' => $botId]);
+        $bot->update(['user_id' => $userId]);
+
+        $legends = Competition::where('season_id', $player->season_id)->where('type', CompetitionType::Legends->value)->value('id');
+        if ($legends) {
+            CompetitionEntry::where('competition_id', $legends)->where('season_team_id', $player->id)->update(['season_team_id' => $bot->id]);
+        }
+
+        PageCache::flush();
+        Ownership::flush();
+
+        return true;
     }
 
     /** Kasuje typy gracza w nierozegranych kolejkach sezonu (rozliczone zostają w historii). */
