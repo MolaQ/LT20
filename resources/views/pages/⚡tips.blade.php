@@ -11,6 +11,7 @@ use App\Support\TipRules;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -360,6 +361,13 @@ new #[Layout('layouts::public')] class extends Component {
             ->keyBy(fn($score) => $score->score_set->value);
     }
 
+    /** Na komputerze bilet stoi obok wyboru składu, więc po każdej zmianie składu liczymy go od nowa. */
+    #[On('designation-changed')]
+    public function refreshTicket(): void
+    {
+        unset($this->ticket);
+    }
+
     /**
      * Bilet: wystawieni zawodnicy w każdym typie rozgrywek gracza (etykieta typu => nazwiska po przecinku).
      *
@@ -598,7 +606,7 @@ new #[Layout('layouts::public')] class extends Component {
                 <x-ui.icon :name="$icon" variant="micro" />
                 {{ $label }}
                 @if (in_array($key, ['scalps', 'blacklist'], true))
-                    <x-ui.icon name="sparkles" variant="micro" class="text-purple-500" />
+                    <x-ui.icon name="sparkles" variant="micro" class="text-ui-muted" />
                 @endif
             </button>
         @endforeach
@@ -655,9 +663,12 @@ new #[Layout('layouts::public')] class extends Component {
         @endforeach
     </div>
 
-    <x-ui.segmented wire:model.live="step" :options="$steps" />
+    <div class="lg:hidden"><x-ui.segmented wire:model.live="step" :options="$steps" /></div>
 
-    @if ($step === 'score')
+    {{-- Telefon: jeden krok naraz. Komputer: wszystkie kroki na jednym ekranie, wynik i pytania po lewej, skład i bilet po prawej. --}}
+    <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div class="flex min-w-0 flex-col gap-6">
+        <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
         <x-ui.card hero>
             <div class="flex items-center justify-between gap-2 text-xs uppercase tracking-wider">
                 <span class="opacity-85">{{ __('Matchday :number', ['number' => $md->number]) }} · {{ $md->kickoff_at ? $md->kickoff_at->translatedFormat('D j M, H:i') : __('not set yet') }}</span>
@@ -710,18 +721,27 @@ new #[Layout('layouts::public')] class extends Component {
 
         @if ($md->isFilled())
             @php $nextStep = isset($steps['questions']) ? 'questions' : 'players'; @endphp
-            <x-ui.button wire:click="$set('step', '{{ $nextStep }}')">{{ __('Next: :step', ['step' => $steps[$nextStep]]) }}</x-ui.button>
+            <x-ui.button class="lg:hidden" wire:click="$set('step', '{{ $nextStep }}')">{{ __('Next: :step', ['step' => $steps[$nextStep]]) }}</x-ui.button>
         @endif
-    @elseif ($step === 'questions')
+        </div>
+        @if (isset($steps['questions']))
+        <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'questions'])>
         @include('partials.tip-questions')
-        <x-ui.button wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => __('Squad picks')]) }}</x-ui.button>
-    @elseif ($step === 'players')
+        <x-ui.button class="lg:hidden" wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => __('Squad picks')]) }}</x-ui.button>
+        </div>
+        @endif
+        </div>
+
+        {{-- Prawa kolumna na komputerze: skład i bilet --}}
+        <div class="flex min-w-0 flex-col gap-6">
+        <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'players'])>
         @if ($md->isFilled())
             <livewire:pages::home.designation-panels part="select" :matchday-id="$md->id" :key="'designation-select-' . $md->id" />
             <livewire:pages::home.designation-panels part="cards" :matchday-id="$md->id" :key="'designation-cards-' . $md->id" />
-            <x-ui.button wire:click="$set('step', 'ticket')">{{ __('Next: :step', ['step' => __('Ticket')]) }}</x-ui.button>
+            <x-ui.button class="lg:hidden" wire:click="$set('step', 'ticket')">{{ __('Next: :step', ['step' => __('Ticket')]) }}</x-ui.button>
         @endif
-    @else
+        </div>
+        <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
         {{-- Bilet: podsumowanie typu i składu. Typ zapisuje się sam przy każdej zmianie, „Skasuj bilet” tylko to potwierdza. --}}
         @php $ticket = $this->ticket; @endphp
         <section x-data="{ punched: false }" x-on:ticket-punched.window="punched = true"
@@ -776,9 +796,12 @@ new #[Layout('layouts::public')] class extends Component {
                 'current' => $this->number,
             ])
         @endif
-    @endif
+        </div>
+        </div>
+    </div>
 
-    @if ($md->isFilled() && $step === 'ticket')
+    @if ($md->isFilled())
+    <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
 
         {{-- Premium: jak typują inni gracze (na żywo, także przed pierwszym gwizdkiem) --}}
         @if ($this->premium && $this->crowd)
@@ -788,8 +811,8 @@ new #[Layout('layouts::public')] class extends Component {
                 $crowdPlayers = \App\Support\MatchdayInsights::players($this->matchday);
                 $crowdColors = ['league' => 'league_1', 'cup' => 'cup', 'champions' => 'champions', 'legends' => 'legends'];
             @endphp
-            <div class="space-y-2 rounded-xl border border-purple-200 bg-purple-50/60 p-3 dark:border-purple-500/30 dark:bg-purple-500/10">
-                <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">
+            <div class="space-y-2 rounded-2xl border border-ui-line bg-ui-raised/50 p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-ui-muted">
                     <span class="flex items-center gap-1"><x-ui.icon name="sparkles" variant="micro" />{{ __('How the others tip') }}</span>
                     <span class="tabular-nums">{{ trans_choice(':count tip|:count tips', $crowd['count'], ['count' => $crowd['count']]) }}</span>
                 </div>
@@ -839,6 +862,7 @@ new #[Layout('layouts::public')] class extends Component {
             <x-premium-lock :title="__('How the others tip')"
                 :text="__('With premium you see live how the other players tip this match.')" />
         @endif
+    </div>
     @endif
 
     @else

@@ -28,6 +28,8 @@
     @endif
 </div>
 
+{{-- Na szerokim ekranie pytania w dwóch kolumnach, żeby nie były rozciągnięte na całą szerokość --}}
+<div class="grid gap-3 lg:grid-cols-2">
 @foreach ($this->questions as $question)
     @php
         $mine = $answers->get($question->id);
@@ -73,3 +75,4 @@
         </div>
     </x-ui.card>
 @endforeach
+</div>

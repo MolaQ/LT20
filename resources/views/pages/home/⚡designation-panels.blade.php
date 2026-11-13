@@ -237,7 +237,7 @@ new class extends Component {
                 @endif
 
                 {{-- Dostępni zawodnicy według doświadczenia w klubie: barwa = typ rozgrywek, w którym są wystawieni --}}
-                <section class="space-y-2 rounded-2xl border border-ui-line bg-ui-surface p-3" x-data="{ pos: '' }">
+                <section class="space-y-2 rounded-2xl border border-ui-line bg-ui-surface p-4" x-data="{ pos: '' }">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <x-ui.heading>{{ __('Available players') }} <span class="font-normal text-ui-muted">({{ $available->count() }})</span></x-ui.heading>
                         <div class="flex gap-1">
@@ -262,7 +262,7 @@ new class extends Component {
                             <button type="button" wire:click="toggle({{ $player->id }})" wire:key="avail-{{ $player->id }}" @disabled(!$open || $full)
                                 x-show="pos === '' || pos === '{{ $player->position->value }}'" title="{{ $title }}"
                                 @if ($in) style="{{ \App\Support\CompetitionColors::style($colors[$in] ?? 'league_1') }}" @endif
-                                class="{{ $in ? 'comp-chip font-medium shadow-sm' : 'border border-ui-line hover:border-lech-400 hover:bg-lech-50 dark:hover:bg-white/5' }} {{ $full && !$in ? 'opacity-50' : '' }} flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs transition disabled:cursor-default">
+                                class="{{ $in ? 'comp-chip font-medium shadow-sm' : 'border border-ui-line hover:border-club/40 hover:bg-ui-raised/60' }} {{ $full && !$in ? 'opacity-50' : '' }} flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition disabled:cursor-default">
                                 <span class="w-4 shrink-0 text-[10px] font-semibold uppercase opacity-70">{{ $player->position->short() }}</span>
                                 <span class="w-4 shrink-0 text-right text-[10px] tabular-nums opacity-60">{{ $player->number }}</span>
                                 <span class="min-w-0 flex-1 truncate">
@@ -285,15 +285,11 @@ new class extends Component {
             @php
                 $resting = $squad->filter(fn ($p) => isset($locks[$p->id]))->sortBy(fn ($p) => $locks[$p->id]);
                 $sheets = $this->sheets;
-                $cols = match (true) {
-                    $sets->count() >= 4 => 'sm:grid-cols-2 lg:grid-cols-4',
-                    $sets->count() === 3 => 'sm:grid-cols-3',
-                    default => 'sm:grid-cols-2',
-                };
             @endphp
             <div class="space-y-4">
                 {{-- Karty typów rozgrywek: wystawieni (klik w kartę wybiera typ, klik w zawodnika zdejmuje), po rozliczeniu protokoły meczów --}}
-                <div class="{{ $cols }} grid items-start gap-3">
+                {{-- Dwie kolumny: na komputerze panel stoi w połowie ekranu typowania, obok biletu --}}
+                <div class="grid items-start gap-3 sm:grid-cols-2">
                     @foreach ($sets as $setValue => $set)
                         @php
                             $mine = $squad->whereIn('id', $picks[$setValue] ?? [])->sortBy(fn ($p) => array_search($p->position, \App\Enums\PlayerPosition::cases(), true));
@@ -356,7 +352,7 @@ new class extends Component {
 
                 {{-- Odpoczywający: kolor według godzin do końca odpoczynku --}}
                 @if ($resting->isNotEmpty())
-                    <section class="space-y-2 rounded-2xl border border-ui-line bg-zinc-50 p-3 dark:bg-white/5">
+                    <section class="space-y-2 rounded-2xl border border-ui-line bg-ui-raised/50 p-4">
                         <x-ui.heading>{{ __('Resting players') }} <span class="font-normal text-ui-muted">({{ $resting->count() }})</span></x-ui.heading>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach ($resting as $player)
