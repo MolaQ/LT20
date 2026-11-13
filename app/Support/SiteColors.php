@@ -33,6 +33,8 @@ final class SiteColors
         'bad' => ['--ui-bad', '#c2410c', 'states'],
         'flap_bg' => ['--flap-bg', '#1d1f24', 'clock'],
         'flap_ink' => ['--flap-ink', '#f4f1e8', 'clock'],
+        'q_attack' => ['--q-attack', '#d97706', 'questions'],
+        'q_defense' => ['--q-defense', '#0891b2', 'questions'],
     ];
 
     /** Klucze z config/club.php (barwy klubu). */
@@ -50,6 +52,7 @@ final class SiteColors
             'light' => __('Light theme'),
             'states' => __('Good and bad'),
             'clock' => __('Countdown board'),
+            'questions' => __('Questions'),
         ];
     }
 
@@ -74,6 +77,8 @@ final class SiteColors
             'bad' => __('Bad (losses, errors)'),
             'flap_bg' => __('Flap'),
             'flap_ink' => __('Digits'),
+            'q_attack' => __('Attack question (swords)'),
+            'q_defense' => __('Defence question (shield)'),
         ];
     }
 

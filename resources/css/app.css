@@ -121,6 +121,12 @@
     border-style: dashed;
 }
 
+/* Kolory pytań (Kolory strony → Pytania): atak (skrzyżowane miecze) i obrona (tarcza). Wartości domyślne, panel je nadpisuje. */
+:root {
+    --q-attack: #d97706;
+    --q-defense: #0891b2;
+}
+
 /* Alpine: ukryj elementy z x-cloak, zanim Alpine je pokaże (zakładki w oknach). */
 [x-cloak] {
     display: none !important;

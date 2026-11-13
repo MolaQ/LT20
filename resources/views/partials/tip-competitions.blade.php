@@ -5,12 +5,12 @@
 --}}
 @php
     $active = $this->activeQuestionSet();
-    $lines = collect($this->ticket)->keyBy('set');
+    $lines = collect($this->setStatus)->keyBy('set');
 @endphp
 <div id="tip-competitions" class="flex scroll-mt-24 flex-col gap-2">
     <div>
         <x-ui.heading size="lg">{{ __('Your competitions') }}</x-ui.heading>
-        <x-ui.text class="text-sm">{{ __('Pick a competition, then its squad and its questions.') }}</x-ui.text>
+        <x-ui.text class="text-sm">{{ __('Pick a competition, then its squad and its questions.') }} {{ __('Everything saves automatically.') }}</x-ui.text>
     </div>
     <div class="grid grid-cols-2 gap-2">
         @foreach ($this->myEntries as $entry)

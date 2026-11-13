@@ -1,6 +1,7 @@
 {{--
     Pytania wybranych rozgrywek w kreatorze typowania (Support\Questions): każde rozgrywki mają własny zestaw do 5 pytań.
-    Gracz odpowiada Tak albo Nie (ponowny klik cofa odpowiedź, czyli pominięcie) i przy każdej odpowiedzi wybiera OF albo DEF.
+    Gracz odpowiada Tak albo Nie (ponowny klik cofa odpowiedź, czyli pominięcie) i przy każdej odpowiedzi wybiera
+    miecze (atak) albo tarczę (obrona). Kolory obu stron: Kolory strony → Pytania (--q-attack, --q-defense).
     Zwarte wiersze: na szerszym ekranie treść i przyciski w jednej linii, na telefonie przyciski pod treścią.
 --}}
 @php
@@ -49,12 +50,14 @@
                     default => ['bad', __('Miss')],
                 };
             @endphp
-            <div wire:key="q-{{ $active }}-{{ $question->id }}" @class([
-                'flex flex-col gap-1.5 rounded-xl border px-3 py-1.5 transition duration-200 hover:shadow-sm sm:flex-row sm:items-center sm:gap-3',
-                'border-club/40 bg-club/5' => $mine,
-                'border-ui-line' => !$mine,
-            ])>
-                <div class="flex min-w-0 flex-1 items-start gap-2 text-[13px]">
+            {{-- Pytanie z odpowiedzią: pasek z lewej w kolorze strony bonusu (miecze = atak, tarcza = obrona) --}}
+            @php $sideColor = $mine ? ($mine->side === 'defense' ? 'var(--q-defense)' : 'var(--q-attack)') : null; @endphp
+            <div wire:key="q-{{ $active }}-{{ $question->id }}" @if ($sideColor) style="border-inline-start-color: {{ $sideColor }}; background: color-mix(in srgb, {{ $sideColor }} 6%, transparent)" @endif
+                @class([
+                    'flex flex-col gap-1.5 rounded-lg border border-s-[3px] px-2.5 py-1 transition duration-200 hover:shadow-sm sm:flex-row sm:items-center sm:gap-2',
+                    'border-ui-line' => true,
+                ])>
+                <div class="flex min-w-0 flex-1 items-start gap-1.5 text-[13px]">
                     <span class="w-4 shrink-0 font-semibold tabular-nums text-ui-muted">{{ $loop->iteration }}.</span>
                     <span class="min-w-0 flex-1 font-medium leading-snug">{{ $question->text }}</span>
                     @if ($result)
@@ -63,26 +66,25 @@
                         <x-ui.chip>{{ $question->correct ? __('Yes') : __('No') }}</x-ui.chip>
                     @endif
                 </div>
-                <div class="flex shrink-0 items-center gap-1.5 ps-6 sm:ps-0">
+                <div class="flex shrink-0 items-center gap-1 ps-5 sm:ps-0">
                     @foreach (['yes' => __('Yes'), 'no' => __('No')] as $option => $label)
                         <button type="button" wire:click="answerQuestion({{ $question->id }}, '{{ $value === $option ? '' : $option }}')" @disabled(!$open) aria-pressed="{{ $value === $option ? 'true' : 'false' }}"
                             @class([
-                                'h-7 min-w-11 rounded-lg px-2.5 text-xs font-bold transition duration-150 active:scale-95 disabled:cursor-default',
+                                'h-7 min-w-10 rounded-md px-2 text-xs font-bold transition duration-150 active:scale-95 disabled:cursor-default',
                                 'bg-club text-club-ink shadow-sm' => $value === $option,
                                 'bg-ui-raised hover:bg-ui-raised/70' => $value !== $option,
                             ])>{{ $label }}</button>
                     @endforeach
-                    {{-- Strona bonusu: OF (atak) albo DEF (obrona), tylko przy pytaniu z odpowiedzią --}}
-                    <div @class(['ms-auto flex gap-1 transition-opacity duration-200 sm:ms-2', 'pointer-events-none opacity-35' => !$mine])>
-                        @foreach (['attack' => ['OF', __('Offensive')], 'defense' => ['DEF', __('Defensive')]] as $side => [$short, $label])
+                    {{-- Strona bonusu: miecze (atak) albo tarcza (obrona), tylko przy pytaniu z odpowiedzią; kolory z panelu --}}
+                    <div @class(['ms-auto flex gap-1 transition-opacity duration-200 sm:ms-1.5', 'pointer-events-none opacity-30' => !$mine])>
+                        @foreach (['attack' => ['swords', __('Attack'), 'var(--q-attack)'], 'defense' => ['shield', __('Defence'), 'var(--q-defense)']] as $side => [$icon, $label, $color])
                             @php $on = $mine && $mine->side === $side; @endphp
-                            <button type="button" wire:click="questionSide({{ $question->id }}, '{{ $side }}')" @disabled(!$open || !$mine) title="{{ $label }}" aria-pressed="{{ $on ? 'true' : 'false' }}"
+                            <button type="button" wire:click="questionSide({{ $question->id }}, '{{ $side }}')" @disabled(!$open || !$mine) title="{{ $label }}" aria-label="{{ $label }}" aria-pressed="{{ $on ? 'true' : 'false' }}"
+                                @if ($on) style="color: {{ $color }}; background: color-mix(in srgb, {{ $color }} 16%, transparent); border-color: color-mix(in srgb, {{ $color }} 45%, transparent)" @endif
                                 @class([
-                                    'h-7 rounded-lg border px-2 font-display text-[11px] font-bold tracking-wider transition duration-150 active:scale-95 disabled:cursor-default',
-                                    'border-transparent bg-gold-soft text-gold' => $on && $side === 'attack',
-                                    'border-transparent bg-good-soft text-good' => $on && $side === 'defense',
-                                    'border-dashed border-ui-line text-ui-muted' => !$on,
-                                ])>{{ $short }}</button>
+                                    'grid size-7 place-items-center rounded-md border transition duration-150 active:scale-90 disabled:cursor-default',
+                                    'border-dashed border-ui-line text-ui-muted hover:text-ui-ink' => !$on,
+                                ])><x-ui.icon :name="$icon" class="size-4" /></button>
                         @endforeach
                     </div>
                 </div>

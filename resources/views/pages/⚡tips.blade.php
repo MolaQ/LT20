@@ -35,7 +35,7 @@ new #[Layout('layouts::public')] class extends Component {
     public string $lech = '';
     public string $opponent = '';
 
-    /** Krok kreatora typowania (wygląd 2.0): score (wynik), players (rozgrywki: skład i pytania), ticket (bilet). */
+    /** Krok kreatora typowania (wygląd 2.0): score (wynik), players (rozgrywki: skład i pytania). */
     public string $step = 'score';
 
     /** Wybrane rozgrywki (score_set): do nich trafiają zawodnicy i odpowiedzi na pytania; pusty = pierwsze z rozgrywek gracza. */
@@ -117,7 +117,7 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->syncUrl();
 
-        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket, $this->questions, $this->allQuestions, $this->myAnswers, $this->questionSets);
+        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->setStatus, $this->questions, $this->allQuestions, $this->myAnswers, $this->questionSets);
         $this->loadTip();
         $this->ensureTip();
 
@@ -372,21 +372,21 @@ new #[Layout('layouts::public')] class extends Component {
             ->keyBy(fn($score) => $score->score_set->value);
     }
 
-    /** Na komputerze bilet stoi obok wyboru składu, więc po każdej zmianie składu liczymy go od nowa. */
+    /** Kafelki rozgrywek pokazują liczbę wystawionych, więc po każdej zmianie składu liczymy stan od nowa. */
     #[On('designation-changed')]
-    public function refreshTicket(): void
+    public function refreshSetStatus(): void
     {
-        unset($this->ticket);
+        unset($this->setStatus);
     }
 
     /**
-     * Bilet: jeden odcinek na każde rozgrywki gracza: barwy, wystawieni zawodnicy i pytania zestawu
+     * Stan każdych rozgrywek gracza (kafelki „Twoje rozgrywki”): barwy, wystawieni zawodnicy i pytania zestawu
      * (stan każdego pytania: attack / defense = odpowiedź z bonusem ataku / obrony, null = pominięte).
      *
      * @return list<array{set: string, label: string, style: string, players: list<string>, max: int, questions: list<string|null>, summary: array{answered: int, attack: int, defense: int}}>
      */
     #[Computed]
-    public function ticket(): array
+    public function setStatus(): array
     {
         if (!$this->matchday) {
             return [];
@@ -468,13 +468,6 @@ new #[Layout('layouts::public')] class extends Component {
         $this->dispatch('designation-active', set: $set);
     }
 
-    /** Klik w odcinek biletu: te rozgrywki i krok ze składem i pytaniami (na telefonie). */
-    public function openSet(string $set): void
-    {
-        $this->pickSet($set);
-        $this->step = 'players';
-    }
-
     /** Rozgrywki wybrane w panelu składu (karta typu): te same rozgrywki w pytaniach. */
     #[On('designation-active')]
     public function syncSet(string $set): void
@@ -532,7 +525,7 @@ new #[Layout('layouts::public')] class extends Component {
             $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
-        unset($this->myAnswers, $this->ticket);
+        unset($this->myAnswers, $this->setStatus);
     }
 
     /** Strona bonusu pytania: 'attack' albo 'defense'. */
@@ -550,19 +543,7 @@ new #[Layout('layouts::public')] class extends Component {
             $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
-        unset($this->myAnswers, $this->ticket);
-    }
-
-    /** „Skasuj bilet”: typ i skład zapisują się na bieżąco, tu tylko potwierdzenie z pieczątką i konfetti. */
-    public function punch(): void
-    {
-        if (!$this->isOpen || !$this->tip) {
-            return;
-        }
-
-        $this->dispatch('ticket-punched');
-        $this->dispatch('ui-toast', text: __('Tip saved! You can change it until kick-off.'));
-        $this->js('setTimeout(() => window.ui.confetti(110), 380)');
+        unset($this->myAnswers, $this->setStatus);
     }
 
     /** Przyciski + / − pod liczbą goli Lecha ('lech') albo rywala ('opponent'). */
@@ -708,7 +689,7 @@ new #[Layout('layouts::public')] class extends Component {
     @php
         $md = $this->matchday;
         $statusChip = $this->isOpen ? ['good', __('Open')] : ($played ? ['club', __('Settled')] : ['default', __('Closed')]);
-        $steps = ['score' => __('Score'), 'players' => __('Squad and questions'), 'ticket' => __('Ticket')];
+        $steps = ['score' => __('Score'), 'players' => __('Squad and questions')];
         if (!isset($steps[$step])) {
             $step = 'score';
         }
@@ -756,7 +737,7 @@ new #[Layout('layouts::public')] class extends Component {
 
     {{--
         Telefon: jeden krok naraz. Komputer: wszystko na jednym ekranie: wynik i obok wybór rozgrywek,
-        pod nimi skład i pytania wybranych rozgrywek, karty składów, a na końcu bilet i to, jak typują inni.
+        pod nimi skład i pytania wybranych rozgrywek, karty składów, a na końcu to, jak typują inni. Wszystko zapisuje się samo.
     --}}
     <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
         <div @class(['flex min-w-0 flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
@@ -832,17 +813,11 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
         </div>
         <livewire:pages::home.designation-panels part="cards" :active="$this->activeQuestionSet()" :matchday-id="$md->id" :key="'designation-cards-' . $md->id" />
-        <x-ui.button class="lg:hidden" wire:click="$set('step', 'ticket')">{{ __('Next: :step', ['step' => __('Ticket')]) }}</x-ui.button>
     </div>
     @endif
 
     @if ($md->isFilled())
-    <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
-        {{-- Bilet nad tym, jak typują inni --}}
-        <div class="flex flex-col gap-3">
-            @include('partials.tip-ticket')
-        </div>
-
+    <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
         {{-- Premium: jak typują inni gracze (na żywo, także przed pierwszym gwizdkiem) --}}
         @if ($this->premium && $this->crowd)
             @php
