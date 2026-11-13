@@ -14,7 +14,8 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
- * Pytania kolejki (przebudowa 2.0): admin klika pytania z banku (najwyżej 5 na kolejkę), a po meczu
+ * Pytania kolejki (przebudowa 2.0): każdy typ rozgrywek ma osobny zestaw (zakładki); admin klika pytania z banku
+ * (najwyżej 5 w zestawie, jedno pytanie z banku tylko w jednym zestawie kolejki), a po meczu
  * zaznacza prawidłową odpowiedź (tak / nie / unieważnione). Bank pytań: dopisywanie i wyłączanie szablonów.
  * Podgląd: season-list, zmiany: season-edit. Zmiana odpowiedzi po rozliczeniu wymaga przeliczenia kolejki w Wynikach.
  * Pytania można układać także w sezonie w przygotowaniu (szkic, zatwierdzony), zanim wystartuje,
@@ -27,6 +28,10 @@ new class extends Component {
 
     #[Url(as: 'kolejka', except: 0)]
     public int $number = 0;
+
+    /** Zestaw pytań: typ rozgrywek (liga, puchar, puchary europejskie, Liga Legend). */
+    #[Url(as: 'zestaw', except: 'league')]
+    public string $set = 'league';
 
     /** Pytanie z banku w trakcie poprawiania i jego nowa treść. */
     public ?int $editingId = null;
@@ -42,12 +47,24 @@ new class extends Component {
             $this->seasonNumber = Season::current()?->number ?? $this->seasons->first()?->number ?? 0;
         }
 
+        if (!in_array($this->set, Questions::sets(), true)) {
+            $this->set = Questions::sets()[0];
+        }
+
         $this->pickMatchday();
+    }
+
+    public function updatedSet(): void
+    {
+        if (!in_array($this->set, Questions::sets(), true)) {
+            $this->set = Questions::sets()[0];
+        }
+        unset($this->questions);
     }
 
     public function updatedSeasonNumber(): void
     {
-        unset($this->season, $this->matchdays, $this->matchday, $this->questions);
+        unset($this->season, $this->matchdays, $this->matchday, $this->allQuestions, $this->questions);
         $this->number = 0;
         $this->pickMatchday();
     }
@@ -92,10 +109,18 @@ new class extends Component {
         return $this->matchdays->firstWhere('number', $this->number);
     }
 
+    /** Wszystkie pytania kolejki (wszystkie zestawy) z liczbą graczy, którzy odpowiedzieli. */
+    #[Computed]
+    public function allQuestions()
+    {
+        return $this->matchday ? Questions::for($this->matchday)->loadCount(['answers' => fn ($q) => $q->select(\Illuminate\Support\Facades\DB::raw('count(distinct user_id)'))]) : collect();
+    }
+
+    /** Pytania wybranego zestawu. */
     #[Computed]
     public function questions()
     {
-        return $this->matchday ? Questions::for($this->matchday)->loadCount(['answers' => fn ($q) => $q->select(\Illuminate\Support\Facades\DB::raw('count(distinct user_id)'))]) : collect();
+        return $this->allQuestions->where('score_set', $this->set)->values();
     }
 
     #[Computed]
@@ -109,7 +134,7 @@ new class extends Component {
         abort_unless(auth()->user()?->can(Permission::SeasonEdit->value), 403);
     }
 
-    /** Klik w pytanie z banku: dodaje je do kolejki albo zdejmuje (najwyżej 5). */
+    /** Klik w pytanie z banku: dodaje je do zestawu albo zdejmuje (najwyżej 5, bez powtórek między zestawami). */
     public function toggleTemplate(int $templateId): void
     {
         $this->authorizeEdit();
@@ -119,17 +144,25 @@ new class extends Component {
         }
 
         $ids = $this->questions->pluck('question_template_id')->filter()->map(fn ($id) => (int) $id)->values()->all();
-        $ids = in_array($templateId, $ids, true) ? array_values(array_diff($ids, [$templateId])) : [...$ids, $templateId];
+        $removing = in_array($templateId, $ids, true);
 
-        if (count($ids) > Questions::PER_MATCHDAY) {
-            $this->dispatch('ui-toast', variant: 'warning', text: __('A matchday has at most :count questions.', ['count' => Questions::PER_MATCHDAY]));
+        if (!$removing && $this->allQuestions->where('score_set', '!=', $this->set)->contains('question_template_id', $templateId)) {
+            $this->dispatch('ui-toast', variant: 'warning', text: __('This question is already in another set of this matchday.'));
 
             return;
         }
 
-        Questions::setForMatchday($this->matchday, $ids);
-        Audit::log('questions.set', null, [], ['matchday' => $this->matchday->number, 'templates' => $ids], __('Matchday :number', ['number' => $this->matchday->number]));
-        unset($this->questions, $this->templates);
+        $ids = $removing ? array_values(array_diff($ids, [$templateId])) : [...$ids, $templateId];
+
+        if (count($ids) > Questions::PER_SET) {
+            $this->dispatch('ui-toast', variant: 'warning', text: __('A set has at most :count questions.', ['count' => Questions::PER_SET]));
+
+            return;
+        }
+
+        Questions::setForMatchday($this->matchday, $this->set, $ids);
+        Audit::log('questions.set', null, [], ['matchday' => $this->matchday->number, 'set' => $this->set, 'templates' => $ids], __('Matchday :number', ['number' => $this->matchday->number]));
+        unset($this->allQuestions, $this->questions, $this->templates);
     }
 
     /** Prawidłowa odpowiedź po meczu: 'yes', 'no', 'void' albo '' (jeszcze nie wiadomo). */
@@ -144,7 +177,7 @@ new class extends Component {
             'voided' => $value === 'void',
         ]);
         Audit::log('questions.settled', null, $old, ['correct' => $question->correct, 'voided' => $question->voided], $question->text);
-        unset($this->questions);
+        unset($this->allQuestions, $this->questions);
     }
 
     public function addTemplate(): void
@@ -190,7 +223,7 @@ new class extends Component {
 
         Audit::log('questions.template_edited', null, ['text' => $old], ['text' => $text], $text);
         $this->cancelEdit();
-        unset($this->templates, $this->questions);
+        unset($this->templates, $this->allQuestions, $this->questions);
     }
 
     public function toggleActive(int $templateId): void
@@ -206,7 +239,7 @@ new class extends Component {
 <div class="mx-auto flex w-full max-w-5xl flex-col gap-6">
     <div>
         <x-ui.heading size="xl">{{ __('Questions') }}</x-ui.heading>
-        <x-ui.text>{{ __('Pick up to :count yes/no questions for the matchday with a click. After the match, mark the right answer.', ['count' => \App\Support\Questions::PER_MATCHDAY]) }}</x-ui.text>
+        <x-ui.text>{{ __('Every competition has its own set of up to :count yes/no questions. A bank question can be used in only one set of a matchday. After the match, mark the right answer.', ['count' => \App\Support\Questions::PER_SET]) }}</x-ui.text>
     </div>
 
     {{-- Sezon trwający albo w przygotowaniu: pytania można ułożyć przed startem sezonu --}}
@@ -243,8 +276,20 @@ new class extends Component {
             @php($canEdit = false)
         @endcan
 
+        {{-- Zestawy pytań: jeden na każdy typ rozgrywek, w zakładce stan zestawu --}}
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            @foreach (\App\Support\Questions::sets() as $setOption)
+                @php($setCount = $this->allQuestions->where('score_set', $setOption)->count())
+                <button type="button" wire:click="$set('set', '{{ $setOption }}')" wire:key="qset-{{ $setOption }}"
+                    class="{{ $setOption === $set ? 'bg-club text-club-ink shadow-sm' : 'bg-ui-raised hover:bg-ui-raised/70' }} flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-start text-sm font-semibold">
+                    <span class="truncate">{{ \App\Support\Questions::setLabel($setOption) }}</span>
+                    <span class="{{ $setCount === \App\Support\Questions::PER_SET ? '' : 'opacity-70' }} shrink-0 text-xs tabular-nums">{{ $setCount }}/{{ \App\Support\Questions::PER_SET }}</span>
+                </button>
+            @endforeach
+        </div>
+
         <x-ui.card class="space-y-3">
-            <x-ui.heading>{{ __('Questions of matchday :number', ['number' => $number]) }} ({{ $this->questions->count() }}/{{ \App\Support\Questions::PER_MATCHDAY }})</x-ui.heading>
+            <x-ui.heading>{{ __('Matchday :number', ['number' => $number]) }} · {{ \App\Support\Questions::setLabel($set) }} ({{ $this->questions->count() }}/{{ \App\Support\Questions::PER_SET }})</x-ui.heading>
             @forelse ($this->questions as $question)
                 @php($state = $question->voided ? 'void' : ($question->correct === null ? '' : ($question->correct ? 'yes' : 'no')))
                 <div class="flex flex-wrap items-center gap-2 rounded-xl border border-ui-line p-3 " wire:key="mq-{{ $question->id }}">
@@ -259,7 +304,7 @@ new class extends Component {
                     </div>
                 </div>
             @empty
-                <x-ui.text>{{ __('No questions in this matchday. Click questions from the bank below.') }}</x-ui.text>
+                <x-ui.text>{{ __('No questions in this set. Click questions from the bank below.') }}</x-ui.text>
             @endforelse
             @if ($this->matchday?->status === \App\Enums\MatchdayStatus::Played)
                 <x-ui.callout icon="arrow-path" variant="warning">{{ __('The matchday is already settled: after changing answers recalculate it in Results.') }}</x-ui.callout>
@@ -270,11 +315,17 @@ new class extends Component {
             <x-ui.heading>{{ __('Question bank') }}</x-ui.heading>
             <div class="flex flex-wrap gap-2">
                 @php($chosen = $this->questions->pluck('question_template_id')->all())
+                @php($elsewhere = $this->allQuestions->where('score_set', '!=', $set)->pluck('score_set', 'question_template_id'))
                 @foreach ($this->templates->where('is_active', true) as $template)
-                    <button type="button" wire:click="toggleTemplate({{ $template->id }})" wire:key="qt-{{ $template->id }}" @disabled(!$canEdit)
-                        class="{{ in_array($template->id, $chosen) ? 'border-lech-700 bg-club text-club-ink' : 'border-zinc-300 hover:border-lech-500 dark:border-zinc-600' }} rounded-xl border px-3 py-2 text-start text-sm">
+                    @php($otherSet = $elsewhere->get($template->id))
+                    <button type="button" wire:click="toggleTemplate({{ $template->id }})" wire:key="qt-{{ $template->id }}" @disabled(!$canEdit || $otherSet)
+                        class="{{ in_array($template->id, $chosen) ? 'border-lech-700 bg-club text-club-ink' : ($otherSet ? 'cursor-not-allowed border-dashed border-ui-line opacity-50' : 'border-zinc-300 hover:border-lech-500 dark:border-zinc-600') }} rounded-xl border px-3 py-2 text-start text-sm">
                         {{ $template->text }}
-                        <span class="ms-1 text-xs opacity-60">×{{ $template->times_used }}</span>
+                        @if ($otherSet)
+                            <span class="ms-1 text-xs">· {{ \App\Support\Questions::setLabel($otherSet) }}</span>
+                        @else
+                            <span class="ms-1 text-xs opacity-60">×{{ $template->times_used }}</span>
+                        @endif
                     </button>
                 @endforeach
             </div>

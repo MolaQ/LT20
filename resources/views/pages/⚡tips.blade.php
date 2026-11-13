@@ -35,10 +35,10 @@ new #[Layout('layouts::public')] class extends Component {
     public string $lech = '';
     public string $opponent = '';
 
-    /** Krok kreatora typowania (wygląd 2.0): score (wynik), players (zawodnicy), ticket (bilet). */
+    /** Krok kreatora typowania (wygląd 2.0): score (wynik), players (rozgrywki: skład i pytania), ticket (bilet). */
     public string $step = 'score';
 
-    /** Typ rozgrywek, w którym gracz odpowiada na pytania (score_set); pusty = pierwszy z jego typów. */
+    /** Wybrane rozgrywki (score_set): do nich trafiają zawodnicy i odpowiedzi na pytania; pusty = pierwsze z rozgrywek gracza. */
     public string $questionSet = '';
 
     /** Godzina ostatniego automatycznego zapisu (do napisu „Zapisano” w pasku na dole). */
@@ -109,7 +109,7 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->syncUrl();
 
-        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket, $this->questions, $this->myAnswers, $this->questionSets);
+        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket, $this->questions, $this->allQuestions, $this->myAnswers, $this->questionSets);
         $this->loadTip();
         $this->ensureTip();
 
@@ -372,9 +372,10 @@ new #[Layout('layouts::public')] class extends Component {
     }
 
     /**
-     * Bilet: wystawieni zawodnicy w każdym typie rozgrywek gracza (etykieta typu => nazwiska po przecinku).
+     * Bilet: jeden odcinek na każde rozgrywki gracza: barwy, wystawieni zawodnicy i pytania zestawu
+     * (stan każdego pytania: attack / defense = odpowiedź z bonusem ataku / obrony, null = pominięte).
      *
-     * @return list<array{label: string, players: string}>
+     * @return list<array{set: string, label: string, style: string, players: list<string>, max: int, questions: list<string|null>, summary: array{answered: int, attack: int, defense: int}}>
      */
     #[Computed]
     public function ticket(): array
@@ -385,15 +386,23 @@ new #[Layout('layouts::public')] class extends Component {
 
         $picks = \App\Support\Squad::picks(auth()->id(), null, $this->matchday);
         $names = \App\Models\LechPlayer::whereIn('id', collect($picks)->flatten()->all())->pluck('name', 'id');
-        $sets = \App\Support\PlayerCompetitions::types(auth()->id(), $this->matchday->season_id, $this->matchday->number);
-
         $answers = $this->myAnswers;
+        $questions = $this->allQuestions->groupBy('score_set');
+        $max = (int) \App\Support\Designation::value('max_players');
 
-        return collect($sets)->map(fn ($set) => [
-            'label' => $set->label(),
-            'players' => collect($picks[$set->value] ?? [])->map(fn ($id) => $names[$id] ?? '?')->implode(', '),
-            'questions' => \App\Support\Questions::summary($answers->get($set->value, collect())),
-        ])->values()->all();
+        return collect($this->questionSets)->map(function (array $set, string $value) use ($picks, $names, $answers, $questions, $max) {
+            $mine = $answers->get($value, collect());
+
+            return [
+                'set' => $value,
+                'label' => $set['label'],
+                'style' => $set['style'],
+                'players' => collect($picks[$value] ?? [])->map(fn ($id) => (string) ($names[$id] ?? '?'))->values()->all(),
+                'max' => $max,
+                'questions' => $questions->get($value, collect())->map(fn ($q) => $mine->get($q->id)?->side)->values()->all(),
+                'summary' => \App\Support\Questions::summary($mine),
+            ];
+        })->values()->all();
     }
 
     /**
@@ -417,7 +426,7 @@ new #[Layout('layouts::public')] class extends Component {
             ]])->all();
     }
 
-    /** Wybrany typ rozgrywek w kroku „Pytania” (albo pierwszy z typów gracza). */
+    /** Wybrane rozgrywki w kroku „Rozgrywki” (albo pierwsze z rozgrywek gracza). */
     public function activeQuestionSet(): string
     {
         $sets = array_keys($this->questionSets);
@@ -425,11 +434,47 @@ new #[Layout('layouts::public')] class extends Component {
         return in_array($this->questionSet, $sets, true) ? $this->questionSet : ($sets[0] ?? \App\Enums\CompetitionType::League->value);
     }
 
-    /** Pytania kolejki (Support\Questions). */
+    /** Wszystkie pytania kolejki (zestawy wszystkich rozgrywek, Support\Questions). */
+    #[Computed]
+    public function allQuestions()
+    {
+        return $this->matchday ? \App\Support\Questions::for($this->matchday) : collect();
+    }
+
+    /** Pytania zestawu wybranych rozgrywek. */
     #[Computed]
     public function questions()
     {
-        return $this->matchday ? \App\Support\Questions::for($this->matchday) : collect();
+        return $this->allQuestions->where('score_set', $this->activeQuestionSet())->values();
+    }
+
+    /** Wybór rozgrywek (kafelek albo odcinek biletu): pytania tego zestawu i wybór składu do tych rozgrywek. */
+    public function pickSet(string $set): void
+    {
+        if (!isset($this->questionSets[$set])) {
+            return;
+        }
+
+        $this->questionSet = $set;
+        unset($this->questions);
+        $this->dispatch('designation-active', set: $set);
+    }
+
+    /** Klik w odcinek biletu: te rozgrywki i krok ze składem i pytaniami (na telefonie). */
+    public function openSet(string $set): void
+    {
+        $this->pickSet($set);
+        $this->step = 'players';
+    }
+
+    /** Rozgrywki wybrane w panelu składu (karta typu): te same rozgrywki w pytaniach. */
+    #[On('designation-active')]
+    public function syncSet(string $set): void
+    {
+        if (isset($this->questionSets[$set]) && $this->questionSet !== $set) {
+            $this->questionSet = $set;
+            unset($this->questions);
+        }
     }
 
     /** Odpowiedzi gracza: typ rozgrywek => (id pytania => QuestionAnswer). */
@@ -460,7 +505,7 @@ new #[Layout('layouts::public')] class extends Component {
         $this->autosave();
     }
 
-    /** Odpowiedź na pytanie: 'yes', 'no' albo '' (pominięcie). */
+    /** Odpowiedź na pytanie zestawu: 'yes', 'no' albo '' (pominięcie, także ponowny klik w wybraną odpowiedź). */
     public function answerQuestion(int $questionId, string $value): void
     {
         $question = $this->questions->firstWhere('id', $questionId);
@@ -470,7 +515,7 @@ new #[Layout('layouts::public')] class extends Component {
         }
 
         try {
-            \App\Support\Questions::answer(auth()->user(), $question, $this->activeQuestionSet(), match ($value) {
+            \App\Support\Questions::answer(auth()->user(), $question, match ($value) {
                 'yes' => true,
                 'no' => false,
                 default => null,
@@ -492,24 +537,7 @@ new #[Layout('layouts::public')] class extends Component {
         }
 
         try {
-            \App\Support\Questions::side(auth()->user(), $question, $this->activeQuestionSet(), $side);
-        } catch (DomainException $e) {
-            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
-        }
-
-        unset($this->myAnswers, $this->ticket);
-    }
-
-    /** Te same odpowiedzi i strony co w wybranym typie rozgrywek we wszystkich pozostałych typach gracza. */
-    public function copyQuestions(): void
-    {
-        if (!$this->matchday || !$this->canPlay) {
-            return;
-        }
-
-        try {
-            \App\Support\Questions::copy(auth()->user(), $this->matchday, $this->activeQuestionSet(), array_keys($this->questionSets));
-            $this->dispatch('ui-toast', variant: 'success', text: __('Answers copied to all your competitions.'));
+            \App\Support\Questions::side(auth()->user(), $question, $side);
         } catch (DomainException $e) {
             $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
@@ -666,15 +694,13 @@ new #[Layout('layouts::public')] class extends Component {
 
     @if ($tab === 'tip')
     {{--
-        Wygląd 2.0: typowanie jako kreator krok po kroku (Wynik → Zawodnicy → Bilet), wszystko kliknięciem.
+        Wygląd 2.0: typowanie jako kreator krok po kroku (Wynik → Rozgrywki: skład i pytania → Bilet), wszystko kliknięciem.
         Pasek kolejek przewija się w bok; kropka = typowanie otwarte.
     --}}
     @php
         $md = $this->matchday;
         $statusChip = $this->isOpen ? ['good', __('Open')] : ($played ? ['club', __('Settled')] : ['default', __('Closed')]);
-        $steps = ['score' => __('Score')]
-            + ($this->questions->isNotEmpty() ? ['questions' => __('Questions')] : [])
-            + ['players' => __('Squad picks'), 'ticket' => __('Ticket')];
+        $steps = ['score' => __('Score'), 'players' => __('Squad and questions'), 'ticket' => __('Ticket')];
         if (!isset($steps[$step])) {
             $step = 'score';
         }
@@ -717,10 +743,12 @@ new #[Layout('layouts::public')] class extends Component {
 
     <div class="lg:hidden"><x-ui.segmented wire:model.live="step" :options="$steps" /></div>
 
-    {{-- Telefon: jeden krok naraz. Komputer: wszystkie kroki na jednym ekranie, wynik i pytania po lewej, skład i bilet po prawej. --}}
+    {{--
+        Telefon: jeden krok naraz. Komputer: wszystko na jednym ekranie: na górze wynik i bilet obok siebie,
+        niżej wybór rozgrywek, a pod nim skład i pytania wybranych rozgrywek, na końcu karty składów.
+    --}}
     <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
-        <div class="flex min-w-0 flex-col gap-6">
-        <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
+        <div @class(['flex min-w-0 flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
         <x-ui.card hero>
             <div class="flex items-center justify-between gap-2 text-xs uppercase tracking-wider">
                 <span class="opacity-85">{{ __('Matchday :number', ['number' => $md->number]) }} · {{ $md->kickoff_at ? $md->kickoff_at->translatedFormat('D j M, H:i') : __('not set yet') }}</span>
@@ -772,59 +800,12 @@ new #[Layout('layouts::public')] class extends Component {
         </p>
 
         @if ($md->isFilled())
-            @php $nextStep = isset($steps['questions']) ? 'questions' : 'players'; @endphp
-            <x-ui.button class="lg:hidden" wire:click="$set('step', '{{ $nextStep }}')">{{ __('Next: :step', ['step' => $steps[$nextStep]]) }}</x-ui.button>
-        @endif
-        </div>
-        @if (isset($steps['questions']))
-        <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'questions'])>
-        @include('partials.tip-questions')
-        <x-ui.button class="lg:hidden" wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => __('Squad picks')]) }}</x-ui.button>
-        </div>
+            <x-ui.button class="lg:hidden" wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => $steps['players']]) }}</x-ui.button>
         @endif
         </div>
 
-        {{-- Prawa kolumna na komputerze: skład i bilet --}}
-        <div class="flex min-w-0 flex-col gap-6">
-        <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'players'])>
-        @if ($md->isFilled())
-            <livewire:pages::home.designation-panels part="select" :matchday-id="$md->id" :key="'designation-select-' . $md->id" />
-            <livewire:pages::home.designation-panels part="cards" :matchday-id="$md->id" :key="'designation-cards-' . $md->id" />
-            <x-ui.button class="lg:hidden" wire:click="$set('step', 'ticket')">{{ __('Next: :step', ['step' => __('Ticket')]) }}</x-ui.button>
-        @endif
-        </div>
-        <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
-        {{-- Bilet: podsumowanie typu i składu. Typ zapisuje się sam przy każdej zmianie, „Skasuj bilet” tylko to potwierdza. --}}
-        @php $ticket = $this->ticket; @endphp
-        <section x-data="{ punched: false }" x-on:ticket-punched.window="punched = true"
-            class="relative flex flex-col gap-2.5 rounded-[20px] border border-ui-line bg-ui-surface p-4 [mask:radial-gradient(circle_12px_at_0_62%,transparent_98%,#000)_left/51%_100%_no-repeat,radial-gradient(circle_12px_at_100%_62%,transparent_98%,#000)_right/51%_100%_no-repeat]">
-            <div class="flex items-center gap-2">
-                <img src="{{ asset(config('club.logo')) }}" alt="" class="size-7">
-                <b class="font-display text-xl">{{ __('Your ticket') }}</b>
-                <span class="ms-auto text-xs text-ui-muted">{{ __('Matchday :number', ['number' => $md->number]) }}</span>
-            </div>
-            <div class="ui-num text-center text-[40px] font-extrabold leading-none">
-                {{ mb_strtoupper(config('club.short_name')) }} {{ $this->tip ? $this->tip->score() : '–:–' }} {{ mb_strtoupper((string) $md->opponent) }}
-            </div>
-            @forelse ($ticket as $line)
-                <div class="flex justify-between gap-3 border-t border-dashed border-ui-line pt-2 text-sm">
-                    <span class="text-ui-muted">{{ $line['label'] }}</span>
-                    <span class="text-end">
-                        <span class="block font-semibold">{{ $line['players'] ?: '–' }}</span>
-                        {{-- Pytania w tym typie rozgrywek: ile odpowiedzi i ile na atak (OF) i obronę (DEF) --}}
-                        @if ($this->questions->isNotEmpty())
-                            <span class="block text-xs text-ui-muted">
-                                {{ __('Questions: :answered/:count', ['answered' => $line['questions']['answered'], 'count' => $this->questions->count()]) }}@if ($line['questions']['answered']) · OF {{ $line['questions']['attack'] }} · DEF {{ $line['questions']['defense'] }}@endif
-                            </span>
-                        @endif
-                    </span>
-                </div>
-            @empty
-                <div class="border-t border-dashed border-ui-line pt-2 text-sm text-ui-muted">{{ __('No players fielded.') }}</div>
-            @endforelse
-            <span x-show="punched || {{ $this->tip && !$this->isOpen ? 'true' : 'false' }}" x-cloak
-                class="animate-ui-stamp pointer-events-none absolute bottom-14 end-4 rounded-lg border-[3px] border-good px-2.5 py-0.5 font-display text-xl font-extrabold tracking-wider text-good">{{ __('PUNCHED') }}</span>
-        </section>
+        <div @class(['flex min-w-0 flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
+        @include('partials.tip-ticket')
 
         @if ($this->isOpen && $this->tip)
             <x-ui.button wire:click="punch">{{ __('Punch the ticket') }}</x-ui.button>
@@ -851,8 +832,24 @@ new #[Layout('layouts::public')] class extends Component {
             ])
         @endif
         </div>
-        </div>
     </div>
+
+    {{-- Rozgrywki gracza: wybór rozgrywek, potem skład i pytania właśnie tych rozgrywek --}}
+    @if ($md->isFilled() && count($this->questionSets) > 0)
+    <div @class(['flex flex-col gap-4', 'hidden lg:flex' => $step !== 'players'])>
+        @include('partials.tip-competitions')
+        <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
+            <div class="min-w-0">
+                <livewire:pages::home.designation-panels part="select" :chooser="false" :active="$this->activeQuestionSet()" :matchday-id="$md->id" :key="'designation-select-' . $md->id" />
+            </div>
+            <div class="min-w-0">
+                @include('partials.tip-questions')
+            </div>
+        </div>
+        <livewire:pages::home.designation-panels part="cards" :active="$this->activeQuestionSet()" :matchday-id="$md->id" :key="'designation-cards-' . $md->id" />
+        <x-ui.button class="lg:hidden" wire:click="$set('step', 'ticket')">{{ __('Next: :step', ['step' => __('Ticket')]) }}</x-ui.button>
+    </div>
+    @endif
 
     @if ($md->isFilled())
     <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>

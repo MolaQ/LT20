@@ -96,7 +96,7 @@ new #[Layout('layouts::public')] class extends Component {
     }
 
     /**
-     * Stan typu zalogowanego gracza w tej kolejce: odpowiedzi na pytania i wystawieni zawodnicy (wszystkie typy rozgrywek).
+     * Stan typu zalogowanego gracza w tej kolejce: odpowiedzi na pytania jego zestawów i wystawieni zawodnicy (wszystkie typy rozgrywek).
      *
      * @return array{answered: int, questions: int, players: int}|null
      */
@@ -107,11 +107,12 @@ new #[Layout('layouts::public')] class extends Component {
             return null;
         }
 
-        $questionIds = \App\Models\MatchdayQuestion::where('matchday_id', $this->matchday->id)->pluck('id');
+        // Pytania z zestawów rozgrywek, w których gracz jeszcze gra (każdy typ rozgrywek ma osobny zestaw).
+        $sets = collect(\App\Support\PlayerCompetitions::types(auth()->id(), $this->matchday->season_id, $this->matchday->number))->map(fn ($set) => $set->value)->all();
+        $questionIds = \App\Models\MatchdayQuestion::where('matchday_id', $this->matchday->id)->whereIn('score_set', $sets)->pluck('id');
 
         return [
-            // Pytania z odpowiedzią w którychkolwiek rozgrywkach (każdy typ rozgrywek ma osobne odpowiedzi).
-            'answered' => $questionIds->isEmpty() ? 0 : \App\Models\QuestionAnswer::whereIn('matchday_question_id', $questionIds)->where('user_id', auth()->id())->distinct()->count('matchday_question_id'),
+            'answered' => $questionIds->isEmpty() ? 0 : \App\Models\QuestionAnswer::whereIn('matchday_question_id', $questionIds)->where('user_id', auth()->id())->count(),
             'questions' => $questionIds->count(),
             'players' => \App\Models\DesignatedPlayer::where('matchday_id', $this->matchday->id)->where('user_id', auth()->id())->count(),
         ];

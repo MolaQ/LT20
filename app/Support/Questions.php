@@ -13,32 +13,47 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Pytania w kolejce (zasady przebudowy 2.0, decyzje MolaQ z 9.11.2026):
- *  - w kolejce jest najwyżej PER_MATCHDAY pytań tak/nie, układa je admin z banku (question_templates),
- *  - gracz odpowiada osobno w każdym typie rozgrywek (liga, Puchar Polski, puchary europejskie, Liga Legend; decyzja z 13.11.2026),
- *  - w każdym typie może pominąć dowolne pytanie; każde, na które odpowiada, oznacza jako atak albo obrona,
- *  - trafione pytanie ataku = +1 do ataku, trafione pytanie obrony = +1 do obrony,
- *  - jedno pudło zeruje oba bonusy z pytań w tym typie rozgrywek (zawodnicy liczą się dalej),
+ * Pytania w kolejce (zasady przebudowy 2.0, decyzje MolaQ z 9.11.2026 i 13.11.2026):
+ *  - każdy typ rozgrywek (liga, Puchar Polski, puchary europejskie, Liga Legend) ma w kolejce osobny zestaw
+ *    najwyżej PER_SET pytań tak/nie; admin układa je z banku (question_templates), a jedno pytanie z banku
+ *    trafia w kolejce najwyżej do jednego zestawu,
+ *  - gracz odpowiada na pytania zestawów rozgrywek, w których jeszcze gra; może pominąć dowolne pytanie,
+ *    a każde, na które odpowiada, oznacza jako atak (OF) albo obrona (DEF),
+ *  - trafione pytanie ataku = +1 do ataku, trafione pytanie obrony = +1 do obrony w tych rozgrywkach,
+ *  - jedno pudło zeruje oba bonusy z pytań w tych rozgrywkach (zawodnicy liczą się dalej),
  *  - pytanie unieważnione (voided) nie liczy się nikomu i niczego nie zeruje.
  */
 final class Questions
 {
-    public const PER_MATCHDAY = 5;
+    /** Najwięcej pytań w zestawie jednego typu rozgrywek. */
+    public const PER_SET = 5;
 
-    /** @return Collection<int, MatchdayQuestion> */
-    public static function for(Matchday $matchday): Collection
+    /**
+     * Pytania kolejki: wszystkie albo jednego zestawu.
+     *
+     * @return Collection<int, MatchdayQuestion>
+     */
+    public static function for(Matchday $matchday, ?string $set = null): Collection
     {
-        return MatchdayQuestion::where('matchday_id', $matchday->id)->orderBy('position')->get();
+        return MatchdayQuestion::where('matchday_id', $matchday->id)
+            ->when($set !== null, fn ($q) => $q->where('score_set', $set))
+            ->orderBy('position')->get();
     }
 
     /**
-     * Typy rozgrywek z osobnymi odpowiedziami (wartości score_set).
+     * Typy rozgrywek z osobnymi zestawami pytań (wartości score_set).
      *
      * @return list<string>
      */
     public static function sets(): array
     {
         return [CompetitionType::League->value, CompetitionType::Cup->value, CompetitionType::Champions->value, CompetitionType::Legends->value];
+    }
+
+    /** Nazwa zestawu, np. „Ligi i Liga podwórkowa”. */
+    public static function setLabel(string $set): string
+    {
+        return CompetitionType::from($set)->scoreSetLabel();
     }
 
     /**
@@ -59,7 +74,7 @@ final class Questions
     }
 
     /**
-     * Krótkie podsumowanie odpowiedzi gracza w jednym typie rozgrywek.
+     * Krótkie podsumowanie odpowiedzi gracza w jednym zestawie.
      *
      * @param  Collection<int, QuestionAnswer>  $answers
      * @return array{answered: int, attack: int, defense: int}
@@ -74,77 +89,40 @@ final class Questions
     }
 
     /**
-     * Gracz odpowiada (true/false) albo pomija pytanie (null) w jednym typie rozgrywek. Strona bonusu zostaje, jeśli już była.
+     * Gracz odpowiada (true/false) albo pomija pytanie (null). Strona bonusu zostaje, jeśli już była.
      *
      * @throws DomainException
      */
-    public static function answer(User $user, MatchdayQuestion $question, string $set, ?bool $answer): void
+    public static function answer(User $user, MatchdayQuestion $question, ?bool $answer): void
     {
         self::ensureOpen($question);
-        self::ensureSet($set);
 
         if ($answer === null) {
-            QuestionAnswer::where('matchday_question_id', $question->id)->where('user_id', $user->id)->where('score_set', $set)->delete();
+            QuestionAnswer::where('matchday_question_id', $question->id)->where('user_id', $user->id)->delete();
 
             return;
         }
 
         QuestionAnswer::updateOrCreate(
-            ['matchday_question_id' => $question->id, 'user_id' => $user->id, 'score_set' => $set],
+            ['matchday_question_id' => $question->id, 'user_id' => $user->id, 'score_set' => $question->score_set],
             ['answer' => $answer],
         );
     }
 
     /**
-     * Strona bonusu pytania w typie rozgrywek: attack albo defense. Działa tylko dla pytania, na które gracz odpowiedział.
+     * Strona bonusu pytania: attack (OF) albo defense (DEF). Działa tylko dla pytania, na które gracz odpowiedział.
      *
      * @throws DomainException
      */
-    public static function side(User $user, MatchdayQuestion $question, string $set, string $side): void
+    public static function side(User $user, MatchdayQuestion $question, string $side): void
     {
         self::ensureOpen($question);
-        self::ensureSet($set);
 
         if (! in_array($side, QuestionAnswer::SIDES, true)) {
             throw new DomainException(__('Unknown bonus side.'));
         }
 
-        QuestionAnswer::where('matchday_question_id', $question->id)->where('user_id', $user->id)->where('score_set', $set)->update(['side' => $side]);
-    }
-
-    /**
-     * Kopiuje odpowiedzi i strony z jednego typu rozgrywek do innych (pominięte pytania też: tam znikają).
-     *
-     * @param  list<string>  $targets
-     *
-     * @throws DomainException
-     */
-    public static function copy(User $user, Matchday $matchday, string $from, array $targets): void
-    {
-        if (! $matchday->isOpenForTips()) {
-            throw new DomainException(__('Tipping for this matchday is closed.'));
-        }
-        self::ensureSet($from);
-
-        $questionIds = MatchdayQuestion::where('matchday_id', $matchday->id)->pluck('id');
-        $source = QuestionAnswer::where('user_id', $user->id)->where('score_set', $from)->whereIn('matchday_question_id', $questionIds)->get();
-
-        DB::transaction(function () use ($user, $questionIds, $source, $from, $targets) {
-            foreach (array_diff($targets, [$from]) as $set) {
-                self::ensureSet($set);
-                QuestionAnswer::where('user_id', $user->id)->where('score_set', $set)->whereIn('matchday_question_id', $questionIds)->delete();
-
-                foreach ($source as $answer) {
-                    QuestionAnswer::create([
-                        'matchday_question_id' => $answer->matchday_question_id,
-                        'user_id' => $user->id,
-                        'score_set' => $set,
-                        'answer' => $answer->answer,
-                        'side' => $answer->side,
-                    ]);
-                }
-            }
-        });
+        QuestionAnswer::where('matchday_question_id', $question->id)->where('user_id', $user->id)->update(['side' => $side]);
     }
 
     /**
@@ -178,7 +156,7 @@ final class Questions
     }
 
     /**
-     * Bonusy z pytań wszystkich graczy kolejki naraz (rozliczenie): user_id => typ rozgrywek => bonus.
+     * Bonusy z pytań wszystkich graczy kolejki naraz (rozliczenie): user_id => typ rozgrywek => bonus z jego zestawu.
      *
      * @return array<int, array<int|string, array{attack: int, defense: int, missed: bool}>>
      */
@@ -190,11 +168,13 @@ final class Questions
             return [];
         }
 
+        $bySet = $questions->groupBy('score_set');
+
         /** @var array<int, array<int|string, array{attack: int, defense: int, missed: bool}>> $out */
         $out = [];
-        foreach (QuestionAnswer::whereIn('matchday_question_id', $questions->pluck('id'))->get()->groupBy(['user_id', 'score_set']) as $userId => $bySet) {
-            foreach ($bySet as $set => $answers) {
-                $out[(int) $userId][(string) $set] = self::bonus($questions, $answers->keyBy('matchday_question_id'));
+        foreach (QuestionAnswer::whereIn('matchday_question_id', $questions->pluck('id'))->get()->groupBy(['user_id', 'score_set']) as $userId => $answersBySet) {
+            foreach ($answersBySet as $set => $answers) {
+                $out[(int) $userId][(string) $set] = self::bonus($bySet->get($set, collect()), $answers->keyBy('matchday_question_id'));
             }
         }
 
@@ -202,22 +182,31 @@ final class Questions
     }
 
     /**
-     * Admin układa pytania kolejki z banku (lista id szablonów w kolejności, najwyżej PER_MATCHDAY).
-     * Pytania, na które ktoś już odpowiedział, zostają, jeśli są dalej na liście.
+     * Admin układa zestaw pytań jednego typu rozgrywek z banku (lista id szablonów w kolejności, najwyżej PER_SET).
+     * Pytania z banku użyte już w innym zestawie tej kolejki są pomijane. Pytania, na które ktoś już odpowiedział,
+     * zostają, jeśli są dalej na liście.
      *
      * @param  list<int>  $templateIds
+     *
+     * @throws DomainException
      */
-    public static function setForMatchday(Matchday $matchday, array $templateIds): void
+    public static function setForMatchday(Matchday $matchday, string $set, array $templateIds): void
     {
-        $templateIds = array_slice(array_values(array_unique($templateIds)), 0, self::PER_MATCHDAY);
+        self::ensureSet($set);
+
+        $usedElsewhere = MatchdayQuestion::where('matchday_id', $matchday->id)->where('score_set', '!=', $set)
+            ->whereNotNull('question_template_id')->pluck('question_template_id')->map(fn ($id) => (int) $id)->all();
+        $templateIds = array_values(array_diff(array_unique($templateIds), $usedElsewhere));
+        $templateIds = array_slice($templateIds, 0, self::PER_SET);
         $templates = QuestionTemplate::whereIn('id', $templateIds)->get()->keyBy('id');
 
-        DB::transaction(function () use ($matchday, $templateIds, $templates) {
-            $existing = MatchdayQuestion::where('matchday_id', $matchday->id)->get()->keyBy('question_template_id');
+        DB::transaction(function () use ($matchday, $set, $templateIds, $templates) {
+            $inSet = fn () => MatchdayQuestion::where('matchday_id', $matchday->id)->where('score_set', $set);
+            $existing = $inSet()->get()->keyBy('question_template_id');
 
             // Usuwamy pytania spoza nowej listy, a pozostałe chwilowo przesuwamy, żeby nie zderzyć się z unikalną pozycją.
-            MatchdayQuestion::where('matchday_id', $matchday->id)->whereNotIn('question_template_id', $templateIds)->delete();
-            MatchdayQuestion::where('matchday_id', $matchday->id)->update(['position' => DB::raw('position + 100')]);
+            $inSet()->whereNotIn('question_template_id', $templateIds)->delete();
+            $inSet()->update(['position' => DB::raw('position + 100')]);
 
             foreach ($templateIds as $index => $templateId) {
                 $template = $templates->get($templateId);
@@ -230,6 +219,7 @@ final class Questions
                 } else {
                     MatchdayQuestion::create([
                         'matchday_id' => $matchday->id,
+                        'score_set' => $set,
                         'question_template_id' => $template->id,
                         'position' => $index + 1,
                         'text' => $template->text,
