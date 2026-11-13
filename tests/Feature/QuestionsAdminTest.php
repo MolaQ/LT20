@@ -65,3 +65,18 @@ test('a bank question can be corrected and the change reaches unanswered matchda
     expect($template->fresh()->text)->toBe('Czy Lech strzeli pierwszy?')
         ->and($question->fresh()->text)->toBe('Czy Lech strzeli pierwszy?');
 });
+
+test('a question can be edited right from the bank tile', function () {
+    Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
+    $template = QuestionTemplate::create(['text' => 'Czy Lech wygra pierwszą połowe?']);
+
+    Livewire::actingAs(qaAdmin())->test('pages::dashboard.questions')
+        ->call('editTemplate', $template->id, 'bank')
+        ->assertSet('editingWhere', 'bank')
+        ->set('editText', 'Czy Lech wygra pierwszą połowę?')
+        ->call('saveTemplate')
+        ->assertHasNoErrors()
+        ->assertSet('editingId', null);
+
+    expect($template->fresh()->text)->toBe('Czy Lech wygra pierwszą połowę?');
+});

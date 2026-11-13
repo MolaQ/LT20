@@ -19,7 +19,8 @@ use Livewire\Component;
  * zaznacza prawidłową odpowiedź (tak / nie / unieważnione). Bank pytań: dopisywanie i wyłączanie szablonów.
  * Podgląd: season-list, zmiany: season-edit. Zmiana odpowiedzi po rozliczeniu wymaga przeliczenia kolejki w Wynikach.
  * Pytania można układać także w sezonie w przygotowaniu (szkic, zatwierdzony), zanim wystartuje,
- * a treść pytań z banku poprawiać (zmiana trafia też do pytań kolejek, na które nikt jeszcze nie odpowiedział).
+ * a treść pytań z banku poprawiać (zmiana trafia też do pytań kolejek, na które nikt jeszcze nie odpowiedział):
+ * ołówkiem przy pytaniu w zestawie, przy kafelku banku albo na liście „Popraw bank pytań”, zawsze w tym samym miejscu.
  */
 new class extends Component {
     /** Sezon: trwający albo w przygotowaniu (pytania można ułożyć przed startem). */
@@ -35,6 +36,9 @@ new class extends Component {
 
     /** Pytanie z banku w trakcie poprawiania i jego nowa treść. */
     public ?int $editingId = null;
+
+    /** Gdzie trwa poprawka: 'set' (zestaw kolejki), 'bank' (kafelki banku) albo 'list' (lista „Popraw bank pytań”). */
+    public string $editingWhere = 'list';
 
     public string $editText = '';
 
@@ -190,11 +194,12 @@ new class extends Component {
         unset($this->templates);
     }
 
-    public function editTemplate(int $templateId): void
+    public function editTemplate(int $templateId, string $where = 'list'): void
     {
         $this->authorizeEdit();
 
         $this->editingId = $templateId;
+        $this->editingWhere = in_array($where, ['set', 'bank', 'list'], true) ? $where : 'list';
         $this->editText = (string) QuestionTemplate::findOrFail($templateId)->text;
         $this->resetValidation();
     }
@@ -294,7 +299,15 @@ new class extends Component {
                 @php($state = $question->voided ? 'void' : ($question->correct === null ? '' : ($question->correct ? 'yes' : 'no')))
                 <div class="flex flex-wrap items-center gap-2 rounded-xl border border-ui-line p-3 " wire:key="mq-{{ $question->id }}">
                     <span class="w-6 font-bold text-zinc-400">{{ $question->position }}.</span>
-                    <span class="min-w-0 flex-1 font-medium">{{ $question->text }}</span>
+                    @if ($editingId !== null && $editingWhere === 'set' && $editingId === $question->question_template_id)
+                        <div class="min-w-0 flex-1">@include('partials.question-edit-form')</div>
+                    @else
+                        <span class="min-w-0 flex-1 font-medium">{{ $question->text }}</span>
+                        @if ($canEdit && $question->question_template_id)
+                            <button type="button" wire:click="editTemplate({{ $question->question_template_id }}, 'set')" title="{{ __('Edit the question') }}" aria-label="{{ __('Edit the question') }}"
+                                class="grid size-7 shrink-0 place-items-center rounded-lg text-ui-muted transition hover:bg-ui-raised hover:text-ui-ink"><x-ui.icon name="pencil-square" variant="micro" /></button>
+                        @endif
+                    @endif
                     <span class="text-xs text-ui-muted">{{ trans_choice(':count answer|:count answers', $question->answers_count, ['count' => $question->answers_count]) }}</span>
                     <div class="flex gap-1">
                         @foreach (['yes' => __('Yes'), 'no' => __('No'), 'void' => __('Voided'), '' => __('Not yet')] as $value => $label)
@@ -318,15 +331,29 @@ new class extends Component {
                 @php($elsewhere = $this->allQuestions->where('score_set', '!=', $set)->pluck('score_set', 'question_template_id'))
                 @foreach ($this->templates->where('is_active', true) as $template)
                     @php($otherSet = $elsewhere->get($template->id))
-                    <button type="button" wire:click="toggleTemplate({{ $template->id }})" wire:key="qt-{{ $template->id }}" @disabled(!$canEdit || $otherSet)
-                        class="{{ in_array($template->id, $chosen) ? 'border-lech-700 bg-club text-club-ink' : ($otherSet ? 'cursor-not-allowed border-dashed border-ui-line opacity-50' : 'border-zinc-300 hover:border-lech-500 dark:border-zinc-600') }} rounded-xl border px-3 py-2 text-start text-sm">
-                        {{ $template->text }}
-                        @if ($otherSet)
-                            <span class="ms-1 text-xs">· {{ \App\Support\Questions::setLabel($otherSet) }}</span>
-                        @else
-                            <span class="ms-1 text-xs opacity-60">×{{ $template->times_used }}</span>
-                        @endif
-                    </button>
+                    @php($picked = in_array($template->id, $chosen))
+                    @if ($editingId === $template->id && $editingWhere === 'bank')
+                        <div class="basis-full" wire:key="qt-edit-{{ $template->id }}">@include('partials.question-edit-form')</div>
+                    @else
+                        {{-- Kafelek: klik dodaje do zestawu albo zdejmuje, ołówek obok poprawia treść w miejscu --}}
+                        <span class="group inline-flex" wire:key="qt-{{ $template->id }}">
+                            <button type="button" wire:click="toggleTemplate({{ $template->id }})" @disabled(!$canEdit || $otherSet)
+                                class="{{ $picked ? 'border-lech-700 bg-club text-club-ink' : ($otherSet ? 'cursor-not-allowed border-dashed border-ui-line opacity-50' : 'border-zinc-300 hover:border-lech-500 dark:border-zinc-600') }} {{ $canEdit ? 'rounded-s-xl border-e-0' : 'rounded-xl' }} border py-2 ps-3 pe-2 text-start text-sm transition">
+                                {{ $template->text }}
+                                @if ($otherSet)
+                                    <span class="ms-1 text-xs">· {{ \App\Support\Questions::setLabel($otherSet) }}</span>
+                                @else
+                                    <span class="ms-1 text-xs opacity-60">×{{ $template->times_used }}</span>
+                                @endif
+                            </button>
+                            @if ($canEdit)
+                                <button type="button" wire:click="editTemplate({{ $template->id }}, 'bank')" title="{{ __('Edit the question') }}" aria-label="{{ __('Edit the question') }}"
+                                    class="{{ $picked ? 'border-lech-700 bg-club text-club-ink' : ($otherSet ? 'border-dashed border-ui-line' : 'border-zinc-300 dark:border-zinc-600') }} grid place-items-center rounded-e-xl border border-s-0 px-2 opacity-60 transition hover:opacity-100">
+                                    <x-ui.icon name="pencil-square" variant="micro" />
+                                </button>
+                            @endif
+                        </span>
+                    @endif
                 @endforeach
             </div>
 
@@ -336,21 +363,14 @@ new class extends Component {
                     <x-ui.btn type="submit" variant="primary">{{ __('Add') }}</x-ui.btn>
                 </form>
 
-                <details class="text-sm" @if ($editingId) open @endif>
+                <details class="text-sm" @if ($editingId && $editingWhere === 'list') open @endif>
                     <summary class="cursor-pointer text-ui-muted">{{ __('Edit the question bank') }}</summary>
                     <div class="mt-2 divide-y divide-ui-line">
                         @foreach ($this->templates as $template)
                             <div class="flex items-center gap-2 py-1.5" wire:key="qta-{{ $template->id }}">
                                 <input type="checkbox" @checked($template->is_active) wire:click="toggleActive({{ $template->id }})" title="{{ __('Active in the bank') }}">
-                                @if ($editingId === $template->id)
-                                    <form wire:submit="saveTemplate" class="flex flex-1 flex-wrap items-start gap-2">
-                                        <div class="min-w-0 flex-1">
-                                            <x-ui.input wire:model="editText" />
-                                            <x-ui.error name="editText" />
-                                        </div>
-                                        <x-ui.btn type="submit" variant="primary" size="sm">{{ __('Save') }}</x-ui.btn>
-                                        <x-ui.btn type="button" size="sm" wire:click="cancelEdit">{{ __('Cancel') }}</x-ui.btn>
-                                    </form>
+                                @if ($editingId === $template->id && $editingWhere === 'list')
+                                    <div class="min-w-0 flex-1">@include('partials.question-edit-form')</div>
                                 @else
                                     <span class="{{ $template->is_active ? '' : 'text-zinc-400 line-through' }} min-w-0 flex-1">{{ $template->text }}</span>
                                     <button type="button" wire:click="editTemplate({{ $template->id }})" class="shrink-0 rounded-lg bg-ui-raised px-2.5 py-1 text-xs font-semibold">{{ __('Edit') }}</button>
