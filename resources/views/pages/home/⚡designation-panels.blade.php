@@ -98,23 +98,7 @@ new class extends Component {
     #[Computed]
     public function setColors(): array
     {
-        $colors = [
-            CompetitionType::League->value => 'league_1',
-            CompetitionType::Cup->value => 'cup',
-            CompetitionType::Champions->value => 'champions',
-            CompetitionType::Legends->value => 'legends',
-        ];
-        $teamId = $this->matchday ? SeasonTeam::where('season_id', $this->matchday->season_id)->where('user_id', auth()->id())->value('id') : null;
-
-        if ($teamId) {
-            foreach (CompetitionEntry::with('competition')->where('season_team_id', $teamId)->get() as $entry) {
-                if ($entry->competition) {
-                    $colors[$entry->competition->type->scoreSet()->value] = $entry->competition->trophyKey();
-                }
-            }
-        }
-
-        return $colors;
+        return $this->matchday ? PlayerCompetitions::colors(auth()->id(), $this->matchday->season_id) : PlayerCompetitions::colors(0, 0);
     }
 
     /**
