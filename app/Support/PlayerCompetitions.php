@@ -47,10 +47,8 @@ class PlayerCompetitions
         $teamId = SeasonTeam::where('season_id', $seasonId)->where('user_id', $userId)->value('id');
 
         if ($teamId) {
-            foreach (CompetitionEntry::with('competition')->where('season_team_id', $teamId)->get() as $entry) {
-                if ($entry->competition) {
-                    $colors[$entry->competition->type->scoreSet()->value] = $entry->competition->trophyKey();
-                }
+            foreach (Competition::whereIn('id', CompetitionEntry::where('season_team_id', $teamId)->select('competition_id'))->get() as $competition) {
+                $colors[$competition->type->scoreSet()->value] = $competition->trophyKey();
             }
         }
 

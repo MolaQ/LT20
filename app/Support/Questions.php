@@ -31,7 +31,11 @@ final class Questions
         return MatchdayQuestion::where('matchday_id', $matchday->id)->orderBy('position')->get();
     }
 
-    /** Typy rozgrywek z osobnymi odpowiedziami (wartości score_set). @return list<string> */
+    /**
+     * Typy rozgrywek z osobnymi odpowiedziami (wartości score_set).
+     *
+     * @return list<string>
+     */
     public static function sets(): array
     {
         return [CompetitionType::League->value, CompetitionType::Cup->value, CompetitionType::Champions->value, CompetitionType::Legends->value];
@@ -44,11 +48,14 @@ final class Questions
      */
     public static function answers(int $userId, Matchday $matchday): Collection
     {
-        return QuestionAnswer::where('user_id', $userId)
+        /** @var Collection<string, Collection<int, QuestionAnswer>> $grouped */
+        $grouped = QuestionAnswer::where('user_id', $userId)
             ->whereIn('matchday_question_id', MatchdayQuestion::where('matchday_id', $matchday->id)->select('id'))
             ->get()
             ->groupBy('score_set')
             ->map(fn (Collection $answers) => $answers->keyBy('matchday_question_id'));
+
+        return $grouped;
     }
 
     /**
@@ -183,6 +190,7 @@ final class Questions
             return [];
         }
 
+        /** @var array<int, array<string, array{attack: int, defense: int, missed: bool}>> $out */
         $out = [];
         foreach (QuestionAnswer::whereIn('matchday_question_id', $questions->pluck('id'))->get()->groupBy(['user_id', 'score_set']) as $userId => $bySet) {
             foreach ($bySet as $set => $answers) {
