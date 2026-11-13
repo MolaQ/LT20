@@ -180,7 +180,7 @@ final class Questions
     /**
      * Bonusy z pytań wszystkich graczy kolejki naraz (rozliczenie): user_id => typ rozgrywek => bonus.
      *
-     * @return array<int, array<string, array{attack: int, defense: int, missed: bool}>>
+     * @return array<int, array<int|string, array{attack: int, defense: int, missed: bool}>>
      */
     public static function bonusesFor(Matchday $matchday): array
     {
@@ -190,7 +190,7 @@ final class Questions
             return [];
         }
 
-        /** @var array<int, array<string, array{attack: int, defense: int, missed: bool}>> $out */
+        /** @var array<int, array<int|string, array{attack: int, defense: int, missed: bool}>> $out */
         $out = [];
         foreach (QuestionAnswer::whereIn('matchday_question_id', $questions->pluck('id'))->get()->groupBy(['user_id', 'score_set']) as $userId => $bySet) {
             foreach ($bySet as $set => $answers) {
