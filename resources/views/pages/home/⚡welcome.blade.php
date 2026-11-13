@@ -110,7 +110,8 @@ new #[Layout('layouts::public')] class extends Component {
         $questionIds = \App\Models\MatchdayQuestion::where('matchday_id', $this->matchday->id)->pluck('id');
 
         return [
-            'answered' => $questionIds->isEmpty() ? 0 : \App\Models\QuestionAnswer::whereIn('matchday_question_id', $questionIds)->where('user_id', auth()->id())->count(),
+            // Pytania z odpowiedzią w którychkolwiek rozgrywkach (każdy typ rozgrywek ma osobne odpowiedzi).
+            'answered' => $questionIds->isEmpty() ? 0 : \App\Models\QuestionAnswer::whereIn('matchday_question_id', $questionIds)->where('user_id', auth()->id())->distinct()->count('matchday_question_id'),
             'questions' => $questionIds->count(),
             'players' => \App\Models\DesignatedPlayer::where('matchday_id', $this->matchday->id)->where('user_id', auth()->id())->count(),
         ];

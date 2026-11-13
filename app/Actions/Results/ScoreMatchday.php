@@ -136,7 +136,7 @@ class ScoreMatchday
             // Dorobek wystawionych zawodników z raportu meczu: klub => typ rozgrywek => sumy (Support\Squad::settle).
             $lineups = Squad::settle($matchday, $matchesOf);
             $humanTips = Tip::where('matchday_id', $matchday->id)->get()->keyBy('user_id');
-            // Bonus z pytań kolejki: user_id => atak / obrona (boty nie odpowiadają na pytania).
+            // Bonus z pytań kolejki: user_id => typ rozgrywek => atak / obrona (boty nie odpowiadają na pytania).
             $questionBonus = Questions::bonusesFor($matchday);
 
             // --- Dorobek zespołów ---
@@ -157,7 +157,8 @@ class ScoreMatchday
                 foreach (array_keys($setsOfTeam[$team->id] ?? []) as $set) {
                     // Atak (gole i asysty) i obrona (czyste konta) wystawionych zawodników.
                     $lineup = $lineups[Squad::clubKey($team->user_id, $team->bot_id)][$set] ?? [];
-                    $questions = $team->user_id ? ($questionBonus[$team->user_id] ?? null) : null;
+                    // Pytania: odpowiedzi gracza w tym typie rozgrywek (każdy typ ma własne).
+                    $questions = $team->user_id ? ($questionBonus[$team->user_id][$set] ?? null) : null;
                     $questionOffense = $questions['attack'] ?? 0;
                     $questionDefense = $questions['defense'] ?? 0;
                     $offense = ($lineup['attack'] ?? 0) + $questionOffense;
