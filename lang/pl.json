@@ -1839,14 +1839,8 @@
     "Offline": "Brak internetu",
     "No connection": "Brak połączenia",
     "Pages you opened recently are still available. Your tips are saved when you are back online.": "Ostatnio oglądane strony nadal działają. Typ zapiszesz, gdy wróci internet.",
-    "Ticket": "Bilet",
     "Next: :step": "Dalej: :step",
     "Quick scores": "Szybkie wyniki",
-    "Your ticket": "Twój bilet",
-    "No players fielded.": "Bez wystawionych zawodników.",
-    "PUNCHED": "SKASOWANY",
-    "Punch the ticket": "Skasuj bilet",
-    "Tip saved! You can change it until kick-off.": "Typ zapisany! Zmienisz go do gwizdka.",
     "One miss: question bonuses wiped.": "Jedno pudło: bonusy z pytań wyzerowane.",
     "Question bonus: attack +:a, defence +:d": "Bonus z pytań: atak +:a, obrona +:d",
     "No questions answered: no bonus, no risk.": "Bez odpowiedzi: bez bonusu i bez ryzyka.",
@@ -2247,5 +2241,9 @@
     "Answered questions": "Pytania z odpowiedzią",
     "No questions for this competition in this matchday.": "W tej kolejce nie ma pytań dla tych rozgrywek.",
     "Click again to take an answer back. One miss wipes both question bonuses in this competition.": "Ponowny klik cofa odpowiedź. Jedno pudło zeruje oba bonusy z pytań w tych rozgrywkach.",
-    "No players fielded yet": "Nikt jeszcze nie wystawiony"
+    "Your matches": "Twoje mecze",
+    "You are out": "Odpadłeś",
+    "Attack question (swords)": "Pytanie ataku (miecze)",
+    "Defence question (shield)": "Pytanie obrony (tarcza)",
+    "Everything saves automatically.": "Wszystko zapisuje się samo."
 }

@@ -35,11 +35,14 @@ new #[Layout('layouts::public')] class extends Component {
     public string $lech = '';
     public string $opponent = '';
 
-    /** Krok kreatora typowania (wygląd 2.0): score (wynik), players (rozgrywki: skład i pytania), ticket (bilet). */
+    /** Krok kreatora typowania (wygląd 2.0): score (wynik), players (rozgrywki: skład i pytania). */
     public string $step = 'score';
 
     /** Wybrane rozgrywki (score_set): do nich trafiają zawodnicy i odpowiedzi na pytania; pusty = pierwsze z rozgrywek gracza. */
     public string $questionSet = '';
+
+    /** Rozgrywki w pasku „Twoje mecze” (id rozgrywek); 0 = pierwsze z rozgrywek gracza (liga). */
+    public int $pathCompetition = 0;
 
     /** Godzina ostatniego automatycznego zapisu (do napisu „Zapisano” w pasku na dole). */
     public string $savedTime = '';
@@ -84,6 +87,11 @@ new #[Layout('layouts::public')] class extends Component {
         $this->js('history.replaceState(history.state, "", '.json_encode($this->pageUrl()).')');
     }
 
+    public function updatedPathCompetition(): void
+    {
+        unset($this->myPath);
+    }
+
     public function updatedTab(): void
     {
         $this->syncUrl();
@@ -109,7 +117,7 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->syncUrl();
 
-        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket, $this->questions, $this->allQuestions, $this->myAnswers, $this->questionSets);
+        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->setStatus, $this->questions, $this->allQuestions, $this->myAnswers, $this->questionSets);
         $this->loadTip();
         $this->ensureTip();
 
@@ -291,43 +299,43 @@ new #[Layout('layouts::public')] class extends Component {
     }
 
     /**
-     * „Twoje ligowe mecze” pod typowaniem: liga zespołu (1-10 albo podwórkowa) w sezonie i jego mecze w kolejkach,
-     * w formacie jak „Twoja droga w pucharze” (partials/my-matches-path).
+     * Rozgrywki gracza w bieżącym sezonie (Support\PlayerStats::competitions): nazwa, typ, etap albo miejsce,
+     * odpadnięcie, barwy. Do kafelków „Twoje rozgrywki” i wyboru paska meczów.
      *
-     * @return array{competition: \App\Models\Competition, entry_id: int, path: array<int, list<\App\Models\Fixture>>, status: string}|null
+     * @return list<array<string, mixed>>
      */
     #[Computed]
-    public function myLeague(): ?array
+    public function myEntries(): array
     {
-        $teamId = $this->season ? SeasonTeam::where('season_id', $this->season->id)->where('user_id', auth()->id())->value('id') : null;
+        return $this->season && auth()->check() ? array_values(\App\Support\PlayerStats::competitions(auth()->user(), $this->season)) : [];
+    }
 
-        $entry = $teamId ? \App\Models\CompetitionEntry::with('competition')
-            ->where('season_team_id', $teamId)
-            ->whereHas('competition', fn ($q) => $q->whereIn('type', [\App\Enums\CompetitionType::League->value, \App\Enums\CompetitionType::Swiss->value]))
-            ->first() : null;
+    /**
+     * „Twoje mecze” pod paskiem kolejek: mecze zespołu gracza w wybranych rozgrywkach (domyślnie pierwsze, czyli liga),
+     * po kolejkach, w formacie partials/my-matches-path (Liga Legend: dwa mecze w kolejce).
+     *
+     * @return array{entry: array<string, mixed>, path: array<int, list<\App\Models\Fixture>>}|null
+     */
+    #[Computed]
+    public function myPath(): ?array
+    {
+        $entries = collect($this->myEntries);
+        $entry = $entries->firstWhere('competition_id', $this->pathCompetition) ?? $entries->first();
 
-        if (!$entry || !$entry->competition) {
+        if (!$entry) {
             return null;
         }
 
         $path = [];
         foreach (\App\Models\Fixture::with(['home.seasonTeam.user:id,name,team_name', 'home.seasonTeam.bot:id,name', 'away.seasonTeam.user:id,name,team_name', 'away.seasonTeam.bot:id,name'])
-            ->where('competition_id', $entry->competition_id)
-            ->where(fn ($q) => $q->where('home_entry_id', $entry->id)->orWhere('away_entry_id', $entry->id))
+            ->where('competition_id', $entry['competition_id'])
+            ->where(fn ($q) => $q->where('home_entry_id', $entry['entry_id'])->orWhere('away_entry_id', $entry['entry_id']))
             ->orderBy('round')
             ->get() as $fixture) {
             $path[$fixture->round][] = $fixture;
         }
 
-        $table = \App\Support\Standings::for($entry->competition)->values();
-        $index = $table->search(fn ($row) => $row['entry_id'] === $entry->id);
-
-        return [
-            'competition' => $entry->competition,
-            'entry_id' => (int) $entry->id,
-            'path' => $path,
-            'status' => $index === false ? '' : __(':place. place of :count', ['place' => $index + 1, 'count' => $table->count()]),
-        ];
+        return ['entry' => $entry, 'path' => $path];
     }
 
     /** Czarna lista (premium): rywale, z którymi gracz ma ujemny bilans bezpośredni. */
@@ -364,21 +372,21 @@ new #[Layout('layouts::public')] class extends Component {
             ->keyBy(fn($score) => $score->score_set->value);
     }
 
-    /** Na komputerze bilet stoi obok wyboru składu, więc po każdej zmianie składu liczymy go od nowa. */
+    /** Kafelki rozgrywek pokazują liczbę wystawionych, więc po każdej zmianie składu liczymy stan od nowa. */
     #[On('designation-changed')]
-    public function refreshTicket(): void
+    public function refreshSetStatus(): void
     {
-        unset($this->ticket);
+        unset($this->setStatus);
     }
 
     /**
-     * Bilet: jeden odcinek na każde rozgrywki gracza: barwy, wystawieni zawodnicy i pytania zestawu
+     * Stan każdych rozgrywek gracza (kafelki „Twoje rozgrywki”): barwy, wystawieni zawodnicy i pytania zestawu
      * (stan każdego pytania: attack / defense = odpowiedź z bonusem ataku / obrony, null = pominięte).
      *
      * @return list<array{set: string, label: string, style: string, players: list<string>, max: int, questions: list<string|null>, summary: array{answered: int, attack: int, defense: int}}>
      */
     #[Computed]
-    public function ticket(): array
+    public function setStatus(): array
     {
         if (!$this->matchday) {
             return [];
@@ -460,13 +468,6 @@ new #[Layout('layouts::public')] class extends Component {
         $this->dispatch('designation-active', set: $set);
     }
 
-    /** Klik w odcinek biletu: te rozgrywki i krok ze składem i pytaniami (na telefonie). */
-    public function openSet(string $set): void
-    {
-        $this->pickSet($set);
-        $this->step = 'players';
-    }
-
     /** Rozgrywki wybrane w panelu składu (karta typu): te same rozgrywki w pytaniach. */
     #[On('designation-active')]
     public function syncSet(string $set): void
@@ -524,7 +525,7 @@ new #[Layout('layouts::public')] class extends Component {
             $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
-        unset($this->myAnswers, $this->ticket);
+        unset($this->myAnswers, $this->setStatus);
     }
 
     /** Strona bonusu pytania: 'attack' albo 'defense'. */
@@ -542,19 +543,7 @@ new #[Layout('layouts::public')] class extends Component {
             $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
-        unset($this->myAnswers, $this->ticket);
-    }
-
-    /** „Skasuj bilet”: typ i skład zapisują się na bieżąco, tu tylko potwierdzenie z pieczątką i konfetti. */
-    public function punch(): void
-    {
-        if (!$this->isOpen || !$this->tip) {
-            return;
-        }
-
-        $this->dispatch('ticket-punched');
-        $this->dispatch('ui-toast', text: __('Tip saved! You can change it until kick-off.'));
-        $this->js('setTimeout(() => window.ui.confetti(110), 380)');
+        unset($this->myAnswers, $this->setStatus);
     }
 
     /** Przyciski + / − pod liczbą goli Lecha ('lech') albo rywala ('opponent'). */
@@ -700,7 +689,7 @@ new #[Layout('layouts::public')] class extends Component {
     @php
         $md = $this->matchday;
         $statusChip = $this->isOpen ? ['good', __('Open')] : ($played ? ['club', __('Settled')] : ['default', __('Closed')]);
-        $steps = ['score' => __('Score'), 'players' => __('Squad and questions'), 'ticket' => __('Ticket')];
+        $steps = ['score' => __('Score'), 'players' => __('Squad and questions')];
         if (!isset($steps[$step])) {
             $step = 'score';
         }
@@ -741,11 +730,14 @@ new #[Layout('layouts::public')] class extends Component {
         @endforeach
     </div>
 
+    {{-- Twoje mecze w wybranych rozgrywkach: zaznaczona kolejka, na telefonie przesuwanie w bok --}}
+    @include('partials.tip-path')
+
     <div class="lg:hidden"><x-ui.segmented wire:model.live="step" :options="$steps" /></div>
 
     {{--
-        Telefon: jeden krok naraz. Komputer: wszystko na jednym ekranie: na górze wynik i bilet obok siebie,
-        niżej wybór rozgrywek, a pod nim skład i pytania wybranych rozgrywek, na końcu karty składów.
+        Telefon: jeden krok naraz. Komputer: wszystko na jednym ekranie: wynik i obok wybór rozgrywek,
+        pod nimi skład i pytania wybranych rozgrywek, karty składów, a na końcu to, jak typują inni. Wszystko zapisuje się samo.
     --}}
     <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
         <div @class(['flex min-w-0 flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
@@ -804,40 +796,14 @@ new #[Layout('layouts::public')] class extends Component {
         @endif
         </div>
 
-        <div @class(['flex min-w-0 flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
-        @include('partials.tip-ticket')
-
-        @if ($this->isOpen && $this->tip)
-            <x-ui.button wire:click="punch">{{ __('Punch the ticket') }}</x-ui.button>
-        @endif
-
-        @if ($league = $this->myLeague)
-            @php $matchdaysByNumber = $this->matchdays->keyBy('number'); @endphp
-            @include('partials.my-matches-path', [
-                'title' => __('Your league matches') . ' · ' . ($league['competition']->name ?: $league['competition']->type->label()),
-                'status' => $league['status'],
-                'rounds' => \App\Models\Matchday::PER_SEASON,
-                'perRound' => 1,
-                'path' => $league['path'],
-                'entryId' => $league['entry_id'],
-                'eliminated' => null,
-                'stageLabel' => fn (int $stage) => __('Matchday :number', ['number' => $stage]) . (($matchdaysByNumber[$stage] ?? null)?->isOpenForTips() ? ' •' : ''),
-                'stageAction' => 'openMatchday',
-                'stageExtra' => fn (int $stage) => match (true) {
-                    !isset($matchdaysByNumber[$stage]) || blank($matchdaysByNumber[$stage]->opponent) => __('Match not assigned yet'),
-                    $matchdaysByNumber[$stage]->lech_goals !== null => 'Lech ' . $matchdaysByNumber[$stage]->lech_goals . ':' . $matchdaysByNumber[$stage]->opponent_goals . ' ' . $matchdaysByNumber[$stage]->opponent,
-                    default => $matchdaysByNumber[$stage]->opponent . ($matchdaysByNumber[$stage]->kickoff_at ? ', ' . $matchdaysByNumber[$stage]->kickoff_at->translatedFormat('j M H:i') : ''),
-                },
-                'current' => $this->number,
-            ])
-        @endif
+        <div @class(['flex min-w-0 flex-col', 'hidden lg:flex' => $step !== 'players'])>
+            @include('partials.tip-competitions')
         </div>
     </div>
 
-    {{-- Rozgrywki gracza: wybór rozgrywek, potem skład i pytania właśnie tych rozgrywek --}}
+    {{-- Skład i pytania wybranych rozgrywek --}}
     @if ($md->isFilled() && count($this->questionSets) > 0)
     <div @class(['flex flex-col gap-4', 'hidden lg:flex' => $step !== 'players'])>
-        @include('partials.tip-competitions')
         <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
             <div class="min-w-0">
                 <livewire:pages::home.designation-panels part="select" :chooser="false" :active="$this->activeQuestionSet()" :matchday-id="$md->id" :key="'designation-select-' . $md->id" />
@@ -847,13 +813,11 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
         </div>
         <livewire:pages::home.designation-panels part="cards" :active="$this->activeQuestionSet()" :matchday-id="$md->id" :key="'designation-cards-' . $md->id" />
-        <x-ui.button class="lg:hidden" wire:click="$set('step', 'ticket')">{{ __('Next: :step', ['step' => __('Ticket')]) }}</x-ui.button>
     </div>
     @endif
 
     @if ($md->isFilled())
-    <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'ticket'])>
-
+    <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
         {{-- Premium: jak typują inni gracze (na żywo, także przed pierwszym gwizdkiem) --}}
         @if ($this->premium && $this->crowd)
             @php

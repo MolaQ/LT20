@@ -19,7 +19,8 @@ test('light theme colors go only to the light theme', function () {
     $css = SiteColors::css();
 
     expect($css[':root'])->toContain('--flap-bg: #1d1f24;')->not->toContain('--ui-bg')
-        ->and($css[':root:not(.dark)'])->toContain('--ui-bg: #f3f5f9;');
+        ->and($css[':root:not(.dark)'])->toContain('--ui-bg: #f3f5f9;')
+        ->and($css[':root'])->toContain('--q-attack: #d97706;')->toContain('--q-defense: #0891b2;');
 });
 
 test('invalid colors are ignored when saving', function () {
