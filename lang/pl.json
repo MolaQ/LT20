@@ -2246,5 +2246,15 @@
     "Attack question (swords)": "Pytanie ataku (miecze)",
     "Defence question (shield)": "Pytanie obrony (tarcza)",
     "Everything saves automatically.": "Wszystko zapisuje się samo.",
-    "Edit the question": "Popraw pytanie"
+    "Edit the question": "Popraw pytanie",
+    "That place belongs to a player. Choose a bot.": "To miejsce należy do gracza. Wybierz bota.",
+    "Nothing was changed.": "Nic się nie zmieniło.",
+    ":team and :bot swapped places.": ":team i :bot zamienili się miejscami.",
+    "Player swapped with a bot": "Gracz zamieniony z botem",
+    "Swapping with bots is possible only after approval and before the first matchday is scored.": "Zamiana z botem jest możliwa tylko po zatwierdzeniu sezonu i przed rozliczeniem pierwszej kolejki.",
+    "Swap with a bot": "Zamień z botem",
+    "Until the first matchday is scored you can still swap a player with any bot (Swap with a bot button next to the player).": "Do rozliczenia pierwszej kolejki możesz jeszcze zamienić gracza z dowolnym botem (przycisk Zamień z botem przy graczu).",
+    "Place in the league (0 = the highest ranked bot)": "Miejsce w lidze (0 = najwyżej sklasyfikowany bot)",
+    "The player takes the bot's place with its fixtures, cup bracket and league, and the bot takes the player's old place. Nobody has points yet, so nothing else changes.": "Gracz przejmuje miejsce bota razem z jego terminarzem, drabinką pucharu i ligą, a bot dostaje dawne miejsce gracza. Nikt nie ma jeszcze punktów, więc nic więcej się nie zmienia.",
+    "Swap": "Zamień"
 }

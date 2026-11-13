@@ -27,7 +27,8 @@ use Livewire\WithPagination;
  *  - admin poprawia ręcznie: przenosi gracza do innej ligi albo zmienia kolejność,
  *  - boty pochodzą z puli 512 botów (tabela bots, BotsSeeder), mają nazwy edytowalne w panelu,
  *  - przycisk "Uzupełnij botami" dopisuje wszystkie wolne boty (to samo dzieje się przy zatwierdzaniu sezonu),
- *  - edycja jest możliwa tylko, gdy sezon jest szkicem (po zatwierdzeniu lista jest zamknięta).
+ *  - edycja jest możliwa tylko, gdy sezon jest szkicem (po zatwierdzeniu lista jest zamknięta),
+ *  - po zatwierdzeniu, do pierwszej rozliczonej kolejki, gracza można jeszcze zamienić z botem (Roster::swapWithBot).
  * Uprawnienia: podgląd season-list, zmiany season-edit.
  */
 new class extends Component {
@@ -45,6 +46,12 @@ new class extends Component {
     public string $moveName = '';
     public int $moveTier = 1;
     public int $moveSlot = 0; // 0 = automatycznie, 1-10 = konkretne miejsce w lidze
+
+    // --- modal "zamień z botem" (po zatwierdzeniu, przed pierwszą rozliczoną kolejką) ---
+    public ?int $swapId = null;
+    public string $swapName = '';
+    public int $swapTier = 1;
+    public int $swapSlot = 0; // 0 = najwyżej sklasyfikowany bot ligi, inaczej miejsce w lidze
 
     // --- modal "przypisz gracza do ligi" (gracze z rolą, którzy nie mają jeszcze miejsca na liście) ---
     public ?int $assignUserId = null;
@@ -588,6 +595,95 @@ new class extends Component {
     }
 
     /* ==================================================================
+     | ZAMIANA Z BOTEM (sezon zatwierdzony lub aktywny, przed pierwszą rozliczoną kolejką)
+     * ================================================================*/
+
+    /** Czy można jeszcze zamieniać graczy z botami. */
+    #[Computed]
+    public function canSwap(): bool
+    {
+        return Roster::canSwap($this->season);
+    }
+
+    public function openSwap(int $id): void
+    {
+        $this->authorizeAbility(Permission::SeasonEdit);
+
+        if (!$this->ensureSwappable()) {
+            return;
+        }
+
+        $team = $this->findTeam($id);
+        abort_if($team->user_id === null, 422);
+
+        $this->swapId = $team->id;
+        $this->swapName = $team->name;
+        $this->swapTier = League::Ekstraklasa->value;
+        $this->swapSlot = 0;
+
+        $this->dispatch('ui-sheet', name: 'swap-team');
+    }
+
+    /** Gracz przejmuje miejsce bota w wybranej lidze, a bot dostaje jego dawne miejsce. Terminarz zostaje. */
+    public function swapTeam(): void
+    {
+        $this->authorizeAbility(Permission::SeasonEdit);
+
+        if (!$this->ensureSwappable()) {
+            return;
+        }
+
+        $team = $this->findTeam((int) $this->swapId);
+        $target = League::tryFrom($this->swapTier);
+        abort_if($target === null, 422);
+
+        $query = SeasonTeam::with(['user', 'bot'])->where('season_id', $this->seasonId)->inLeague($target)->orderBy('position');
+        $other = $this->swapSlot > 0
+            ? $query->skip($this->swapSlot - 1)->first()
+            : $query->whereNull('user_id')->first();
+
+        if (!$other || $other->user_id !== null) {
+            $this->dispatch('ui-toast', text: $other ? __('That place belongs to a player. Choose a bot.') : __('There are no bots in :league. Nothing was changed.', ['league' => $target->label()]), variant: 'warning');
+
+            return;
+        }
+
+        $from = $team->league;
+        $oldPosition = $team->position;
+        $botName = $other->name;
+        $name = $this->swapName;
+
+        if (!DB::transaction(fn() => Roster::swapWithBot($team, $other), Roster::ATTEMPTS)) {
+            $this->dispatch('ui-toast', text: __('Nothing was changed.'), variant: 'warning');
+
+            return;
+        }
+
+        Audit::log('season_list.swapped', $team->user, ['league' => $from->label(), 'position' => $oldPosition], ['league' => $target->label(), 'position' => $other->position, 'bot' => $botName], $name . ' (' . $this->season->title . ')');
+
+        $this->dispatch('ui-sheet', name: 'swap-team', open: false);
+        $this->resetSwap();
+        $this->clearCaches();
+        $this->dispatch('ui-toast', text: __(':team and :bot swapped places.', ['team' => $name, 'bot' => $botName]), variant: 'success');
+    }
+
+    public function resetSwap(): void
+    {
+        $this->reset('swapId', 'swapName', 'swapTier', 'swapSlot');
+    }
+
+    private function ensureSwappable(): bool
+    {
+        if (!$this->canSwap) {
+            $this->dispatch('ui-toast', text: __('Swapping with bots is possible only after approval and before the first matchday is scored.'), variant: 'warning');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /* ==================================================================
      | POMOCNICZE
      * ================================================================*/
 
@@ -878,6 +974,9 @@ new class extends Component {
                 @if ($this->season->status === \App\Enums\SeasonStatus::Approved)
                     {{ __('To change it, revert the approval in Season setup.') }}
                 @endif
+                @if ($this->canSwap)
+                    {{ __('Until the first matchday is scored you can still swap a player with any bot (Swap with a bot button next to the player).') }}
+                @endif
             </x-ui.text>
         @endif
 
@@ -1079,6 +1178,13 @@ new class extends Component {
                                                 :aria-label="__('Move to another league')" />
                                         </div>
                                     @endcan
+                                @elseif ($this->canSwap && $team->user_id)
+                                    @can(\App\Enums\Permission::SeasonEdit->value)
+                                        <x-ui.btn variant="ghost" size="sm" icon="arrows-right-left" inset="top bottom"
+                                            wire:click="openSwap({{ $team->id }})">
+                                            {{ __('Swap with a bot') }}
+                                        </x-ui.btn>
+                                    @endcan
                                 @endif
                             </x-ui.table.cell>
                         </x-ui.table.row>
@@ -1126,6 +1232,38 @@ new class extends Component {
                 <x-ui.btn variant="primary" type="submit">
                     <span wire:loading.remove wire:target="moveTeam">{{ __('Move') }}</span>
                     <span wire:loading wire:target="moveTeam">{{ __('Saving...') }}</span>
+                </x-ui.btn>
+            </div>
+        </form>
+    </x-ui.modal>
+
+    {{-- Modal: zamiana gracza z botem (po zatwierdzeniu, przed pierwszą rozliczoną kolejką) --}}
+    <x-ui.modal name="swap-team" class="w-full md:w-[30rem]" @close="$wire.resetSwap()">
+        <form wire:submit="swapTeam" class="space-y-6">
+            <div>
+                <x-ui.heading size="lg">{{ __('Swap with a bot') }}</x-ui.heading>
+                <x-ui.text class="mt-1">{{ $swapName }}</x-ui.text>
+            </div>
+
+            <x-ui.select wire:model="swapTier" :label="__('League')">
+                @foreach (\App\Enums\League::cases() as $league)
+                    <x-ui.select.option :value="$league->value">{{ $league->label() }}</x-ui.select.option>
+                @endforeach
+            </x-ui.select>
+
+            <x-ui.input type="number" min="0" step="1" wire:model="swapSlot" :label="__('Place in the league (0 = the highest ranked bot)')" />
+
+            <x-ui.text class="text-sm">
+                {{ __('The player takes the bot\'s place with its fixtures, cup bracket and league, and the bot takes the player\'s old place. Nobody has points yet, so nothing else changes.') }}
+            </x-ui.text>
+
+            <div class="flex justify-end gap-2">
+                <x-ui.modal.close>
+                    <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
+                </x-ui.modal.close>
+                <x-ui.btn variant="primary" type="submit">
+                    <span wire:loading.remove wire:target="swapTeam">{{ __('Swap') }}</span>
+                    <span wire:loading wire:target="swapTeam">{{ __('Saving...') }}</span>
                 </x-ui.btn>
             </div>
         </form>
