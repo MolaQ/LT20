@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Enums\CompetitionType;
 use App\Models\Competition;
+use App\Models\CompetitionEntry;
+use App\Models\SeasonTeam;
 
 /**
  * W jakich typach rozgrywek sezonu gra dany użytkownik (CompetitionType::scoreSet)?
@@ -27,5 +29,29 @@ class PlayerCompetitions
             ->all();
 
         return array_values(array_filter(CompetitionType::cases(), fn ($t) => in_array($t, $present, true)));
+    }
+
+    /**
+     * Barwy typów rozgrywek gracza (klucz CompetitionColors): jego liga, Puchar Polski, jego puchar europejski, Liga Legend.
+     *
+     * @return array<string, string> typ rozgrywek (score_set) => klucz barw
+     */
+    public static function colors(int $userId, int $seasonId): array
+    {
+        $colors = [
+            CompetitionType::League->value => 'league_1',
+            CompetitionType::Cup->value => 'cup',
+            CompetitionType::Champions->value => 'champions',
+            CompetitionType::Legends->value => 'legends',
+        ];
+        $teamId = SeasonTeam::where('season_id', $seasonId)->where('user_id', $userId)->value('id');
+
+        if ($teamId) {
+            foreach (Competition::whereIn('id', CompetitionEntry::where('season_team_id', $teamId)->select('competition_id'))->get() as $competition) {
+                $colors[$competition->type->scoreSet()->value] = $competition->trophyKey();
+            }
+        }
+
+        return $colors;
     }
 }

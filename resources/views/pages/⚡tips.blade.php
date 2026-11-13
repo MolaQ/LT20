@@ -38,6 +38,9 @@ new #[Layout('layouts::public')] class extends Component {
     /** Krok kreatora typowania (wygląd 2.0): score (wynik), players (zawodnicy), ticket (bilet). */
     public string $step = 'score';
 
+    /** Typ rozgrywek, w którym gracz odpowiada na pytania (score_set); pusty = pierwszy z jego typów. */
+    public string $questionSet = '';
+
     /** Godzina ostatniego automatycznego zapisu (do napisu „Zapisano” w pasku na dole). */
     public string $savedTime = '';
 
@@ -106,7 +109,7 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $this->syncUrl();
 
-        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket, $this->questions, $this->myAnswers);
+        unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->ticket, $this->questions, $this->myAnswers, $this->questionSets);
         $this->loadTip();
         $this->ensureTip();
 
@@ -384,10 +387,42 @@ new #[Layout('layouts::public')] class extends Component {
         $names = \App\Models\LechPlayer::whereIn('id', collect($picks)->flatten()->all())->pluck('name', 'id');
         $sets = \App\Support\PlayerCompetitions::types(auth()->id(), $this->matchday->season_id, $this->matchday->number);
 
+        $answers = $this->myAnswers;
+
         return collect($sets)->map(fn ($set) => [
             'label' => $set->label(),
             'players' => collect($picks[$set->value] ?? [])->map(fn ($id) => $names[$id] ?? '?')->implode(', '),
+            'questions' => \App\Support\Questions::summary($answers->get($set->value, collect())),
         ])->values()->all();
+    }
+
+    /**
+     * Typy rozgrywek gracza do pytań: score_set => nazwa i barwy karty (jak w wyborze składu).
+     *
+     * @return array<string, array{label: string, style: string}>
+     */
+    #[Computed]
+    public function questionSets(): array
+    {
+        if (!$this->matchday || !auth()->check()) {
+            return [];
+        }
+
+        $colors = \App\Support\PlayerCompetitions::colors(auth()->id(), $this->matchday->season_id);
+
+        return collect(\App\Support\PlayerCompetitions::types(auth()->id(), $this->matchday->season_id, $this->matchday->number))
+            ->mapWithKeys(fn ($set) => [$set->value => [
+                'label' => $set->scoreSetLabel(),
+                'style' => \App\Support\CompetitionColors::style($colors[$set->value] ?? 'league_1'),
+            ]])->all();
+    }
+
+    /** Wybrany typ rozgrywek w kroku „Pytania” (albo pierwszy z typów gracza). */
+    public function activeQuestionSet(): string
+    {
+        $sets = array_keys($this->questionSets);
+
+        return in_array($this->questionSet, $sets, true) ? $this->questionSet : ($sets[0] ?? \App\Enums\CompetitionType::League->value);
     }
 
     /** Pytania kolejki (Support\Questions). */
@@ -397,7 +432,7 @@ new #[Layout('layouts::public')] class extends Component {
         return $this->matchday ? \App\Support\Questions::for($this->matchday) : collect();
     }
 
-    /** Odpowiedzi gracza: id pytania => QuestionAnswer. */
+    /** Odpowiedzi gracza: typ rozgrywek => (id pytania => QuestionAnswer). */
     #[Computed]
     public function myAnswers()
     {
@@ -435,7 +470,7 @@ new #[Layout('layouts::public')] class extends Component {
         }
 
         try {
-            \App\Support\Questions::answer(auth()->user(), $question, match ($value) {
+            \App\Support\Questions::answer(auth()->user(), $question, $this->activeQuestionSet(), match ($value) {
                 'yes' => true,
                 'no' => false,
                 default => null,
@@ -444,7 +479,7 @@ new #[Layout('layouts::public')] class extends Component {
             $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
-        unset($this->myAnswers);
+        unset($this->myAnswers, $this->ticket);
     }
 
     /** Strona bonusu pytania: 'attack' albo 'defense'. */
@@ -457,12 +492,29 @@ new #[Layout('layouts::public')] class extends Component {
         }
 
         try {
-            \App\Support\Questions::side(auth()->user(), $question, $side);
+            \App\Support\Questions::side(auth()->user(), $question, $this->activeQuestionSet(), $side);
         } catch (DomainException $e) {
             $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
         }
 
-        unset($this->myAnswers);
+        unset($this->myAnswers, $this->ticket);
+    }
+
+    /** Te same odpowiedzi i strony co w wybranym typie rozgrywek we wszystkich pozostałych typach gracza. */
+    public function copyQuestions(): void
+    {
+        if (!$this->matchday || !$this->canPlay) {
+            return;
+        }
+
+        try {
+            \App\Support\Questions::copy(auth()->user(), $this->matchday, $this->activeQuestionSet(), array_keys($this->questionSets));
+            $this->dispatch('ui-toast', variant: 'success', text: __('Answers copied to all your competitions.'));
+        } catch (DomainException $e) {
+            $this->dispatch('ui-toast', variant: 'danger', text: $e->getMessage());
+        }
+
+        unset($this->myAnswers, $this->ticket);
     }
 
     /** „Skasuj bilet”: typ i skład zapisują się na bieżąco, tu tylko potwierdzenie z pieczątką i konfetti. */
@@ -754,16 +806,18 @@ new #[Layout('layouts::public')] class extends Component {
             <div class="ui-num text-center text-[40px] font-extrabold leading-none">
                 {{ mb_strtoupper(config('club.short_name')) }} {{ $this->tip ? $this->tip->score() : '–:–' }} {{ mb_strtoupper((string) $md->opponent) }}
             </div>
-            @if ($this->questions->isNotEmpty())
-                <div class="flex justify-between gap-3 border-t border-dashed border-ui-line pt-2 text-sm">
-                    <span class="text-ui-muted">{{ __('Questions') }}</span>
-                    <span class="text-end font-semibold">{{ __(':answered of :total', ['answered' => (string) $this->myAnswers->count(), 'total' => (string) $this->questions->count()]) }} · ⚔ {{ $this->myAnswers->where('side', 'attack')->count() }} · 🛡 {{ $this->myAnswers->where('side', 'defense')->count() }}</span>
-                </div>
-            @endif
             @forelse ($ticket as $line)
                 <div class="flex justify-between gap-3 border-t border-dashed border-ui-line pt-2 text-sm">
                     <span class="text-ui-muted">{{ $line['label'] }}</span>
-                    <span class="text-end font-semibold">{{ $line['players'] ?: '–' }}</span>
+                    <span class="text-end">
+                        <span class="block font-semibold">{{ $line['players'] ?: '–' }}</span>
+                        {{-- Pytania w tym typie rozgrywek: ile odpowiedzi i ile na atak (OF) i obronę (DEF) --}}
+                        @if ($this->questions->isNotEmpty())
+                            <span class="block text-xs text-ui-muted">
+                                {{ __('Questions: :answered/:count', ['answered' => $line['questions']['answered'], 'count' => $this->questions->count()]) }}@if ($line['questions']['answered']) · OF {{ $line['questions']['attack'] }} · DEF {{ $line['questions']['defense'] }}@endif
+                            </span>
+                        @endif
+                    </span>
                 </div>
             @empty
                 <div class="border-t border-dashed border-ui-line pt-2 text-sm text-ui-muted">{{ __('No players fielded.') }}</div>

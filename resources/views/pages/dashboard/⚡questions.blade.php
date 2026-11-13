@@ -54,7 +54,7 @@ new class extends Component {
     #[Computed]
     public function questions()
     {
-        return $this->matchday ? Questions::for($this->matchday)->loadCount('answers') : collect();
+        return $this->matchday ? Questions::for($this->matchday)->loadCount(['answers' => fn ($q) => $q->select(\Illuminate\Support\Facades\DB::raw('count(distinct user_id)'))]) : collect();
     }
 
     #[Computed]
