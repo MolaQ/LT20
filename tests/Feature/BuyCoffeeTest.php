@@ -26,6 +26,17 @@ test('the support page links to buycoffee.to and asks for the account e-mail', f
         ->assertDontSee(__('Online payments are not available yet.'));
 });
 
+test('without Przelewy24 the page offers only a coffee that gives no premium, without the price list', function () {
+    config(['services.buycoffee.url' => 'https://buycoffee.to/lechtyper']);
+    $user = User::factory()->create();
+
+    expect(Premium::isActive($user))->toBeFalse();
+
+    $this->actingAs($user)->get(route('support'))->assertOk()
+        ->assertSee(__('A coffee is a voluntary support for the creator. It does not give premium.'))
+        ->assertDontSee(__('Half a year'));
+});
+
 test('without a buycoffee.to address the page says that payments are not available', function () {
     config(['services.buycoffee.url' => 'https://example.com/obce']);
 
@@ -34,7 +45,7 @@ test('without a buycoffee.to address the page says that payments are not availab
         ->assertSee(__('Online payments are not available yet.'));
 });
 
-test('an admin records a buycoffee.to payment and premium follows the price list', function () {
+test('an admin records a buycoffee.to payment and it never gives premium, a bank transfer does', function () {
     Role::findOrCreate(RoleName::Admin->value, 'web');
     PermissionModel::findOrCreate(Permission::DashboardAccess->value, 'web');
     $admin = User::factory()->create();
@@ -54,7 +65,15 @@ test('an admin records a buycoffee.to payment and premium follows the price list
     $payment = Payment::firstOrFail();
     expect($payment->source)->toBe('buycoffee')
         ->and($payment->status)->toBe(Payment::PAID)
-        ->and($payment->premium_days)->toBe(30)
+        ->and($payment->premium_days)->toBe(0)
+        ->and($player->fresh()->premium_until)->toBeNull();
+
+    // Przelew na konto wpisany ręcznie nadal przedłuża premium według cennika.
+    Livewire::actingAs($admin)->test('pages::dashboard.payments')
+        ->call('openPayment')->set('userId', $player->id)->set('source', 'manual')->set('amount', '15')
+        ->call('savePayment')->assertHasNoErrors();
+
+    expect(Payment::latest('id')->first()->premium_days)->toBe(30)
         ->and($player->fresh()->premium_until->isFuture())->toBeTrue();
 
     Livewire::actingAs($admin)->test('pages::dashboard.payments')

@@ -175,8 +175,9 @@ new class extends Component {
             'amount' => $amount,
             'status' => Payment::PENDING,
             'source' => $this->source,
-            // Przy premium dla wszystkich wpłata jest tylko wsparciem i nie nalicza dni premium.
-            'premium_days' => Premium::free() ? 0 : ($isPremium ? Premium::PLANS[$this->plan][1] : Premium::daysFor($amount)),
+            // Kawka z buycoffee.to to tylko dobrowolne wsparcie (13.11.2026) i nigdy nie nalicza premium,
+            // tak samo każda wpłata przy premium dla wszystkich.
+            'premium_days' => Premium::free() || $this->source === 'buycoffee' ? 0 : ($isPremium ? Premium::PLANS[$this->plan][1] : Premium::daysFor($amount)),
             // Dzisiejsza data z bieżącą godziną, wcześniejsza na koniec dnia (kolejność w rankingu wspierających).
             'paid_at' => Carbon::parse($this->paidAt)->isToday() ? now() : Carbon::parse($this->paidAt)->endOfDay(),
             'note' => $this->note ?: null,
@@ -409,7 +410,7 @@ new class extends Component {
     <x-ui.modal name="payment-form" class="w-full md:w-[30rem]">
         <div class="space-y-4">
             <x-ui.heading size="lg">{{ __('Add payment') }}</x-ui.heading>
-            <x-ui.text class="text-sm">{{ __('For example a bank transfer or a coffee on buycoffee.to. The payment is saved as paid and extends premium.') }}</x-ui.text>
+            <x-ui.text class="text-sm">{{ __('For example a bank transfer or a coffee on buycoffee.to. The payment is saved as paid. A bank transfer extends premium, a coffee never does.') }}</x-ui.text>
 
             @include('partials.payments-user-picker')
 

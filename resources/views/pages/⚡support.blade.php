@@ -42,11 +42,18 @@ new #[Layout('layouts::public')] class extends Component {
         return Premium::free();
     }
 
-    /** Profil na buycoffee.to: przy premium dla wszystkich zawsze, inaczej gdy płatności online (P24) nie są ustawione. */
+    /** Profil na buycoffee.to: kawka to zawsze tylko dobrowolne wsparcie, nie daje premium (13.11.2026). */
     #[Computed]
     public function coffeeUrl(): ?string
     {
-        return $this->free || !$this->configured ? Payment::buyCoffeeUrl() : null;
+        return Payment::buyCoffeeUrl();
+    }
+
+    /** Cennik i cegiełka: tylko gdy premium nie jest za darmo i płatności Przelewy24 są ustawione. */
+    #[Computed]
+    public function sales(): bool
+    {
+        return !$this->free && $this->configured;
     }
 
     #[Computed]
@@ -107,7 +114,7 @@ new #[Layout('layouts::public')] class extends Component {
 
     private function startPayment(string $kind, ?string $plan, int $amount, int $days, string $description): void
     {
-        abort_if($this->free, 404);
+        abort_unless($this->sales, 404);
         $user = auth()->user();
 
         if (!$user) {
@@ -168,11 +175,11 @@ new #[Layout('layouts::public')] class extends Component {
         </div>
     @endif
 
-    @if ($this->coffeeUrl && $this->free)
-        {{-- Kawka przy premium dla wszystkich: dobrowolne wsparcie, admin wpisuje je w panelu (ranking wspierających) --}}
+    @if ($this->coffeeUrl)
+        {{-- Kawka: dobrowolne wsparcie, nie daje premium. Admin wpisuje ją w panelu (ranking wspierających) --}}
         <x-ui.card class="space-y-3">
             <x-ui.heading size="lg">{{ __('Buy us a coffee') }}</x-ui.heading>
-            <x-ui.text class="text-sm">{{ __('A coffee is a voluntary support for the creator. It changes nothing in the game: premium is free for everyone.') }}</x-ui.text>
+            <x-ui.text class="text-sm">{{ $this->free ? __('A coffee is a voluntary support for the creator. It changes nothing in the game: premium is free for everyone.') : __('A coffee is a voluntary support for the creator. It does not give premium.') }}</x-ui.text>
             <x-ui.text class="text-sm">
                 @auth
                     {{ __('To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message: :email.', ['email' => auth()->user()->email]) }}
@@ -180,23 +187,6 @@ new #[Layout('layouts::public')] class extends Component {
                     {{ __('To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message.') }}
                 @endauth
             </x-ui.text>
-            <div>
-                <x-ui.btn variant="primary" icon="heart" :href="$this->coffeeUrl" target="_blank" rel="noopener">{{ __('Go to buycoffee.to') }}</x-ui.btn>
-            </div>
-        </x-ui.card>
-    @elseif ($this->coffeeUrl)
-        {{-- Wpłata przez buycoffee.to: admin wpisuje ją w panelu i nadaje premium według cennika --}}
-        <x-ui.card class="space-y-3">
-            <x-ui.heading size="lg">{{ __('Pay with buycoffee.to') }}</x-ui.heading>
-            <ol class="list-decimal space-y-1 ps-5 text-sm text-ui-muted">
-                <li>{{ __('Choose an amount from the price list below or any amount from 5 zł.') }}</li>
-                @auth
-                    <li>{{ __('In the message on buycoffee.to write the e-mail of your LechTYPER account: :email.', ['email' => auth()->user()->email]) }}</li>
-                @else
-                    <li>{{ __('In the message on buycoffee.to write the e-mail of your LechTYPER account.') }}</li>
-                @endauth
-                <li>{{ __('We grant premium by hand after checking the payment. It shows up in your payments below.') }}</li>
-            </ol>
             <div>
                 <x-ui.btn variant="primary" icon="heart" :href="$this->coffeeUrl" target="_blank" rel="noopener">{{ __('Go to buycoffee.to') }}</x-ui.btn>
             </div>
@@ -233,8 +223,8 @@ new #[Layout('layouts::public')] class extends Component {
         </x-ui.card>
     @endauth
 
-    {{-- Cennik premium i cegiełka (bez nich, gdy premium jest za darmo dla wszystkich) --}}
-    @unless ($this->free)
+    {{-- Cennik premium i cegiełka: tylko przy płatnościach Przelewy24 (nie przy premium dla wszystkich) --}}
+    @if ($this->sales)
     <div class="space-y-3">
         <x-ui.heading size="lg">{{ __('Premium') }}</x-ui.heading>
         <x-ui.text class="text-sm">
@@ -247,9 +237,7 @@ new #[Layout('layouts::public')] class extends Component {
                     <x-ui.heading>{{ \App\Support\Premium::labels()[$plan] }}</x-ui.heading>
                     <p class="text-3xl font-black tabular-nums">{{ \App\Models\Payment::money($price) }}</p>
                     <x-ui.text class="text-sm">{{ trans_choice(':count day|:count days', $days, ['count' => $days]) }}</x-ui.text>
-                    @if ($this->coffeeUrl)
-                        <x-ui.btn class="w-full" :href="$this->coffeeUrl" target="_blank" rel="noopener">buycoffee.to</x-ui.btn>
-                    @elseif (auth()->check())
+                    @if (auth()->check())
                         <x-ui.btn variant="primary" class="w-full" wire:click="buy('{{ $plan }}')" :disabled="!$this->configured">
                             {{ __('Buy') }}
                         </x-ui.btn>
@@ -268,11 +256,7 @@ new #[Layout('layouts::public')] class extends Component {
             {{ __('Any amount from 5 zł. You get premium for the highest price list option the amount covers.') }}
         </x-ui.text>
 
-        @if ($this->coffeeUrl)
-            <div>
-                <x-ui.btn icon="heart" :href="$this->coffeeUrl" target="_blank" rel="noopener">{{ __('Go to buycoffee.to') }}</x-ui.btn>
-            </div>
-        @elseif (auth()->check())
+        @if (auth()->check())
             <div class="flex flex-wrap items-end gap-2">
                 <div class="w-40">
                     <x-ui.input type="number" min="5" step="1" wire:model="supportAmount" :label="__('Amount')" suffix="zł" />
@@ -288,7 +272,7 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
         @endif
     </x-ui.card>
-    @endunless
+    @endif
 
     {{-- Historia wpłat --}}
     @if ($this->payments->isNotEmpty())
