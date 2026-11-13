@@ -6,11 +6,12 @@ use App\Enums\RoleName;
 use App\Models\SeasonTeam;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\Permission\Models\Role;
 
 /**
  * Kto może grać w sezonie?
- * Gracz to użytkownik z co najmniej jedną rolą (admin nadaje rolę po rejestracji,
- * to jest "zatwierdzenie" konta), który NIE ma roli "Banned" ani "Inactive". Zbanowany użytkownik
+ * Gracz to użytkownik z co najmniej jedną rolą (rolę User konto dostaje samo po potwierdzeniu adresu e-mail,
+ * Players::approveVerified; admin może ją też nadać ręcznie), który NIE ma roli "Banned" ani "Inactive". Zbanowany użytkownik
  * nie bierze udziału w żadnych rozgrywkach, więc każdy kod wybierający uczestników
  * (lista, ligi, puchar, typowanie) powinien korzystać z Players::eligible().
  * Jeśli gracz nie ma nazwy zespołu, na liście pokazuje się jego nazwa wyświetlana
@@ -51,5 +52,28 @@ class Players
     public static function canPlay(User $user): bool
     {
         return $user->roles->isNotEmpty() && ! $user->hasAnyRole(self::BLOCKING_ROLES);
+    }
+
+    /**
+     * Konto po potwierdzeniu adresu e-mail (13.11.2026): bez żadnej roli dostaje rolę User i trafia na listę
+     * nieukończonych sezonów (Liga podwórkowa, Roster::syncUser). Konto z rolą (także zbanowane albo nieaktywne)
+     * zostaje bez zmian. Zwraca true, gdy rola została nadana.
+     */
+    public static function approveVerified(User $user): bool
+    {
+        $user->unsetRelation('roles');
+
+        if ($user->roles->isNotEmpty() || ! Role::where('name', RoleName::User->value)->where('guard_name', 'web')->exists()) {
+            return false;
+        }
+
+        $user->assignRole(RoleName::User->value);
+        $user->unsetRelation('roles');
+
+        SystemFeed::record('players', ':name joined the game', ['name' => $user->team_name ?: $user->name], 'team.show', ['user' => $user->id], $user->id);
+        Audit::log('roles.updated', $user, ['roles' => ''], ['roles' => RoleName::User->value], __('Email address confirmed'));
+        Roster::syncUser($user);
+
+        return true;
     }
 }
