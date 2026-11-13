@@ -278,7 +278,7 @@ class Squad
     {
         self::forget();
         $report = self::report($matchday);
-        $picks = DesignatedPlayer::with('player:id,position')->where('matchday_id', $matchday->id)->get();
+        $picks = DesignatedPlayer::with('player:id,position,is_academy')->where('matchday_id', $matchday->id)->get();
 
         if ($picks->isEmpty()) {
             return [];
@@ -313,7 +313,8 @@ class Squad
                 'attack' => $played ? (int) $r['goals'] + (int) $r['assists'] : 0,
                 'defense' => $played && $r['clean_sheet'] === true ? ($goalkeeper ? $cleanGk : $cleanDf) : 0,
                 // Wystawiony przez klub, a nieobecny w kadrze meczowej Lecha: samo wystawienie daje premię jak ławka (0,5).
-                'experience' => $inSquad ? (float) $r['experience'] : ($locked ? 0 : Designation::number('exp_sub')),
+                // Wychowanek: doświadczenie z protokołu jest już podwojone, tu podwajamy samą premię za wystawienie.
+                'experience' => $inSquad ? (float) $r['experience'] : ($locked ? 0 : Designation::number('exp_sub') * ($pick->player?->is_academy ? MatchReport::ACADEMY_EXPERIENCE : 1)),
                 'rest_hours' => $played ? (int) $r['rest_hours'] : 0,
             ];
             $set = $pick->score_set->value;

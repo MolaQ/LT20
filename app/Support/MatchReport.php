@@ -18,10 +18,13 @@ use Illuminate\Support\Collection;
  * część, gdy był w niej tylko przez chwilę.
  *
  * Doświadczenie (ustawienia Support\Designation): powołanie do wyjściowej jedenastki albo na ławkę (także bez wejścia), cała połowa i część połowy,
- * czyste konto (bramkarz, obrońca), gole (także w serii karnych) i asysty.
+ * czyste konto (bramkarz, obrońca), gole (także w serii karnych) i asysty. Wychowanek Akademii Lecha dostaje go zawsze dwa razy więcej.
  */
 class MatchReport
 {
+    /** Wychowanek Akademii Lecha zawsze dostaje tyle razy więcej doświadczenia niż pozostali zawodnicy. */
+    public const ACADEMY_EXPERIENCE = 2;
+
     /** Koniec 90 minut i koniec dogrywki na osi meczu. */
     public const END_REGULAR = 4;
 
@@ -216,7 +219,7 @@ class MatchReport
     /**
      * Czyste rozliczenie (bez bazy), klucz = id zawodnika.
      *
-     * @param  array<int, array{id: int, position: PlayerPosition, started: bool, on: int|null, off: int, goals: int, assists: int, own_goals: int, yellow: int, red: bool}>  $appearances
+     * @param  array<int, array{id: int, position: PlayerPosition, started: bool, on: int|null, off: int, goals: int, assists: int, own_goals: int, yellow: int, red: bool, academy?: bool}>  $appearances
      * @param  int  $conceded  gole stracone przez Lecha w całym meczu (z dogrywką)
      * @param  array<string, float>  $settings  Designation::values()
      * @return array<int, array{played: bool, full_halves: int, partial_halves: int, play_time: float, rest_hours: int, goals: int, assists: int, own_goals: int, clean_sheet: bool|null, experience: float, yellow: int, red: bool}>
@@ -226,12 +229,14 @@ class MatchReport
         $result = [];
 
         foreach ($appearances as $a) {
+            $factor = ($a['academy'] ?? false) ? self::ACADEMY_EXPERIENCE : 1;
+
             // Ławka bez wejścia: tylko premia za powołanie przez trenera, bez czasu gry, odpoczynku i czystego konta.
             if (! $a['started'] && $a['on'] === null) {
                 $result[$a['id']] = [
                     'played' => false, 'full_halves' => 0, 'partial_halves' => 0, 'play_time' => 0.0, 'rest_hours' => 0,
                     'goals' => 0, 'assists' => 0, 'own_goals' => 0, 'clean_sheet' => null,
-                    'experience' => round((float) ($settings['exp_sub'] ?? 0.5), 1), 'yellow' => $a['yellow'], 'red' => $a['red'],
+                    'experience' => round((float) ($settings['exp_sub'] ?? 0.5) * $factor, 1), 'yellow' => $a['yellow'], 'red' => $a['red'],
                 ];
 
                 continue;
@@ -251,6 +256,7 @@ class MatchReport
                 + ($cleanSheet ? ($settings['exp_clean_sheet'] ?? 1) : 0)
                 + $a['goals'] * ($settings['exp_goal'] ?? 1)
                 + $a['assists'] * ($settings['exp_assist'] ?? 1);
+            $experience *= $factor;
 
             $result[$a['id']] = [
                 'played' => true,
@@ -313,6 +319,7 @@ class MatchReport
         $computed = self::compute($appearances->map(fn (MatchAppearance $a) => [
             'id' => $a->lech_player_id,
             'position' => $a->player->position,
+            'academy' => (bool) $a->player->is_academy,
             'started' => $a->started,
             'on' => $a->on_slot,
             'off' => $a->off_slot,
