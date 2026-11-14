@@ -44,7 +44,7 @@
         ]],
         [__('Site content'), $canNews || $canRoles, [
             $item('newspaper', 'dashboard.news', __('News'), show: $canNews),
-            $item('book-open', 'dashboard.guide', __('Rules and FAQ'), show: $canNews),
+            $item('book-open', 'dashboard.guide', __('Rules, FAQ and coffee'), show: $canNews),
             $item('chart-bar', 'dashboard.site-statistics', __('Visit statistics'), show: $canRoles),
             $item('inbox', 'dashboard.office', __('Complaints and requests office'), badge: $office, show: $canRoles),
         ]],

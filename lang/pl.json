@@ -2210,7 +2210,6 @@
     "Support LechTYPER": "Wesprzyj LechTYPER",
     "Tipping and premium are free for everyone. A coffee supports the development of LechTYPER.": "Typowanie i premium są za darmo dla wszystkich. Kawka wspiera rozwój LechTYPER.",
     "Buy us a coffee": "Postaw kawkę",
-    "A coffee is a voluntary support for the creator. It changes nothing in the game: premium is free for everyone.": "Kawka to dobrowolne wsparcie twórcy. Niczego nie zmienia w grze: premium jest za darmo dla wszystkich.",
     "To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message: :email.": "Jeśli chcesz trafić do rankingu wspierających, wpisz w wiadomości e-mail swojego konta w LechTYPER: :email.",
     "To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message.": "Jeśli chcesz trafić do rankingu wspierających, wpisz w wiadomości e-mail swojego konta w LechTYPER.",
     "Free for everyone": "Za darmo dla wszystkich",
@@ -2242,7 +2241,6 @@
     "Everything saves automatically.": "Wszystko zapisuje się samo.",
     "Edit the question": "Popraw pytanie",
     "For example a bank transfer or a coffee on buycoffee.to. The payment is saved as paid. A bank transfer extends premium, a coffee never does.": "Na przykład przelew na konto albo kawa na buycoffee.to. Wpłata zapisuje się jako opłacona. Przelew przedłuża premium, kawa nigdy.",
-    "A coffee is a voluntary support for the creator. It does not give premium.": "Kawa to dobrowolne wsparcie twórcy. Nie daje premium.",
     "Premium coming soon": "Premium wkrótce",
     "Email address confirmed": "Potwierdzony adres e-mail",
     "That place belongs to a player. Choose a bot.": "To miejsce należy do gracza. Wybierz bota.",
@@ -2268,5 +2266,16 @@
     "Deleted.": "Usunięto.",
     "Rules or FAQ item saved": "Zapisano pozycję zasad lub FAQ",
     "Rules or FAQ item deleted": "Usunięto pozycję zasad lub FAQ",
-    "Rules or FAQ restored to defaults": "Przywrócono domyślne zasady lub FAQ"
+    "Rules or FAQ restored to defaults": "Przywrócono domyślne zasady lub FAQ",
+    "Hi, fan! 💙": "Cześć, Kibolu! 💙",
+    "#LechTYPER is a fan predictor of Lech Poznań matches. You tip the score, answer the match questions and fight in leagues, the Polish Cup and the Legends League with other fans. The game is and always will be free.": "#LechTYPER to kibicowski typer meczów Lecha Poznań. Typujesz wynik, odpowiadasz na pytania do meczu i walczysz w ligach, Pucharze Polski i Lidze Legend z innymi kibicami. Gra jest i zawsze będzie darmowa.",
+    "I make it after hours, on my own, as a continuation of the old predictor from twitter.com. The server, the domain and every new feature cost time and money. If LechTYPER makes waiting for the match nicer, you can buy me a coffee.": "Robię ją po godzinach, sam, jako kontynuację starego typera z platformy twitter.com. Serwer, domena i każda nowa funkcja kosztują czas i pieniądze. Jeśli LechTYPER umila Ci czekanie na mecz, możesz postawić mi kawę.",
+    "What does a coffee give?": "Co daje kawa?",
+    "It helps keep the server running and develop the game.": "Pomaga utrzymać serwer i rozwijać grę.",
+    "A coffee gives no advantage in the game and no premium. It is pure support from one fan to another.": "Kawa nie daje przewagi w grze ani premium. To czyste wsparcie od kibica dla kibica.",
+    "Thanks for being here! See you on x, at the stadium and while tipping on lechtyper.pl": "Dzięki, że jesteś! Do zobaczenia na x, na stadionie i przy typowaniu na lechtyper.pl",
+    "Hej Kolejorz! 🔵⚪": "Hej Kolejorz! 🔵⚪",
+    "Coffee": "Kawka",
+    "Texts of the Rules of the game, FAQ and coffee pages. An empty line starts a new paragraph; simple HTML (bold, links, lists) works too.": "Teksty stron Zasady gry i FAQ oraz karty kawki na stronie wsparcia. Pusty wiersz zaczyna nowy akapit; działa też prosty HTML (pogrubienie, linki, listy).",
+    "Rules, FAQ and coffee": "Zasady, FAQ i kawka"
 }

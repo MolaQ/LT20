@@ -13,7 +13,8 @@ use Livewire\Component;
  * Zasady gry i FAQ (14.11.2026): admin poprawia, dodaje, usuwa i przestawia pozycje akordeonów ze stron /rules i /faq.
  * Przy pierwszym wejściu teksty domyślne kopiują się do tabeli guide_items (Guide::ensureEditable), a „Przywróć domyślne”
  * wraca do nich. Treść jak w newsach: pusty wiersz = nowy akapit, można użyć prostego HTML (pogrubienie, link, lista).
- * Uprawnienie: news-create (ta sama grupa „Treści”).
+ * Zakładka „Kawka” (14.11.2026): jedna pozycja, tekst karty „Postaw kawkę” na stronie wsparcia (bez dodawania,
+ * usuwania i przestawiania). Uprawnienie: news-create (ta sama grupa „Treści”).
  */
 new class extends Component {
     #[Url(as: 'rodzaj', except: 'rules')]
@@ -32,7 +33,7 @@ new class extends Component {
 
     public function render(): View
     {
-        return $this->view()->title(__('Rules and FAQ'));
+        return $this->view()->title(__('Rules, FAQ and coffee'));
     }
 
     public function updatedKind(): void
@@ -61,6 +62,7 @@ new class extends Component {
     public function add(): void
     {
         $this->authorizeEdit();
+        abort_if($this->kind === 'coffee', 403);
         $this->editId = 0;
         $this->title = '';
         $this->body = '';
@@ -95,6 +97,7 @@ new class extends Component {
     public function delete(int $id): void
     {
         $this->authorizeEdit();
+        abort_if($this->kind === 'coffee', 403);
         $item = $this->find($id);
         Audit::log('guide.deleted', null, ['kind' => $this->kind], [], $item->title);
         $item->delete();
@@ -130,7 +133,7 @@ new class extends Component {
         $this->authorizeEdit();
         GuideItem::where('kind', $this->kind)->delete();
         Guide::ensureEditable($this->kind);
-        Audit::log('guide.restored', null, [], ['kind' => $this->kind], $this->kind === 'faq' ? __('FAQ') : __('Rules of the game'));
+        Audit::log('guide.restored', null, [], ['kind' => $this->kind], match ($this->kind) { 'faq' => __('FAQ'), 'coffee' => __('Coffee'), default => __('Rules of the game') });
         $this->dispatch('ui-sheet', name: 'restore-guide', open: false);
         $this->cancel();
         unset($this->items);
@@ -151,16 +154,18 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <x-ui.heading size="xl" level="1">{{ __('Rules and FAQ') }}</x-ui.heading>
-            <x-ui.subheading>{{ __('Texts of the Rules of the game and FAQ pages. An empty line starts a new paragraph; simple HTML (bold, links, lists) works too.') }}</x-ui.subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Rules, FAQ and coffee') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Texts of the Rules of the game, FAQ and coffee pages. An empty line starts a new paragraph; simple HTML (bold, links, lists) works too.') }}</x-ui.subheading>
         </div>
         <div class="flex flex-wrap gap-2">
-            <x-ui.btn variant="ghost" icon="arrow-top-right-on-square" :href="$kind === 'faq' ? route('faq') : route('rules')" target="_blank">{{ __('Open the page') }}</x-ui.btn>
-            <x-ui.btn variant="primary" icon="plus" wire:click="add">{{ __('Add an item') }}</x-ui.btn>
+            <x-ui.btn variant="ghost" icon="arrow-top-right-on-square" :href="route(match ($kind) { 'faq' => 'faq', 'coffee' => 'support', default => 'rules' })" target="_blank">{{ __('Open the page') }}</x-ui.btn>
+            @if ($kind !== 'coffee')
+                <x-ui.btn variant="primary" icon="plus" wire:click="add">{{ __('Add an item') }}</x-ui.btn>
+            @endif
         </div>
     </div>
 
-    <x-ui.segmented wire:model.live="kind" class="max-w-sm" :options="['rules' => __('Rules of the game'), 'faq' => __('FAQ')]" />
+    <x-ui.segmented wire:model.live="kind" class="max-w-md" :options="['rules' => __('Rules of the game'), 'faq' => __('FAQ'), 'coffee' => __('Coffee')]" />
 
     <div class="space-y-2">
         @foreach ($this->items as $item)
@@ -169,16 +174,22 @@ new class extends Component {
                     @include('partials.guide-edit-form')
                 @else
                     <div class="flex items-start gap-3 p-4">
+                        @if ($kind !== 'coffee')
                         <span class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-ui-raised text-xs font-bold tabular-nums">{{ $loop->iteration }}</span>
+                        @endif
                         <button type="button" wire:click="edit({{ $item->id }})" class="min-w-0 flex-1 text-start">
                             <span class="block font-semibold">{{ $item->title }}</span>
                             <span class="mt-0.5 line-clamp-2 block text-sm text-ui-muted">{{ \Illuminate\Support\Str::limit(strip_tags($item->body), 220) }}</span>
                         </button>
                         <div class="flex shrink-0 items-center gap-0.5">
+                            @if ($kind !== 'coffee')
                             <x-ui.btn variant="ghost" size="sm" icon="chevron-up" :disabled="$loop->first" wire:click="move({{ $item->id }}, -1)" :aria-label="__('Move up')" />
                             <x-ui.btn variant="ghost" size="sm" icon="chevron-down" :disabled="$loop->last" wire:click="move({{ $item->id }}, 1)" :aria-label="__('Move down')" />
+                            @endif
                             <x-ui.btn variant="ghost" size="sm" icon="pencil" wire:click="edit({{ $item->id }})" :aria-label="__('Edit')" />
+                            @if ($kind !== 'coffee')
                             <x-ui.btn variant="ghost" size="sm" icon="trash" wire:click="delete({{ $item->id }})" wire:confirm="{{ __('Delete this item?') }}" :aria-label="__('Delete')" />
+                            @endif
                         </div>
                     </div>
                 @endif

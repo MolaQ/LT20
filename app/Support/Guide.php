@@ -9,7 +9,7 @@ use Illuminate\Database\QueryException;
  * Treści „Zasady gry” i „FAQ” (skrót regulaminu w wersji 1.0) do akordeonów na stronie głównej
  * i na stronach /rules oraz /faq. Każda pozycja to [tytuł, treść].
  * Od 14.11.2026 admin edytuje je w panelu (Treści → Zasady i FAQ, tabela guide_items). Dopóki nic tam nie ma,
- * strona pokazuje teksty domyślne z tej klasy.
+ * strona pokazuje teksty domyślne z tej klasy. Tu też tekst karty „Postaw kawkę” na stronie wsparcia (coffee).
  */
 class Guide
 {
@@ -23,6 +23,25 @@ class Guide
     public static function faq(): array
     {
         return self::items('faq');
+    }
+
+    /**
+     * Karta „Postaw kawkę” na stronie /support: [tytuł, HTML]. Jedna pozycja z panelu albo tekst domyślny
+     * (ten sam co na profilu buycoffee.to).
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function coffee(): array
+    {
+        try {
+            $item = GuideItem::where('kind', 'coffee')->orderBy('position')->orderBy('id')->first(['title', 'body']);
+        } catch (QueryException) {
+            $item = null;
+        }
+
+        [$title, $body] = $item ? [$item->title, $item->body] : self::defaults('coffee')[0];
+
+        return [$title, NewsHtml::render($body)];
     }
 
     /**
@@ -53,7 +72,11 @@ class Guide
      */
     public static function defaults(string $kind): array
     {
-        return $kind === 'faq' ? self::defaultFaq() : self::defaultRules();
+        return match ($kind) {
+            'faq' => self::defaultFaq(),
+            'coffee' => self::defaultCoffee(),
+            default => self::defaultRules(),
+        };
     }
 
     /** Kopiuje teksty domyślne do tabeli, żeby admin mógł je edytować (tylko gdy jeszcze nic tam nie ma). */
@@ -66,6 +89,25 @@ class Guide
         foreach (self::defaults($kind) as $i => [$title, $body]) {
             GuideItem::create(['kind' => $kind, 'position' => $i + 1, 'title' => $title, 'body' => $body]);
         }
+    }
+
+    /**
+     * Tekst kawki (akapity jak w newsach, zamieniane na HTML przy wyświetlaniu).
+     *
+     * @return array<int, array{0: string, 1: string}>
+     */
+    private static function defaultCoffee(): array
+    {
+        return [[__('Buy us a coffee'), implode("\n\n", [
+            __('Hi, fan! 💙'),
+            __('#LechTYPER is a fan predictor of Lech Poznań matches. You tip the score, answer the match questions and fight in leagues, the Polish Cup and the Legends League with other fans. The game is and always will be free.'),
+            __('I make it after hours, on my own, as a continuation of the old predictor from twitter.com. The server, the domain and every new feature cost time and money. If LechTYPER makes waiting for the match nicer, you can buy me a coffee.'),
+            __('What does a coffee give?'),
+            '• '.__('It helps keep the server running and develop the game.'),
+            '• '.__('A coffee gives no advantage in the game and no premium. It is pure support from one fan to another.'),
+            __('Thanks for being here! See you on x, at the stadium and while tipping on lechtyper.pl'),
+            __('Hej Kolejorz! 🔵⚪'),
+        ])]];
     }
 
     /** @return array<int, array{0: string, 1: string}> */
