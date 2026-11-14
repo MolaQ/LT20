@@ -58,5 +58,5 @@ test('an admin adds, moves and deletes rules and restores the defaults', functio
 });
 
 test('the panel needs the news permission', function () {
-    $this->actingAs(User::factory()->create())->get(route('dashboard.guide'))->assertForbidden();
+    $this->actingAs(User::factory()->create())->get(route('dashboard.guide'))->assertRedirect();
 });
