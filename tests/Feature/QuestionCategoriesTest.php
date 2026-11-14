@@ -16,6 +16,8 @@ use Spatie\Permission\Models\Permission as PermissionModel;
 
 function categoryMatchday(): Matchday
 {
+    // Migracja zasiewa bank przykładowymi pytaniami bez kategorii: testy zaczynają od pustego banku.
+    QuestionTemplate::query()->delete();
     $season = Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
 
     return Matchday::create(['season_id' => $season->id, 'number' => 1, 'status' => MatchdayStatus::Planned->value]);
