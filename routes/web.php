@@ -110,6 +110,9 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('panel/news', 'pages::dashboard.news')
         ->middleware('permission:'.Permission::NewsCreate->value)
         ->name('dashboard.news');
+    Route::livewire('panel/guide', 'pages::dashboard.guide')
+        ->middleware('permission:'.Permission::NewsCreate->value)
+        ->name('dashboard.guide');
     // Zarządzanie rolami i użytkownikami: nadal tylko Admin
     Route::livewire('panel/roles', 'pages::dashboard.roles')
         ->middleware('role:Admin')

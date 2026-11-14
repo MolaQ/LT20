@@ -2254,5 +2254,19 @@
     "Until the first matchday is scored you can still swap a player with any bot (Swap with a bot button next to the player).": "Do rozliczenia pierwszej kolejki możesz jeszcze zamienić gracza z dowolnym botem (przycisk Zamień z botem przy graczu).",
     "Place in the league (0 = the highest ranked bot)": "Miejsce w lidze (0 = najwyżej sklasyfikowany bot)",
     "The player takes the bot's place with its fixtures, cup bracket and league, and the bot takes the player's old place. Nobody has points yet, so nothing else changes.": "Gracz przejmuje miejsce bota razem z jego terminarzem, drabinką pucharu i ligą, a bot dostaje dawne miejsce gracza. Nikt nie ma jeszcze punktów, więc nic więcej się nie zmienia.",
-    "Swap": "Zamień"
+    "Swap": "Zamień",
+    "Rules and FAQ": "Zasady i FAQ",
+    "Texts of the Rules of the game and FAQ pages. An empty line starts a new paragraph; simple HTML (bold, links, lists) works too.": "Teksty stron Zasady gry i FAQ. Pusty wiersz zaczyna nowy akapit; działa też prosty HTML (pogrubienie, linki, listy).",
+    "Open the page": "Otwórz stronę",
+    "Add an item": "Dodaj pozycję",
+    "Delete this item?": "Usunąć tę pozycję?",
+    "Restore default texts": "Przywróć domyślne teksty",
+    "Restore default texts?": "Przywrócić domyślne teksty?",
+    "Your changes on this tab will be replaced with the default texts.": "Twoje zmiany w tej zakładce zastąpią teksty domyślne.",
+    "Restore": "Przywróć",
+    "Default texts restored.": "Przywrócono domyślne teksty.",
+    "Deleted.": "Usunięto.",
+    "Rules or FAQ item saved": "Zapisano pozycję zasad lub FAQ",
+    "Rules or FAQ item deleted": "Usunięto pozycję zasad lub FAQ",
+    "Rules or FAQ restored to defaults": "Przywrócono domyślne zasady lub FAQ"
 }
