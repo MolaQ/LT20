@@ -60,3 +60,20 @@ test('an admin adds, moves and deletes rules and restores the defaults', functio
 test('the panel needs the news permission', function () {
     $this->actingAs(User::factory()->create())->get(route('dashboard.guide'))->assertRedirect();
 });
+
+test('an admin edits the coffee card text on the support page', function () {
+    config(['services.buycoffee.url' => 'https://buycoffee.to/lechtyper']);
+    $component = Livewire::actingAs(guideAdmin())->test('pages::dashboard.guide')->set('kind', 'coffee');
+
+    $item = GuideItem::where('kind', 'coffee')->sole();
+    $component->call('edit', $item->id)
+        ->set('title', 'Postaw kawkę')
+        ->set('body', "Cześć, Kibolu!\n\nDzięki za wsparcie.")
+        ->call('save')
+        ->assertHasNoErrors()
+        ->call('add')
+        ->assertForbidden();
+
+    expect(Guide::coffee())->toBe(['Postaw kawkę', '<p>Cześć, Kibolu!</p><p>Dzięki za wsparcie.</p>']);
+    $this->get(route('support'))->assertOk()->assertSee('Dzięki za wsparcie.');
+});

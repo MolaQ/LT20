@@ -33,7 +33,7 @@ test('without Przelewy24 the page offers only a coffee that gives no premium, wi
     expect(Premium::isActive($user))->toBeFalse();
 
     $this->actingAs($user)->get(route('support'))->assertOk()
-        ->assertSee(__('A coffee is a voluntary support for the creator. It does not give premium.'))
+        ->assertSee(__('A coffee gives no advantage in the game and no premium. It is pure support from one fan to another.'))
         ->assertDontSee(__('Half a year'));
 });
 

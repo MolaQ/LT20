@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Payment;
+use App\Support\Guide;
 use App\Support\Supporters;
 use App\Support\Premium;
 use App\Support\Przelewy24;
@@ -47,6 +48,17 @@ new #[Layout('layouts::public')] class extends Component {
     public function coffeeUrl(): ?string
     {
         return Payment::buyCoffeeUrl();
+    }
+
+    /**
+     * Tekst karty „Postaw kawkę” z panelu albo domyślny: [tytuł, HTML].
+     *
+     * @return array{0: string, 1: string}
+     */
+    #[Computed]
+    public function coffee(): array
+    {
+        return Guide::coffee();
     }
 
     /** Cennik i cegiełka: tylko gdy premium nie jest za darmo i płatności Przelewy24 są ustawione. */
@@ -176,11 +188,12 @@ new #[Layout('layouts::public')] class extends Component {
     @endif
 
     @if ($this->coffeeUrl)
-        {{-- Kawka: dobrowolne wsparcie, nie daje premium. Admin wpisuje ją w panelu (ranking wspierających) --}}
+        {{-- Kawka: dobrowolne wsparcie, nie daje premium. Tekst karty z panelu (Treści → Zasady, FAQ i kawka),
+             admin wpisuje wpłatę w panelu (ranking wspierających) --}}
         <x-ui.card class="space-y-3">
-            <x-ui.heading size="lg">{{ __('Buy us a coffee') }}</x-ui.heading>
-            <x-ui.text class="text-sm">{{ $this->free ? __('A coffee is a voluntary support for the creator. It changes nothing in the game: premium is free for everyone.') : __('A coffee is a voluntary support for the creator. It does not give premium.') }}</x-ui.text>
-            <x-ui.text class="text-sm">
+            <x-ui.heading size="lg">{{ $this->coffee[0] }}</x-ui.heading>
+            <div class="max-w-3xl space-y-3 text-sm leading-relaxed text-ui-ink [&_a]:font-semibold [&_a]:text-club [&_a]:underline">{!! $this->coffee[1] !!}</div>
+            <x-ui.text class="text-xs">
                 @auth
                     {{ __('To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message: :email.', ['email' => auth()->user()->email]) }}
                 @else
