@@ -2277,5 +2277,10 @@
     "Hej Kolejorz! 🔵⚪": "Hej Kolejorz! 🔵⚪",
     "Coffee": "Kawka",
     "Texts of the Rules of the game, FAQ and coffee pages. An empty line starts a new paragraph; simple HTML (bold, links, lists) works too.": "Teksty stron Zasady gry i FAQ oraz karty kawki na stronie wsparcia. Pusty wiersz zaczyna nowy akapit; działa też prosty HTML (pogrubienie, linki, listy).",
-    "Rules, FAQ and coffee": "Zasady, FAQ i kawka"
+    "Rules, FAQ and coffee": "Zasady, FAQ i kawka",
+    "Draw the rest": "Wylosuj resztę",
+    "Fill all sets": "Uzupełnij wszystkie zestawy",
+    "In this set": "W tym zestawie",
+    "Nothing to add: the set is full or the bank has no questions from new categories.": "Nie ma czego dodać: zestaw jest pełny albo w banku brak pytań z nowych kategorii.",
+    "Added :count question|Added :count questions": "Dodano :count pytanie|Dodano :count pytania|Dodano :count pytań"
 }

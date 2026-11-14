@@ -230,6 +230,51 @@ final class Questions
         });
     }
 
+    /**
+     * Automat: uzupełnia zestaw kolejki do PER_SET pytań z aktywnego banku. Z jednej kategorii bierze najwyżej jedno pytanie
+     * (licząc też te, które już są w zestawie), pomija pytania z innych zestawów tej kolejki, a najpierw sięga po najrzadziej
+     * używane (przy remisie losowo). Pytania bez kategorii nie blokują się nawzajem. Zwraca liczbę dodanych pytań.
+     */
+    public static function autoFill(Matchday $matchday, string $set): int
+    {
+        self::ensureSet($set);
+
+        $all = self::for($matchday);
+        $current = $all->where('score_set', $set)->pluck('question_template_id')->filter()->map(fn ($id) => (int) $id)->values()->all();
+        $taken = $all->pluck('question_template_id')->filter()->map(fn ($id) => (int) $id)->all();
+        $free = self::PER_SET - count($current);
+
+        if ($free <= 0) {
+            return 0;
+        }
+
+        $usedCategories = QuestionTemplate::whereIn('id', $current)->whereNotNull('category')->pluck('category')
+            ->map(fn ($c) => mb_strtolower($c))->all();
+
+        $picked = [];
+        foreach (QuestionTemplate::where('is_active', true)->whereNotIn('id', $taken)->get()
+            ->shuffle()->sortBy('times_used') as $template) {
+            $category = $template->category ? mb_strtolower($template->category) : null;
+            if ($category !== null && in_array($category, $usedCategories, true)) {
+                continue;
+            }
+
+            $picked[] = $template->id;
+            if ($category !== null) {
+                $usedCategories[] = $category;
+            }
+            if (count($picked) === $free) {
+                break;
+            }
+        }
+
+        if ($picked !== []) {
+            self::setForMatchday($matchday, $set, [...$current, ...$picked]);
+        }
+
+        return count($picked);
+    }
+
     /** @throws DomainException */
     private static function ensureSet(string $set): void
     {

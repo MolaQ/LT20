@@ -21,6 +21,8 @@ use Livewire\Component;
  * Pytania można układać także w sezonie w przygotowaniu (szkic, zatwierdzony), zanim wystartuje,
  * a treść pytań z banku poprawiać (zmiana trafia też do pytań kolejek, na które nikt jeszcze nie odpowiedział):
  * ołówkiem przy pytaniu w zestawie, przy kafelku banku albo na liście „Popraw bank pytań”, zawsze w tym samym miejscu.
+ * Bank jest pogrupowany w kategorie (Posiadanie piłki, Kartki …), a przycisk „Wylosuj” uzupełnia zestaw automatycznie:
+ * z jednej kategorii najwyżej jedno pytanie (Questions::autoFill).
  */
 new class extends Component {
     /** Sezon: trwający albo w przygotowaniu (pytania można ułożyć przed startem). */
@@ -42,8 +44,12 @@ new class extends Component {
 
     public string $editText = '';
 
-    /** Nowe pytanie do banku (jedyne pole tekstowe na tej stronie). */
+    public string $editCategory = '';
+
+    /** Nowe pytanie do banku i jego kategoria. */
     public string $newText = '';
+
+    public string $newCategory = '';
 
     public function mount(): void
     {
@@ -133,6 +139,85 @@ new class extends Component {
         return QuestionTemplate::orderByDesc('is_active')->orderBy('times_used')->orderBy('id')->get();
     }
 
+    /** Kategorie do podpowiedzi: używane w banku i domyślne, alfabetycznie. */
+    #[Computed]
+    public function categories(): array
+    {
+        return collect(QuestionTemplate::CATEGORIES)
+            ->merge($this->templates->pluck('category')->filter())
+            ->unique(fn ($c) => mb_strtolower($c))
+            ->sort(fn ($a, $b) => strcoll($a, $b))
+            ->values()->all();
+    }
+
+    /**
+     * Aktywny bank pogrupowany w kategorie (alfabetycznie, „Bez kategorii” na końcu).
+     *
+     * @return \Illuminate\Support\Collection<string, \Illuminate\Support\Collection<int, QuestionTemplate>>
+     */
+    #[Computed]
+    public function bankGroups()
+    {
+        return $this->templates->where('is_active', true)
+            ->groupBy(fn ($t) => (string) $t->category)
+            ->sortKeysUsing(fn ($a, $b) => $a === '' ? 1 : ($b === '' ? -1 : strcoll($a, $b)));
+    }
+
+    /** Automat: uzupełnia wybrany zestaw do 5 pytań, po jednym z kategorii. */
+    public function autoFill(): void
+    {
+        $this->authorizeEdit();
+
+        if (!$this->matchday) {
+            return;
+        }
+
+        $added = Questions::autoFill($this->matchday, $this->set);
+        $this->afterAutoFill($added, [$this->set]);
+    }
+
+    /** Automat dla wszystkich zestawów kolejki naraz. */
+    public function autoFillAll(): void
+    {
+        $this->authorizeEdit();
+
+        if (!$this->matchday) {
+            return;
+        }
+
+        $added = 0;
+        foreach (Questions::sets() as $set) {
+            $added += Questions::autoFill($this->matchday, $set);
+        }
+        $this->afterAutoFill($added, Questions::sets());
+    }
+
+    /** @param list<string> $sets */
+    private function afterAutoFill(int $added, array $sets): void
+    {
+        unset($this->allQuestions, $this->questions, $this->templates, $this->bankGroups);
+
+        if ($added === 0) {
+            $this->dispatch('ui-toast', variant: 'warning', text: __('Nothing to add: the set is full or the bank has no questions from new categories.'));
+
+            return;
+        }
+
+        Audit::log('questions.set', null, [], ['matchday' => $this->matchday->number, 'sets' => $sets, 'auto' => $added], __('Matchday :number', ['number' => $this->matchday->number]));
+        $this->dispatch('ui-toast', variant: 'success', text: trans_choice('Added :count question|Added :count questions', $added, ['count' => $added]));
+    }
+
+    private function cleanCategory(string $category): ?string
+    {
+        $category = trim(preg_replace('/\s+/', ' ', $category) ?? '');
+        if ($category === '') {
+            return null;
+        }
+
+        // Ta sama kategoria inną wielkością liter: bierzemy istniejącą pisownię.
+        return collect($this->categories)->first(fn ($c) => mb_strtolower($c) === mb_strtolower($category)) ?? mb_substr($category, 0, 40);
+    }
+
     private function authorizeEdit(): void
     {
         abort_unless(auth()->user()?->can(Permission::SeasonEdit->value), 403);
@@ -166,7 +251,7 @@ new class extends Component {
 
         Questions::setForMatchday($this->matchday, $this->set, $ids);
         Audit::log('questions.set', null, [], ['matchday' => $this->matchday->number, 'set' => $this->set, 'templates' => $ids], __('Matchday :number', ['number' => $this->matchday->number]));
-        unset($this->allQuestions, $this->questions, $this->templates);
+        unset($this->allQuestions, $this->questions, $this->templates, $this->bankGroups);
     }
 
     /** Prawidłowa odpowiedź po meczu: 'yes', 'no', 'void' albo '' (jeszcze nie wiadomo). */
@@ -188,10 +273,11 @@ new class extends Component {
     {
         $this->authorizeEdit();
 
-        $data = $this->validate(['newText' => ['required', 'string', 'min:8', 'max:160']]);
-        QuestionTemplate::create(['text' => trim($data['newText'])]);
+        $data = $this->validate(['newText' => ['required', 'string', 'min:8', 'max:160'], 'newCategory' => ['nullable', 'string', 'max:40']]);
+        QuestionTemplate::create(['text' => trim($data['newText']), 'category' => $this->cleanCategory((string) $data['newCategory'])]);
+        // Kategoria zostaje w polu: kolejne pytanie zwykle jest z tej samej grupy.
         $this->newText = '';
-        unset($this->templates);
+        unset($this->templates, $this->categories, $this->bankGroups);
     }
 
     public function editTemplate(int $templateId, string $where = 'list'): void
@@ -200,7 +286,9 @@ new class extends Component {
 
         $this->editingId = $templateId;
         $this->editingWhere = in_array($where, ['set', 'bank', 'list'], true) ? $where : 'list';
-        $this->editText = (string) QuestionTemplate::findOrFail($templateId)->text;
+        $template = QuestionTemplate::findOrFail($templateId);
+        $this->editText = (string) $template->text;
+        $this->editCategory = (string) $template->category;
         $this->resetValidation();
     }
 
@@ -208,6 +296,7 @@ new class extends Component {
     {
         $this->editingId = null;
         $this->editText = '';
+        $this->editCategory = '';
     }
 
     /** Nowa treść pytania z banku; trafia też do pytań kolejek bez odpowiedzi graczy i bez rozstrzygnięcia. */
@@ -215,11 +304,11 @@ new class extends Component {
     {
         $this->authorizeEdit();
 
-        $data = $this->validate(['editText' => ['required', 'string', 'min:8', 'max:160']]);
+        $data = $this->validate(['editText' => ['required', 'string', 'min:8', 'max:160'], 'editCategory' => ['nullable', 'string', 'max:40']]);
         $template = QuestionTemplate::findOrFail($this->editingId);
         $old = $template->text;
         $text = trim($data['editText']);
-        $template->update(['text' => $text]);
+        $template->update(['text' => $text, 'category' => $this->cleanCategory((string) $data['editCategory'])]);
 
         MatchdayQuestion::where('question_template_id', $template->id)
             ->whereNull('correct')->where('voided', false)
@@ -228,7 +317,7 @@ new class extends Component {
 
         Audit::log('questions.template_edited', null, ['text' => $old], ['text' => $text], $text);
         $this->cancelEdit();
-        unset($this->templates, $this->allQuestions, $this->questions);
+        unset($this->templates, $this->allQuestions, $this->questions, $this->categories, $this->bankGroups);
     }
 
     public function toggleActive(int $templateId): void
@@ -237,7 +326,7 @@ new class extends Component {
 
         $template = QuestionTemplate::findOrFail($templateId);
         $template->update(['is_active' => !$template->is_active]);
-        unset($this->templates);
+        unset($this->templates, $this->bankGroups);
     }
 }; ?>
 
@@ -293,8 +382,24 @@ new class extends Component {
             @endforeach
         </div>
 
+        {{-- Podpowiedzi kategorii dla pól „Kategoria” (nowe pytanie i poprawka) --}}
+        <datalist id="question-categories">
+            @foreach ($this->categories as $categoryOption)
+                <option value="{{ $categoryOption }}"></option>
+            @endforeach
+        </datalist>
+
         <x-ui.card class="space-y-3">
-            <x-ui.heading>{{ __('Matchday :number', ['number' => $number]) }} · {{ \App\Support\Questions::setLabel($set) }} ({{ $this->questions->count() }}/{{ \App\Support\Questions::PER_SET }})</x-ui.heading>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <x-ui.heading>{{ __('Matchday :number', ['number' => $number]) }} · {{ \App\Support\Questions::setLabel($set) }} ({{ $this->questions->count() }}/{{ \App\Support\Questions::PER_SET }})</x-ui.heading>
+                @if ($canEdit)
+                    {{-- Automat: po jednym pytaniu z kategorii, najpierw najrzadziej używane --}}
+                    <div class="flex flex-wrap gap-2">
+                        <x-ui.btn size="sm" variant="primary" icon="sparkles" wire:click="autoFill" :disabled="$this->questions->count() >= \App\Support\Questions::PER_SET">{{ __('Draw the rest') }}</x-ui.btn>
+                        <x-ui.btn size="sm" icon="squares-2x2" wire:click="autoFillAll">{{ __('Fill all sets') }}</x-ui.btn>
+                    </div>
+                @endif
+            </div>
             @forelse ($this->questions as $question)
                 @php($state = $question->voided ? 'void' : ($question->correct === null ? '' : ($question->correct ? 'yes' : 'no')))
                 <div class="flex flex-wrap items-center gap-2 rounded-xl border border-ui-line p-3 " wire:key="mq-{{ $question->id }}">
@@ -302,7 +407,12 @@ new class extends Component {
                     @if ($editingId !== null && $editingWhere === 'set' && $editingId === $question->question_template_id)
                         <div class="min-w-0 flex-1">@include('partials.question-edit-form')</div>
                     @else
-                        <span class="min-w-0 flex-1 font-medium">{{ $question->text }}</span>
+                        <span class="min-w-0 flex-1 font-medium">
+                            {{ $question->text }}
+                            @if ($category = $this->templates->firstWhere('id', $question->question_template_id)?->category)
+                                <span class="ms-1 inline-block rounded-full bg-ui-raised px-2 py-0.5 align-middle text-[11px] font-semibold text-ui-muted">{{ $category }}</span>
+                            @endif
+                        </span>
                         @if ($canEdit && $question->question_template_id)
                             <button type="button" wire:click="editTemplate({{ $question->question_template_id }}, 'set')" title="{{ __('Edit the question') }}" aria-label="{{ __('Edit the question') }}"
                                 class="grid size-7 shrink-0 place-items-center rounded-lg text-ui-muted transition hover:bg-ui-raised hover:text-ui-ink"><x-ui.icon name="pencil-square" variant="micro" /></button>
@@ -326,40 +436,59 @@ new class extends Component {
 
         <x-ui.card class="space-y-3">
             <x-ui.heading>{{ __('Question bank') }}</x-ui.heading>
-            <div class="flex flex-wrap gap-2">
-                @php($chosen = $this->questions->pluck('question_template_id')->all())
-                @php($elsewhere = $this->allQuestions->where('score_set', '!=', $set)->pluck('score_set', 'question_template_id'))
-                @foreach ($this->templates->where('is_active', true) as $template)
-                    @php($otherSet = $elsewhere->get($template->id))
-                    @php($picked = in_array($template->id, $chosen))
-                    @if ($editingId === $template->id && $editingWhere === 'bank')
-                        <div class="basis-full" wire:key="qt-edit-{{ $template->id }}">@include('partials.question-edit-form')</div>
-                    @else
-                        {{-- Kafelek: klik dodaje do zestawu albo zdejmuje, ołówek obok poprawia treść w miejscu --}}
-                        <span class="group inline-flex" wire:key="qt-{{ $template->id }}">
-                            <button type="button" wire:click="toggleTemplate({{ $template->id }})" @disabled(!$canEdit || $otherSet)
-                                class="{{ $picked ? 'border-lech-700 bg-club text-club-ink' : ($otherSet ? 'cursor-not-allowed border-dashed border-ui-line opacity-50' : 'border-zinc-300 hover:border-lech-500 dark:border-zinc-600') }} {{ $canEdit ? 'rounded-s-xl border-e-0' : 'rounded-xl' }} border py-2 ps-3 pe-2 text-start text-sm transition">
-                                {{ $template->text }}
-                                @if ($otherSet)
-                                    <span class="ms-1 text-xs">· {{ \App\Support\Questions::setLabel($otherSet) }}</span>
-                                @else
-                                    <span class="ms-1 text-xs opacity-60">×{{ $template->times_used }}</span>
+            @php($chosen = $this->questions->pluck('question_template_id')->all())
+            @php($elsewhere = $this->allQuestions->where('score_set', '!=', $set)->pluck('score_set', 'question_template_id'))
+            {{-- Kategorie zajęte w tym zestawie: w ich grupie kolejne pytanie da się dodać, ale grupa jest przygaszona --}}
+            @php($setCategories = $this->templates->whereIn('id', $chosen)->pluck('category')->filter()->map(fn ($c) => mb_strtolower($c))->all())
+            <div class="grid gap-3 md:grid-cols-2">
+                @foreach ($this->bankGroups as $categoryName => $group)
+                    @php($covered = $categoryName !== '' && in_array(mb_strtolower($categoryName), $setCategories, true))
+                    <section class="{{ $covered ? 'opacity-70' : '' }} rounded-xl border border-ui-line p-3 transition" wire:key="qcat-{{ md5($categoryName) }}">
+                        <header class="mb-2 flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wide text-ui-muted">{{ $categoryName !== '' ? $categoryName : __('No category') }}</span>
+                            <span class="flex items-center gap-2 text-[11px] text-ui-muted">
+                                @if ($covered)
+                                    <span class="rounded-full bg-club/15 px-2 py-0.5 font-semibold text-club">{{ __('In this set') }}</span>
                                 @endif
-                            </button>
-                            @if ($canEdit)
-                                <button type="button" wire:click="editTemplate({{ $template->id }}, 'bank')" title="{{ __('Edit the question') }}" aria-label="{{ __('Edit the question') }}"
-                                    class="{{ $picked ? 'border-lech-700 bg-club text-club-ink' : ($otherSet ? 'border-dashed border-ui-line' : 'border-zinc-300 dark:border-zinc-600') }} grid place-items-center rounded-e-xl border border-s-0 px-2 opacity-60 transition hover:opacity-100">
-                                    <x-ui.icon name="pencil-square" variant="micro" />
-                                </button>
+                                <span class="tabular-nums">{{ $group->count() }}</span>
+                            </span>
+                        </header>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($group as $template)
+                            @php($otherSet = $elsewhere->get($template->id))
+                            @php($picked = in_array($template->id, $chosen))
+                            @if ($editingId === $template->id && $editingWhere === 'bank')
+                                <div class="basis-full" wire:key="qt-edit-{{ $template->id }}">@include('partials.question-edit-form')</div>
+                            @else
+                                {{-- Kafelek: klik dodaje do zestawu albo zdejmuje, ołówek obok poprawia treść w miejscu --}}
+                                <span class="group inline-flex" wire:key="qt-{{ $template->id }}">
+                                    <button type="button" wire:click="toggleTemplate({{ $template->id }})" @disabled(!$canEdit || $otherSet)
+                                        class="{{ $picked ? 'border-lech-700 bg-club text-club-ink' : ($otherSet ? 'cursor-not-allowed border-dashed border-ui-line opacity-50' : 'border-zinc-300 hover:border-lech-500 dark:border-zinc-600') }} {{ $canEdit ? 'rounded-s-xl border-e-0' : 'rounded-xl' }} border py-2 ps-3 pe-2 text-start text-sm transition">
+                                        {{ $template->text }}
+                                        @if ($otherSet)
+                                            <span class="ms-1 text-xs">· {{ \App\Support\Questions::setLabel($otherSet) }}</span>
+                                        @else
+                                            <span class="ms-1 text-xs opacity-60">×{{ $template->times_used }}</span>
+                                        @endif
+                                    </button>
+                                    @if ($canEdit)
+                                        <button type="button" wire:click="editTemplate({{ $template->id }}, 'bank')" title="{{ __('Edit the question') }}" aria-label="{{ __('Edit the question') }}"
+                                            class="{{ $picked ? 'border-lech-700 bg-club text-club-ink' : ($otherSet ? 'border-dashed border-ui-line' : 'border-zinc-300 dark:border-zinc-600') }} grid place-items-center rounded-e-xl border border-s-0 px-2 opacity-60 transition hover:opacity-100">
+                                            <x-ui.icon name="pencil-square" variant="micro" />
+                                        </button>
+                                    @endif
+                                </span>
                             @endif
-                        </span>
-                    @endif
+                            @endforeach
+                        </div>
+                    </section>
                 @endforeach
             </div>
 
             @if ($canEdit)
-                <form wire:submit="addTemplate" class="flex gap-2">
-                    <x-ui.input wire:model="newText" :placeholder="__('New yes/no question, e.g. Will Lech score first?')" class="flex-1" />
+                <form wire:submit="addTemplate" class="flex flex-wrap gap-2">
+                    <x-ui.input wire:model="newText" :placeholder="__('New yes/no question, e.g. Will Lech score first?')" class="min-w-60 flex-1" />
+                    <x-ui.input wire:model="newCategory" list="question-categories" :placeholder="__('Category')" class="w-44" />
                     <x-ui.btn type="submit" variant="primary">{{ __('Add') }}</x-ui.btn>
                 </form>
 
@@ -373,6 +502,7 @@ new class extends Component {
                                     <div class="min-w-0 flex-1">@include('partials.question-edit-form')</div>
                                 @else
                                     <span class="{{ $template->is_active ? '' : 'text-zinc-400 line-through' }} min-w-0 flex-1">{{ $template->text }}</span>
+                                    <span class="shrink-0 text-xs text-ui-muted">{{ $template->category ?: __('No category') }}</span>
                                     <button type="button" wire:click="editTemplate({{ $template->id }})" class="shrink-0 rounded-lg bg-ui-raised px-2.5 py-1 text-xs font-semibold">{{ __('Edit') }}</button>
                                 @endif
                             </div>
