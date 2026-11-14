@@ -922,7 +922,8 @@ new #[Layout('layouts::public')] class extends Component {
                         </div>
                     @endif
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                        {{-- Odstępy zerowe: linie między wierszami rysują komórki (ciągłe na całą szerokość) --}}
+                        <table class="w-full border-separate border-spacing-0 text-sm">
                             <thead class="text-[11px] font-semibold uppercase tracking-wide opacity-80">
                                 <tr>
                                     <th class="px-3 py-1.5 text-right">#</th>
@@ -944,23 +945,31 @@ new #[Layout('layouts::public')] class extends Component {
                                         $zone = $this->finalMoves !== []
                                             ? ($this->finalMoves[$row['team']->id] ?? null)
                                             : \App\Support\Standings::zone($this->competition, $index + 1, $this->table->count());
-                                        $zoneClass = match ($zone) {
-                                            'up' => 'border-l-4 border-l-green-500',
-                                            'down' => 'border-l-4 border-l-red-500',
-                                            default => 'border-l-4 border-l-transparent',
+                                        // Mistrz: pierwsze miejsce Ekstraklasy (w trakcie sezonu prowadzący).
+                                        if ($zone === null && $index === 0 && $this->competition->type === \App\Enums\CompetitionType::League && (int) $this->competition->tier === 1 && !$this->tableBrowsable()) {
+                                            $zone = 'champion';
+                                        }
+                                        // Belka strefy jako cień w pierwszej komórce: obramowanie wiersza (tr) przy tabeli z odstępami się nie rysuje.
+                                        $zoneBar = match ($zone) {
+                                            'up' => 'shadow-[inset_4px_0_0_#22c55e]',
+                                            'down' => 'shadow-[inset_4px_0_0_#ef4444]',
+                                            'champion' => 'shadow-[inset_4px_0_0_#fbbf24]',
+                                            default => '',
                                         };
+                                        $zoneClass = '';
                                         // Liga Legend: zespół, który odpadł, zostaje w tabeli wyciszony: szary pasek z lewej, delikatne ukośne
                                         // paski w tle, przygaszony tekst, a zamiast strzałki zmiany miejsca ikona wyjścia z kolejką w podpowiedzi.
                                         $outRound = $this->legendsOut[$row['entry_id']] ?? null;
                                         if ($outRound !== null) {
-                                            $zoneClass = 'border-l-4 border-l-zinc-400 text-zinc-400 dark:border-l-zinc-600 dark:text-zinc-500 bg-[repeating-linear-gradient(135deg,rgba(113,113,122,0.08)_0_6px,transparent_6px_12px)]';
+                                            $zoneBar = 'shadow-[inset_4px_0_0_#a1a1aa]';
+                                            $zoneClass = 'text-zinc-400 dark:text-zinc-500 bg-[repeating-linear-gradient(135deg,rgba(113,113,122,0.08)_0_6px,transparent_6px_12px)]';
                                         }
                                         $move = $this->tableMoves[$row['entry_id']] ?? 0;
                                     @endphp
                                     <tr wire:key="row-{{ $row['entry_id'] }}"
-                                        class="{{ $zoneClass }} border-b border-zinc-100 last:border-b-0 dark:border-zinc-700/50 {{ $this->highlighted($row['team']->id) ? 'bg-amber-50 font-semibold dark:bg-amber-900/20' : '' }}">
+                                        class="{{ $zoneClass }} transition-colors hover:bg-black/[.03] dark:hover:bg-white/[.04] [&>td]:border-b [&>td]:border-zinc-200/80 last:[&>td]:border-b-0 dark:[&>td]:border-white/10 {{ $this->highlighted($row['team']->id) ? 'bg-amber-50 font-semibold dark:bg-amber-900/20' : '' }}">
                                         {{-- Miejsce, a po prawej zmiana po kolejce: zielony trójkąt w górę, czerwony w dół (liczba miejsc w podpowiedzi) --}}
-                                        <td class="px-2 py-1.5 text-right tabular-nums text-ui-muted">
+                                        <td class="{{ $zoneBar }} px-2 py-1.5 text-right tabular-nums text-ui-muted">
                                             <span class="inline-flex items-center justify-end gap-1">
                                                 <span>{{ $index + 1 }}.</span>
                                                 @if ($outRound !== null)
@@ -1036,6 +1045,9 @@ new #[Layout('layouts::public')] class extends Component {
                                     $hasRelegation = $zoneSizes['down'] > 0;
                                 @endphp
                                 <p class="flex flex-wrap gap-4 opacity-90">
+                                    @if ($this->competition->type === \App\Enums\CompetitionType::League && (int) $this->competition->tier === 1 && !$this->tableBrowsable())
+                                        <span class="flex items-center gap-1"><span class="inline-block h-3 w-1 bg-amber-400"></span>{{ __('Champion') }}</span>
+                                    @endif
                                     @if ($hasPromotion)
                                         <span class="flex items-center gap-1"><span class="inline-block h-3 w-1 bg-green-500"></span>{{ __('Promotion') }}</span>
                                     @endif

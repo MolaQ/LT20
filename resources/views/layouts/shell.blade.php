@@ -51,11 +51,21 @@
             <nav class="ms-6 hidden flex-1 items-center gap-1 lg:flex" aria-label="{{ __('Main menu') }}">
                 @foreach ($items as $item)
                     @if ($item['href'])
-                        <a href="{{ $item['href'] }}" wire:navigate @class([
-                            'rounded-lg px-3 py-1.5 text-sm font-semibold',
-                            'bg-ui-raised text-ui-ink' => $item['active'],
-                            'text-ui-muted hover:bg-ui-raised hover:text-ui-ink' => ! $item['active'],
-                        ]) @if ($item['active']) aria-current="page" @endif>{{ $item['label'] }}</a>
+                        @if ($item['key'] === 'tip')
+                            {{-- „Typuj” wyróżnione jak środkowy przycisk na telefonie: pigułka w barwach klubu z ikoną --}}
+                            <a href="{{ $item['href'] }}" wire:navigate @class([
+                                'mx-1 inline-flex items-center gap-1.5 rounded-full bg-club px-4 py-1.5 text-sm font-bold text-club-ink shadow-md shadow-club/30 transition hover:-translate-y-px hover:shadow-lg hover:shadow-club/40 active:translate-y-0',
+                                'ring-2 ring-club/40 ring-offset-2 ring-offset-ui-bg' => $item['active'],
+                            ]) @if ($item['active']) aria-current="page" @endif>
+                                <x-ui.icon name="tip" class="size-4" />{{ $item['label'] }}
+                            </a>
+                        @else
+                            <a href="{{ $item['href'] }}" wire:navigate @class([
+                                'rounded-lg px-3 py-1.5 text-sm font-semibold',
+                                'bg-ui-raised text-ui-ink' => $item['active'],
+                                'text-ui-muted hover:bg-ui-raised hover:text-ui-ink' => ! $item['active'],
+                            ]) @if ($item['active']) aria-current="page" @endif>{{ $item['label'] }}</a>
+                        @endif
                     @else
                         <button type="button" @click="$dispatch('ui-sheet', { name: 'more' })"
                             class="rounded-lg px-3 py-1.5 text-sm font-semibold text-ui-muted hover:bg-ui-raised hover:text-ui-ink">{{ $item['label'] }}</button>

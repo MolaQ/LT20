@@ -2,14 +2,73 @@
 
 namespace App\Support;
 
+use App\Models\GuideItem;
+use Illuminate\Database\QueryException;
+
 /**
  * Treści „Zasady gry” i „FAQ” (skrót regulaminu w wersji 1.0) do akordeonów na stronie głównej
  * i na stronach /rules oraz /faq. Każda pozycja to [tytuł, treść].
+ * Od 14.11.2026 admin edytuje je w panelu (Treści → Zasady i FAQ, tabela guide_items). Dopóki nic tam nie ma,
+ * strona pokazuje teksty domyślne z tej klasy.
  */
 class Guide
 {
     /** Najważniejsze punkty regulaminu. */
     public static function rules(): array
+    {
+        return self::items('rules');
+    }
+
+    /** Najczęstsze pytania graczy. */
+    public static function faq(): array
+    {
+        return self::items('faq');
+    }
+
+    /**
+     * Pozycje z panelu (treść jak w newsach: akapity albo oczyszczony HTML), a bez nich domyślne.
+     *
+     * @return list<array{0: string, 1: string}>
+     */
+    public static function items(string $kind): array
+    {
+        try {
+            $rows = GuideItem::where('kind', $kind)->orderBy('position')->orderBy('id')->get(['title', 'body']);
+        } catch (QueryException) {
+            // Tabela jeszcze bez migracji (tuż po wgraniu paczki): teksty domyślne.
+            $rows = collect();
+        }
+
+        if ($rows->isEmpty()) {
+            return self::defaults($kind);
+        }
+
+        return $rows->map(fn (GuideItem $item) => [$item->title, NewsHtml::render($item->body)])->values()->all();
+    }
+
+    /**
+     * Teksty domyślne (tłumaczenia).
+     *
+     * @return list<array{0: string, 1: string}>
+     */
+    public static function defaults(string $kind): array
+    {
+        return $kind === 'faq' ? self::defaultFaq() : self::defaultRules();
+    }
+
+    /** Kopiuje teksty domyślne do tabeli, żeby admin mógł je edytować (tylko gdy jeszcze nic tam nie ma). */
+    public static function ensureEditable(string $kind): void
+    {
+        if (GuideItem::where('kind', $kind)->exists()) {
+            return;
+        }
+
+        foreach (self::defaults($kind) as $i => [$title, $body]) {
+            GuideItem::create(['kind' => $kind, 'position' => $i + 1, 'title' => $title, 'body' => $body]);
+        }
+    }
+
+    private static function defaultRules(): array
     {
         return [
             [__('Season and matchdays'), __('A season has 9 matchdays, each with one real Lech Poznań match. You give one tip (Lech : opponent after 90 minutes) per matchday and it counts in every competition you play in. Tipping closes at kick-off.')],
@@ -26,8 +85,7 @@ class Guide
         ];
     }
 
-    /** Najczęstsze pytania graczy. */
-    public static function faq(): array
+    private static function defaultFaq(): array
     {
         return [
             [__('Is tipping free?'), __('Yes. Tipping is always free, premium only adds extras.')],
