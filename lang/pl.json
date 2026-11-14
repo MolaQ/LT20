@@ -2268,5 +2268,10 @@
     "Deleted.": "Usunięto.",
     "Rules or FAQ item saved": "Zapisano pozycję zasad lub FAQ",
     "Rules or FAQ item deleted": "Usunięto pozycję zasad lub FAQ",
-    "Rules or FAQ restored to defaults": "Przywrócono domyślne zasady lub FAQ"
+    "Rules or FAQ restored to defaults": "Przywrócono domyślne zasady lub FAQ",
+    "Draw the rest": "Wylosuj resztę",
+    "Fill all sets": "Uzupełnij wszystkie zestawy",
+    "In this set": "W tym zestawie",
+    "Nothing to add: the set is full or the bank has no questions from new categories.": "Nie ma czego dodać: zestaw jest pełny albo w banku brak pytań z nowych kategorii.",
+    "Added :count question|Added :count questions": "Dodano :count pytanie|Dodano :count pytania|Dodano :count pytań"
 }

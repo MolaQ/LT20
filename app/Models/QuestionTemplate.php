@@ -11,10 +11,17 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $text
  * @property bool $is_active
  * @property int $times_used
+ * @property string|null $category
  */
 class QuestionTemplate extends Model
 {
-    protected $fillable = ['text', 'is_active', 'times_used'];
+    protected $fillable = ['text', 'category', 'is_active', 'times_used'];
+
+    /** Podpowiedzi kategorii w panelu (admin może wpisać też własną). */
+    public const CATEGORIES = [
+        'Bramki', 'Strzały', 'Posiadanie piłki', 'Podania', 'Rzuty rożne', 'Stałe fragmenty',
+        'Kartki', 'Faule', 'Bramkarz', 'Zmiany', 'Inne',
+    ];
 
     protected function casts(): array
     {

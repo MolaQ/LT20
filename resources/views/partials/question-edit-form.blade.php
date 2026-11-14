@@ -8,6 +8,7 @@
         <x-ui.input wire:model="editText" x-init="$nextTick(() => { $el.focus(); $el.select?.() })" />
         <x-ui.error name="editText" />
     </div>
+    <x-ui.input wire:model="editCategory" list="question-categories" :placeholder="__('Category')" class="w-44" />
     <x-ui.btn type="submit" variant="primary" size="sm">{{ __('Save') }}</x-ui.btn>
     <x-ui.btn type="button" size="sm" wire:click="cancelEdit">{{ __('Cancel') }}</x-ui.btn>
 </form>
