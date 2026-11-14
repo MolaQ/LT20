@@ -87,9 +87,28 @@ new #[Layout('layouts::public')] class extends Component {
         $this->js('history.replaceState(history.state, "", '.json_encode($this->pageUrl()).')');
     }
 
+    /** Rozgrywki wybrane w pasku „Twoje mecze”: te same rozgrywki w kafelkach, składzie i pytaniach (jeśli gracz w nich gra). */
     public function updatedPathCompetition(): void
     {
         unset($this->myPath);
+
+        $entry = collect($this->myEntries)->firstWhere('competition_id', $this->pathCompetition);
+        $set = $entry ? $entry['type']->scoreSet()->value : null;
+
+        if ($set !== null && isset($this->questionSets[$set]) && $this->questionSet !== $set) {
+            $this->pickSet($set);
+        }
+    }
+
+    /** Pasek „Twoje mecze” idzie za wybranymi rozgrywkami (kafelek, odcinek składu): mecze z tych rozgrywek. */
+    private function followSet(string $set): void
+    {
+        $entry = collect($this->myEntries)->first(fn ($e) => $e['type']->scoreSet()->value === $set);
+
+        if ($entry && (int) $entry['competition_id'] !== $this->pathCompetition) {
+            $this->pathCompetition = (int) $entry['competition_id'];
+            unset($this->myPath);
+        }
     }
 
     public function updatedTab(): void
@@ -465,6 +484,7 @@ new #[Layout('layouts::public')] class extends Component {
 
         $this->questionSet = $set;
         unset($this->questions);
+        $this->followSet($set);
         $this->dispatch('designation-active', set: $set);
     }
 
@@ -475,6 +495,7 @@ new #[Layout('layouts::public')] class extends Component {
         if (isset($this->questionSets[$set]) && $this->questionSet !== $set) {
             $this->questionSet = $set;
             unset($this->questions);
+            $this->followSet($set);
         }
     }
 
