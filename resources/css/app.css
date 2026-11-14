@@ -524,3 +524,14 @@
         font-size: 150%;
     }
 }
+
+/*
+ * Nazwy botów są kursywą, a .truncate ucina to, co wystaje poza pole. Pochylona ostatnia litera (np. „i” w „Kluski”)
+ * wychodzi za prawą krawędź i była obcinana. Mały odstęp z prawej to naprawia. :where() ma zerową wagę,
+ * więc klasy px-* (np. w kafelkach pojedynków) dalej wygrywają.
+ */
+@layer base {
+    :where(.truncate.italic) {
+        padding-inline-end: 0.2em;
+    }
+}
