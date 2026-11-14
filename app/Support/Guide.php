@@ -28,7 +28,7 @@ class Guide
     /**
      * Pozycje z panelu (treść jak w newsach: akapity albo oczyszczony HTML), a bez nich domyślne.
      *
-     * @return list<array{0: string, 1: string}>
+     * @return array<int, array{0: string, 1: string}>
      */
     public static function items(string $kind): array
     {
@@ -49,7 +49,7 @@ class Guide
     /**
      * Teksty domyślne (tłumaczenia).
      *
-     * @return list<array{0: string, 1: string}>
+     * @return array<int, array{0: string, 1: string}>
      */
     public static function defaults(string $kind): array
     {
@@ -68,6 +68,7 @@ class Guide
         }
     }
 
+    /** @return array<int, array{0: string, 1: string}> */
     private static function defaultRules(): array
     {
         return [
@@ -85,6 +86,7 @@ class Guide
         ];
     }
 
+    /** @return array<int, array{0: string, 1: string}> */
     private static function defaultFaq(): array
     {
         return [
