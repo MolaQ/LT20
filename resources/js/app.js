@@ -194,6 +194,47 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // Liczba „na żywo” (strona główna): najpierw nabija się od zera, a gdy serwer przyśle nową wartość
+    // (Livewire podmienia atrybut data-to przy odświeżeniu), płynnie dochodzi do niej i na chwilę się podświetla.
+    Alpine.data('uiTween', () => ({
+        shown: '0',
+        cur: 0,
+        bump: false,
+        init() {
+            const read = () => parseInt(this.$el.dataset.to || '0', 10) || 0;
+            new MutationObserver(() => this.go(read(), true)).observe(this.$el, { attributes: true, attributeFilter: ['data-to'] });
+            const io = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    io.disconnect();
+                    this.go(read(), false);
+                }
+            });
+            io.observe(this.$el);
+        },
+        go(to, flash) {
+            const from = this.cur;
+            if (to === from && this.shown !== '0') {
+                return;
+            }
+            const dur = reducedMotion() ? 0 : 900;
+            const t0 = performance.now();
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            const step = (now) => {
+                const k = dur ? Math.min(1, (now - t0) / dur) : 1;
+                this.cur = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+                this.shown = fmt(this.cur);
+                if (k < 1) {
+                    requestAnimationFrame(step);
+                }
+            };
+            requestAnimationFrame(step);
+            if (flash && to !== from) {
+                this.bump = true;
+                setTimeout(() => (this.bump = false), 1200);
+            }
+        },
+    }));
+
     // Klapka tablicy jak na starym dworcu (odliczanie na stronie głównej): przy zmianie cyfry górna połówka
     // ze starą cyfrą opada, a dolna z nową dochodzi do końca. CSS: .flap w app.css.
     Alpine.data('uiFlap', (initial) => ({
