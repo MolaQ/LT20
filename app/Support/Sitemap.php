@@ -33,7 +33,7 @@ final class Sitemap
         return Cache::remember('sitemap.xml', 3600, function () {
             $urls = [];
             foreach (['home' => 'daily', 'results' => 'daily', 'hall-of-fame' => 'weekly', 'history' => 'weekly', 'stars' => 'weekly',
-                'rules' => 'monthly', 'faq' => 'monthly', 'support' => 'monthly', 'system' => 'daily', 'office' => 'weekly'] as $route => $freq) {
+                'howto' => 'monthly', 'rules' => 'monthly', 'faq' => 'monthly', 'support' => 'monthly', 'system' => 'daily', 'office' => 'weekly'] as $route => $freq) {
                 $urls[] = [route($route), null, $freq];
             }
             foreach (News::published()->latest('published_at')->limit(500)->get(['id', 'title', 'updated_at']) as $news) {

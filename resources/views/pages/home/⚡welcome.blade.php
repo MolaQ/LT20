@@ -76,16 +76,18 @@ new #[Layout('layouts::public')] class extends Component {
         return MatchEvent::with(['player:id,name', 'other:id,name'])->where('lech_match_id', $matchday->lech_match_id)->orderBy('id')->get();
     }
 
-    /** Liczby serwisu do paska pod banerem: gracze, zakończone sezony, rozegrane kolejki, zdobyte trofea. */
+    /** Liczby serwisu (na dole strony): gracze, oddane typy, rozegrane pojedynki, zdobyte trofea. */
     #[Computed]
     public function numbers(): array
     {
-        return [
-            ['icon' => 'users', 'value' => \App\Support\Players::eligible()->count(), 'label' => __('Players')],
-            ['icon' => 'calendar', 'value' => Season::where('status', SeasonStatus::Finished->value)->count(), 'label' => __('Seasons played')],
-            ['icon' => 'flag', 'value' => Matchday::where('status', MatchdayStatus::Played->value)->count(), 'label' => __('Lech matches tipped')],
-            ['icon' => 'trophy', 'value' => \App\Models\HallOfFameAward::whereNotNull('trophy')->count(), 'label' => __('Trophies won')],
-        ];
+        return \App\Support\HomeStats::numbers();
+    }
+
+    /** Ciekawostki sezonu (celność typów, najskuteczniejsi) albo null przed pierwszą rozegraną kolejką. */
+    #[Computed]
+    public function seasonStats(): ?array
+    {
+        return $this->season ? \App\Support\HomeStats::season($this->season) : null;
     }
 
     /** Ostatni mistrzowie najważniejszych rozgrywek (App\Support\CompetitionHistory). */
@@ -119,28 +121,30 @@ new #[Layout('layouts::public')] class extends Component {
     }
 
     /**
-     * Tabela ligi zalogowanego gracza w bieżącym sezonie: cała liga (10 zespołów), w Lidze podwórkowej
-     * tylko dwa miejsca nad i pod graczem (tam zespołów są setki).
+     * Liga gracza w bieżącym sezonie: pięć miejsc wokół gracza (cała tabela pod linkiem). Gość albo gracz
+     * bez ligi widzi czołówkę Ekstraklasy.
      *
-     * @return array{name: string, url: string, rows: array<int, array<string, mixed>>}|null
+     * @return array{name: string, url: string, mine: ?array<string, mixed>, rows: array<int, array<string, mixed>>}|null
      */
     #[Computed]
     public function myLeague(): ?array
     {
-        if (!$this->season || !auth()->check()) {
+        if (!$this->season) {
             return null;
         }
 
-        $team = \App\Models\SeasonTeam::where('season_id', $this->season->id)->where('user_id', auth()->id())->first();
+        $team = auth()->check() ? \App\Models\SeasonTeam::where('season_id', $this->season->id)->where('user_id', auth()->id())->first() : null;
         $entry = $team ? \App\Models\CompetitionEntry::with('competition')->where('season_team_id', $team->id)
             ->whereHas('competition', fn($q) => $q->where('season_id', $this->season->id)->whereIn('type', [\App\Enums\CompetitionType::League->value, \App\Enums\CompetitionType::Swiss->value]))
             ->first() : null;
 
-        if (!$entry) {
+        $competition = $entry?->competition ?? \App\Models\Competition::where('season_id', $this->season->id)
+            ->where('type', \App\Enums\CompetitionType::League->value)->where('tier', \App\Enums\League::Ekstraklasa->value)->first();
+
+        if (!$competition) {
             return null;
         }
 
-        $competition = $entry->competition;
         $rows = \App\Support\Standings::for($competition)->values()->map(fn($row, $index) => [
             'place' => $index + 1,
             'name' => $row['team']?->name ?? '—',
@@ -148,18 +152,17 @@ new #[Layout('layouts::public')] class extends Component {
             'played' => $row['played'],
             'goals' => $row['for'] . ':' . $row['against'],
             'points' => $row['points'],
-            'me' => $row['entry_id'] === $entry->id,
+            'me' => $entry !== null && $row['entry_id'] === $entry->id,
         ]);
 
-        if ($competition->type === \App\Enums\CompetitionType::Swiss) {
-            $mine = $rows->search(fn($row) => $row['me']);
-            $rows = $rows->slice(max(0, $mine - 2), 5);
-        }
+        $mine = $rows->search(fn($row) => $row['me']);
+        $start = $mine === false ? 0 : max(0, min($mine - 2, $rows->count() - 5));
 
         return [
             'name' => $competition->name ?: $competition->type->label(),
-            'url' => route('results', ['season_slug' => 'sezon-' . $this->season->number, 'competition_slug' => $competition->slug()]) . '?team=' . $team->id,
-            'rows' => $rows->values()->all(),
+            'url' => route('results', ['season_slug' => 'sezon-' . $this->season->number, 'competition_slug' => $competition->slug()]) . ($team ? '?team=' . $team->id : ''),
+            'mine' => $mine === false ? null : $rows[$mine],
+            'rows' => $rows->slice($start, 5)->values()->all(),
         ];
     }
 
@@ -328,20 +331,40 @@ new #[Layout('layouts::public')] class extends Component {
                         @elseif (!auth()->check())
                             <x-ui.btn variant="primary" :href="route('login')" wire:navigate>{{ __('Log in to tip') }}</x-ui.btn>
                         @elseif ($matchday->isOpenForTips())
-                            @if ($this->myTip)
-                                <x-ui.badge color="green">{{ __('Your tip: :score', ['score' => $this->myTip->score()]) }}</x-ui.badge>
-                            @endif
-                            {{-- Czego jeszcze brakuje w typie: pytania i zawodnicy --}}
-                            @if ($status = $this->myTipStatus)
-                                @if ($status['questions'] > 0)
-                                    <x-ui.badge :color="$status['answered'] >= $status['questions'] ? 'green' : 'amber'">{{ __('Questions: :answered/:count', ['answered' => $status['answered'], 'count' => $status['questions']]) }}</x-ui.badge>
-                                @endif
-                                <x-ui.badge :color="$status['players'] > 0 ? 'green' : 'zinc'">{{ __('Players: :count', ['count' => $status['players']]) }}</x-ui.badge>
-                            @endif
-                            <x-ui.btn variant="primary" icon="pencil-square"
-                                :href="route('tips', ['matchday_slug' => 'kolejka-' . $matchday->number])" wire:navigate>
-                                {{ $this->myTip ? __('Change tip') : __('Tip now') }}
-                            </x-ui.btn>
+                            {{-- Stan typu: wynik, pytania i zawodnicy jako równe kafelki, przycisk tej samej wysokości obok --}}
+                            @php
+                                $status = $this->myTipStatus;
+                                $tipUrl = route('tips', ['matchday_slug' => 'kolejka-' . $matchday->number]);
+                                $tiles = [
+                                    [__('Score'), $this->myTip?->score() ?? '–', $this->myTip ? 'done' : 'missing'],
+                                ];
+                                if ($status && $status['questions'] > 0) {
+                                    $tiles[] = [__('Questions'), $status['answered'] . '/' . $status['questions'], $status['answered'] >= $status['questions'] ? 'done' : ($status['answered'] > 0 ? 'partial' : 'missing')];
+                                }
+                                $tiles[] = [__('Lech players picked'), (string) ($status['players'] ?? 0), ($status['players'] ?? 0) > 0 ? 'done' : 'missing'];
+                            @endphp
+                            <div @class(['grid w-full max-w-3xl gap-3', 'grid-cols-2 sm:grid-cols-4' => count($tiles) === 3, 'grid-cols-3' => count($tiles) === 2])>
+                                @foreach ($tiles as [$label, $value, $state])
+                                    <a href="{{ $tipUrl }}" wire:navigate @class([
+                                        'group flex flex-col justify-between gap-2 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md',
+                                        'border-green-300 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10' => $state === 'done',
+                                        'border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' => $state === 'partial',
+                                        'border-dashed border-ui-line bg-ui-raised/40' => $state === 'missing',
+                                    ])>
+                                        <span class="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-wider text-ui-muted">
+                                            {{ $label }}
+                                            <x-ui.icon :name="$state === 'done' ? 'check-circle' : ($state === 'partial' ? 'exclamation-circle' : 'plus-circle')" variant="mini"
+                                                :class="$state === 'done' ? 'text-green-600 dark:text-green-400' : ($state === 'partial' ? 'text-amber-500' : 'text-ui-muted')" />
+                                        </span>
+                                        <span class="font-display text-2xl font-bold leading-none tabular-nums text-ui-ink">{{ $value }}</span>
+                                    </a>
+                                @endforeach
+                                <a href="{{ $tipUrl }}" wire:navigate
+                                    class="col-span-full flex items-center justify-center gap-2 rounded-xl bg-club px-4 py-3 font-semibold text-club-ink shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:col-span-1 sm:flex-col sm:gap-1">
+                                    <x-ui.icon name="pencil-square" class="size-6" />
+                                    <span>{{ $this->myTip ? __('Change tip') : __('Tip now') }}</span>
+                                </a>
+                            </div>
                         @else
                             @if ($this->myTip)
                                 <x-ui.badge color="zinc">{{ __('Your tip: :score', ['score' => $this->myTip->score()]) }}</x-ui.badge>
@@ -351,6 +374,11 @@ new #[Layout('layouts::public')] class extends Component {
                     </div>
                 </div>
             </section>
+
+            {{-- Puls kolejki na żywo: ilu graczy już typuje, składy, pytania, pojedynki --}}
+            @unless ($played)
+                <livewire:pages::home.live-pulse :matchday-id="$matchday->id" :key="'live-' . $matchday->id" />
+            @endunless
 
             {{-- Rywale w kolejce: na komputerze są w prawej kolumnie, na telefonie i tablecie tutaj, zamiast w menu „Więcej” --}}
             @auth
@@ -384,42 +412,106 @@ new #[Layout('layouts::public')] class extends Component {
             @endif
         @endif
 
-        {{-- Tabela ligi gracza (cała liga, w Lidze podwórkowej miejsca wokół gracza) --}}
-        @if ($league = $this->myLeague)
-            <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
-                <div class="flex items-center justify-between gap-2 px-5 pb-2 pt-4">
-                    <x-ui.heading>{{ $league['name'] }}</x-ui.heading>
-                    <a href="{{ $league['url'] }}" wire:navigate class="text-xs font-semibold text-club hover:underline">{{ __('Full table') }}</a>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm tabular-nums">
-                        <thead>
-                            <tr class="text-left text-[11px] text-ui-muted">
-                                <th class="px-5 py-1.5 font-medium">#</th>
-                                <th class="py-1.5 font-medium">{{ __('Team') }}</th>
-                                <th class="px-2 py-1.5 text-right font-medium">{{ __('M') }}</th>
-                                <th class="px-2 py-1.5 text-right font-medium">{{ __('Goals') }}</th>
-                                <th class="px-5 py-1.5 text-right font-medium">{{ __('Pts') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($league['rows'] as $row)
-                                <tr wire:key="league-row-{{ $row['place'] }}" @class([
-                                    'border-t border-ui-line',
-                                    'bg-club/10 shadow-[inset_2px_0_0_var(--ui-club)]' => $row['me'],
-                                ])>
-                                    <td class="px-5 py-2 text-ui-muted">{{ $row['place'] }}</td>
-                                    <td @class(['max-w-0 truncate py-2 font-medium', 'italic' => $row['bot']])>{{ $row['name'] }}</td>
-                                    <td class="px-2 py-2 text-right text-ui-muted">{{ $row['played'] }}</td>
-                                    <td class="px-2 py-2 text-right text-ui-muted">{{ $row['goals'] }}</td>
-                                    <td class="px-5 py-2 text-right font-semibold">{{ $row['points'] }}</td>
-                                </tr>
+        {{-- Liga gracza (gość: czołówka Ekstraklasy) obok ciekawostek sezonu albo skrótu zasad przed pierwszą kolejką --}}
+        <div class="grid gap-6 lg:grid-cols-2">
+            @if ($league = $this->myLeague)
+                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                    <div class="flex items-center justify-between gap-3 border-b border-ui-line px-5 py-4">
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-bold uppercase tracking-widest text-club">{{ $league['mine'] ? __('Your league') : __('The top of Ekstraklasa') }}</p>
+                            <h2 class="truncate font-display text-lg font-semibold">{{ $league['name'] }}</h2>
+                        </div>
+                        @if ($league['mine'])
+                            <div class="text-right">
+                                <div class="font-display text-3xl font-bold leading-none tabular-nums">{{ $league['mine']['place'] }}.</div>
+                                <div class="text-[11px] font-semibold uppercase tracking-wide text-ui-muted">{{ __('place') }}</div>
+                            </div>
+                        @endif
+                    </div>
+                    <ol class="space-y-1 p-3">
+                        @foreach ($league['rows'] as $row)
+                            <li wire:key="league-row-{{ $row['place'] }}" @class([
+                                'flex items-center gap-3 rounded-xl px-3 py-2 text-sm',
+                                'bg-club text-club-ink shadow-sm' => $row['me'],
+                                'odd:bg-ui-raised/40' => !$row['me'],
+                            ])>
+                                <span @class([
+                                    'grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums',
+                                    'bg-white/20' => $row['me'],
+                                    'bg-amber-400 text-amber-950' => !$row['me'] && $row['place'] === 1,
+                                    'bg-ui-raised' => !$row['me'] && $row['place'] !== 1,
+                                ])>{{ $row['place'] }}</span>
+                                <span @class(['min-w-0 flex-1 truncate font-semibold', 'italic' => $row['bot']])>{{ $row['name'] }}</span>
+                                <span @class(['hidden text-xs tabular-nums sm:inline', 'opacity-80' => $row['me'], 'text-ui-muted' => !$row['me']])>{{ $row['played'] }} {{ __('M') }} · {{ $row['goals'] }}</span>
+                                <span class="w-10 text-right font-display text-base font-bold tabular-nums">{{ $row['points'] }}</span>
+                            </li>
+                        @endforeach
+                    </ol>
+                    <a href="{{ $league['url'] }}" wire:navigate class="flex items-center justify-center gap-1 border-t border-ui-line px-5 py-3 text-sm font-semibold text-club transition hover:bg-ui-raised/50">
+                        {{ __('Full table') }} <x-ui.icon name="arrow-right" variant="micro" />
+                    </a>
+                </section>
+            @endif
+
+            @if ($stats = $this->seasonStats)
+                {{-- Ciekawostki sezonu: celność typów i najskuteczniejsi --}}
+                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                    <div class="border-b border-ui-line px-5 py-4">
+                        <p class="text-[11px] font-bold uppercase tracking-widest text-club">{{ trans_choice('After :count matchday|After :count matchdays', $stats['matchdays'], ['count' => $stats['matchdays']]) }}</p>
+                        <h2 class="font-display text-lg font-semibold">{{ __('Season facts') }}</h2>
+                    </div>
+                    <div class="grid grid-cols-3 divide-x divide-ui-line border-b border-ui-line text-center">
+                        @foreach ([[$stats['outcome'] . '%', __('right outcomes')], [$stats['exact'] . '%', __('exact scores')], [$stats['exact_count'], __('exact hits')]] as [$value, $label])
+                            <div class="px-2 py-4">
+                                <div class="font-display text-2xl font-bold tabular-nums text-club">{{ $value }}</div>
+                                <div class="text-[11px] font-semibold uppercase leading-tight tracking-wide text-ui-muted">{{ $label }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="p-3">
+                        <p class="px-2 pb-2 text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Best tipsters') }}</p>
+                        <ol class="space-y-1">
+                            @foreach ($stats['top'] as $row)
+                                <li wire:key="top-{{ $row['user_id'] }}" class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm odd:bg-ui-raised/40">
+                                    <span @class([
+                                        'grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold',
+                                        'bg-amber-400 text-amber-950' => $loop->index === 0,
+                                        'bg-zinc-300 text-zinc-800' => $loop->index === 1,
+                                        'bg-orange-300 text-orange-950' => $loop->index === 2,
+                                        'bg-ui-raised' => $loop->index > 2,
+                                    ])>{{ $loop->iteration }}</span>
+                                    <span class="min-w-0 flex-1 truncate font-semibold">{{ $row['team'] }}</span>
+                                    <span class="text-xs tabular-nums text-ui-muted" title="{{ __('exact scores') }}">🎯 {{ $row['exact'] }}</span>
+                                    <span class="w-12 text-right font-display font-bold tabular-nums">{{ $row['percent'] }}%</span>
+                                </li>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        @endif
+                        </ol>
+                    </div>
+                </section>
+            @else
+                {{-- Przed pierwszą rozegraną kolejką: jak grać w trzech krokach --}}
+                <section class="rounded-2xl border border-ui-line bg-ui-surface p-5">
+                    <p class="text-[11px] font-bold uppercase tracking-widest text-club">#LechTYPER</p>
+                    <h2 class="font-display text-lg font-semibold">{{ __('How to play') }}</h2>
+                    <ol class="mt-4 space-y-4">
+                        @foreach ([
+                            ['pencil-square', __('Tip the score'), __('Before kickoff tip the score of the Lech match. One tip counts in every competition you play.')],
+                            ['user-group', __('Pick Lech players'), __('Field Lech players for each competition: goals and assists add attack, clean sheets stop the rival.')],
+                            ['trophy', __('Win trophies'), __('Climb the leagues, go deep in the cups and collect Hall of Fame points season after season.')],
+                        ] as [$icon, $title, $text])
+                            <li class="flex gap-3">
+                                <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-club/10 text-club"><x-ui.icon :name="$icon" class="size-5" /></span>
+                                <span>
+                                    <span class="block font-semibold">{{ $loop->iteration }}. {{ $title }}</span>
+                                    <span class="block text-sm text-ui-muted">{{ $text }}</span>
+                                </span>
+                            </li>
+                        @endforeach
+                    </ol>
+                    <a href="{{ route('howto') }}" wire:navigate class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">{{ __('Guide for beginners') }} <x-ui.icon name="arrow-right" variant="micro" /></a>
+                </section>
+            @endif
+        </div>
     @else
         {{-- Bez aktywnego sezonu: duży baner zapraszający do gry (z zapowiedzią sezonu w przygotowaniu) --}}
         <section class="lech-banner relative overflow-hidden rounded-2xl px-6 py-10 sm:px-10 sm:py-12">
@@ -449,21 +541,6 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
         </section>
     @endif
-
-    {{-- Liczby serwisu --}}
-    <section class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        @foreach ($this->numbers as $number)
-            <div class="group flex items-center gap-3 rounded-2xl border border-ui-line bg-ui-surface p-4">
-                <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-ui-raised">
-                    <x-ui.icon :name="$number['icon']" class="size-5 text-club" />
-                </span>
-                <div class="min-w-0">
-                    <div class="font-display text-xl font-bold leading-none tabular-nums text-ui-ink">{{ number_format($number['value'], 0, ',', ' ') }}</div>
-                    <div class="text-[11px] font-semibold uppercase leading-tight tracking-wide text-ui-muted">{{ $number['label'] }}</div>
-                </div>
-            </div>
-        @endforeach
-    </section>
 
     @unless ($this->season)
         {{-- Jak to działa: trzy kroki --}}
@@ -529,5 +606,21 @@ new #[Layout('layouts::public')] class extends Component {
 
     {{-- Newsy z panelu z ocenami kciukami: siatka 3 x 5 z paginacją --}}
     <livewire:pages::home.news />
+
+    {{-- Liczby serwisu (zmieniają się rzadko, więc na dole); nowa wartość dochodzi płynnie --}}
+    <section wire:poll.60s.visible class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        @foreach ($this->numbers as $number)
+            <div wire:key="number-{{ $loop->index }}" x-data="uiTween" data-to="{{ $number['value'] }}" :class="bump && 'ring-2 ring-club/50'"
+                class="flex items-center gap-3 rounded-2xl border border-ui-line bg-ui-surface p-4 transition">
+                <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-ui-raised">
+                    <x-ui.icon :name="$number['icon']" class="size-5 text-club" />
+                </span>
+                <div class="min-w-0">
+                    <div class="font-display text-xl font-bold leading-none tabular-nums text-ui-ink" x-text="shown">{{ number_format($number['value'], 0, ',', ' ') }}</div>
+                    <div class="text-[11px] font-semibold uppercase leading-tight tracking-wide text-ui-muted">{{ $number['label'] }}</div>
+                </div>
+            </div>
+        @endforeach
+    </section>
 
 </div>

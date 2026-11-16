@@ -12,6 +12,7 @@
         [route('history'), 'clock', __('History')],
         [route('stars'), 'star', __('Stars')],
         [route('support'), 'sparkles', __('Premium and support')],
+        [route('howto'), 'academic-cap', __('Guide for beginners')],
         [route('rules'), 'book-open', __('Rules')],
         [route('faq'), 'question-mark-circle', __('FAQ')],
         [route('office'), 'inbox', __('Complaints and requests office')],
