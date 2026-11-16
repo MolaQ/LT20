@@ -3,27 +3,33 @@
 namespace App\Support;
 
 use App\Actions\Tips\SaveTip;
+use App\Enums\CompetitionType;
 use App\Enums\MatchdayStatus;
 use App\Enums\PlayerStatus;
 use App\Models\Automat;
+use App\Models\CompetitionEntry;
 use App\Models\DesignatedPlayer;
+use App\Models\Fixture;
 use App\Models\LechPlayer;
 use App\Models\Matchday;
 use App\Models\QuestionAnswer;
+use App\Models\SeasonTeam;
 use App\Models\Tip;
 use App\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Random\Engine\Mt19937;
+use Random\Randomizer;
 
 /**
  * Automaty (decyzje MolaQ z 16.11.2026). Zwykłe konta graczy, które o ustawionej porze przed pierwszym gwizdkiem
  * (domyślnie 60 minut) same grają w kolejce, raz na kolejkę:
  *  - typ: stały wynik albo najczęstszy typ graczy w tej chwili; remis w głosowaniu wygrywa wynik lepszy dla Lecha,
  *    a bez typów graczy automat typuje 1:0,
- *  - skład: kadra Lecha bez niedostępnych i odpoczywających, od największego doświadczenia z raportów meczów
- *    (przy równym: grający regularnie, rotacja, rezerwa, potem pozycja i numer); po max_players w każdym typie
- *    rozgrywek, w którym gra, a zawodnik trafia tylko do jednego typu,
+ *  - skład: kadra Lecha bez niedostępnych i odpoczywających; strategia osobno w każdym typie rozgrywek i na mecz
+ *    z botem (najbardziej doświadczeni z raportów meczów, własna kolejność, losowo albo nikt), a skład poprawiony
+ *    w panelu na najbliższą kolejkę ma pierwszeństwo; po max_players w typie, zawodnik tylko w jednym typie,
  *  - pytania: najczęstsze odpowiedzi graczy; dwie z największą zgodnością jako atak (OF), dwie kolejne jako obrona (DEF).
  * Typy, skład i odpowiedzi innych automatów się nie liczą. Zapis typu idzie zwykłą drogą (SaveTip), więc automat
  * pojawia się w „Właśnie typowali” jak każdy gracz.
@@ -79,7 +85,7 @@ final class Automats
 
         if ($matchday->isOpenForTips() && $matchday->isFilled() && Players::canPlay($user)) {
             self::attempt($automat, 'tip', fn () => app(SaveTip::class)->handle($user, $matchday, ...self::tipFor($automat, $matchday)));
-            self::attempt($automat, 'squad', fn () => self::pickSquad($user, $matchday));
+            self::attempt($automat, 'squad', fn () => self::pickSquad($automat, $matchday));
             self::attempt($automat, 'questions', fn () => self::answerQuestions($user, $matchday));
         }
 
@@ -118,34 +124,142 @@ final class Automats
     }
 
     /**
-     * Skład automatu: ten sam porządek kadry dla każdego typu rozgrywek, kolejne max_players zawodników do kolejnego typu.
+     * Skład automatu według planu (App\Support\Automats::plan) zapisany w kolejce.
      *
      * @return array<string, array<int, int>> typ rozgrywek => id zawodników
      */
-    public static function pickSquad(User $user, Matchday $matchday): array
+    public static function pickSquad(Automat $automat, Matchday $matchday): array
     {
+        $plan = self::plan($automat, $matchday);
+        $userId = $automat->user_id;
+        $picked = [];
+
+        DB::transaction(function () use ($plan, $userId, $matchday, &$picked) {
+            DesignatedPlayer::where('matchday_id', $matchday->id)->where('user_id', $userId)->delete();
+
+            foreach ($plan as $set => $row) {
+                foreach ($row['players'] as $playerId) {
+                    DesignatedPlayer::create(['matchday_id' => $matchday->id, 'user_id' => $userId, 'score_set' => $set, 'lech_player_id' => $playerId]);
+                    $picked[$set][] = $playerId;
+                }
+            }
+        });
+
+        return $picked;
+    }
+
+    /**
+     * Plan składu automatu na kolejkę, osobno w każdym typie rozgrywek, w którym gra (podgląd w panelu i zapis przed meczem).
+     * Rozgrywki wybierają po kolei (kolejność z panelu), każde swoją strategią i liczbą zawodników; gdy wszyscy rywale
+     * w tych rozgrywkach w tej rundzie to boty (terminarz jest znany przed meczem), działa strategia na mecz z botem.
+     * Skład poprawiony ręcznie na tę kolejkę ma pierwszeństwo. Zawodnik trafia tylko do jednych rozgrywek, najwyżej
+     * max_players w każdych, bez niedostępnych i odpoczywających.
+     *
+     * @return array<string, array{label: string, opponents: array<int, string>, bot: bool, strategy: string, players: array<int, int>, manual: bool}>
+     */
+    public static function plan(Automat $automat, Matchday $matchday): array
+    {
+        $user = $automat->user;
         $sets = PlayerCompetitions::types($user->id, $matchday->season_id, $matchday->number);
 
         if ($sets === []) {
             return [];
         }
 
-        $order = self::squadOrder($user, $matchday);
+        $free = self::squadOrder($user, $matchday);
         $max = max(0, Designation::value('max_players'));
-        $picked = [];
+        $override = ($automat->squad_override['matchday_id'] ?? null) === $matchday->id ? ($automat->squad_override['sets'] ?? []) : null;
+        $opponents = self::opponents($user, $matchday);
+        $playing = array_map(fn (CompetitionType $set) => $set->value, $sets);
+        $used = [];
+        $plan = [];
 
-        DB::transaction(function () use ($user, $matchday, $sets, $order, $max, &$picked) {
-            DesignatedPlayer::where('matchday_id', $matchday->id)->where('user_id', $user->id)->delete();
+        // Rozgrywki w kolejności z panelu: pierwsze wybierają spośród wszystkich wolnych zawodników.
+        foreach (array_values(array_intersect($automat->setOrder(), $playing)) as $value) {
+            $rule = $automat->rule($value);
+            $rivals = $opponents[$value] ?? [];
+            $bot = $rivals !== [] && collect($rivals)->every(fn (array $rival) => $rival['bot']);
+            $strategy = $bot && $rule['bot'] !== Automat::SQUAD_SAME ? $rule['bot'] : $rule['strategy'];
+            $pool = array_values(array_diff($free, $used));
+            $manual = $override !== null && array_key_exists($value, $override);
 
-            foreach ($sets as $set) {
-                foreach (array_splice($order, 0, $max) as $playerId) {
-                    DesignatedPlayer::create(['matchday_id' => $matchday->id, 'user_id' => $user->id, 'score_set' => $set->value, 'lech_player_id' => $playerId]);
-                    $picked[$set->value][] = $playerId;
-                }
+            $players = $manual
+                ? array_slice(array_values(array_intersect(array_map('intval', (array) $override[$value]), $pool)), 0, $max)
+                : array_slice(self::orderBy($strategy, $pool, $automat, $matchday), 0, $rule['count']);
+            $used = array_merge($used, $players);
+
+            $plan[$value] = [
+                'label' => CompetitionType::from($value)->scoreSetLabel(),
+                'opponents' => array_column($rivals, 'name'),
+                'bot' => $bot,
+                'strategy' => $strategy,
+                'players' => $players,
+                'manual' => $manual,
+            ];
+        }
+
+        return $plan;
+    }
+
+    /**
+     * Kolejność zawodników według strategii. $pool jest już od najbardziej doświadczonych.
+     *
+     * @param  array<int, int>  $pool
+     * @return array<int, int>
+     */
+    public static function orderBy(string $strategy, array $pool, Automat $automat, Matchday $matchday): array
+    {
+        return match ($strategy) {
+            // Własna kolejność, a po niej pozostali według doświadczenia.
+            'priority' => array_values(array_unique(array_merge(array_intersect(array_map('intval', $automat->squad_priority ?? []), $pool), $pool))),
+            'random' => $pool === [] ? [] : (new Randomizer(new Mt19937(crc32($matchday->id.'-a'.$automat->id))))->shuffleArray($pool),
+            'none' => [],
+            default => $pool,
+        };
+    }
+
+    /**
+     * Rywale automatu w tej rundzie w każdym typie rozgrywek: nazwa i czy to bot (wolny los w Lidze podwórkowej też).
+     *
+     * @return array<string, array<int, array{name: string, bot: bool}>>
+     */
+    public static function opponents(User $user, Matchday $matchday): array
+    {
+        $team = SeasonTeam::where('season_id', $matchday->season_id)->where('user_id', $user->id)->first();
+
+        if (! $team) {
+            return [];
+        }
+
+        $entries = CompetitionEntry::with('competition:id,type')->where('season_team_id', $team->id)->get()->keyBy('id');
+
+        if ($entries->isEmpty()) {
+            return [];
+        }
+
+        $fixtures = Fixture::where('round', $matchday->number)
+            ->where(fn ($q) => $q->whereIn('home_entry_id', $entries->keys())->orWhereIn('away_entry_id', $entries->keys()))
+            ->get();
+        $out = [];
+
+        foreach ($fixtures as $fixture) {
+            $homeMine = $fixture->home_entry_id !== null && $entries->has($fixture->home_entry_id);
+            $mine = $entries->get($homeMine ? $fixture->home_entry_id : (int) $fixture->away_entry_id);
+            $type = $mine?->competition?->getAttribute('type');
+
+            if (! $type instanceof CompetitionType) {
+                continue;
             }
-        });
 
-        return $picked;
+            $otherId = $homeMine ? $fixture->away_entry_id : $fixture->home_entry_id;
+            $other = $otherId ? CompetitionEntry::with('seasonTeam.user:id,name,team_name', 'seasonTeam.bot:id,name')->find($otherId)?->seasonTeam : null;
+
+            $out[$type->scoreSet()->value][] = $other instanceof SeasonTeam
+                ? ['name' => (string) $other->name, 'bot' => $other->bot_id !== null]
+                : ['name' => Fixture::VIRTUAL_OPPONENT, 'bot' => true];
+        }
+
+        return $out;
     }
 
     /**
