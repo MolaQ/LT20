@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Support\Players;
+use App\Support\Premium;
 use App\Support\Seo;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Verified;
@@ -36,10 +37,10 @@ class AppServiceProvider extends ServiceProvider
         // Opis i obrazek strony (App\Support\Seo) nie przechodzą na następne żądanie (kolejka, testy).
         $this->app->terminating(fn () => Seo::reset());
 
-        // Nowe konto po potwierdzeniu adresu e-mail dostaje rolę User i od razu trafia na listę sezonu.
+        // Nowe konto po potwierdzeniu adresu e-mail dostaje rolę User, od razu trafia na listę sezonu i dostaje premium na start.
         Event::listen(Verified::class, function (Verified $event): void {
-            if ($event->user instanceof User) {
-                Players::approveVerified($event->user);
+            if ($event->user instanceof User && Players::approveVerified($event->user)) {
+                Premium::welcome($event->user);
             }
         });
     }
