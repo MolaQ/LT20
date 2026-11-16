@@ -40,6 +40,7 @@
         ]],
         [__('Players'), $canRoles || $canRequests, [
             $item('users', 'dashboard.users', __('Users'), show: $canRoles),
+            $item('cpu-chip', 'dashboard.automats', __('Automats'), show: $canRoles),
             $item('identification', 'dashboard.team-requests', __('Team requests'), badge: $requests, show: $canRequests),
             $item('banknotes', 'dashboard.payments', __('Payments'), show: $canRoles),
         ]],

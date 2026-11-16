@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Automats;
 use App\Support\Premium;
 use App\Support\Push;
 use Illuminate\Foundation\Inspiring;
@@ -37,3 +38,10 @@ Schedule::command('push:matchdays')->everyFiveMinutes()->withoutOverlapping();
 
 // Stare odsłony stron (App\Models\PageView, ok. 13 miesięcy) i inne modele z Prunable.
 Schedule::command('model:prune')->daily();
+
+// Automaty (App\Support\Automats): o ustawionej porze przed pierwszym gwizdkiem typują, wybierają skład i odpowiadają na pytania.
+Artisan::command('automats:run', function () {
+    $this->info('Automats played: '.Automats::run());
+})->purpose('Let the automat teams tip, pick a squad and answer questions before kickoff');
+
+Schedule::command('automats:run')->everyMinute()->withoutOverlapping();
