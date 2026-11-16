@@ -243,7 +243,7 @@ final class Automats
         foreach ($fixtures as $fixture) {
             $homeMine = $fixture->home_entry_id !== null && $entries->has($fixture->home_entry_id);
             $mine = $entries->get($homeMine ? $fixture->home_entry_id : (int) $fixture->away_entry_id);
-            $type = $mine?->competition?->type;
+            $type = $mine?->competition?->getAttribute('type');
 
             if (! $type instanceof CompetitionType) {
                 continue;
