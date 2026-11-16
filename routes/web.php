@@ -33,6 +33,8 @@ Route::livewire('bots/{bot}', 'pages::bot-profile')->name('bot.show');
 Route::livewire('support', 'pages::support')->name('support');
 Route::livewire('rules', 'pages::rules')->name('rules');
 Route::livewire('faq', 'pages::faq')->name('faq');
+// Poradnik dla nowych graczy: typ, skład, pytania (16.11.2026).
+Route::livewire('poradnik', 'pages::howto')->name('howto');
 Route::livewire('system', 'pages::system-feed')->name('system');
 Route::livewire('news/{news}', 'pages::news-show')->name('news.show');
 Route::livewire('office', 'pages::office')->name('office');

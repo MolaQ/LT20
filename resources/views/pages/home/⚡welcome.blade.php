@@ -508,7 +508,7 @@ new #[Layout('layouts::public')] class extends Component {
                             </li>
                         @endforeach
                     </ol>
-                    <a href="{{ route('rules') }}" wire:navigate class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">{{ __('Rules of the game') }} <x-ui.icon name="arrow-right" variant="micro" /></a>
+                    <a href="{{ route('howto') }}" wire:navigate class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">{{ __('Guide for beginners') }} <x-ui.icon name="arrow-right" variant="micro" /></a>
                 </section>
             @endif
         </div>

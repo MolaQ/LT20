@@ -8,6 +8,7 @@
         fn () => \App\Models\OfficeRequest::where('status', \App\Models\OfficeRequest::VOTING)->count());
     $brand = config('club.brand.prefix').config('club.brand.suffix');
     $links = [
+        [route('howto'), __('Guide for beginners')],
         [route('rules'), __('Rules')],
         [route('faq'), __('FAQ')],
         [route('support'), __('Premium and support')],
