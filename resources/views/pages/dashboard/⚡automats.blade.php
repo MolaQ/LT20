@@ -43,10 +43,11 @@ new class extends Component {
 
     public bool $active = true;
 
-    /** @var array<string, string> typ rozgrywek => strategia składu */
+    /** @var array<string, array{strategy: string, count: int, bot: string}> typ rozgrywek => ustawienia składu */
     public array $squadRules = [];
 
-    public string $squadVsBot = Automat::SQUAD_SAME;
+    /** @var array<int, string> kolejność typów rozgrywek przy wyborze zawodników */
+    public array $squadOrder = [];
 
     /** @var array<int, int> własna kolejność zawodników */
     public array $squadPriority = [];
@@ -249,7 +250,8 @@ new class extends Component {
     public function add(): void
     {
         $this->resetValidation();
-        $this->reset('userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active', 'squadRules', 'squadVsBot', 'squadPriority');
+        $this->reset('userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active', 'squadPriority');
+        $this->loadSquadRules(new Automat);
         $this->editId = 0;
     }
 
@@ -265,9 +267,22 @@ new class extends Component {
         $this->tipOpponent = $automat->tip_opponent;
         $this->minutesBefore = $automat->minutes_before;
         $this->active = $automat->active;
-        $this->squadRules = collect(Questions::sets())->mapWithKeys(fn (string $set) => [$set => $automat->strategyFor($set)])->all();
-        $this->squadVsBot = $automat->squad_vs_bot;
+        $this->loadSquadRules($automat);
         $this->squadPriority = array_values(array_map('intval', $automat->squad_priority ?? []));
+    }
+
+    private function loadSquadRules(Automat $automat): void
+    {
+        $this->squadOrder = $automat->setOrder();
+        $this->squadRules = collect($this->squadOrder)->mapWithKeys(fn (string $set) => [$set => $automat->rule($set)])->all();
+    }
+
+    /** Rozgrywki wyżej: wybierają zawodników wcześniej. */
+    public function raiseSet(int $index): void
+    {
+        if ($index > 0 && isset($this->squadOrder[$index])) {
+            [$this->squadOrder[$index - 1], $this->squadOrder[$index]] = [$this->squadOrder[$index], $this->squadOrder[$index - 1]];
+        }
     }
 
     public function save(): void
@@ -281,8 +296,11 @@ new class extends Component {
             'tipOpponent' => ['required', 'integer', 'min:0', 'max:'.TipRules::MAX_GOALS],
             'minutesBefore' => ['required', 'integer', 'min:5', 'max:720'],
             'squadRules' => ['array'],
-            'squadRules.*' => ['in:'.implode(',', Automat::SQUAD_STRATEGIES)],
-            'squadVsBot' => ['required', 'in:'.implode(',', [Automat::SQUAD_SAME, ...Automat::SQUAD_STRATEGIES])],
+            'squadRules.*.strategy' => ['required', 'in:'.implode(',', Automat::SQUAD_STRATEGIES)],
+            'squadRules.*.count' => ['required', 'integer', 'min:0', 'max:'.Designation::value('max_players')],
+            'squadRules.*.bot' => ['required', 'in:'.implode(',', [Automat::SQUAD_SAME, ...Automat::SQUAD_STRATEGIES])],
+            'squadOrder' => ['array'],
+            'squadOrder.*' => ['in:'.implode(',', Questions::sets())],
             'squadPriority' => ['array'],
             'squadPriority.*' => ['integer', 'exists:lech_players,id'],
         ], [], [
@@ -298,8 +316,9 @@ new class extends Component {
             'tip_opponent' => $this->tipOpponent,
             'minutes_before' => $this->minutesBefore,
             'active' => $this->active,
-            'squad_rules' => array_intersect_key($this->squadRules, array_flip(Questions::sets())) ?: null,
-            'squad_vs_bot' => $this->squadVsBot,
+            'squad_rules' => collect(array_intersect_key($this->squadRules, array_flip(Questions::sets())))
+                ->map(fn (array $rule) => ['strategy' => $rule['strategy'], 'count' => (int) $rule['count'], 'bot' => $rule['bot']])->all() ?: null,
+            'squad_order' => array_values(array_unique($this->squadOrder)) ?: null,
             'squad_priority' => array_values(array_unique(array_map('intval', $this->squadPriority))) ?: null,
         ];
         $automat->fill($data)->save();
@@ -321,7 +340,7 @@ new class extends Component {
 
     public function cancel(): void
     {
-        $this->reset('editId', 'userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active', 'squadRules', 'squadVsBot', 'squadPriority');
+        $this->reset('editId', 'userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active', 'squadRules', 'squadOrder', 'squadPriority');
         $this->resetValidation();
     }
 
@@ -421,21 +440,38 @@ new class extends Component {
             @endphp
             <div class="space-y-3 border-t border-ui-line pt-5">
                 <p class="text-sm font-semibold">{{ __('Squad') }}</p>
-                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                    @foreach (\App\Support\Questions::sets() as $set)
-                        <x-ui.select wire:model.live="squadRules.{{ $set }}" :label="\App\Support\Questions::setLabel($set)">
-                            @foreach ($strategies as $value => $label)
-                                <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
-                            @endforeach
-                        </x-ui.select>
+                <p class="text-xs text-ui-muted">{{ __('Competitions pick players from the top: the first one chooses from all free players, the next ones from the rest. A player plays in one competition only.') }}</p>
+                <div class="overflow-hidden rounded-xl border border-ui-line">
+                    <div class="hidden grid-cols-[2.5rem_1fr_12rem_6rem_12rem] gap-3 bg-ui-raised/50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-ui-muted md:grid">
+                        <span></span><span>{{ __('Competition') }}</span><span>{{ __('Strategy') }}</span><span>{{ __('Number of players') }}</span><span>{{ __('Against a bot') }}</span>
+                    </div>
+                    @foreach ($squadOrder as $index => $set)
+                        <div wire:key="rule-{{ $set }}" class="grid grid-cols-[2.5rem_1fr] items-center gap-3 border-t border-ui-line px-3 py-2.5 first:border-t-0 md:grid-cols-[2.5rem_1fr_12rem_6rem_12rem]">
+                            <span class="flex items-center gap-0.5">
+                                <b class="w-4 text-center tabular-nums text-club">{{ $index + 1 }}</b>
+                                @if ($index > 0)
+                                    <button type="button" wire:click="raiseSet({{ $index }})" class="grid size-6 place-items-center rounded-full text-ui-muted hover:bg-ui-raised" aria-label="{{ __('Move up') }}"><x-ui.icon name="chevron-up" variant="micro" /></button>
+                                @endif
+                            </span>
+                            <span class="font-semibold">{{ \App\Support\Questions::setLabel($set) }}</span>
+                            <div class="col-span-2 grid grid-cols-[1fr_5rem_1fr] gap-2 md:col-span-3 md:grid-cols-[12rem_6rem_12rem] md:gap-3">
+                                <x-ui.select wire:model.live="squadRules.{{ $set }}.strategy" :aria-label="__('Strategy')">
+                                    @foreach ($strategies as $value => $label)
+                                        <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
+                                    @endforeach
+                                </x-ui.select>
+                                <x-ui.input type="number" min="0" max="{{ \App\Support\Designation::value('max_players') }}" wire:model="squadRules.{{ $set }}.count" :aria-label="__('Number of players')" />
+                                <x-ui.select wire:model.live="squadRules.{{ $set }}.bot" :aria-label="__('Against a bot')">
+                                    <x-ui.select.option value="same">{{ __('As in the competition') }}</x-ui.select.option>
+                                    @foreach ($strategies as $value => $label)
+                                        <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
+                                    @endforeach
+                                </x-ui.select>
+                            </div>
+                        </div>
                     @endforeach
-                    <x-ui.select wire:model.live="squadVsBot" :label="__('Against a bot')">
-                        <x-ui.select.option value="same">{{ __('As in the competition') }}</x-ui.select.option>
-                        @foreach ($strategies as $value => $label)
-                            <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
-                        @endforeach
-                    </x-ui.select>
                 </div>
+                <x-ui.error name="squadRules.*" />
                 <div class="rounded-xl bg-ui-raised/50 p-3">
                     <p class="text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ __('Own order') }}</p>
                     <p class="mb-2 text-xs text-ui-muted">{{ __('Used by the Own order strategy. Players from the top, the rest by experience. Resting and unavailable players are skipped.') }}</p>

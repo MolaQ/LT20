@@ -150,7 +150,8 @@ final class Automats
 
     /**
      * Plan składu automatu na kolejkę, osobno w każdym typie rozgrywek, w którym gra (podgląd w panelu i zapis przed meczem).
-     * Strategia z rozgrywek, a gdy wszyscy rywale w tych rozgrywkach to boty, strategia na mecz z botem (jeśli inna).
+     * Rozgrywki wybierają po kolei (kolejność z panelu), każde swoją strategią i liczbą zawodników; gdy wszyscy rywale
+     * w tych rozgrywkach w tej rundzie to boty (terminarz jest znany przed meczem), działa strategia na mecz z botem.
      * Skład poprawiony ręcznie na tę kolejkę ma pierwszeństwo. Zawodnik trafia tylko do jednych rozgrywek, najwyżej
      * max_players w każdych, bez niedostępnych i odpoczywających.
      *
@@ -169,25 +170,26 @@ final class Automats
         $max = max(0, Designation::value('max_players'));
         $override = ($automat->squad_override['matchday_id'] ?? null) === $matchday->id ? ($automat->squad_override['sets'] ?? []) : null;
         $opponents = self::opponents($user, $matchday);
+        $playing = array_map(fn (CompetitionType $set) => $set->value, $sets);
         $used = [];
         $plan = [];
 
-        foreach ($sets as $set) {
-            $value = $set->value;
+        // Rozgrywki w kolejności z panelu: pierwsze wybierają spośród wszystkich wolnych zawodników.
+        foreach (array_values(array_intersect($automat->setOrder(), $playing)) as $value) {
+            $rule = $automat->rule($value);
             $rivals = $opponents[$value] ?? [];
             $bot = $rivals !== [] && collect($rivals)->every(fn (array $rival) => $rival['bot']);
-            $strategy = $bot && $automat->squad_vs_bot !== Automat::SQUAD_SAME ? $automat->squad_vs_bot : $automat->strategyFor($value);
+            $strategy = $bot && $rule['bot'] !== Automat::SQUAD_SAME ? $rule['bot'] : $rule['strategy'];
             $pool = array_values(array_diff($free, $used));
             $manual = $override !== null && array_key_exists($value, $override);
 
             $players = $manual
-                ? array_values(array_intersect(array_map('intval', (array) $override[$value]), $pool))
-                : self::orderBy($strategy, $pool, $automat, $matchday);
-            $players = array_slice($players, 0, $max);
+                ? array_slice(array_values(array_intersect(array_map('intval', (array) $override[$value]), $pool)), 0, $max)
+                : array_slice(self::orderBy($strategy, $pool, $automat, $matchday), 0, $rule['count']);
             $used = array_merge($used, $players);
 
             $plan[$value] = [
-                'label' => $set->scoreSetLabel(),
+                'label' => CompetitionType::from($value)->scoreSetLabel(),
                 'opponents' => array_column($rivals, 'name'),
                 'bot' => $bot,
                 'strategy' => $strategy,

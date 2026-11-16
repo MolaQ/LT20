@@ -206,22 +206,24 @@ test('the squad follows the strategy of each competition, the bot strategy and a
     Fixture::create(['competition_id' => $cup->id, 'round' => 1, 'home_entry_id' => $humanCup->id, 'away_entry_id' => $myCup->id]);
 
     $players = collect(range(1, 4))->map(fn ($n) => LechPlayer::create(['name' => 'Zawodnik '.$n, 'number' => $n, 'position' => 'midfielder']));
+    // Puchar wybiera pierwszy (3 zawodników, własna kolejność), liga po nim; w lidze rywalem jest bot, więc nikt.
     $automat = Automat::create([
         'user_id' => $user->id,
-        'squad_rules' => ['league' => 'experience', 'cup' => 'priority'],
-        'squad_vs_bot' => 'none',
+        'squad_rules' => ['league' => ['strategy' => 'experience', 'count' => 6, 'bot' => 'none'], 'cup' => ['strategy' => 'priority', 'count' => 3, 'bot' => 'same']],
+        'squad_order' => ['cup', 'league'],
         'squad_priority' => [$players[3]->id, $players[1]->id],
     ]);
 
     $plan = Automats::plan($automat->fresh('user'), $matchday);
-    expect($plan['league'])->toMatchArray(['bot' => true, 'strategy' => 'none', 'players' => [], 'manual' => false])
+    expect(array_keys($plan))->toBe(['cup', 'league'])
+        ->and($plan['league'])->toMatchArray(['bot' => true, 'strategy' => 'none', 'players' => [], 'manual' => false])
         ->and($plan['cup'])->toMatchArray(['bot' => false, 'strategy' => 'priority', 'manual' => false])
-        ->and($plan['cup']['players'])->toBe([$players[3]->id, $players[1]->id, $players[0]->id, $players[2]->id]);
+        ->and($plan['cup']['players'])->toBe([$players[3]->id, $players[1]->id, $players[0]->id]);
 
-    // Skład poprawiony ręcznie na tę kolejkę ma pierwszeństwo; zawodnik z ligi nie trafia już do pucharu.
-    $automat->update(['squad_override' => ['matchday_id' => $matchday->id, 'sets' => ['league' => [$players[1]->id]]]]);
+    // Skład poprawiony ręcznie na tę kolejkę ma pierwszeństwo; zawodnik z pucharu nie trafia już do ligi.
+    $automat->update(['squad_override' => ['matchday_id' => $matchday->id, 'sets' => ['league' => [$players[0]->id, $players[2]->id]]]]);
     expect(Automats::pickSquad($automat->fresh('user'), $matchday))->toBe([
-        'league' => [$players[1]->id],
-        'cup' => [$players[3]->id, $players[0]->id, $players[2]->id],
+        'cup' => [$players[3]->id, $players[1]->id, $players[0]->id],
+        'league' => [$players[2]->id],
     ]);
 });
