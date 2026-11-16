@@ -158,5 +158,13 @@ test('an admin adds an automat as an ordinary verified player', function () {
 });
 
 test('the automats page is only for the admin', function () {
-    $this->actingAs(User::factory()->create())->get(route('dashboard.automats'))->assertForbidden();
+    // Moderator z dostępem do panelu, ale bez roli Admin, wraca na pulpit.
+    $permissions = [\App\Enums\Permission::DashboardAccess->value, \App\Enums\Permission::SeasonList->value];
+    foreach ($permissions as $permission) {
+        \Spatie\Permission\Models\Permission::findOrCreate($permission, 'web');
+    }
+    $moderator = User::factory()->create();
+    $moderator->givePermissionTo($permissions);
+
+    $this->actingAs($moderator)->get(route('dashboard.automats'))->assertRedirect(route('dashboard'));
 });
