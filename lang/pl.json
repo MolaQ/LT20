@@ -2418,5 +2418,6 @@
     "Used by the Own order strategy. Players from the top, the rest by experience. Resting and unavailable players are skipped.": "Dla strategii Własna kolejność. Najpierw zawodnicy z listy od góry, potem reszta według doświadczenia. Odpoczywający i niedostępni są pomijani.",
     "Competitions pick players from the top: the first one chooses from all free players, the next ones from the rest. A player plays in one competition only.": "Rozgrywki wybierają zawodników od góry: pierwsze spośród wszystkich wolnych, kolejne z pozostałych. Zawodnik gra tylko w jednych rozgrywkach.",
     "Strategy": "Strategia",
-    "Number of players": "Zawodników"
+    "Number of players": "Zawodników",
+    "Least experienced": "Najmniej doświadczeni"
 }
