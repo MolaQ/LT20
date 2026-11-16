@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Support\Audit;
 use App\Support\Automats;
 use App\Support\Players;
-use App\Support\TeamRules;
 use App\Support\TipRules;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -15,7 +14,8 @@ use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 /**
- * Automaty (16.11.2026): admin zakłada zespół (nazwa i e-mail) i wybiera strategię typu oraz porę gry przed meczem.
+ * Automaty (16.11.2026): admin wybiera istniejącą drużynę (wyszukiwanie po nazwie albo e-mailu z podpowiedziami na żywo)
+ * i ustawia strategię typu oraz porę gry przed meczem.
  * Skład (kadra Lecha od największego doświadczenia) i pytania (najczęstsze odpowiedzi, 2 OF i 2 DEF) są wspólne
  * (App\Support\Automats). Dla innych graczy to zwykłe zespoły: znacznik widać tylko tutaj. Tylko Admin.
  */
@@ -23,9 +23,10 @@ new class extends Component {
     /** Automat w edycji: null = brak formularza, 0 = nowy. */
     public ?int $editId = null;
 
-    public string $teamName = '';
+    /** Wybrana drużyna (konto gracza) i fraza wyszukiwania. */
+    public ?int $userId = null;
 
-    public string $email = '';
+    public string $search = '';
 
     public string $tipMode = Automat::MODE_POPULAR;
 
@@ -58,6 +59,48 @@ new class extends Component {
             ->where('kickoff_at', '>', now())->orderBy('kickoff_at')->first();
     }
 
+    /**
+     * Podpowiedzi drużyn do wpisanej frazy (od 2 liter): nazwa drużyny, nazwa wyświetlana albo e-mail, bez automatów.
+     *
+     * @return \Illuminate\Support\Collection<int, User>
+     */
+    #[Computed]
+    public function matches()
+    {
+        $term = Str::squish($this->search);
+
+        if (mb_strlen($term) < 2) {
+            return collect();
+        }
+
+        $like = '%'.$term.'%';
+
+        return Players::eligible()
+            ->whereNotIn('id', Automat::select('user_id'))
+            ->where(fn ($q) => $q->where('team_name', 'like', $like)->orWhere('name', 'like', $like)->orWhere('email', 'like', $like))
+            ->orderByRaw('COALESCE(team_name, name)')
+            ->limit(8)
+            ->get(['id', 'name', 'team_name', 'email']);
+    }
+
+    #[Computed]
+    public function picked(): ?User
+    {
+        return $this->userId ? User::find($this->userId, ['id', 'name', 'team_name', 'email']) : null;
+    }
+
+    public function pick(int $id): void
+    {
+        $this->userId = $id;
+        $this->search = '';
+        $this->resetValidation('userId');
+    }
+
+    public function unpick(): void
+    {
+        $this->userId = null;
+    }
+
     #[Computed]
     public function popularTip(): ?array
     {
@@ -67,7 +110,7 @@ new class extends Component {
     public function add(): void
     {
         $this->resetValidation();
-        $this->reset('teamName', 'email', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active');
+        $this->reset('userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active');
         $this->editId = 0;
     }
 
@@ -76,8 +119,8 @@ new class extends Component {
         $this->resetValidation();
         $automat = Automat::with('user')->findOrFail($id);
         $this->editId = $automat->id;
-        $this->teamName = (string) ($automat->user->team_name ?: $automat->user->name);
-        $this->email = $automat->user->email;
+        $this->userId = $automat->user_id;
+        $this->search = '';
         $this->tipMode = $automat->tip_mode;
         $this->tipLech = $automat->tip_lech;
         $this->tipOpponent = $automat->tip_opponent;
@@ -87,33 +130,22 @@ new class extends Component {
 
     public function save(): void
     {
-        $this->teamName = Str::squish($this->teamName);
-        $this->email = mb_strtolower(trim($this->email));
-        $automat = $this->editId ? Automat::with('user')->findOrFail($this->editId) : null;
+        $automat = $this->editId ? Automat::findOrFail($this->editId) : null;
 
         $this->validate([
-            'teamName' => TeamRules::name($automat?->user_id),
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'.($automat ? ','.$automat->user_id : '')],
+            'userId' => ['required', 'integer', 'exists:users,id', 'unique:automats,user_id'.($automat ? ','.$automat->id : '')],
             'tipMode' => ['required', 'in:'.implode(',', Automat::MODES)],
             'tipLech' => ['required', 'integer', 'min:0', 'max:'.TipRules::MAX_GOALS],
             'tipOpponent' => ['required', 'integer', 'min:0', 'max:'.TipRules::MAX_GOALS],
             'minutesBefore' => ['required', 'integer', 'min:5', 'max:720'],
         ], [], [
-            'teamName' => __('Team name'), 'email' => __('Email address'), 'tipLech' => 'Lech', 'tipOpponent' => __('Opponent'),
+            'userId' => __('Team'), 'tipLech' => 'Lech', 'tipOpponent' => __('Opponent'),
             'minutesBefore' => __('Minutes before kickoff'),
         ]);
 
-        if ($automat) {
-            $automat->user->update(['team_name' => $this->teamName, 'email' => $this->email]);
-        } else {
-            // Zwykłe konto gracza: potwierdzony adres, rola User i miejsce na listach sezonów jak po rejestracji.
-            $user = User::create(['name' => $this->teamName, 'team_name' => $this->teamName, 'email' => $this->email, 'password' => Str::password(32)]);
-            $user->forceFill(['email_verified_at' => now()])->save();
-            Players::approveVerified($user);
-            $automat = new Automat(['user_id' => $user->id]);
-        }
-
+        $automat ??= new Automat;
         $data = [
+            'user_id' => (int) $this->userId,
             'tip_mode' => $this->tipMode,
             'tip_lech' => $this->tipLech,
             'tip_opponent' => $this->tipOpponent,
@@ -122,7 +154,8 @@ new class extends Component {
         ];
         $automat->fill($data)->save();
 
-        Audit::log('automats.saved', $automat->user()->first(), [], $data, $this->teamName);
+        $user = $automat->user()->first();
+        Audit::log('automats.saved', $user, [], $data, $user?->team_name ?: $user?->name);
         $this->cancel();
         unset($this->automats);
         $this->dispatch('ui-toast', text: __('Saved.'), variant: 'success');
@@ -137,7 +170,7 @@ new class extends Component {
 
     public function cancel(): void
     {
-        $this->reset('editId', 'teamName', 'email', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active');
+        $this->reset('editId', 'userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active');
         $this->resetValidation();
     }
 
@@ -177,9 +210,36 @@ new class extends Component {
 
     @if ($editId !== null)
         <form wire:submit="save" class="space-y-5 rounded-2xl border border-club/40 bg-ui-surface p-5 shadow-sm" x-on:keydown.escape="$wire.cancel()">
-            <div class="grid gap-4 sm:grid-cols-2">
-                <x-ui.input wire:model="teamName" :label="__('Team name')" maxlength="40" />
-                <x-ui.input wire:model="email" type="email" :label="__('Email address')" maxlength="255" />
+            {{-- Drużyna: wyszukiwanie po nazwie albo e-mailu, podpowiedzi na żywo --}}
+            <div>
+                <p class="mb-1 text-sm font-semibold">{{ __('Team') }}</p>
+                @if ($picked = $this->picked)
+                    <div class="flex items-center gap-3 rounded-xl border border-club/40 bg-club/5 px-3 py-2.5">
+                        <x-ui.icon name="cpu-chip" variant="mini" class="shrink-0 text-club" />
+                        <span class="min-w-0 flex-1 truncate"><b>{{ $picked->team_name ?: $picked->name }}</b> <span class="text-ui-muted">({{ $picked->email }})</span></span>
+                        @if (! $editId)
+                            <button type="button" wire:click="unpick" class="text-sm font-semibold text-club hover:underline">{{ __('Change') }}</button>
+                        @endif
+                    </div>
+                @else
+                    <div class="relative" x-data="{ open: true }" x-on:click.outside="open = false">
+                        <x-ui.input wire:model.live.debounce.250ms="search" icon="magnifying-glass" :placeholder="__('Type the team name or email')"
+                            autocomplete="off" x-on:focus="open = true" x-on:input="open = true" />
+                        @if (mb_strlen(trim($search)) >= 2)
+                            <div x-show="open" class="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-ui-line bg-ui-surface shadow-lg">
+                                @forelse ($this->matches as $match)
+                                    <button type="button" wire:key="match-{{ $match->id }}" wire:click="pick({{ $match->id }})"
+                                        class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition hover:bg-ui-raised">
+                                        <span class="truncate"><b>{{ $match->team_name ?: $match->name }}</b> <span class="text-ui-muted">({{ $match->email }})</span></span>
+                                    </button>
+                                @empty
+                                    <p class="px-3 py-2.5 text-sm text-ui-muted">{{ __('No team found.') }}</p>
+                                @endforelse
+                            </div>
+                        @endif
+                    </div>
+                @endif
+                <x-ui.error name="userId" />
             </div>
 
             <div class="grid gap-5 lg:grid-cols-[1fr_16rem]">
