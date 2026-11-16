@@ -258,6 +258,10 @@ new #[Layout('layouts::public')] class extends Component {
                                 </div>
                             @endif
                             <div class="{{ $index === 0 ? 'items-end text-right' : 'items-start text-left' }} flex min-w-0 flex-col gap-1">
+                                {{-- Barwy klubu (rywal z bazy w panelu Rywale, Lech na stałe) --}}
+                                @if ($stripe = \App\Models\Rival::stripe($side['lech'] ? \App\Models\Rival::LECH_COLORS : \App\Models\Rival::colorsFor($side['name'])))
+                                    <span class="mb-1 h-1.5 w-16 rounded-full shadow-sm ring-1 ring-black/10 sm:w-24 dark:ring-white/10" style="{{ $stripe }}"></span>
+                                @endif
                                 <span class="{{ $side['lech'] ? 'text-club' : 'text-ui-ink' }} truncate font-display text-base font-semibold sm:text-xl">{{ $side['name'] }}</span>
                                 <span class="rounded bg-ui-raised px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ui-muted">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
                             </div>

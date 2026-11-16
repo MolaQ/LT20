@@ -64,6 +64,9 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('panel/lech-calendar/{lechMatch}/report', 'pages::dashboard.lech-match-report')
         ->middleware('permission:'.Permission::SeasonList->value)
         ->name('dashboard.lech-match-report');
+    Route::livewire('panel/rivals', 'pages::dashboard.rivals')
+        ->middleware('permission:'.Permission::SeasonList->value)
+        ->name('dashboard.rivals');
     Route::livewire('panel/season-teams', 'pages::dashboard.season-teams')
         ->middleware('permission:'.Permission::SeasonList->value)
         ->name('dashboard.season-teams');
