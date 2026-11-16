@@ -82,6 +82,8 @@ class Audit
             'season_list.moved' => __('Team moved to another league'),
             'season_list.swapped' => __('Player swapped with a bot'),
             'guide.saved' => __('Rules or FAQ item saved'),
+            'rivals.saved' => __('Rival saved'),
+            'rivals.deleted' => __('Rival deleted'),
             'guide.deleted' => __('Rules or FAQ item deleted'),
             'guide.restored' => __('Rules or FAQ restored to defaults'),
             'season_list.reordered' => __('Team order changed'),

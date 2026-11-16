@@ -594,7 +594,8 @@ new class extends Component {
 
             @if ($mode === 'edit')
                 {{-- Dane meczu kolejki: zapis zmienia mecz w kalendarzu Lecha i kolejkę, typy graczy zostają --}}
-                <x-ui.input wire:model="opponent" :label="__('Opponent')" placeholder="Legia Warszawa" />
+                <x-ui.input wire:model="opponent" :label="__('Opponent')" placeholder="Legia Warszawa" list="rival-names" />
+                @include('partials.rival-names')
                 <x-ui.switch wire:model="isHome" :label="__('Home match')" />
                 <x-ui.select wire:model="competition" :label="__('Competition')">
                     @foreach (\App\Enums\MatchCompetition::options() as $value => $label)

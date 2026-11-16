@@ -301,7 +301,8 @@ new class extends Component {
         <form wire:submit="save" class="space-y-6">
             <x-ui.heading size="lg">{{ $editId ? __('Edit match') : __('New match') }}</x-ui.heading>
 
-            <x-ui.input wire:model="opponent" :label="__('Opponent')" placeholder="Legia Warszawa" />
+            <x-ui.input wire:model="opponent" :label="__('Opponent')" placeholder="Legia Warszawa" list="rival-names" />
+            @include('partials.rival-names')
             <x-ui.switch wire:model="isHome" :label="__('Home match')" />
             <x-ui.select wire:model="competition" :label="__('Competition')">
                 @foreach (\App\Enums\MatchCompetition::options() as $value => $label)

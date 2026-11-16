@@ -27,6 +27,7 @@
             $item('calendar-days', 'dashboard.seasons', __('Seasons')),
             $item('calendar', 'dashboard.matchdays', __('Matchdays'), ['dashboard.matchdays', 'dashboard.lech-calendar']),
             $item('users', 'dashboard.lech-squad', __('Lech squad')),
+            $item('swatch', 'dashboard.rivals', __('Rivals')),
             $item('check-badge', 'dashboard.tips', __('Tips overview')),
             $item('question-mark-circle', 'dashboard.questions', __('Questions')),
             $item('flag', 'dashboard.results', __('Results')),
