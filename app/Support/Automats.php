@@ -212,10 +212,27 @@ final class Automats
         return match ($strategy) {
             // Własna kolejność, a po niej pozostali według doświadczenia.
             'priority' => array_values(array_unique(array_merge(array_intersect(array_map('intval', $automat->squad_priority ?? []), $pool), $pool))),
+            // Najmniej doświadczeni (przy równym doświadczeniu jak w kadrze: grający regularnie, rotacja, rezerwa).
+            'least' => self::leastExperienced($pool),
             'random' => $pool === [] ? [] : (new Randomizer(new Mt19937(crc32($matchday->id.'-a'.$automat->id))))->shuffleArray($pool),
             'none' => [],
             default => $pool,
         };
+    }
+
+    /**
+     * Zawodnicy od najmniej doświadczonego; przy równym doświadczeniu zostaje kolejność z $pool.
+     *
+     * @param  array<int, int>  $pool
+     * @return array<int, int>
+     */
+    private static function leastExperienced(array $pool): array
+    {
+        $totals = MatchReport::playerTotals();
+        $rows = array_map(fn (int $id, int $index) => ['id' => $id, 'key' => [$totals[$id]['experience'] ?? 0.0, $index]], $pool, array_keys($pool));
+        usort($rows, fn (array $a, array $b) => $a['key'] <=> $b['key']);
+
+        return array_column($rows, 'id');
     }
 
     /**

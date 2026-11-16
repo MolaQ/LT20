@@ -227,3 +227,17 @@ test('the squad follows the strategy of each competition, the bot strategy and a
         'league' => [$players[2]->id],
     ]);
 });
+
+test('the least experienced strategy starts from players without experience', function () {
+    $matchday = automatMatchday(30);
+    $user = automatPlayer($matchday, 1);
+    $players = collect(range(1, 3))->map(fn ($n) => LechPlayer::create(['name' => 'Zawodnik '.$n, 'number' => $n, 'position' => 'midfielder']));
+    $match = LechMatch::create(['opponent' => 'Radomiak', 'kickoff_at' => now()->subWeek()]);
+    MatchAppearance::create(['lech_match_id' => $match->id, 'lech_player_id' => $players[0]->id, 'experience' => 2.0]);
+    MatchAppearance::create(['lech_match_id' => $match->id, 'lech_player_id' => $players[2]->id, 'experience' => 1.0]);
+
+    $automat = Automat::create(['user_id' => $user->id, 'squad_rules' => ['league' => ['strategy' => 'least', 'count' => 6, 'bot' => 'same']]]);
+
+    expect(Automats::plan($automat->fresh('user'), $matchday)['league']['players'])
+        ->toBe([$players[1]->id, $players[2]->id, $players[0]->id]);
+});
