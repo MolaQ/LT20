@@ -133,16 +133,26 @@ test('an automat waits until its time before kickoff', function () {
         ->and(Tip::where('user_id', $user->id)->exists())->toBeFalse();
 });
 
-test('an admin adds an automat as an ordinary verified player', function () {
+test('an admin finds a team by name or email and makes it an automat', function () {
     Role::findOrCreate(RoleName::Admin->value, 'web');
     Role::findOrCreate(RoleName::User->value, 'web');
     $admin = User::factory()->create();
     $admin->assignRole(RoleName::Admin->value);
+    $team = User::factory()->create(['team_name' => 'Kolejorz z Wildy', 'email' => 'wilda@example.com']);
+    $team->assignRole(RoleName::User->value);
+    $other = User::factory()->create(['team_name' => 'Bułgarska Ekipa', 'email' => 'bulgarska@example.com']);
+    $other->assignRole(RoleName::User->value);
 
-    Livewire::actingAs($admin)->test('pages::dashboard.automats')
+    $page = Livewire::actingAs($admin)->test('pages::dashboard.automats')
         ->call('add')
-        ->set('teamName', '  Kolejorz   Automat ')
-        ->set('email', 'Automat@Example.com')
+        ->set('search', 'z wildy')
+        ->assertSee('Kolejorz z Wildy')
+        ->assertSee('(wilda@example.com)')
+        ->assertDontSee('Bułgarska Ekipa')
+        ->set('search', 'bulgarska@')
+        ->assertSee('Bułgarska Ekipa');
+
+    $page->call('pick', $team->id)
         ->set('tipMode', 'fixed')
         ->set('tipLech', 2)
         ->set('tipOpponent', 0)
@@ -150,13 +160,16 @@ test('an admin adds an automat as an ordinary verified player', function () {
         ->call('save')
         ->assertHasNoErrors();
 
-    $user = User::where('email', 'automat@example.com')->firstOrFail();
-    $automat = Automat::where('user_id', $user->id)->firstOrFail();
+    $automat = Automat::where('user_id', $team->id)->firstOrFail();
+    expect($automat->only('tip_mode', 'tip_lech', 'tip_opponent', 'minutes_before'))->toBe(['tip_mode' => 'fixed', 'tip_lech' => 2, 'tip_opponent' => 0, 'minutes_before' => 45]);
 
-    expect($user->team_name)->toBe('Kolejorz Automat')
-        ->and($user->email_verified_at)->not->toBeNull()
-        ->and($user->hasRole(RoleName::User->value))->toBeTrue()
-        ->and($automat->only('tip_mode', 'tip_lech', 'tip_opponent', 'minutes_before'))->toBe(['tip_mode' => 'fixed', 'tip_lech' => 2, 'tip_opponent' => 0, 'minutes_before' => 45]);
+    // Drużyna, która już jest automatem, nie podpowiada się drugi raz i nie da się jej dodać ponownie.
+    $page->call('add')
+        ->set('search', 'z wildy')
+        ->assertDontSee('(wilda@example.com)')
+        ->call('pick', $team->id)
+        ->call('save')
+        ->assertHasErrors('userId');
 });
 
 test('the automats page is only for the admin', function () {

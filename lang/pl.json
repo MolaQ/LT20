@@ -2395,5 +2395,7 @@
     "The most common answers of the players: the two with the strongest agreement as attack, the next two as defence.": "Najczęstsze odpowiedzi graczy: dwie z największą zgodnością jako atak, dwie kolejne jako obrona.",
     "Played at :time": "Zagrał o :time",
     "Premium on the start": "Premium na start",
-    "Premium for :days days on the start": "Premium na start na :days dni"
+    "Premium for :days days on the start": "Premium na start na :days dni",
+    "Type the team name or email": "Wpisz nazwę drużyny albo e-mail",
+    "No team found.": "Nie znaleziono drużyny."
 }
