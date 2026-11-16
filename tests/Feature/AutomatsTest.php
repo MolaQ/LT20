@@ -5,9 +5,11 @@ use App\Enums\Permission;
 use App\Enums\RoleName;
 use App\Enums\SeasonStatus;
 use App\Models\Automat;
+use App\Models\Bot;
 use App\Models\Competition;
 use App\Models\CompetitionEntry;
 use App\Models\DesignatedPlayer;
+use App\Models\Fixture;
 use App\Models\LechMatch;
 use App\Models\LechPlayer;
 use App\Models\MatchAppearance;
@@ -182,4 +184,44 @@ test('the automats page is only for the admin', function () {
     $moderator->givePermissionTo($permissions);
 
     $this->actingAs($moderator)->get(route('dashboard.automats'))->assertRedirect(route('dashboard'));
+});
+
+test('the squad follows the strategy of each competition, the bot strategy and a squad set by hand', function () {
+    $matchday = automatMatchday(30);
+    $user = automatPlayer($matchday, 1);
+    $myTeam = SeasonTeam::where('user_id', $user->id)->firstOrFail();
+    $league = Competition::where('season_id', $matchday->season_id)->where('type', 'league')->firstOrFail();
+    $cup = Competition::create(['season_id' => $matchday->season_id, 'type' => 'cup', 'name' => 'Puchar Polski']);
+
+    // Liga: rywalem jest bot. Puchar: rywalem jest gracz.
+    $bot = Bot::create(['sort_order' => 9001, 'name' => 'Automatyczny Bot Testowy']);
+    $botTeam = SeasonTeam::create(['season_id' => $matchday->season_id, 'position' => 50, 'bot_id' => $bot->id]);
+    $human = automatPlayer($matchday, 2);
+    $humanTeam = SeasonTeam::where('user_id', $human->id)->firstOrFail();
+    $myLeague = CompetitionEntry::where('competition_id', $league->id)->where('season_team_id', $myTeam->id)->firstOrFail();
+    $botLeague = CompetitionEntry::create(['competition_id' => $league->id, 'season_team_id' => $botTeam->id, 'seed' => 50]);
+    $myCup = CompetitionEntry::create(['competition_id' => $cup->id, 'season_team_id' => $myTeam->id, 'seed' => 1]);
+    $humanCup = CompetitionEntry::create(['competition_id' => $cup->id, 'season_team_id' => $humanTeam->id, 'seed' => 2]);
+    Fixture::create(['competition_id' => $league->id, 'round' => 1, 'home_entry_id' => $myLeague->id, 'away_entry_id' => $botLeague->id]);
+    Fixture::create(['competition_id' => $cup->id, 'round' => 1, 'home_entry_id' => $humanCup->id, 'away_entry_id' => $myCup->id]);
+
+    $players = collect(range(1, 4))->map(fn ($n) => LechPlayer::create(['name' => 'Zawodnik '.$n, 'number' => $n, 'position' => 'midfielder']));
+    $automat = Automat::create([
+        'user_id' => $user->id,
+        'squad_rules' => ['league' => 'experience', 'cup' => 'priority'],
+        'squad_vs_bot' => 'none',
+        'squad_priority' => [$players[3]->id, $players[1]->id],
+    ]);
+
+    $plan = Automats::plan($automat->fresh('user'), $matchday);
+    expect($plan['league'])->toMatchArray(['bot' => true, 'strategy' => 'none', 'players' => [], 'manual' => false])
+        ->and($plan['cup'])->toMatchArray(['bot' => false, 'strategy' => 'priority', 'manual' => false])
+        ->and($plan['cup']['players'])->toBe([$players[3]->id, $players[1]->id, $players[0]->id, $players[2]->id]);
+
+    // Skład poprawiony ręcznie na tę kolejkę ma pierwszeństwo; zawodnik z ligi nie trafia już do pucharu.
+    $automat->update(['squad_override' => ['matchday_id' => $matchday->id, 'sets' => ['league' => [$players[1]->id]]]]);
+    expect(Automats::pickSquad($automat->fresh('user'), $matchday))->toBe([
+        'league' => [$players[1]->id],
+        'cup' => [$players[3]->id, $players[0]->id, $players[2]->id],
+    ]);
 });

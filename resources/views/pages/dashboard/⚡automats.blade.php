@@ -6,7 +6,10 @@ use App\Models\Matchday;
 use App\Models\User;
 use App\Support\Audit;
 use App\Support\Automats;
+use App\Support\Designation;
 use App\Support\Players;
+use App\Support\Questions;
+use App\Support\Squad;
 use App\Support\TipRules;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -16,8 +19,10 @@ use Livewire\Component;
 /**
  * Automaty (16.11.2026): admin wybiera istniejącą drużynę (wyszukiwanie po nazwie albo e-mailu z podpowiedziami na żywo)
  * i ustawia strategię typu oraz porę gry przed meczem.
- * Skład (kadra Lecha od największego doświadczenia) i pytania (najczęstsze odpowiedzi, 2 OF i 2 DEF) są wspólne
- * (App\Support\Automats). Dla innych graczy to zwykłe zespoły: znacznik widać tylko tutaj. Tylko Admin.
+ * Skład: strategia osobno w każdych rozgrywkach i na mecz z botem, własna kolejność zawodników, a pod przyciskiem
+ * „Skład” podgląd zawodników na najbliższą kolejkę z ręczną poprawką (App\Support\Automats::plan).
+ * Pytania (najczęstsze odpowiedzi, 2 OF i 2 DEF) są wspólne. Dla innych graczy to zwykłe zespoły: znacznik widać
+ * tylko tutaj. Tylko Admin.
  */
 new class extends Component {
     /** Automat w edycji: null = brak formularza, 0 = nowy. */
@@ -37,6 +42,20 @@ new class extends Component {
     public int $minutesBefore = 60;
 
     public bool $active = true;
+
+    /** @var array<string, string> typ rozgrywek => strategia składu */
+    public array $squadRules = [];
+
+    public string $squadVsBot = Automat::SQUAD_SAME;
+
+    /** @var array<int, int> własna kolejność zawodników */
+    public array $squadPriority = [];
+
+    /** Automat z otwartym podglądem składu i poprawiany skład: typ rozgrywek => id zawodników. */
+    public ?int $squadId = null;
+
+    /** @var array<string, array<int, int>> */
+    public array $squadDraft = [];
 
     public function render(): View
     {
@@ -101,6 +120,126 @@ new class extends Component {
         $this->userId = null;
     }
 
+    /** Kadra Lecha bez niedostępnych: id => zawodnik (nazwy w podglądzie i w liście własnej kolejności). */
+    #[Computed]
+    public function squadPlayers()
+    {
+        return Squad::available()->keyBy('id');
+    }
+
+    /**
+     * Podgląd składu otwartego automatu na najbliższą kolejkę: plan, zawodnicy wolni do dodania i limit w rozgrywkach.
+     *
+     * @return array{automat: Automat, plan: array<string, array<string, mixed>>, free: array<int, int>, max: int}|null
+     */
+    #[Computed]
+    public function squadPanel(): ?array
+    {
+        $automat = $this->squadId ? Automat::with('user')->find($this->squadId) : null;
+
+        if (! $automat || ! $this->nextMatchday) {
+            return null;
+        }
+
+        return [
+            'automat' => $automat,
+            'plan' => Automats::plan($automat, $this->nextMatchday),
+            'free' => Automats::squadOrder($automat->user, $this->nextMatchday),
+            'max' => Designation::value('max_players'),
+        ];
+    }
+
+    public function addPriority(int $playerId): void
+    {
+        if ($this->squadPlayers->has($playerId) && ! in_array($playerId, $this->squadPriority, true)) {
+            $this->squadPriority[] = $playerId;
+        }
+    }
+
+    public function removePriority(int $index): void
+    {
+        unset($this->squadPriority[$index]);
+        $this->squadPriority = array_values($this->squadPriority);
+    }
+
+    public function raisePriority(int $index): void
+    {
+        if ($index > 0 && isset($this->squadPriority[$index])) {
+            [$this->squadPriority[$index - 1], $this->squadPriority[$index]] = [$this->squadPriority[$index], $this->squadPriority[$index - 1]];
+        }
+    }
+
+    public function openSquad(int $id): void
+    {
+        $this->squadId = $this->squadId === $id ? null : $id;
+        unset($this->squadPanel);
+        $this->squadDraft = collect($this->squadPanel['plan'] ?? [])->map(fn (array $row) => $row['players'])->all();
+    }
+
+    public function addToSquad(string $set, int $playerId): void
+    {
+        $panel = $this->squadPanel;
+
+        if (! $panel || ! isset($panel['plan'][$set]) || ! in_array($playerId, $panel['free'], true)
+            || count($this->squadDraft[$set] ?? []) >= $panel['max'] || in_array($playerId, array_merge(...array_values($this->squadDraft ?: [[]])), true)) {
+            return;
+        }
+
+        $this->squadDraft[$set][] = $playerId;
+    }
+
+    public function removeFromSquad(string $set, int $index): void
+    {
+        unset($this->squadDraft[$set][$index]);
+        $this->squadDraft[$set] = array_values($this->squadDraft[$set] ?? []);
+    }
+
+    /** Skład poprawiony ręcznie zostaje na tę kolejkę; jeśli automat już zagrał, od razu poprawia zapisany skład. */
+    public function saveSquad(): void
+    {
+        $panel = $this->squadPanel;
+
+        if (! $panel) {
+            return;
+        }
+
+        $sets = [];
+        foreach ($panel['plan'] as $set => $row) {
+            $sets[$set] = array_values(array_map('intval', $this->squadDraft[$set] ?? []));
+        }
+
+        $automat = $panel['automat'];
+        $automat->update(['squad_override' => ['matchday_id' => $this->nextMatchday->id, 'sets' => $sets]]);
+        $this->replayIfPlayed($automat);
+        Audit::log('automats.saved', $automat->user, [], ['squad' => $sets], $automat->user->team_name ?: $automat->user->name);
+        unset($this->squadPanel);
+        $this->dispatch('ui-toast', text: __('Saved.'), variant: 'success');
+    }
+
+    /** Wraca do strategii: skład liczy się znów sam. */
+    public function resetSquad(): void
+    {
+        $automat = $this->squadPanel['automat'] ?? null;
+
+        if (! $automat) {
+            return;
+        }
+
+        $automat->update(['squad_override' => null]);
+        $this->replayIfPlayed($automat);
+        unset($this->squadPanel);
+        $this->squadDraft = collect($this->squadPanel['plan'] ?? [])->map(fn (array $row) => $row['players'])->all();
+    }
+
+    private function replayIfPlayed(Automat $automat): void
+    {
+        $matchday = $this->nextMatchday;
+
+        if ($matchday && $automat->last_matchday_id === $matchday->id && $matchday->isOpenForTips()) {
+            Automats::pickSquad($automat->fresh('user'), $matchday);
+        }
+    }
+
     #[Computed]
     public function popularTip(): ?array
     {
@@ -110,7 +249,7 @@ new class extends Component {
     public function add(): void
     {
         $this->resetValidation();
-        $this->reset('userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active');
+        $this->reset('userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active', 'squadRules', 'squadVsBot', 'squadPriority');
         $this->editId = 0;
     }
 
@@ -126,6 +265,9 @@ new class extends Component {
         $this->tipOpponent = $automat->tip_opponent;
         $this->minutesBefore = $automat->minutes_before;
         $this->active = $automat->active;
+        $this->squadRules = collect(Questions::sets())->mapWithKeys(fn (string $set) => [$set => $automat->strategyFor($set)])->all();
+        $this->squadVsBot = $automat->squad_vs_bot;
+        $this->squadPriority = array_values(array_map('intval', $automat->squad_priority ?? []));
     }
 
     public function save(): void
@@ -138,6 +280,11 @@ new class extends Component {
             'tipLech' => ['required', 'integer', 'min:0', 'max:'.TipRules::MAX_GOALS],
             'tipOpponent' => ['required', 'integer', 'min:0', 'max:'.TipRules::MAX_GOALS],
             'minutesBefore' => ['required', 'integer', 'min:5', 'max:720'],
+            'squadRules' => ['array'],
+            'squadRules.*' => ['in:'.implode(',', Automat::SQUAD_STRATEGIES)],
+            'squadVsBot' => ['required', 'in:'.implode(',', [Automat::SQUAD_SAME, ...Automat::SQUAD_STRATEGIES])],
+            'squadPriority' => ['array'],
+            'squadPriority.*' => ['integer', 'exists:lech_players,id'],
         ], [], [
             'userId' => __('Team'), 'tipLech' => 'Lech', 'tipOpponent' => __('Opponent'),
             'minutesBefore' => __('Minutes before kickoff'),
@@ -151,8 +298,12 @@ new class extends Component {
             'tip_opponent' => $this->tipOpponent,
             'minutes_before' => $this->minutesBefore,
             'active' => $this->active,
+            'squad_rules' => array_intersect_key($this->squadRules, array_flip(Questions::sets())) ?: null,
+            'squad_vs_bot' => $this->squadVsBot,
+            'squad_priority' => array_values(array_unique(array_map('intval', $this->squadPriority))) ?: null,
         ];
         $automat->fill($data)->save();
+        unset($this->squadPanel);
 
         $user = $automat->user()->first();
         Audit::log('automats.saved', $user, [], $data, $user?->team_name ?: $user?->name);
@@ -170,7 +321,7 @@ new class extends Component {
 
     public function cancel(): void
     {
-        $this->reset('editId', 'userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active');
+        $this->reset('editId', 'userId', 'search', 'tipMode', 'tipLech', 'tipOpponent', 'minutesBefore', 'active', 'squadRules', 'squadVsBot', 'squadPriority');
         $this->resetValidation();
     }
 
@@ -198,7 +349,7 @@ new class extends Component {
     <div class="grid gap-3 md:grid-cols-3">
         @foreach ([
             ['pencil-square', __('Tip'), __('A fixed score or the most common tip of the players at that moment. A tie in the vote goes to the score better for Lech, with no tips it is 1:0.')],
-            ['user-group', __('Squad'), __('The Lech squad without unavailable and resting players, from the most experienced. :count players in each competition the team plays.', ['count' => \App\Support\Designation::value('max_players')])],
+            ['user-group', __('Squad'), __('A strategy for each competition and for a match against a bot, up to :count players. Under Squad you see the players for the next matchday and can change them.', ['count' => \App\Support\Designation::value('max_players')])],
             ['question-mark-circle', __('Questions'), __('The most common answers of the players: the two with the strongest agreement as attack, the next two as defence.')],
         ] as [$icon, $title, $text])
             <div class="rounded-2xl border border-ui-line bg-ui-surface p-4">
@@ -264,6 +415,55 @@ new class extends Component {
                 </div>
             </div>
 
+            {{-- Strategia składu: w każdych rozgrywkach, na mecz z botem i własna kolejność --}}
+            @php
+                $strategies = \App\Models\Automat::strategyLabels();
+            @endphp
+            <div class="space-y-3 border-t border-ui-line pt-5">
+                <p class="text-sm font-semibold">{{ __('Squad') }}</p>
+                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                    @foreach (\App\Support\Questions::sets() as $set)
+                        <x-ui.select wire:model.live="squadRules.{{ $set }}" :label="\App\Support\Questions::setLabel($set)">
+                            @foreach ($strategies as $value => $label)
+                                <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
+                            @endforeach
+                        </x-ui.select>
+                    @endforeach
+                    <x-ui.select wire:model.live="squadVsBot" :label="__('Against a bot')">
+                        <x-ui.select.option value="same">{{ __('As in the competition') }}</x-ui.select.option>
+                        @foreach ($strategies as $value => $label)
+                            <x-ui.select.option :value="$value">{{ $label }}</x-ui.select.option>
+                        @endforeach
+                    </x-ui.select>
+                </div>
+                <div class="rounded-xl bg-ui-raised/50 p-3">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-ui-muted">{{ __('Own order') }}</p>
+                    <p class="mb-2 text-xs text-ui-muted">{{ __('Used by the Own order strategy. Players from the top, the rest by experience. Resting and unavailable players are skipped.') }}</p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        @foreach ($squadPriority as $index => $playerId)
+                            @if ($player = $this->squadPlayers[$playerId] ?? null)
+                                <span wire:key="prio-{{ $playerId }}" class="flex items-center gap-1 rounded-full border border-ui-line bg-ui-surface py-1 pe-1 ps-2.5 text-sm">
+                                    <b class="tabular-nums text-club">{{ $index + 1 }}.</b> {{ $player->name }}
+                                    @if ($index > 0)
+                                        <button type="button" wire:click="raisePriority({{ $index }})" class="grid size-6 place-items-center rounded-full text-ui-muted hover:bg-ui-raised" aria-label="{{ __('Move up') }}"><x-ui.icon name="chevron-left" variant="micro" /></button>
+                                    @endif
+                                    <button type="button" wire:click="removePriority({{ $index }})" class="grid size-6 place-items-center rounded-full text-ui-muted hover:bg-ui-raised" aria-label="{{ __('Delete') }}"><x-ui.icon name="x-mark" variant="micro" /></button>
+                                </span>
+                            @endif
+                        @endforeach
+                        <select x-on:change="if ($event.target.value) { $wire.addPriority(Number($event.target.value)); $event.target.value = '' }"
+                            class="h-9 rounded-full border border-ui-line bg-ui-surface px-3 text-sm text-ui-ink">
+                            <option value="">{{ __('Add a player') }}</option>
+                            @foreach ($this->squadPlayers as $player)
+                                @unless (in_array($player->id, $squadPriority, true))
+                                    <option value="{{ $player->id }}">{{ $player->name }} ({{ $player->position->label() }})</option>
+                                @endunless
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end gap-2">
                 <x-ui.btn variant="ghost" type="button" wire:click="cancel">{{ __('Cancel') }}</x-ui.btn>
                 <x-ui.btn variant="primary" type="submit">{{ __('Save') }}</x-ui.btn>
@@ -313,12 +513,86 @@ new class extends Component {
                         </div>
                     </div>
                     <div class="flex justify-end gap-1 border-t border-ui-line px-2 py-1.5">
+                        <x-ui.btn variant="ghost" size="sm" icon="user-group" wire:click="openSquad({{ $automat->id }})" @class(['text-club' => $squadId === $automat->id])>{{ __('Squad') }}</x-ui.btn>
                         <x-ui.btn variant="ghost" size="sm" icon="pencil" wire:click="edit({{ $automat->id }})">{{ __('Edit') }}</x-ui.btn>
                         <x-ui.btn variant="ghost" size="sm" icon="trash" wire:click="delete({{ $automat->id }})" wire:confirm="{{ __('Remove the automat? The team stays as an ordinary player.') }}" :aria-label="__('Delete')" />
                     </div>
                 </div>
             @endforeach
         </div>
+        {{-- Podgląd składu otwartego automatu na najbliższą kolejkę, z ręczną poprawką --}}
+        @if ($squadId !== null)
+            @if ($panel = $this->squadPanel)
+                @php
+                    $squadAutomat = $panel['automat'];
+                    $taken = array_merge(...array_values($squadDraft ?: [[]]));
+                    $strategies = \App\Models\Automat::strategyLabels();
+                @endphp
+                <section class="overflow-hidden rounded-2xl border border-club/40 bg-ui-surface shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-ui-line px-5 py-3">
+                        <div>
+                            <p class="font-semibold">{{ __('Squad for matchday :number', ['number' => $next->number]) }}: {{ $squadAutomat->user->team_name ?: $squadAutomat->user->name }}</p>
+                            <p class="text-xs text-ui-muted">{{ __('Resting and unavailable players are left out. Changes count only for this matchday.') }}</p>
+                        </div>
+                        <button type="button" wire:click="openSquad({{ $squadAutomat->id }})" class="grid size-8 place-items-center rounded-full text-ui-muted hover:bg-ui-raised" aria-label="{{ __('Close') }}"><x-ui.icon name="x-mark" variant="mini" /></button>
+                    </div>
+                    @if ($panel['plan'] === [])
+                        <p class="px-5 py-4 text-sm text-ui-muted">{{ __('This team plays no competition in this matchday.') }}</p>
+                    @else
+                        <div class="divide-y divide-ui-line">
+                            @foreach ($panel['plan'] as $set => $row)
+                                <div wire:key="plan-{{ $set }}" class="grid gap-3 px-5 py-4 lg:grid-cols-[16rem_1fr]">
+                                    <div>
+                                        <p class="font-semibold">{{ $row['label'] }}</p>
+                                        <p class="mt-0.5 text-xs text-ui-muted">
+                                            {{ $row['opponents'] !== [] ? __('Against :teams', ['teams' => implode(', ', $row['opponents'])]) : __('No duel in this round') }}
+                                        </p>
+                                        <div class="mt-1.5 flex flex-wrap gap-1">
+                                            @if ($row['bot'])<x-ui.badge size="sm" color="zinc" icon="cpu-chip">{{ __('Bot') }}</x-ui.badge>@endif
+                                            @if ($row['manual'])
+                                                <x-ui.badge size="sm" color="amber" icon="pencil">{{ __('Set by hand') }}</x-ui.badge>
+                                            @else
+                                                <x-ui.badge size="sm" color="blue">{{ $strategies[$row['strategy']] ?? $row['strategy'] }}</x-ui.badge>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        @foreach ($squadDraft[$set] ?? [] as $index => $playerId)
+                                            @if ($player = $this->squadPlayers[$playerId] ?? null)
+                                                <span wire:key="pick-{{ $set }}-{{ $playerId }}" class="flex items-center gap-1 rounded-full bg-club/10 py-1 pe-1 ps-2.5 text-sm font-medium">
+                                                    {{ $player->name }} <span class="text-xs text-ui-muted">{{ $player->position->label() }}</span>
+                                                    <button type="button" wire:click="removeFromSquad('{{ $set }}', {{ $index }})" class="grid size-6 place-items-center rounded-full text-ui-muted hover:bg-ui-raised" aria-label="{{ __('Delete') }}"><x-ui.icon name="x-mark" variant="micro" /></button>
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                        @if (count($squadDraft[$set] ?? []) < $panel['max'])
+                                            <select x-on:change="if ($event.target.value) { $wire.addToSquad(@js($set), Number($event.target.value)); $event.target.value = '' }"
+                                                class="h-9 rounded-full border border-dashed border-ui-line bg-ui-surface px-3 text-sm text-ui-ink">
+                                                <option value="">{{ __('Add a player') }} ({{ count($squadDraft[$set] ?? []) }}/{{ $panel['max'] }})</option>
+                                                @foreach ($panel['free'] as $playerId)
+                                                    @if (! in_array($playerId, $taken, true) && ($player = $this->squadPlayers[$playerId] ?? null))
+                                                        <option value="{{ $playerId }}">{{ $player->name }} ({{ $player->position->label() }})</option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="flex flex-wrap justify-end gap-2 border-t border-ui-line px-5 py-3">
+                            @if (($squadAutomat->squad_override['matchday_id'] ?? null) === $next->id)
+                                <x-ui.btn variant="ghost" icon="arrow-path" wire:click="resetSquad">{{ __('Back to the strategy') }}</x-ui.btn>
+                            @endif
+                            <x-ui.btn variant="primary" wire:click="saveSquad">{{ __('Save the squad for this matchday') }}</x-ui.btn>
+                        </div>
+                    @endif
+                </section>
+            @else
+                <x-ui.callout icon="information-circle">{{ __('No upcoming matchday yet.') }}</x-ui.callout>
+            @endif
+        @endif
+
         @if ($next)
             <p class="text-xs text-ui-muted">{{ __('Next matchday: :number, kickoff :date. The most common tip may still change until the automat plays.', ['number' => $next->number, 'date' => $next->kickoff_at->format('d.m, H:i')]) }}</p>
         @endif
