@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\MatchdayStatus;
+use App\Enums\Permission;
 use App\Enums\RoleName;
 use App\Enums\SeasonStatus;
 use App\Models\Automat;
@@ -19,6 +20,7 @@ use App\Models\Tip;
 use App\Models\User;
 use App\Support\Automats;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission as PermissionModel;
 use Spatie\Permission\Models\Role;
 
 // Automaty: same typują, wybierają skład i odpowiadają na pytania o ustawionej porze przed meczem.
@@ -159,9 +161,9 @@ test('an admin adds an automat as an ordinary verified player', function () {
 
 test('the automats page is only for the admin', function () {
     // Moderator z dostępem do panelu, ale bez roli Admin, wraca na pulpit.
-    $permissions = [\App\Enums\Permission::DashboardAccess->value, \App\Enums\Permission::SeasonList->value];
+    $permissions = [Permission::DashboardAccess->value, Permission::SeasonList->value];
     foreach ($permissions as $permission) {
-        \Spatie\Permission\Models\Permission::findOrCreate($permission, 'web');
+        PermissionModel::findOrCreate($permission, 'web');
     }
     $moderator = User::factory()->create();
     $moderator->givePermissionTo($permissions);
