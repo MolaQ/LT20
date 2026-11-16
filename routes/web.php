@@ -127,6 +127,10 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
         ->middleware('role:Admin')
         ->name('dashboard.users');
 
+    Route::livewire('panel/automats', 'pages::dashboard.automats')
+        ->middleware('role:Admin')
+        ->name('dashboard.automats');
+
     Route::livewire('panel/office', 'pages::dashboard.office')
         ->middleware('role:Admin')
         ->name('dashboard.office');

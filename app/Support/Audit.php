@@ -84,6 +84,8 @@ class Audit
             'guide.saved' => __('Rules or FAQ item saved'),
             'rivals.saved' => __('Rival saved'),
             'rivals.deleted' => __('Rival deleted'),
+            'automats.saved' => __('Automat saved'),
+            'automats.deleted' => __('Automat removed'),
             'guide.deleted' => __('Rules or FAQ item deleted'),
             'guide.restored' => __('Rules or FAQ restored to defaults'),
             'season_list.reordered' => __('Team order changed'),
