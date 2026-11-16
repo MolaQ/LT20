@@ -6,6 +6,7 @@ use App\Models\Season;
 use App\Models\SeasonTeam;
 use App\Models\User;
 use App\Support\Players;
+use App\Support\Premium;
 use Illuminate\Support\Facades\URL;
 use Spatie\Permission\Models\Role;
 
@@ -14,6 +15,7 @@ use Spatie\Permission\Models\Role;
 beforeEach(function () {
     Role::findOrCreate(RoleName::User->value, 'web');
     Role::findOrCreate(RoleName::Banned->value, 'web');
+    Role::findOrCreate(RoleName::Premium->value, 'web');
 });
 
 test('confirming the email address gives the User role and a place on the season list', function () {
@@ -37,4 +39,27 @@ test('an account that already has a role keeps it', function () {
 
     expect(Players::approveVerified($user))->toBeFalse()
         ->and($user->fresh()->hasRole(RoleName::User->value))->toBeFalse();
+});
+
+test('a new account gets two weeks of premium after confirming the email address', function () {
+    config(['premium.free' => false]);
+    $user = User::factory()->unverified()->create();
+
+    $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), ['id' => $user->id, 'hash' => sha1($user->email)]);
+    $this->actingAs($user)->get($url);
+
+    $user = $user->fresh();
+    expect($user->hasRole(RoleName::Premium->value))->toBeTrue()
+        ->and($user->premium_until->isSameDay(now()->addDays(14)))->toBeTrue()
+        ->and(Premium::isActive($user))->toBeTrue()
+        ->and(Premium::isActive($user, now()->addDays(15)))->toBeFalse();
+});
+
+test('premium on the start is given only once', function () {
+    $user = User::factory()->create(['premium_until' => now()->subDay()]);
+
+    expect(Premium::welcome($user))->toBeNull();
+
+    config(['premium.welcome_days' => 0]);
+    expect(Premium::welcome(User::factory()->create()))->toBeNull();
 });

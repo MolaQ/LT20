@@ -2393,5 +2393,7 @@
     "Teams that play by themselves before each match: a tip, a squad and answers to questions. Other players see them as ordinary teams.": "Zespoły, które przed każdym meczem grają same: typ, skład i odpowiedzi na pytania. Inni gracze widzą je jak zwykłe zespoły.",
     "The Lech squad without unavailable and resting players, from the most experienced. :count players in each competition the team plays.": "Kadra Lecha bez niedostępnych i odpoczywających, od najbardziej doświadczonych. :count zawodników w każdych rozgrywkach, w których gra zespół.",
     "The most common answers of the players: the two with the strongest agreement as attack, the next two as defence.": "Najczęstsze odpowiedzi graczy: dwie z największą zgodnością jako atak, dwie kolejne jako obrona.",
-    "Played at :time": "Zagrał o :time"
+    "Played at :time": "Zagrał o :time",
+    "Premium on the start": "Premium na start",
+    "Premium for :days days on the start": "Premium na start na :days dni"
 }

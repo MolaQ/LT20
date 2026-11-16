@@ -117,6 +117,7 @@ class Audit
             'user.role_removed' => __('Role removed'),
             'premium.manual' => __('Premium granted manually'),
             'premium.expired' => __('Premium expired'),
+            'premium.welcome' => __('Premium on the start'),
             'payment.paid' => __('Payment received'),
 
             // Treści

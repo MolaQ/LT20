@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\RoleName;
 use App\Models\User;
 use Carbon\CarbonInterface;
+use Spatie\Permission\Models\Role;
 
 /**
  * Premium (regulamin, punkt 11): rola z datą wygaśnięcia. Typowanie jest zawsze darmowe, premium daje
@@ -94,6 +95,25 @@ final class Premium
         $from = $user->premium_until?->isFuture() ? $user->premium_until->copy() : now();
 
         return self::setUntil($user, $from->addDays($days));
+    }
+
+    /**
+     * Premium na start (config premium.welcome_days, domyślnie 14 dni) dla nowego konta po potwierdzeniu adresu e-mail.
+     * Konto, które już kiedyś miało premium, nic nie dostaje. Zwraca datę wygaśnięcia albo null.
+     */
+    public static function welcome(User $user): ?CarbonInterface
+    {
+        $days = (int) config('premium.welcome_days', 0);
+
+        if ($days <= 0 || $user->premium_until !== null || $user->hasRole(RoleName::Premium->value)
+            || ! Role::where('name', RoleName::Premium->value)->where('guard_name', 'web')->exists()) {
+            return null;
+        }
+
+        $until = self::extend($user, $days);
+        Audit::log('premium.welcome', $user, [], ['premium_until' => $until->toDateTimeString()], __('Premium for :days days on the start', ['days' => $days]));
+
+        return $until;
     }
 
     /** Ustawia datę wygaśnięcia (np. ręcznie w panelu). Data w przeszłości odbiera premium. */
