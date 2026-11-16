@@ -42,7 +42,7 @@ class Rival extends Model
         if (self::$byName === null) {
             try {
                 self::$byName = self::all(['name', 'colors'])
-                    ->mapWithKeys(fn (self $rival) => [mb_strtolower($rival->name) => array_values($rival->colors ?? [])])
+                    ->mapWithKeys(fn (self $rival) => [mb_strtolower($rival->name) => $rival->colors ?? []])
                     ->all();
             } catch (QueryException) {
                 self::$byName = []; // tabela jeszcze bez migracji
