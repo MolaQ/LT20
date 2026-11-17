@@ -2481,5 +2481,21 @@
     "goal": "gol",
     "in the line-up from the first whistle": "w składzie od pierwszego gwizdka",
     "one match: the higher, the more experience": "jeden mecz: im wyżej, tym więcej doświadczenia",
-    "starting eleven: :start, bench (also without coming on): :sub,": "wyjściowa jedenastka: :start, ławka (także bez wejścia): :sub,"
+    "starting eleven: :start, bench (also without coming on): :sub,": "wyjściowa jedenastka: :start, ławka (także bez wejścia): :sub,",
+    ":count assist|:count assists": ":count asysta|:count asysty|:count asyst",
+    "Click a column to sort, click a player to see his seasons and competitions in this team.": "Kliknij nagłówek, żeby posortować, a zawodnika, żeby zobaczyć jego sezony i rozgrywki w tej drużynie.",
+    "Experience earned": "Zdobyte doświadczenie",
+    "Experience earned in this team": "Doświadczenie zdobyte w tej drużynie",
+    "Goals + assists": "Gole + asysty",
+    "Grey: not fielded in the selected season and competition.": "Szary: niewystawiony w wybranym sezonie i rozgrywkach.",
+    "Not fielded by this team in the selected season and competition.": "Ta drużyna nie wystawiła go w wybranym sezonie i rozgrywkach.",
+    "Overview": "Przegląd",
+    "Roster": "Kadra",
+    "Team squad": "Kadra drużyny",
+    "Your own squad is always free here. With premium you also see the squads of other teams: their players, form and statistics season by season.": "Swoją kadrę widzisz tu zawsze za darmo. Z premium zobaczysz też kadry innych drużyn: zawodników, formę i statystyki sezon po sezonie.",
+    "assist": "asysta",
+    "competitions: ": "rozgrywki: ",
+    "defence points": "punkty obrony",
+    "most: ": "najwięcej: ",
+    "players fielded by this team": "zawodnicy wystawiani przez tę drużynę"
 }

@@ -12,15 +12,22 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
  * Strona zespołu (etap 14): punkty Hall of Fame i miejsce w rankingu wszech czasów, gablota z trofeami
  * oraz historia zakończonych sezonów (miejsca w rozgrywkach i zdobyte punkty).
  * W banerze licznik wyświetleń (oko, raz na sesję odwiedzającego, bez właściciela) i polubienia (niebieskie serduszko).
+ * Zakładka „Kadra” (17.11.2026, ?widok=kadra): dorobek zawodników wystawionych przez drużynę (Support\TeamSquad),
+ * swoją widzi każdy, cudzą tylko premium.
  */
 new #[Layout('layouts::public')] class extends Component {
     public User $user;
+
+    /** Zakładka: przegląd albo kadra. */
+    #[Url(as: 'widok', except: 'przeglad')]
+    public string $tab = 'przeglad';
 
     public function mount(User $user): void
     {
@@ -239,6 +246,16 @@ new #[Layout('layouts::public')] class extends Component {
         return \App\Support\TeamHistory::for($this->user->id, null, $this->awards);
     }
 
+    /** Kadra drużyny: swoja dla każdego, cudza tylko w premium (null = zablokowane). */
+    #[Computed]
+    public function teamSquad(): ?array
+    {
+        $viewer = auth()->user();
+        $allowed = $viewer && ($viewer->id === $this->user->id || \App\Support\Premium::isActive($viewer));
+
+        return $allowed ? \App\Support\TeamSquad::for($this->user->id, $this->currentSeason) : null;
+    }
+
     #[Computed]
     public function icons(): array
     {
@@ -304,6 +321,24 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
         </x-slot:aside>
     </x-page-banner>
+
+    {{-- Zakładki: przegląd zespołu i kadra --}}
+    <div class="flex gap-1 self-start rounded-2xl bg-ui-raised p-1" role="tablist">
+        @foreach (['przeglad' => [__('Overview'), 'home'], 'kadra' => [__('Roster'), 'user-group']] as $tabKey => [$tabLabel, $tabIcon])
+            <button type="button" role="tab" wire:click="$set('tab', '{{ $tabKey }}')" aria-selected="{{ $tab === $tabKey ? 'true' : 'false' }}"
+                @class(['inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition', 'bg-ui-surface shadow' => $tab === $tabKey, 'text-ui-muted hover:text-ui-ink' => $tab !== $tabKey])>
+                <x-ui.icon :name="$tabIcon" variant="micro" /> {{ $tabLabel }}
+            </button>
+        @endforeach
+    </div>
+
+    @if ($tab === 'kadra')
+        @if ($this->teamSquad)
+            @include('partials.team-squad', ['squad' => $this->teamSquad, 'teamName' => $user->team_name ?: $user->name])
+        @else
+            <x-premium-lock :title="__('Team squad')" :text="__('Your own squad is always free here. With premium you also see the squads of other teams: their players, form and statistics season by season.')" />
+        @endif
+    @else
 
     {{-- Rozgrywki w bieżącym sezonie: miejsce albo odpadnięcie, kliknięcie otwiera wyniki z wyróżnionym zespołem --}}
     @if (count($this->seasonCompetitions) > 0)
@@ -399,4 +434,5 @@ new #[Layout('layouts::public')] class extends Component {
 
     {{-- Historia sezonów --}}
     @include('partials.team-history', ['history' => $this->history])
+    @endif
 </div>
