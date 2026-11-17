@@ -6,6 +6,8 @@ use App\Models\Payment;
 use App\Models\SupporterRank;
 use App\Models\User;
 use App\Support\SupporterRanks;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Once;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission as PermissionModel;
 use Spatie\Permission\Models\Role;
@@ -58,7 +60,7 @@ test('a supporter can hide from the wall and the team name loses the background'
     Livewire::actingAs($fan)->test('pages::support')->call('toggleWall');
 
     expect($fan->fresh()->show_as_supporter)->toBeFalse();
-    \Illuminate\Support\Once::flush();
+    Once::flush();
     expect(SupporterRanks::forUser($fan->id))->toBeNull()
         ->and(SupporterRanks::wall())->toBe([]);
 });
@@ -95,8 +97,8 @@ test('the team name gets the background in the colour of the rank', function () 
     $fan = User::factory()->create();
     supportPaid($fan, 10000);
 
-    $html = \Illuminate\Support\Facades\Blade::render('<x-supporter-name :user-id="$id">Kolejorz</x-supporter-name>', ['id' => $fan->id]);
-    $plain = \Illuminate\Support\Facades\Blade::render('<x-supporter-name :user-id="$id">Kolejorz</x-supporter-name>', ['id' => null]);
+    $html = Blade::render('<x-supporter-name :user-id="$id">Kolejorz</x-supporter-name>', ['id' => $fan->id]);
+    $plain = Blade::render('<x-supporter-name :user-id="$id">Kolejorz</x-supporter-name>', ['id' => null]);
 
     expect($html)->toContain('supporter-name')->toContain('#f59e0b')->toContain(e(__(':rank of LechTYPER', ['rank' => 'Mecenas'])))
         ->and(trim($plain))->toBe('Kolejorz');
