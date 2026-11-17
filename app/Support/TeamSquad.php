@@ -88,11 +88,11 @@ class TeamSquad
                 ? Competition::whereIn('id', CompetitionEntry::where('season_team_id', $teamId)->select('competition_id'))->get()
                 : collect();
             $sets = [];
-            foreach ($list->sortBy(fn (Competition $c) => $order[$c->type->scoreSet()->value] ?? 99) as $competition) {
+            foreach ($list->sortBy(fn (Competition $c) => $order[$c->type->scoreSet()->value]) as $competition) {
                 $sets[$competition->type->scoreSet()->value] = ['key' => $competition->trophyKey(), 'label' => (string) $competition->name];
             }
             // Wystawienia bez wpisu w rozgrywkach (np. stare dane): ogólna nazwa typu.
-            foreach (collect($rows)->where(1, $season['id'])->pluck(2)->unique() as $set) {
+            foreach (array_unique(array_column(array_filter($rows, fn (array $r) => $r[1] === $season['id']), 2)) as $set) {
                 $sets[(string) $set] ??= self::generic(CompetitionType::from((string) $set));
             }
             $comps[$season['id']] = $sets;
