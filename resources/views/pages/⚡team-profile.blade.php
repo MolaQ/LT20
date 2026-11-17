@@ -388,21 +388,6 @@ new #[Layout('layouts::public')] class extends Component {
         </x-ui.card>
     @endif
 
-    {{-- Statystyki sezonu (jak zakładka Statystyki na /tips): swoje dla każdego, cudze w premium --}}
-    @if ($this->currentSeason)
-        <x-ui.card class="space-y-4">
-            <div class="flex items-center justify-between gap-2">
-                <x-ui.heading size="lg">{{ __('Statistics') }}</x-ui.heading>
-                <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
-            </div>
-            @if ($this->seasonStats)
-                @include('partials.player-stats-tiles', ['data' => $this->seasonStats, 'user' => $user])
-            @else
-                <x-premium-lock :title="__('Statistics')" :text="__('Your own statistics are free in My tips. With premium you also see the statistics of other players.')" />
-            @endif
-        </x-ui.card>
-    @endif
-
     {{-- Gablota --}}
     <x-ui.card class="space-y-4">
         <x-ui.heading size="lg">{{ __('Trophy cabinet') }}</x-ui.heading>
@@ -431,6 +416,21 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
         @endif
     </x-ui.card>
+
+    {{-- Statystyki sezonu (jak zakładka Statystyki na /tips): swoje dla każdego, cudze w premium --}}
+    @if ($this->currentSeason)
+        <x-ui.card class="space-y-4">
+            <div class="flex items-center justify-between gap-2">
+                <x-ui.heading size="lg">{{ __('Statistics') }}</x-ui.heading>
+                <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
+            </div>
+            @if ($this->seasonStats)
+                @include('partials.player-stats-tiles', ['data' => $this->seasonStats, 'user' => $user])
+            @else
+                <x-premium-lock :title="__('Statistics')" :text="__('Your own statistics are free in My tips. With premium you also see the statistics of other players.')" />
+            @endif
+        </x-ui.card>
+    @endif
 
     {{-- Historia sezonów --}}
     @include('partials.team-history', ['history' => $this->history])

@@ -30,8 +30,9 @@ test('an unsupported language is rejected', function () {
     $this->post(route('locale.switch', 'de'))->assertNotFound();
 });
 
-test('the browser language is used when nothing was chosen', function () {
-    $this->get(route('rules'), ['Accept-Language' => 'en-GB,en;q=0.9'])->assertSee('lang="en"', false);
+test('polish is the default even when the browser prefers english', function () {
+    $this->get(route('rules'), ['Accept-Language' => 'en-GB,en;q=0.9'])->assertSee('lang="pl"', false);
+    $this->withSession(['locale' => 'en'])->get(route('rules'))->assertSee('lang="en"', false);
 });
 
 test('the web app manifest uses the club configuration', function () {
