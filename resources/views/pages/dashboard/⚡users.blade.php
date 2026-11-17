@@ -303,7 +303,7 @@ new class extends Component {
             event(new \Illuminate\Auth\Events\Verified($user));
         }
 
-        unset($this->stats);
+        unset($this->stats, $this->users);
         $this->dispatch('ui-toast', text: __('Email of :name confirmed.', ['name' => $user->name]), variant: 'success');
     }
 
@@ -458,7 +458,7 @@ new class extends Component {
                                 @endif
                                 <x-ui.btn variant="ghost" size="xs" icon="arrow-path" wire:click="newCode({{ $user->id }})"
                                     :aria-label="__('New code')" :tooltip="__('New code')" />
-                                <x-ui.btn variant="ghost" size="xs" icon="check-badge" x-on:click="$dispatch('confirm-action', { message: @js(__('Confirm this email without a code?')), run: () => $wire.confirmEmail({{ $user->id }}) })" :aria-label="__('Confirm without a code')"
+                                <x-ui.btn variant="ghost" size="xs" icon="check-badge" wire:click="confirmEmail({{ $user->id }})" wire:confirm="{{ __('Confirm this email without a code?') }}" :aria-label="__('Confirm without a code')"
                                     :tooltip="__('Confirm without a code')" />
                             </div>
                         @endif
