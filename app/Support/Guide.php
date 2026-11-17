@@ -119,8 +119,9 @@ class Guide
             [__('Team score'), __('Your score in a match is the points for the tip plus your offensive bonus minus the defensive bonus of your rival, never below 0.')],
             [__('Competitions'), __('10 leagues of 10 teams (Ekstraklasa to C klasa), Liga podwórkowa in leagues of 10 (1.1–1.4, 2.1–2.16 …: the winner goes up, one team drops to each league below), Puchar Polski (512 teams, a fixed bracket of 9 rounds), Liga Mistrzów, Europy and Konferencji and Liga Legend.')],
             [__('League table'), __('A win gives 3 points, a draw 1 and a loss 0. Ties are decided by goal balance, goals, wins, draws, exact tips, hit differences, hit outcomes, bonuses, Hall of Fame points and the place on the list.')],
-            [__('Puchar Polski'), __('The favourite plays on the left and the winner takes the better seed of the pair. A draw goes to the team whose tip was saved first (every save gets its own number; bots and missing tips come last, then the higher seed), shown as “after penalties”.')],
+            [__('Puchar Polski'), __('The favourite plays on the left and the winner takes the better seed of the pair. A draw goes to the team whose fielded players have more experience in the club, then to the team whose tip was saved first (every save gets its own number; bots and missing tips come last, then the higher seed), shown as “after penalties”.')],
             [__('European cups'), __('Liga Mistrzów, Europy and Konferencji have 24 teams each; a team plays in only one of them. Matchdays 1-5: four groups of six, everyone plays everyone once, league points and tie-breakers. The top four of each group go through, the fifth and sixth places are out. Teams from the same group place are ranked against each other: seeds 1-4 are the group winners, 5-8 the runners-up, 9-12 the third places and 13-16 the fourth places. Matchdays 6-9: round of 16 (1-16, 2-15 …), quarter-final, semi-final and final, played like Puchar Polski, so the best group winner can meet the second best only in the final.')],
+            ...self::experienceRules(),
             [__('Promotion and relegation'), __('After the season bots go to the bottom of every table, then 4 teams go up and 4 go down, and finally every bot swaps places with the best human below it, so humans fill the leagues from the top. Bots beyond place 512 of the list rest for a season. The top 3 of leagues 1–10 play in Liga Mistrzów, Europy and Konferencji next season.')],
             [__('Liga Legend'), __('All teams run by people play. Every matchday each team plays two duels in a cycle: 1-2, 2-3 … and the first with the last (matchday 1 from the pre-season list, then by the current table, the higher team on the left). The table is a league table (3 points for a win, 1 for a draw, criteria as in the leagues) and counts from matchday 1. Two losses in one matchday knock the team out: its results stay in the table, but it no longer plays. A draw is not a loss. When two teams are left, they play one match. After matchday 9 the top of the whole table wins.')],
             [__('Individual awards'), __('Season MVP: correct outcomes plus your players\' attack and defence points in league matches. Golden Ball: the most goals in the whole season from all competitions (points for the tip plus your players\' attack points, without the rival\'s own goals). Golden Boot: the most attack points of your players (goals and assists) from all competitions. Golden Gloves: the most defence points of your players (clean sheets) in league matches. On a tie the team with more trophies this season wins, then the higher league place. Top scorer of a league: the most goals in its table, on a tie the higher place. All awards give Hall of Fame points.')],
@@ -140,5 +141,46 @@ class Guide
             [__('What is a Koziołek?'), __('An exact score tip, worth the full 3 points for the tip.')],
             [__('Where can I see my history?'), __('In LechTYPER under the History tab, and on your team page in the Hall of Fame.')],
         ];
+    }
+
+    /**
+     * Zasady doświadczenia i formy (17.11.2026): dwie pozycje z prostym HTML (akapity, lista).
+     * Liczby z ustawień gry (Designation), żeby zasady zgadzały się z rozliczeniem. Też w migracji dla zasad z panelu.
+     *
+     * @return array<int, array{0: string, 1: string}>
+     */
+    public static function experienceRules(?string $locale = null): array
+    {
+        $n = fn (string $key): string => str_replace('.', ',', (string) Designation::number($key));
+        $form = MatchReport::FORM_MATCHES;
+
+        $experience = '<p>'.self::text('Every Lech player earns experience in every real Lech match:', [], $locale).'</p><ul>'
+            .'<li>'.self::text('starting eleven: :start, bench (also without coming on): :sub,', ['start' => $n('exp_start'), 'sub' => $n('exp_sub')], $locale).'</li>'
+            .'<li>'.self::text('every full half played: :full, part of a half: :partial (extra time is two more halves),', ['full' => $n('exp_full_half'), 'partial' => $n('exp_partial_half')], $locale).'</li>'
+            .'<li>'.self::text('clean sheet of a goalkeeper or defender who played: :cs,', ['cs' => $n('exp_clean_sheet')], $locale).'</li>'
+            .'<li>'.self::text('every goal (also in a penalty shoot-out): :goal, every assist: :assist.', ['goal' => $n('exp_goal'), 'assist' => $n('exp_assist')], $locale).'</li>'
+            .'</ul><p>'.self::text('An academy graduate gets double. Example: a start, the whole match and a goal give 1 + 2 + 1 = 4.', [], $locale).'</p>'
+            .'<p>'.self::text('Each club counts the experience of its players separately: a player collects it in your club only in matchdays in which you fielded him. Fielded, but not in the Lech matchday squad: :sub (an academy graduate double). A resting player gets nothing.', ['sub' => $n('exp_sub')], $locale).'</p>'
+            .'<p><strong>'.self::text('What it decides:', [], $locale).'</strong> '.self::text('a drawn tie in Puchar Polski and in the knockout rounds of the European cups goes to the team whose fielded players have more experience in the club (after this match), then to the earlier saved tip. In the leagues and Liga Legend experience does not change the result.', [], $locale).'</p>';
+
+        $formBody = '<p>'.self::text('Form is the experience of a Lech player from the last :count Lech matches with a report. It is the same in every club, because it comes from the real matches.', ['count' => $form], $locale).'</p>'
+            .'<p>'.self::text('Form gives no points and does not decide any tie. It shows who plays regularly now, so it helps to pick the squad: such a player is more likely to score, assist, keep a clean sheet and earn experience. Remember about rest.', [], $locale).'</p>';
+
+        return [
+            [self::text('Experience', [], $locale), $experience],
+            [self::text('Form', [], $locale), $formBody],
+        ];
+    }
+
+    /**
+     * Tłumaczenie do HTML zasad (bez znaczników z tłumaczeń).
+     *
+     * @param  array<string, int|string>  $replace
+     */
+    private static function text(string $key, array $replace, ?string $locale): string
+    {
+        $text = __($key, $replace, $locale);
+
+        return e(is_string($text) ? $text : $key);
     }
 }
