@@ -2419,5 +2419,12 @@
     "Competitions pick players from the top: the first one chooses from all free players, the next ones from the rest. A player plays in one competition only.": "Rozgrywki wybierają zawodników od góry: pierwsze spośród wszystkich wolnych, kolejne z pozostałych. Zawodnik gra tylko w jednych rozgrywkach.",
     "Strategy": "Strategia",
     "Number of players": "Zawodników",
-    "Least experienced": "Najmniej doświadczeni"
+    "Least experienced": "Najmniej doświadczeni",
+    "Form: experience from the last :count Lech matches": "Forma: doświadczenie z ostatnich :count meczów Lecha",
+    "exp.": "dośw.",
+    ":count goal|:count goals": ":count gol|:count gole|:count goli",
+    "not in the squad": "poza kadrą meczową",
+    "Best form": "Najlepsza forma",
+    "Worst form": "Najsłabsza forma",
+    "Next to a player: the flame shows his form (experience from the last :count Lech matches), the last number his experience in your club. A player can be in only one competition type per matchday: clicking him with another type selected moves him there.": "Przy zawodniku: płomień to jego forma (doświadczenie z ostatnich :count meczów Lecha), ostatnia liczba to doświadczenie w Twoim klubie. Zawodnik może grać tylko w jednym typie rozgrywek w kolejce: kliknięcie go przy innym wybranym typie przenosi go tam."
 }

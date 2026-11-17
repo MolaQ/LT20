@@ -25,6 +25,9 @@ class MatchReport
     /** Wychowanek Akademii Lecha zawsze dostaje tyle razy więcej doświadczenia niż pozostali zawodnicy. */
     public const ACADEMY_EXPERIENCE = 2;
 
+    /** Forma: suma doświadczenia z tylu ostatnich rozegranych meczów Lecha z raportem. */
+    public const FORM_MATCHES = 10;
+
     /** Koniec 90 minut i koniec dogrywki na osi meczu. */
     public const END_REGULAR = 4;
 
@@ -413,5 +416,53 @@ class MatchReport
                 'red' => (int) $row->getAttribute('red'),
                 'experience' => (float) $row->getAttribute('experience'),
             ]])->all();
+    }
+
+    /**
+     * Forma zawodników Lecha: doświadczenie z ostatnich FORM_MATCHES rozegranych meczów z raportem, od najstarszego.
+     * series ma wpis na każdy z tych meczów: null, gdy zawodnika nie było w kadrze meczowej.
+     *
+     * @return array{matches: array<int, array{id: int, opponent: string, date: string|null}>, players: array<int, array{total: float, series: array<int, array{experience: float, goals: int}|null>}>}
+     */
+    public static function form(): array
+    {
+        $matches = LechMatch::query()
+            ->where(fn ($q) => $q->whereNull('kickoff_at')->orWhere('kickoff_at', '<=', now()))
+            ->whereHas('appearances')
+            ->orderByDesc('kickoff_at')->orderByDesc('id')
+            ->limit(self::FORM_MATCHES)
+            ->get()
+            ->reverse()->values();
+
+        $ids = $matches->pluck('id')->all();
+        $byMatch = MatchAppearance::query()->whereIn('lech_match_id', $ids)->get()->groupBy('lech_match_id');
+
+        $players = [];
+        foreach ($matches as $i => $match) {
+            foreach ($byMatch[$match->id] ?? [] as $a) {
+                /** @var MatchAppearance $a */
+                $players[$a->lech_player_id] ??= ['total' => 0.0, 'series' => array_fill(0, count($ids), null)];
+                $players[$a->lech_player_id]['series'][$i] = ['experience' => $a->experience, 'goals' => $a->goals];
+                $players[$a->lech_player_id]['total'] += $a->experience;
+            }
+        }
+        foreach ($players as $id => $row) {
+            $players[$id]['total'] = round($row['total'], 1);
+        }
+
+        return [
+            'matches' => $matches->map(fn (LechMatch $m) => ['id' => $m->id, 'opponent' => $m->opponent, 'date' => $m->kickoff_at?->format('d.m')])->all(),
+            'players' => $players,
+        ];
+    }
+
+    /**
+     * Sama liczba formy: lech_player_id => suma (zawodnicy bez meczów w tym okresie nie mają wpisu).
+     *
+     * @return array<int, float>
+     */
+    public static function formTotals(): array
+    {
+        return array_map(fn (array $row) => $row['total'], self::form()['players']);
     }
 }

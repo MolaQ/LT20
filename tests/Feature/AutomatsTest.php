@@ -21,6 +21,7 @@ use App\Models\SeasonTeam;
 use App\Models\Tip;
 use App\Models\User;
 use App\Support\Automats;
+use App\Support\MatchReport;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission as PermissionModel;
 use Spatie\Permission\Models\Role;
@@ -240,4 +241,47 @@ test('the least experienced strategy starts from players without experience', fu
 
     expect(Automats::plan($automat->fresh('user'), $matchday)['league']['players'])
         ->toBe([$players[1]->id, $players[2]->id, $players[0]->id]);
+});
+
+test('form sums experience from the last ten Lech matches only', function () {
+    $players = collect(range(1, 2))->map(fn ($n) => LechPlayer::create(['name' => 'Zawodnik '.$n, 'number' => $n, 'position' => 'midfielder']));
+    // Najstarszy mecz wypada z okna 10 meczów, a w nim tylko pierwszy zawodnik miał dużo doświadczenia.
+    foreach (range(11, 1) as $weeks) {
+        $match = LechMatch::create(['opponent' => 'Rywal '.$weeks, 'kickoff_at' => now()->subWeeks($weeks)]);
+        MatchAppearance::create(['lech_match_id' => $match->id, 'lech_player_id' => $players[0]->id, 'experience' => $weeks === 11 ? 20.0 : 1.0]);
+        if ($weeks <= 2) {
+            MatchAppearance::create(['lech_match_id' => $match->id, 'lech_player_id' => $players[1]->id, 'experience' => 4.0, 'goals' => 1]);
+        }
+    }
+
+    $form = MatchReport::form();
+
+    expect($form['matches'])->toHaveCount(10)
+        ->and($form['matches'][0]['opponent'])->toBe('Rywal 10')
+        ->and($form['players'][$players[0]->id]['total'])->toBe(10.0)
+        ->and($form['players'][$players[1]->id]['total'])->toBe(8.0)
+        ->and($form['players'][$players[1]->id]['series'][0])->toBeNull()
+        ->and($form['players'][$players[1]->id]['series'][9])->toBe(['experience' => 4.0, 'goals' => 1]);
+});
+
+test('the best form strategy picks players by the last ten matches', function () {
+    $matchday = automatMatchday(30);
+    $user = automatPlayer($matchday, 1);
+    $players = collect(range(1, 3))->map(fn ($n) => LechPlayer::create(['name' => 'Zawodnik '.$n, 'number' => $n, 'position' => 'midfielder']));
+    // Pierwszy ma najwięcej doświadczenia, ale zdobył je dawno: w ostatnich 10 meczach lepszy jest trzeci.
+    $old = LechMatch::create(['opponent' => 'Dawno', 'kickoff_at' => now()->subWeeks(20)]);
+    MatchAppearance::create(['lech_match_id' => $old->id, 'lech_player_id' => $players[0]->id, 'experience' => 30.0]);
+    foreach (range(10, 1) as $weeks) {
+        $match = LechMatch::create(['opponent' => 'Rywal '.$weeks, 'kickoff_at' => now()->subWeeks($weeks)]);
+        MatchAppearance::create(['lech_match_id' => $match->id, 'lech_player_id' => $players[2]->id, 'experience' => 2.0]);
+        MatchAppearance::create(['lech_match_id' => $match->id, 'lech_player_id' => $players[1]->id, 'experience' => 1.0]);
+    }
+
+    $best = Automat::create(['user_id' => $user->id, 'squad_rules' => ['league' => ['strategy' => 'form', 'count' => 6, 'bot' => 'same']]]);
+    expect(Automats::plan($best->fresh('user'), $matchday)['league']['players'])
+        ->toBe([$players[2]->id, $players[1]->id, $players[0]->id]);
+
+    $best->update(['squad_rules' => ['league' => ['strategy' => 'form_low', 'count' => 6, 'bot' => 'same']]]);
+    expect(Automats::plan($best->fresh('user'), $matchday)['league']['players'])
+        ->toBe([$players[0]->id, $players[1]->id, $players[2]->id]);
 });
