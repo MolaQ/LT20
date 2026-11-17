@@ -36,7 +36,7 @@ class Automat extends Model
     public const MODES = [self::MODE_POPULAR, self::MODE_FIXED];
 
     /** Strategie składu: najbardziej doświadczeni, najmniej doświadczeni, własna kolejność, losowo, nikogo. */
-    public const SQUAD_STRATEGIES = ['experience', 'least', 'priority', 'random', 'none'];
+    public const SQUAD_STRATEGIES = ['experience', 'least', 'form', 'form_low', 'priority', 'random', 'none'];
 
     /** Strategia na mecz z botem: jak w rozgrywkach albo jedna ze strategii składu. */
     public const SQUAD_SAME = 'same';
@@ -67,6 +67,8 @@ class Automat extends Model
         return [
             'experience' => __('Most experienced'),
             'least' => __('Least experienced'),
+            'form' => __('Best form'),
+            'form_low' => __('Worst form'),
             'priority' => __('Own order'),
             'random' => __('Random'),
             'none' => __('Nobody'),

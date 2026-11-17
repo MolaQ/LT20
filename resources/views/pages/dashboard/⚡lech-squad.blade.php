@@ -76,6 +76,13 @@ new class extends Component {
         return \App\Support\MatchReport::playerTotals();
     }
 
+    /** Forma: doświadczenie z ostatnich 10 meczów Lecha z raportem, Support\MatchReport::form. */
+    #[Computed]
+    public function formStats(): array
+    {
+        return \App\Support\MatchReport::form();
+    }
+
     /** Liczba zawodników w każdym statusie (kafelki nad tabelą). */
     #[Computed]
     public function statusCounts(): array
@@ -265,6 +272,7 @@ new class extends Component {
             @foreach ($statCols as [$short, $long])
                 <x-ui.table.column align="center"><span title="{{ $long }}">{{ $short }}</span></x-ui.table.column>
             @endforeach
+            <x-ui.table.column><span title="{{ __('Form: experience from the last :count Lech matches', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}">{{ __('Form') }}</span></x-ui.table.column>
             <x-ui.table.column align="center">{{ __('Cards') }}</x-ui.table.column>
             <x-ui.table.column>{{ __('Status') }}</x-ui.table.column>
             <x-ui.table.column />
@@ -291,6 +299,9 @@ new class extends Component {
                             {{ $col === 'experience' ? \App\Support\ClubStats::experience($total[$col] ?? 0) : \App\Support\ClubStats::format($total[$col] ?? 0) }}
                         </x-ui.table.cell>
                     @endforeach
+                    <x-ui.table.cell>
+                        @include('partials.form-bars', ['row' => $this->formStats['players'][$player->id] ?? null, 'matches' => $this->formStats['matches']])
+                    </x-ui.table.cell>
                     <x-ui.table.cell align="center" class="text-xs tabular-nums">
                         @include('partials.card-counts', ['yellow' => $total['yellow'] ?? 0, 'red' => $total['red'] ?? 0])
                     </x-ui.table.cell>
@@ -313,7 +324,7 @@ new class extends Component {
                 </x-ui.table.row>
             @empty
                 <x-ui.table.row>
-                    <x-ui.table.cell colspan="15">
+                    <x-ui.table.cell colspan="16">
                         <x-ui.text>{{ __('No players. Add them here or run the squad seeder.') }}</x-ui.text>
                         <code class="mt-1 block text-xs">php artisan db:seed --class=LechSquadSeeder</code>
                     </x-ui.table.cell>

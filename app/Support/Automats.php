@@ -214,10 +214,28 @@ final class Automats
             'priority' => array_values(array_unique(array_merge(array_intersect(array_map('intval', $automat->squad_priority ?? []), $pool), $pool))),
             // Najmniej doświadczeni (przy równym doświadczeniu jak w kadrze: grający regularnie, rotacja, rezerwa).
             'least' => self::leastExperienced($pool),
+            // Forma (ostatnie 10 meczów Lecha): przy równej formie zostaje kolejność według doświadczenia.
+            'form' => self::byForm($pool, true),
+            'form_low' => self::byForm($pool, false),
             'random' => $pool === [] ? [] : (new Randomizer(new Mt19937(crc32($matchday->id.'-a'.$automat->id))))->shuffleArray($pool),
             'none' => [],
             default => $pool,
         };
+    }
+
+    /**
+     * Zawodnicy według formy: od najlepszej ($best) albo od najsłabszej; przy równej formie zostaje kolejność z $pool.
+     *
+     * @param  array<int, int>  $pool
+     * @return array<int, int>
+     */
+    private static function byForm(array $pool, bool $best): array
+    {
+        $form = MatchReport::formTotals();
+        $rows = array_map(fn (int $id, int $index) => ['id' => $id, 'key' => [($best ? -1 : 1) * ($form[$id] ?? 0.0), $index]], $pool, array_keys($pool));
+        usort($rows, fn (array $a, array $b) => $a['key'] <=> $b['key']);
+
+        return array_column($rows, 'id');
     }
 
     /**

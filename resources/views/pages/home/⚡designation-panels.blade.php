@@ -69,9 +69,11 @@ new class extends Component {
     public function squad()
     {
         $experience = Squad::clubExperience(auth()->id(), null);
+        // Forma: doświadczenie z ostatnich 10 meczów Lecha (taka sama we wszystkich klubach).
+        $form = \App\Support\MatchReport::formTotals();
 
         return Squad::available()->sortByDesc(fn ($p) => $experience[$p->id] ?? 0)->values()
-            ->each(fn ($p) => $p->setAttribute('club_experience', $experience[$p->id] ?? 0.0));
+            ->each(fn ($p) => $p->setAttribute('club_experience', $experience[$p->id] ?? 0.0)->setAttribute('lech_form', $form[$p->id] ?? 0.0));
     }
 
     /** Protokoły meczów rozliczonej kolejki: typ rozgrywek => mecze. */
@@ -270,12 +272,13 @@ new class extends Component {
                                 @if ($inSet)
                                     <x-ui.icon name="check-circle" variant="micro" class="shrink-0" />
                                 @endif
+                                <span class="flex shrink-0 items-center gap-0.5 text-[10px] tabular-nums {{ $in ? 'opacity-80' : 'text-amber-600 dark:text-amber-400' }}" title="{{ __('Form: experience from the last :count Lech matches', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}"><x-ui.icon name="fire" variant="micro" class="size-3" />{{ $fmt($player->lech_form) }}</span>
                                 <span class="shrink-0 text-[10px] tabular-nums opacity-70" title="{{ __('Experience in your club') }}">{{ $fmt($player->club_experience) }}</span>
                             </button>
                         @endforeach
                     </div>
                 </section>
-                <x-ui.text class="text-xs">{{ __('The number next to a player is his experience in your club. A player can be in only one competition type per matchday: clicking him with another type selected moves him there.') }}</x-ui.text>
+                <x-ui.text class="text-xs">{{ __('Next to a player: the flame shows his form (experience from the last :count Lech matches), the last number his experience in your club. A player can be in only one competition type per matchday: clicking him with another type selected moves him there.', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}</x-ui.text>
             </div>
         @else
             @php
