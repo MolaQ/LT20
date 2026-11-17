@@ -422,7 +422,7 @@ class MatchReport
      * Forma zawodników Lecha: doświadczenie z ostatnich FORM_MATCHES rozegranych meczów z raportem, od najstarszego.
      * series ma wpis na każdy z tych meczów: null, gdy zawodnika nie było w kadrze meczowej.
      *
-     * @return array{matches: array<int, array{id: int, opponent: string, date: string|null}>, players: array<int, array{total: float, series: array<int, array{experience: float, goals: int}|null>}>}
+     * @return array{matches: array<int, array{id: int, opponent: string, date: string|null}>, players: array<int, array{total: float, series: array<int, array{experience: float, goals: int, assists: int}|null>}>}
      */
     public static function form(): array
     {
@@ -442,7 +442,7 @@ class MatchReport
             foreach ($byMatch[$match->id] ?? [] as $a) {
                 /** @var MatchAppearance $a */
                 $players[$a->lech_player_id] ??= ['total' => 0.0, 'series' => array_fill(0, count($ids), null)];
-                $players[$a->lech_player_id]['series'][$i] = ['experience' => $a->experience, 'goals' => $a->goals];
+                $players[$a->lech_player_id]['series'][$i] = ['experience' => $a->experience, 'goals' => $a->goals, 'assists' => $a->assists];
                 $players[$a->lech_player_id]['total'] += $a->experience;
             }
         }

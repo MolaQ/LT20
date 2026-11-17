@@ -261,7 +261,7 @@ test('form sums experience from the last ten Lech matches only', function () {
         ->and($form['players'][$players[0]->id]['total'])->toBe(10.0)
         ->and($form['players'][$players[1]->id]['total'])->toBe(8.0)
         ->and($form['players'][$players[1]->id]['series'][0])->toBeNull()
-        ->and($form['players'][$players[1]->id]['series'][9])->toBe(['experience' => 4.0, 'goals' => 1]);
+        ->and($form['players'][$players[1]->id]['series'][9])->toBe(['experience' => 4.0, 'goals' => 1, 'assists' => 0]);
 });
 
 test('the best form strategy picks players by the last ten matches', function () {

@@ -70,12 +70,12 @@ new #[Layout('layouts::public')] class extends Component {
         $formMatches = collect(['Legia', 'Raków', 'Jagiellonia', 'Pogoń', 'Górnik', 'Widzew', 'Cracovia', 'Śląsk', 'Motor', 'Piast'])
             ->map(fn ($opponent, $i) => ['id' => $i, 'opponent' => $opponent, 'date' => null])->all();
         $formSample = [
-            [__('Plays every match'), ['total' => 37.0, 'series' => [[4, 1], [3, 0], [5, 1], [3, 0], [6, 2], null, [4, 1], [3, 0], [5, 1], [4, 1]]]],
+            [__('Plays every match'), ['total' => 37.0, 'series' => [[4, 1, 0], [3, 0, 1], [5, 1, 0], [3, 0], [6, 2, 1], null, [4, 1], [3, 0], [5, 1, 1], [4, 1]]]],
             [__('Comes back to the team'), ['total' => 18.0, 'series' => [null, null, [1.5, 0], [2, 0], [1, 0], [3, 0], null, [3.5, 1], [4, 1], [3, 0]]]],
             [__('Rarely in the squad'), ['total' => 4.0, 'series' => [null, null, null, null, [0.5, 0], null, [1, 0], [0.5, 0], null, [2, 0]]]],
         ];
         foreach ($formSample as $i => [$label, $row]) {
-            $formSample[$i][1]['series'] = array_map(fn ($g) => $g ? ['experience' => (float) $g[0], 'goals' => $g[1]] : null, $row['series']);
+            $formSample[$i][1]['series'] = array_map(fn ($g) => $g ? ['experience' => (float) $g[0], 'goals' => $g[1], 'assists' => $g[2] ?? 0] : null, $row['series']);
         }
     @endphp
 
@@ -289,6 +289,7 @@ new #[Layout('layouts::public')] class extends Component {
                     <span class="flex items-center gap-1.5"><span class="h-3 w-1.5 rounded-sm bg-club"></span>{{ __('one match: the higher, the more experience') }}</span>
                     <span class="flex items-center gap-1.5"><span class="h-0.5 w-1.5 rounded-sm bg-zinc-300 dark:bg-zinc-600"></span>{{ __('not in the squad') }}</span>
                     <span class="flex items-center gap-1.5"><span class="size-1.5 rounded-full bg-amber-400"></span>{{ __('goal') }}</span>
+                    <span class="flex items-center gap-1.5"><span class="size-1.5 rounded-full bg-sky-400"></span>{{ __('assist') }}</span>
                 </p>
             </div>
             <div class="flex flex-col gap-4">
