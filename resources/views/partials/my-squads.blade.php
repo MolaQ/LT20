@@ -6,15 +6,18 @@
 @php
     $fmtExp = fn ($v) => \App\Support\ClubStats::experience($v);
 @endphp
-<div class="flex flex-col gap-3 bg-ui-surface px-4 py-4 sm:px-5">
+<div data-share-target class="flex flex-col gap-3 bg-ui-surface px-4 py-4 sm:px-5">
     <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
             <p class="text-[11px] font-bold uppercase tracking-widest text-club">{{ __('Your squads in this matchday') }}</p>
             <p class="text-xs text-ui-muted">{{ __('Flame: player form. Last number: experience in your club.') }}</p>
         </div>
-        <a href="{{ $tipUrl }}" wire:navigate class="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-club hover:underline">
-            {{ __('Change squads') }} <x-ui.icon name="arrow-right" variant="micro" />
-        </a>
+        <div class="flex shrink-0 items-center gap-2">
+            <a href="{{ $tipUrl }}" wire:navigate data-share-hide class="inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">
+                {{ __('Change squads') }} <x-ui.icon name="arrow-right" variant="micro" />
+            </a>
+            <x-share-image :title="__('Your squads in this matchday')" class="text-ui-muted" />
+        </div>
     </div>
 
     <div class="grid gap-3 sm:grid-cols-2">

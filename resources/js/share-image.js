@@ -3,7 +3,9 @@
 // (cleanCopy) z klasą is-sharing, bez elementów [data-share-hide] i ze stopką z adresem strony.
 // Gotowy obrazek pokazuje się w podglądzie z przyciskami „Pobierz” i „Udostępnij”. Udostępnianie jest
 // osobnym kliknięciem, bo przeglądarka otwiera systemowe „Udostępnij” tylko zaraz po kliknięciu, a zdjęcie
-// trwa chwilę. Biblioteka html-to-image ładuje się przy najechaniu na przycisk (osobny plik po npm run build).
+// trwa chwilę. Każdy kanał dostaje ten sam podpis (labels.text, np. „#LechTYPER lechtyper.pl”): „Kopiuj” wkłada
+// do schowka obrazek razem z tekstem (wklejenie w poście na Facebooku, X czy w komunikatorze), „Udostępnij” przekazuje
+// tekst obok pliku, a X dostaje go w oknie nowego posta. Biblioteka html-to-image ładuje się przy najechaniu na przycisk (osobny plik po npm run build).
 
 const slug = (text) =>
     String(text)
@@ -85,15 +87,32 @@ const showPreview = (blob, file, labels) => {
         document.body.appendChild(a);
         a.click();
         a.remove();
-        const text = labels.title + (labels.hashtag ? ' #' + labels.hashtag : '') + (labels.via ? ' ' + labels.via : '');
-        const intent = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(location.href.split('#')[0]);
+        const text = labels.title + ' ' + labels.text + (labels.via ? ' ' + labels.via : '');
+        const intent = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
         window.open(intent, '_blank', 'noopener');
         toast(labels.xHint, 'success');
     });
+    // Schowek: obrazek i tekst naraz; przeglądarka bez obsługi dwóch typów dostaje sam obrazek, a tekst pokazuje się w dymku.
+    if (navigator.clipboard?.write && window.ClipboardItem) {
+        button(labels.copy, false, async () => {
+            try {
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob, 'text/plain': new Blob([labels.text], { type: 'text/plain' }) })]);
+                toast(labels.copied, 'success');
+            } catch (e) {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    toast(labels.copiedImage.replace(':text', labels.text), 'success');
+                } catch (e2) {
+                    console.error(e2);
+                    toast(labels.error);
+                }
+            }
+        });
+    }
     if (navigator.canShare?.({ files: [file] })) {
         button(labels.share, true, async () => {
             try {
-                await navigator.share({ files: [file], title: labels.title });
+                await navigator.share({ files: [file], title: labels.title, text: labels.text });
             } catch (e) {
                 // Zamknięte okno udostępniania to nie błąd.
                 if (e.name !== 'AbortError') {

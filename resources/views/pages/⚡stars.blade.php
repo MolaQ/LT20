@@ -261,12 +261,7 @@ new #[Layout('layouts::public')] class extends Component {
 @php
     $me = auth()->id();
     // Barwy pozycji (B/O/P/N): kolor kwadratu z numerem, jak w „Mojej kadrze”
-    $posTone = [
-        'goalkeeper' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200',
-        'defender' => 'bg-sky-400 text-sky-950',
-        'midfielder' => 'bg-emerald-400 text-emerald-950',
-        'forward' => 'bg-rose-400 text-rose-950',
-    ];
+    $posTone = \App\Enums\PlayerPosition::tones();
     // Czyste konta i punkty obrony liczą się tylko bramkarzom i obrońcom
     $sheetPositions = ['goalkeeper', 'defender'];
     $cols = [

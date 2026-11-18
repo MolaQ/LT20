@@ -2517,5 +2517,8 @@
     "Pick players": "Wybierz zawodników",
     "Change squads": "Zmień składy",
     "Your squads in this matchday": "Twoje składy w tej kolejce",
-    "Flame: player form. Last number: experience in your club.": "Płomień: forma zawodnika. Ostatnia liczba: doświadczenie w Twoim klubie."
+    "Flame: player form. Last number: experience in your club.": "Płomień: forma zawodnika. Ostatnia liczba: doświadczenie w Twoim klubie.",
+    "Copy image and text": "Kopiuj obraz i tekst",
+    "Copied: paste the image and text into your post.": "Skopiowane: wklej obraz i tekst do posta.",
+    "Image copied. Add the text: :text": "Obraz skopiowany. Dopisz tekst: :text"
 }
