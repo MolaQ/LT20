@@ -122,9 +122,10 @@ new #[Layout('layouts::public')] class extends Component {
 
     /**
      * Liga gracza w bieżącym sezonie: pięć miejsc wokół gracza (cała tabela pod linkiem). Gość albo gracz
-     * bez ligi widzi czołówkę Ekstraklasy.
+     * bez ligi widzi czołówkę Ekstraklasy. Przy każdym miejscu strefa (awans, spadek), zmiana miejsca po ostatniej
+     * kolejce i forma z pięciu ostatnich meczów; pod tabelą najbliższa kolejka z rywalem gracza (18.11.2026).
      *
-     * @return array{name: string, url: string, mine: ?array<string, mixed>, rows: array<int, array<string, mixed>>}|null
+     * @return array{name: string, key: string, url: string, round: int, mine: ?array<string, mixed>, rows: array<int, array<string, mixed>>, rival: ?array{name: string, url: ?string, bot: bool}}|null
      */
     #[Computed]
     public function myLeague(): ?array
@@ -145,24 +146,64 @@ new #[Layout('layouts::public')] class extends Component {
             return null;
         }
 
-        $rows = \App\Support\Standings::for($competition)->values()->map(fn($row, $index) => [
+        // Rozegrane mecze ligi od najnowszych: ostatnia kolejka z wynikiem, forma i zmiana miejsc.
+        $played = \App\Models\Fixture::where('competition_id', $competition->id)->whereNotNull('home_goals')
+            ->orderByDesc('round')->toBase()->get(['round', 'home_entry_id', 'away_entry_id', 'home_goals', 'away_goals']);
+        $round = (int) ($played->first()->round ?? 0);
+        $table = \App\Support\Standings::for($competition)->values();
+        $before = $round >= 2 ? \App\Support\Standings::for($competition, null, $round - 1)->pluck('entry_id')->flip() : collect();
+
+        $rows = $table->map(fn($row, $index) => [
             'place' => $index + 1,
+            'entry' => $row['entry_id'],
+            'team' => $row['team'],
             'name' => $row['team']?->name ?? '—',
             'bot' => (bool) $row['team']?->is_bot,
-            'played' => $row['played'],
             'goals' => $row['for'] . ':' . $row['against'],
             'points' => $row['points'],
+            'zone' => \App\Support\Standings::zone($competition, $index + 1, $table->count()),
+            'move' => $before->has($row['entry_id']) ? (int) $before[$row['entry_id']] - $index : 0,
             'me' => $entry !== null && $row['entry_id'] === $entry->id,
         ]);
 
         $mine = $rows->search(fn($row) => $row['me']);
         $start = $mine === false ? 0 : max(0, min($mine - 2, $rows->count() - 5));
+        $shown = $rows->slice($start, 5)->values()->map(function (array $row) use ($played): array {
+            // Forma: pięć ostatnich meczów od najstarszego, W/D/L.
+            $row['form'] = $played->filter(fn($f) => (int) $f->home_entry_id === $row['entry'] || (int) $f->away_entry_id === $row['entry'])
+                ->take(5)->reverse()->map(function ($f) use ($row): string {
+                    [$for, $against] = (int) $f->home_entry_id === $row['entry'] ? [$f->home_goals, $f->away_goals] : [$f->away_goals, $f->home_goals];
+
+                    return $for > $against ? 'W' : ($for == $against ? 'D' : 'L');
+                })->values()->all();
+
+            return $row;
+        });
+
+        // Rywal gracza w najbliższej kolejce bez wyniku.
+        $rival = null;
+        if ($entry && $this->matchday && $this->matchday->status !== MatchdayStatus::Played) {
+            $fixture = \App\Models\Fixture::where('competition_id', $competition->id)->where('round', $this->matchday->number)
+                ->where(fn($q) => $q->where('home_entry_id', $entry->id)->orWhere('away_entry_id', $entry->id))->first();
+            $otherId = $fixture ? ((int) $fixture->home_entry_id === $entry->id ? $fixture->away_entry_id : $fixture->home_entry_id) : null;
+            $other = $otherId ? \App\Models\CompetitionEntry::with('seasonTeam.user:id,name,team_name', 'seasonTeam.bot:id,name')->find($otherId)?->seasonTeam : null;
+            if ($other) {
+                $rival = [
+                    'name' => $other->name,
+                    'url' => $other->user ? route('team.show', $other->user) : ($other->bot ? route('bot.show', $other->bot) : null),
+                    'bot' => $other->is_bot,
+                ];
+            }
+        }
 
         return [
             'name' => $competition->name ?: $competition->type->label(),
+            'key' => $competition->trophyKey(),
             'url' => route('results', ['season_slug' => 'sezon-' . $this->season->number, 'competition_slug' => $competition->slug()]) . ($team ? '?team=' . $team->id : ''),
+            'round' => $round,
             'mine' => $mine === false ? null : $rows[$mine],
-            'rows' => $rows->slice($start, 5)->values()->all(),
+            'rows' => $shown->all(),
+            'rival' => $rival,
         ];
     }
 
@@ -419,41 +460,114 @@ new #[Layout('layouts::public')] class extends Component {
         {{-- Liga gracza (gość: czołówka Ekstraklasy) obok ciekawostek sezonu albo skrótu zasad przed pierwszą kolejką --}}
         <div class="grid gap-6 lg:grid-cols-2">
             @if ($league = $this->myLeague)
-                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
-                    <div class="flex items-center justify-between gap-3 border-b border-ui-line px-5 py-4">
-                        <div class="min-w-0">
-                            <p class="text-[11px] font-bold uppercase tracking-widest text-club">{{ $league['mine'] ? __('Your league') : __('The top of Ekstraklasa') }}</p>
-                            <h2 class="truncate font-display text-lg font-semibold">{{ $league['name'] }}</h2>
+                @php
+                    $nextMatchday = $this->matchday && $this->matchday->status !== MatchdayStatus::Played ? $this->matchday : null;
+                    $formTones = ['W' => 'bg-green-600', 'D' => 'bg-zinc-400 dark:bg-zinc-500', 'L' => 'bg-red-600'];
+                @endphp
+                <section class="flex flex-col overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                    {{-- Nagłówek w barwach rozgrywek --}}
+                    <div class="comp-banner flex items-center justify-between gap-3 !rounded-none !border-x-0 !border-t-0 px-5 py-4 !shadow-none" style="{{ \App\Support\CompetitionColors::style($league['key']) }}">
+                        <div class="relative min-w-0">
+                            <p class="text-[11px] font-bold uppercase tracking-widest opacity-80">
+                                {{ $league['mine'] ? __('Your league') : __('The top of Ekstraklasa') }} &middot;
+                                {{ $league['round'] > 0 ? trans_choice('After :count matchday|After :count matchdays', $league['round'], ['count' => $league['round']]) : __('Before the start') }}
+                            </p>
+                            <h2 class="truncate font-display text-xl font-bold">{{ $league['name'] }}</h2>
                         </div>
                         @if ($league['mine'])
-                            <div class="text-right">
+                            <div class="relative text-right">
                                 <div class="font-display text-3xl font-bold leading-none tabular-nums">{{ $league['mine']['place'] }}.</div>
-                                <div class="text-[11px] font-semibold uppercase tracking-wide text-ui-muted">{{ __('place') }}</div>
+                                <div class="text-[11px] font-semibold uppercase tracking-wide opacity-80">{{ __('place') }}</div>
                             </div>
                         @endif
                     </div>
-                    <ol class="space-y-1 p-3">
+
+                    {{-- Nagłówki kolumn: forma tylko od pierwszej kolejki z wynikiem i na szerszym ekranie --}}
+                    <div class="flex items-center gap-2 px-6 pb-1 pt-3 text-[10px] font-bold uppercase tracking-wider text-ui-muted">
+                        <span class="w-7 text-center">#</span>
+                        <span class="flex-1 ps-7">{{ __('Team') }}</span>
+                        @if ($league['round'] > 0)
+                            <span class="hidden w-[7.5rem] sm:block">{{ __('Form') }}</span>
+                        @endif
+                        <span class="w-12 text-right">{{ __('Goals') }}</span>
+                        <span class="w-9 text-right">{{ __('Pts') }}</span>
+                    </div>
+                    <ol class="space-y-1 px-3 pb-3">
                         @foreach ($league['rows'] as $row)
                             <li wire:key="league-row-{{ $row['place'] }}" @class([
-                                'flex items-center gap-3 rounded-xl px-3 py-2 text-sm',
-                                'bg-club text-club-ink shadow-sm' => $row['me'],
+                                'relative flex items-center gap-2 rounded-xl py-2 pe-3 ps-4 text-sm',
+                                'bg-club/10 ring-1 ring-inset ring-club' => $row['me'],
                                 'odd:bg-ui-raised/40' => !$row['me'],
                             ])>
+                                {{-- Strefa awansu albo spadku --}}
+                                @if ($row['zone'])
+                                    <span class="absolute inset-y-2 start-1 w-[3px] rounded-full {{ $row['zone'] === 'up' ? 'bg-green-500' : 'bg-red-500' }}" title="{{ $row['zone'] === 'up' ? __('Promotion') : __('Relegation') }}"></span>
+                                @endif
                                 <span @class([
                                     'grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums',
-                                    'bg-white/20' => $row['me'],
-                                    'bg-amber-400 text-amber-950' => !$row['me'] && $row['place'] === 1,
-                                    'bg-ui-raised' => !$row['me'] && $row['place'] !== 1,
+                                    'bg-amber-400 text-amber-950' => $row['place'] === 1,
+                                    'bg-ui-raised' => $row['place'] !== 1,
                                 ])>{{ $row['place'] }}</span>
+                                {{-- Zmiana miejsca po ostatniej kolejce --}}
+                                <span class="w-6 shrink-0 text-center text-[10px] font-bold tabular-nums">
+                                    @if ($row['move'] > 0)
+                                        <span class="text-green-600 dark:text-green-400" title="{{ __('Up :count places', ['count' => $row['move']]) }}">&#9650;{{ $row['move'] }}</span>
+                                    @elseif ($row['move'] < 0)
+                                        <span class="text-red-600 dark:text-red-400" title="{{ __('Down :count places', ['count' => -$row['move']]) }}">&#9660;{{ -$row['move'] }}</span>
+                                    @else
+                                        <span class="text-ui-muted">&middot;</span>
+                                    @endif
+                                </span>
                                 <span @class(['min-w-0 flex-1 truncate font-semibold', 'italic' => $row['bot']])>{{ $row['name'] }}</span>
-                                <span @class(['hidden text-xs tabular-nums sm:inline', 'opacity-80' => $row['me'], 'text-ui-muted' => !$row['me']])>{{ $row['played'] }} {{ __('M') }} · {{ $row['goals'] }}</span>
-                                <span class="w-10 text-right font-display text-base font-bold tabular-nums">{{ $row['points'] }}</span>
+                                @if ($row['team'])
+                                    <x-champion-trophies :team="$row['team']" />
+                                @endif
+                                @if ($league['round'] > 0)
+                                    <span class="hidden w-[7.5rem] shrink-0 gap-0.5 sm:flex">
+                                        @foreach ($row['form'] as $result)
+                                            <span class="grid size-5 place-items-center rounded text-[10px] font-bold text-white {{ $formTones[$result] }}">{{ __($result) }}</span>
+                                        @endforeach
+                                    </span>
+                                @endif
+                                <span class="w-12 shrink-0 text-right text-xs tabular-nums text-ui-muted">{{ $row['goals'] }}</span>
+                                <span class="w-9 shrink-0 text-right font-display text-base font-bold tabular-nums">{{ $row['points'] }}</span>
                             </li>
                         @endforeach
                     </ol>
-                    <a href="{{ $league['url'] }}" wire:navigate class="flex items-center justify-center gap-1 border-t border-ui-line px-5 py-3 text-sm font-semibold text-club transition hover:bg-ui-raised/50">
-                        {{ __('Full table') }} <x-ui.icon name="arrow-right" variant="micro" />
-                    </a>
+
+                    {{-- Najbliższa kolejka (typowanie dla zalogowanych) i rywal gracza --}}
+                    @if ($nextMatchday)
+                        <div class="mx-4 mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl bg-ui-raised/60 px-3 py-2 text-xs text-ui-muted">
+                            <a href="{{ auth()->check() ? route('tips', ['matchday_slug' => 'kolejka-' . $nextMatchday->number]) : route('login') }}" wire:navigate class="inline-flex items-center gap-1 font-semibold text-club hover:underline">
+                                <x-ui.icon name="clock" variant="micro" class="size-3.5" />
+                                {{ __('Matchday :number', ['number' => $nextMatchday->number]) }}:
+                                {{ $nextMatchday->is_home ? 'Lech' : $nextMatchday->opponent }} &ndash; {{ $nextMatchday->is_home ? $nextMatchday->opponent : 'Lech' }}@if ($nextMatchday->kickoff_at), {{ $nextMatchday->kickoff_at->format('d.m H:i') }}@endif
+                            </a>
+                            @if ($league['rival'])
+                                <span>{{ __('Rival') }}:
+                                    @if ($league['rival']['url'])
+                                        <a href="{{ $league['rival']['url'] }}" wire:navigate @class(['font-semibold text-ui-ink hover:text-club hover:underline', 'italic' => $league['rival']['bot']])>{{ $league['rival']['name'] }}</a>
+                                    @else
+                                        <span class="font-semibold text-ui-ink">{{ $league['rival']['name'] }}</span>
+                                    @endif
+                                </span>
+                            @endif
+                        </div>
+                    @endif
+
+                    <div class="mt-auto flex items-center justify-between gap-3 border-t border-ui-line px-5 py-3">
+                        <span class="flex items-center gap-3 text-xs text-ui-muted">
+                            @if (collect($league['rows'])->contains('zone', 'up'))
+                                <span class="inline-flex items-center gap-1"><span class="h-[3px] w-3 rounded-full bg-green-500"></span>{{ __('Promotion') }}</span>
+                            @endif
+                            @if (collect($league['rows'])->contains('zone', 'down'))
+                                <span class="inline-flex items-center gap-1"><span class="h-[3px] w-3 rounded-full bg-red-500"></span>{{ __('Relegation') }}</span>
+                            @endif
+                        </span>
+                        <a href="{{ $league['url'] }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-club hover:underline">
+                            {{ __('Full table') }} <x-ui.icon name="arrow-right" variant="micro" />
+                        </a>
+                    </div>
                 </section>
             @endif
 
