@@ -669,6 +669,9 @@ new #[Layout('layouts::public')] class extends Component {
                 </section>
             @endif
         </div>
+
+        {{-- Kawka (18.11.2026): dobrowolne wsparcie projektu, pod tabelą ligi i ciekawostkami --}}
+        <x-coffee-button variant="banner" />
     @else
         {{-- Bez aktywnego sezonu: duży baner zapraszający do gry (z zapowiedzią sezonu w przygotowaniu) --}}
         <section class="lech-banner relative overflow-hidden rounded-2xl px-6 py-10 sm:px-10 sm:py-12">

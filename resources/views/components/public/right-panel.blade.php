@@ -42,5 +42,6 @@
         @endforelse
     </section>
     <hr class="border-ui-line">
-    <x-public.premium-card />
+    {{-- Kawka zamiast karty premium (18.11.2026): premium jest teraz tylko na stronie wsparcia --}}
+    <x-coffee-button variant="card" />
 </div>
