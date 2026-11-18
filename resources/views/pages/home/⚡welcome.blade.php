@@ -207,6 +207,19 @@ new #[Layout('layouts::public')] class extends Component {
         ];
     }
 
+    /**
+     * Składy zalogowanego gracza w najbliższej kolejce (prawa część karty kolejki), pusta lista dla gościa i po rozliczeniu.
+     *
+     * @return list<array<string, mixed>>
+     */
+    #[Computed]
+    public function mySquads(): array
+    {
+        return auth()->check() && $this->matchday && $this->matchday->status !== MatchdayStatus::Played
+            ? \App\Support\MySquads::for((int) auth()->id(), $this->matchday)
+            : [];
+    }
+
     /** Typ zalogowanego gracza na tę kolejkę (null, gdy brak albo gość). */
     #[Computed]
     public function myTip(): ?Tip
@@ -283,9 +296,15 @@ new #[Layout('layouts::public')] class extends Component {
                     </div>
                 </div>
 
-                <div class="space-y-5 px-5 py-5 sm:px-8">
+                @php
+                    $squads = $this->mySquads;
+                @endphp
+                <div @class(['grid', 'lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]' => $squads !== []])>
+                {{-- Lewa część: mecz na niebieskim tle Lecha --}}
+                <div class="relative space-y-5 overflow-hidden bg-linear-to-br from-lech-900 via-lech-800 to-lech-600 px-5 py-5 text-white sm:px-8">
+                    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgb(255_255_255/0.12),transparent_60%)]"></div>
                     {{-- Tablica: gospodarz, wynik albo „vs”, gość --}}
-                    <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
+                    <div class="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
                         @foreach ($sides as $index => $side)
                             @if ($index === 1)
                                 <div class="flex flex-col items-center gap-1">
@@ -294,7 +313,7 @@ new #[Layout('layouts::public')] class extends Component {
                                             <span>{{ $sides[0]['goals'] }}</span><span class="opacity-60">:</span><span>{{ $sides[1]['goals'] }}</span>
                                         </div>
                                     @else
-                                        <div class="rounded-lg bg-ui-raised px-3 py-1.5 text-sm font-semibold uppercase tracking-widest text-ui-muted">vs</div>
+                                        <div class="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-bold uppercase tracking-widest">vs</div>
                                     @endif
                                 </div>
                             @endif
@@ -303,8 +322,8 @@ new #[Layout('layouts::public')] class extends Component {
                                 @if ($stripe = \App\Models\Rival::stripe($side['lech'] ? \App\Models\Rival::LECH_COLORS : \App\Models\Rival::colorsFor($side['name'])))
                                     <span class="mb-1 h-1.5 w-16 rounded-full shadow-sm ring-1 ring-black/10 sm:w-24 dark:ring-white/10" style="{{ $stripe }}"></span>
                                 @endif
-                                <span class="{{ $side['lech'] ? 'text-club' : 'text-ui-ink' }} truncate font-display text-base font-semibold sm:text-xl">{{ $side['name'] }}</span>
-                                <span class="rounded bg-ui-raised px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ui-muted">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
+                                <span class="{{ $side['lech'] ? 'drop-shadow-[0_0_14px_rgb(96_165_250/0.8)]' : '' }} truncate font-display text-base font-bold text-white sm:text-xl">{{ $side['name'] }}</span>
+                                <span class="rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lech-100">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -314,13 +333,13 @@ new #[Layout('layouts::public')] class extends Component {
                         $protocol = $this->protocolOf($played ? $matchday : null);
                     @endphp
                     @if ($protocol->isNotEmpty())
-                        <div class="mx-auto w-full max-w-md rounded-xl border border-ui-line px-3 py-1">
+                        <div class="relative mx-auto w-full max-w-md rounded-xl bg-white px-3 py-1 text-zinc-900">
                             @include('partials.match-protocol', ['events' => $protocol])
                         </div>
                     @endif
 
                     @if ($matchday->kickoff_at)
-                        <div class="flex items-center justify-center gap-1.5 text-sm text-ui-muted">
+                        <div class="relative flex items-center justify-center gap-1.5 text-sm text-lech-100">
                             <x-ui.icon name="calendar-days" variant="mini" />
                             <span>{{ $matchday->kickoff_at->translatedFormat('l, j F Y, H:i') }}</span>
                         </div>
@@ -335,8 +354,8 @@ new #[Layout('layouts::public')] class extends Component {
                                     let s = Math.max(0, Math.floor((this.end - Date.now()) / 1000));
                                     this.parts = [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60];
                                 },
-                            }" x-init="tick(); setInterval(() => tick(), 1000)" class="space-y-2 text-center">
-                            <div class="text-xs font-semibold uppercase tracking-wider text-ui-muted">{{ __('Tipping closes in') }}</div>
+                            }" x-init="tick(); setInterval(() => tick(), 1000)" class="relative space-y-2 text-center">
+                            <div class="text-xs font-bold uppercase tracking-widest text-lech-100">{{ __('Tipping closes in') }}</div>
                             {{-- Tablica klapkowa jak na dworcu: każda cyfra na osobnej klapce (uiFlap), przy zmianie się przewraca. --}}
                             @php
                                 $dayDigits = max(2, strlen((string) intdiv(max(0, $matchday->kickoff_at->getTimestamp() - now()->getTimestamp()), 86400)));
@@ -362,7 +381,7 @@ new #[Layout('layouts::public')] class extends Component {
                                                 </span>
                                             @endfor
                                         </div>
-                                        <div class="text-[11px] font-medium uppercase tracking-wider text-ui-muted">{{ $unit }}</div>
+                                        <div class="text-[11px] font-medium uppercase tracking-wider text-lech-200">{{ $unit }}</div>
                                     </div>
                                 @endforeach
                             </div>
@@ -370,7 +389,7 @@ new #[Layout('layouts::public')] class extends Component {
                     @endif
 
                     {{-- Akcje: typowanie albo wyniki --}}
-                    <div class="flex flex-wrap items-center justify-center gap-2 border-t border-ui-line pt-4">
+                    <div class="relative flex flex-wrap items-center justify-center gap-2 border-t border-white/15 pt-4">
                         @if ($played)
                             <x-ui.btn :href="route('results')" wire:navigate icon="trophy">{{ __('Results and tables') }}</x-ui.btn>
                         @elseif (!auth()->check())
@@ -392,20 +411,20 @@ new #[Layout('layouts::public')] class extends Component {
                                 @foreach ($tiles as [$label, $value, $state])
                                     <a href="{{ $tipUrl }}" wire:navigate @class([
                                         'group flex flex-col justify-between gap-2 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md',
-                                        'border-green-300 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10' => $state === 'done',
-                                        'border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' => $state === 'partial',
-                                        'border-dashed border-ui-line bg-ui-raised/40' => $state === 'missing',
+                                        'border-green-400/60 bg-green-500/25' => $state === 'done',
+                                        'border-amber-300/70 bg-amber-500/25' => $state === 'partial',
+                                        'border-dashed border-white/30 bg-white/5' => $state === 'missing',
                                     ])>
-                                        <span class="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-wider text-ui-muted">
+                                        <span class="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-wider text-lech-100">
                                             {{ $label }}
                                             <x-ui.icon :name="$state === 'done' ? 'check-circle' : ($state === 'partial' ? 'exclamation-circle' : 'plus-circle')" variant="mini"
-                                                :class="$state === 'done' ? 'text-green-600 dark:text-green-400' : ($state === 'partial' ? 'text-amber-500' : 'text-ui-muted')" />
+                                                :class="$state === 'done' ? 'text-green-300' : ($state === 'partial' ? 'text-amber-300' : 'text-lech-200')" />
                                         </span>
-                                        <span class="font-display text-2xl font-bold leading-none tabular-nums text-ui-ink">{{ $value }}</span>
+                                        <span class="font-display text-2xl font-bold leading-none tabular-nums text-white">{{ $value }}</span>
                                     </a>
                                 @endforeach
                                 <a href="{{ $tipUrl }}" wire:navigate
-                                    class="col-span-full flex items-center justify-center gap-2 rounded-xl bg-club px-4 py-3 font-semibold text-club-ink shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:col-span-1 sm:flex-col sm:gap-1">
+                                    class="col-span-full flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 font-bold text-lech-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:col-span-1 sm:flex-col sm:gap-1">
                                     <x-ui.icon name="pencil-square" class="size-6" />
                                     <span>{{ $this->myTip ? __('Change tip') : __('Tip now') }}</span>
                                 </a>
@@ -417,6 +436,12 @@ new #[Layout('layouts::public')] class extends Component {
                             <x-ui.btn :href="route('results')" wire:navigate icon="trophy">{{ __('Results and tables') }}</x-ui.btn>
                         @endif
                     </div>
+                </div>
+
+                {{-- Prawa część: składy gracza w tej kolejce (tylko zalogowany z rozgrywkami, przed rozliczeniem) --}}
+                @if ($squads !== [])
+                    @include('partials.my-squads', ['squads' => $squads, 'tipUrl' => route('tips', ['matchday_slug' => 'kolejka-' . $matchday->number])])
+                @endif
                 </div>
             </section>
 

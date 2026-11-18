@@ -4,13 +4,16 @@ use App\Enums\MatchdayStatus;
 use App\Enums\SeasonStatus;
 use App\Models\Competition;
 use App\Models\CompetitionEntry;
+use App\Models\DesignatedPlayer;
 use App\Models\Fixture;
+use App\Models\LechPlayer;
 use App\Models\Matchday;
 use App\Models\Season;
 use App\Models\SeasonTeam;
 use App\Models\Tip;
 use App\Models\User;
 use App\Support\HomeStats;
+use App\Support\MySquads;
 use Livewire\Livewire;
 
 // Strona startowa: liga gracza (pięć miejsc wokół niego), czołówka Ekstraklasy dla gościa, puls kolejki i ciekawostki sezonu.
@@ -102,4 +105,27 @@ test('the league card shows the form, the place change and the next rival with a
     $page->assertSee(route('tips', ['matchday_slug' => 'kolejka-3']), false)
         ->assertSee('Zespół 3')
         ->assertDontSee(' M ·');
+});
+
+test('the next matchday shows the player squads with form and club experience, guests do not see them', function () {
+    [$season, $me] = homeLeague();
+    $open = Matchday::create(['season_id' => $season->id, 'number' => 1, 'opponent' => 'GKS Katowice', 'is_home' => false, 'kickoff_at' => now()->addDays(3), 'status' => MatchdayStatus::Planned->value]);
+    $ishak = LechPlayer::create(['name' => 'Mikael Ishak', 'number' => 9, 'position' => 'forward']);
+    $lis = LechPlayer::create(['name' => 'Mateusz Lis', 'number' => 41, 'position' => 'goalkeeper', 'is_academy' => true]);
+    DesignatedPlayer::create(['matchday_id' => $open->id, 'user_id' => $me->id, 'score_set' => 'league', 'lech_player_id' => $ishak->id]);
+    DesignatedPlayer::create(['matchday_id' => $open->id, 'user_id' => $me->id, 'score_set' => 'league', 'lech_player_id' => $lis->id]);
+
+    $squads = MySquads::for($me->id, $open);
+
+    expect($squads)->toHaveCount(1)
+        ->and($squads[0]['name'])->toBe('Ekstraklasa')
+        ->and(collect($squads[0]['players'])->pluck('name')->sort()->values()->all())->toBe(['M. Ishak', 'M. Lis'])
+        ->and(collect($squads[0]['players'])->firstWhere('name', 'M. Lis')['academy'])->toBeTrue();
+
+    Livewire::actingAs($me)->test('pages::home.welcome')
+        ->assertSee(__('Your squads in this matchday'))->assertSee('M. Ishak')
+        ->assertSee(route('tips', ['matchday_slug' => 'kolejka-1']), false);
+
+    Livewire::test('pages::home.welcome')->assertDontSee(__('Your squads in this matchday'));
+    expect(MySquads::short('Mikael Ishak'))->toBe('M. Ishak')->and(MySquads::short('Ishak'))->toBe('Ishak');
 });
