@@ -20,7 +20,9 @@ test('security settings page renders without two factor when feature is disabled
 
     $user = User::factory()->create();
 
+    // Teksty po angielsku: domyślny język strony to polski (17.11.2026), więc wybieramy angielski w sesji.
     $this->actingAs($user)
+        ->withSession(['locale' => 'en'])
         ->get(route('security.edit'))
         ->assertOk()
         ->assertSee('Update password')
