@@ -295,12 +295,16 @@ new class extends Component {
                             $isActive = $open && $setValue === $this->active;
                             $setSheets = $sheets[$setValue] ?? [];
                         @endphp
-                        <section wire:key="set-{{ $setValue }}" style="{{ \App\Support\CompetitionColors::style($colors[$setValue] ?? 'league_1') }}"
+                        <section data-share-target wire:key="set-{{ $setValue }}" style="{{ \App\Support\CompetitionColors::style($colors[$setValue] ?? 'league_1') }}"
                             @if ($open) wire:click="selectSet('{{ $setValue }}')" @endif
                             class="comp-banner {{ $isActive ? 'ring-2 ring-lech-600 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900' : '' }} {{ $open ? 'cursor-pointer' : '' }} min-w-0 rounded-2xl p-2.5">
                             <header class="relative z-10 flex items-center justify-between gap-2 px-0.5">
                                 <h2 class="min-w-0 text-xs font-semibold uppercase leading-tight tracking-wider">{{ $this->setNames[$setValue] ?? $set->scoreSetLabel() }}</h2>
-                                <span class="comp-badge shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums">{{ $mine->count() }}/{{ $max }}</span>
+                                <span class="flex shrink-0 items-center gap-1.5">
+                                    <span class="comp-badge rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums">{{ $mine->count() }}/{{ $max }}</span>
+                                    {{-- Udostępnianie bez przełączania rozgrywek (kliknięcie kafelka wybiera rozgrywki) --}}
+                                    <span @click.stop><x-share-image :title="$this->setNames[$setValue] ?? $set->scoreSetLabel()" class="!size-6" /></span>
+                                </span>
                             </header>
 
                             @if ($setSheets === [])

@@ -28,7 +28,7 @@
             $perRound = $row['type'] === \App\Enums\CompetitionType::Legends ? 2 : 1;
             $byRound = collect($row['matches'])->groupBy('round');
         @endphp
-        <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm" wire:key="comp-{{ $loop->index }}">
+        <section data-share-target class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface shadow-sm" wire:key="comp-{{ $loop->index }}">
             <div class="lech-bar flex flex-wrap items-center gap-3 px-4 py-3">
                 <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ui-surface shadow-xs">
                     @if (isset($trophyIcons[$row['trophy']]))
@@ -55,6 +55,7 @@
                         </div>
                     </div>
                 @endif
+                <x-share-image :title="$row['name']" class="text-white" />
             </div>
 
             <div class="grid grid-cols-3 gap-2 p-3 lg:grid-cols-9">

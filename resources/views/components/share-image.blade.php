@@ -23,7 +23,13 @@
                 'close' => __('Close'),
                 'x' => __('Post on X'),
                 'xHint' => __('The image is saved: attach it to the post on X.'),
+                'xPaste' => __('The image is in the clipboard: paste it into the post on X (Ctrl+V).'),
                 'hashtag' => config('club.hashtag'),
+                // Podpis każdego udostępnienia: hashtag gry i adres strony.
+                'text' => trim((config('club.hashtag') ? '#'.config('club.hashtag').' ' : '').$brand),
+                'copy' => __('Copy image and text'),
+                'copied' => __('Copied: paste the image and text into your post.'),
+                'copiedImage' => __('Image copied. Add the text: :text'),
                 'via' => config('club.x_handle'),
             ];
         @endphp

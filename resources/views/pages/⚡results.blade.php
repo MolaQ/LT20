@@ -882,14 +882,14 @@ new #[Layout('layouts::public')] class extends Component {
                 @php
                     $tableStyle = \App\Support\CompetitionColors::style($colorKey);
                 @endphp
-                <section data-share-target class="self-start overflow-hidden rounded-2xl p-1 shadow-md"
+                <section data-share-target class="self-start overflow-hidden rounded-2xl p-1 shadow-md lg:self-stretch"
                     style="{{ $tableStyle }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-between gap-2.5 px-3 pb-1.5 pt-2">
                         <div>
                             <h3 class="text-sm font-semibold uppercase tracking-wider">{{ __('Table') }}</h3>
                             <p class="text-[11px] opacity-80">{{ __('After matchday :number', ['number' => max(1, $round)]) }}</p>
                         </div>
-                        <x-share-image :title="__('Table').' '.($this->competition->name ?: $this->competition->type->label()).' '.$this->season->title" class="ms-auto" />
+                        <x-share-image :title="__('Table').' · '.($this->competition->name ?: $this->competition->type->label()).' · '.$this->season->title.' · '.__('After matchday :number', ['number' => max(1, $round)])" class="ms-auto" />
                         <span class="comp-badge {{ $dashed }} flex size-9 shrink-0 items-center justify-center rounded-full shadow">
                             @if (isset($bannerIcons[$colorKey]))
                                 <img src="{{ $bannerIcons[$colorKey] }}" alt="" class="size-6 object-contain">
@@ -1181,7 +1181,7 @@ new #[Layout('layouts::public')] class extends Component {
                                 <x-ui.text class="text-xs tabular-nums">
                                     {{ __(':played of :total matches played', ['played' => $this->cupPlayed, 'total' => $total]) }}
                                 </x-ui.text>
-                                <x-share-image :title="\App\Support\CupBracket::roundName($round).' '.($this->competition->name ?: $this->competition->type->label())" class="text-ui-muted" />
+                                <x-share-image :title="\App\Support\CupBracket::roundName($round).' · '.($this->competition->name ?: $this->competition->type->label())" class="text-ui-muted" />
                             </div>
                         </div>
                         {{-- Pasek postępu rundy --}}
@@ -1239,8 +1239,9 @@ new #[Layout('layouts::public')] class extends Component {
 
             {{-- ============ Mecze kolejki (ligi, podwórkowa, Liga Legend) ============ --}}
             {{-- Karta w barwach rozgrywek jak stopka grupy pucharów europejskich: wynik w wyróżnionym kafelku na środku. --}}
+            {{-- Obok tabeli ta sama wysokość co tabela: mecze rozkładają się równo na całą kolumnę (lg:self-stretch, flex-1 wierszy) --}}
             @if (!$this->isCup && !$this->isEuropean)
-                <section data-share-target class="self-start space-y-1.5 overflow-hidden rounded-2xl p-2 shadow-md"
+                <section data-share-target class="flex flex-col gap-1.5 self-start overflow-hidden rounded-2xl p-2 shadow-md {{ $this->hasTable ? 'lg:self-stretch' : '' }}"
                     style="{{ \App\Support\CompetitionColors::style($colorKey) }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-between gap-2 px-1 pb-1">
                         <h3 class="text-sm font-semibold uppercase tracking-wider">{{ __('Matchday :number', ['number' => $round]) }}</h3>
@@ -1248,7 +1249,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @if ($this->matches && $this->matches->total() > 0)
                                 <span class="comp-accent text-[11px] font-bold tabular-nums">{{ trans_choice(':count match|:count matches', $this->matches->total(), ['count' => $this->matches->total()]) }}</span>
                             @endif
-                            <x-share-image :title="__('Matchday :number', ['number' => $round]).' '.($this->competition->name ?: $this->competition->type->label())" />
+                            <x-share-image :title="__('Matchday :number', ['number' => $round]).' · '.($this->competition->name ?: $this->competition->type->label())" />
                         </div>
                     </header>
 
@@ -1260,7 +1261,7 @@ new #[Layout('layouts::public')] class extends Component {
                                 $awayWon = $fixture->isPlayed() && $fixture->away_goals > $fixture->home_goals;
                             @endphp
                             <button type="button" wire:click="showFixture({{ $fixture->id }})" title="{{ __('Match details') }}" wire:key="fx-{{ $fixture->id }}"
-                                class="{{ $mine ? 'ring-2 ring-amber-400' : '' }} grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg bg-black/20 px-2 py-1.5 text-sm transition hover:bg-black/30">
+                                class="{{ $mine ? 'ring-2 ring-amber-400' : '' }} {{ $this->hasTable ? 'lg:flex-1' : '' }} grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg bg-black/20 px-2 py-1.5 text-sm transition hover:bg-black/30">
                                 <span class="flex min-w-0 items-center justify-end gap-1 {{ $homeWon ? 'font-bold' : 'opacity-85' }}"><x-champion-trophies :team="$fixture->home?->seasonTeam" :size="14" /><span class="truncate {{ $fixture->home?->seasonTeam?->is_bot ? 'italic' : '' }}">{{ $fixture->home?->seasonTeam->name ?? __('Seat :number', ['number' => $fixture->home_seat]) }}</span></span>
                                 @if ($fixture->isPlayed())
                                     <span class="comp-badge min-w-14 rounded-md px-2 py-0.5 text-center text-base font-black tabular-nums shadow">{{ $fixture->home_goals }}:{{ $fixture->away_goals }}</span>

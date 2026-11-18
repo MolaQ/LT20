@@ -37,12 +37,7 @@
     $exp = fn ($v) => \App\Support\ClubStats::experience($v);
     $maxExp = max(1, collect($clubPlayers)->max(fn ($c) => $c['career']['experience']) ?: 1);
     // Barwy pozycji (B/O/P/N): kolor kwadratu z numerem
-    $posTone = [
-        'goalkeeper' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200',
-        'defender' => 'bg-sky-400 text-sky-950',
-        'midfielder' => 'bg-emerald-400 text-emerald-950',
-        'forward' => 'bg-rose-400 text-rose-950',
-    ];
+    $posTone = \App\Enums\PlayerPosition::tones();
     $posOrder = array_flip(\App\Enums\PlayerPosition::values());
     $defaults = collect($toggles)->map(fn ($t) => $t[1])->all();
 @endphp
