@@ -168,6 +168,23 @@ const cleanCopy = (target) => {
     holder.appendChild(copy);
     target.parentNode.appendChild(holder);
 
+    // Przewijane pola (tabela z suwakami) rozwijamy na całą treść, żeby na obrazku nie było pasków przewijania
+    // ani uciętych wierszy i kolumn.
+    for (const el of copy.querySelectorAll('*')) {
+        const style = getComputedStyle(el);
+        if (/(auto|scroll)/.test(style.overflowX + style.overflowY)) {
+            el.style.overflow = 'visible';
+            el.style.maxHeight = 'none';
+            el.style.maxWidth = 'none';
+            el.style.height = 'auto';
+        }
+    }
+    // Szeroka tabela: kopia rośnie o tyle, ile brakuje najbardziej ściśniętemu elementowi.
+    const missing = Math.max(0, ...[copy, ...copy.querySelectorAll('*')].map((el) => el.scrollWidth - el.clientWidth));
+    if (missing > 0) {
+        copy.style.width = Math.ceil(copy.getBoundingClientRect().width + missing) + 'px';
+    }
+
     return { holder, copy };
 };
 
