@@ -206,7 +206,11 @@ final class Graphic
         return is_file($path) ? $path : resource_path('fonts/Inter-Bold.otf');
     }
 
-    /** Składowa koloru w zakresie 0–255. @return int<0, 255> */
+    /**
+     * Składowa koloru w zakresie 0–255.
+     *
+     * @return int<0, 255>
+     */
     private static function channel(float|int $value): int
     {
         return max(0, min(255, (int) round($value)));
