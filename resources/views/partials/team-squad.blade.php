@@ -144,11 +144,11 @@
                         class="comp-chip h-8 truncate rounded-full px-3 text-xs font-bold transition" x-text="comp.label"></button>
                 </template>
             </div>
-            <div class="flex w-full rounded-full bg-ui-raised p-1 sm:inline-flex sm:w-auto">
+            <div class="flex w-full gap-1 rounded-full bg-ui-raised p-1 sm:inline-flex sm:w-auto">
                 @foreach ($positions as $posKey => $posLabel)
                     <button type="button" x-on:click="pos = '{{ $posKey }}'" title="{{ $posKey === 'all' ? $posLabel : \App\Enums\PlayerPosition::from($posKey)->label() }}"
-                        x-bind:class="pos === '{{ $posKey }}' ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-ui-ink'"
-                        class="h-7 min-w-9 flex-1 rounded-full px-3 text-xs font-bold transition">{{ $posLabel }}</button>
+                        x-bind:class="pos === '{{ $posKey }}' ? '{{ $posKey === 'all' ? 'bg-club text-club-ink' : \App\Enums\PlayerPosition::tones()[$posKey] }} shadow ring-2 ring-white/70 dark:ring-white/30' : '{{ $posKey === 'all' ? 'text-ui-muted hover:text-ui-ink' : \App\Enums\PlayerPosition::tones()[$posKey].' opacity-45 hover:opacity-80' }}'"
+                        class="h-7 min-w-9 flex-1 rounded-full px-3 text-xs font-black transition">{{ $posLabel }}</button>
                 @endforeach
             </div>
         </div>
@@ -177,7 +177,6 @@
                             <td class="px-2 py-2">
                                 <span class="flex items-center gap-1.5 whitespace-nowrap font-semibold">
                                     <span x-text="p.name"></span>
-                                    <span class="text-[11px] font-medium text-ui-muted" x-text="p.posShort"></span>
                                     <template x-if="p.academy"><x-ui.icon name="academic-cap" variant="micro" class="shrink-0 text-lech-600 dark:text-lech-300" /></template>
                                 </span>
                             </td>
