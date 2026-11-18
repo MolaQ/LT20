@@ -41,7 +41,7 @@
     $posOrder = array_flip(\App\Enums\PlayerPosition::values());
     $defaults = collect($toggles)->map(fn ($t) => $t[1])->all();
 @endphp
-<div class="space-y-3" x-on:keydown.escape.window="open = null"
+<div class="space-y-3" x-on:keydown.escape.window="open = null" x-init="stripe(); $watch('pos', () => stripe())"
     x-data="{
         open: null, season: null, pos: 'all', scope: 'season', sort: 'total', dir: -1,
         cols: Object.assign({{ json_encode($defaults) }}, (() => { try { return JSON.parse(localStorage.getItem('club-cols') || '{}') } catch (e) { return {} } })()),
@@ -53,6 +53,14 @@
             if (this.sort === key) { this.dir = -this.dir } else { this.sort = key; this.dir = ['name', 'number', 'pos'].includes(key) ? 1 : -1 }
             this.apply();
         },
+        // Paski co drugi widoczny wiersz (po sortowaniu i filtrze pozycji)
+        stripe() {
+            let i = 0;
+            [...this.$refs.body.children].forEach(row => {
+                const odd = (this.pos === 'all' || row.dataset.posKey === this.pos) && i++ % 2 === 1;
+                ['bg-zinc-50/80', 'dark:bg-white/[0.03]'].forEach(c => row.classList.toggle(c, odd));
+            });
+        },
         attr(key) { return ['total', 'name', 'number', 'pos'].includes(key) ? key : this.scope + '-' + key },
         apply() {
             const body = this.$refs.body, attr = 'data-' + this.attr(this.sort), dir = this.dir;
@@ -61,6 +69,7 @@
                 const cmp = isNaN(parseFloat(x)) ? x.localeCompare(y, 'pl') : parseFloat(x) - parseFloat(y);
                 return cmp * dir || parseFloat(b.dataset.total) - parseFloat(a.dataset.total);
             }).forEach(row => body.appendChild(row));
+            this.stripe();
         },
     }" x-effect="scope; $nextTick(() => apply())">
     <x-lech-panel :title="$clubTitle ?? __('Club players')" :subtitle="__('Click a column to sort, click a player to see all seasons and matches.')" icon="user-group" flush>
@@ -99,7 +108,7 @@
                 <thead class="bg-zinc-50 text-[11px] font-bold uppercase tracking-wider text-ui-muted dark:bg-white/5">
                     <tr>
                         @foreach (['number' => ['#', __('Number'), 'text-center w-12'], 'name' => [__('Footballer'), __('Footballer'), 'text-left'], 'total' => [__('Total exp.'), __('Experience in the club, all seasons'), 'text-left w-32']] as $sortKey => [$short, $long, $align])
-                            <th class="{{ $align }} whitespace-nowrap px-2 py-2 first:ps-4" title="{{ $long }}">
+                            <th class="{{ $align }} whitespace-nowrap px-2 py-2 first:ps-4" title="{{ $long }}" x-bind:class="sort === '{{ $sortKey }}' && 'bg-club/[0.07]'">
                                 <button type="button" x-on:click="sortBy('{{ $sortKey }}')" class="inline-flex items-center gap-1 uppercase hover:text-club"
                                     x-bind:class="sort === '{{ $sortKey }}' && 'text-club '">
                                     {{ $short }}<span x-show="sort === '{{ $sortKey }}'" x-text="dir > 0 ? '▲' : '▼'" class="text-[9px]"></span>
@@ -107,7 +116,7 @@
                             </th>
                         @endforeach
                         @foreach ($tableCols as $col)
-                            <th x-show="cols['{{ $col }}']" class="whitespace-nowrap px-2 py-2 text-right" title="{{ $statCols[$col][1] }}">
+                            <th x-show="cols['{{ $col }}']" x-bind:class="sort === '{{ $col }}' && 'bg-club/[0.07]'" class="whitespace-nowrap px-2 py-2 text-right" title="{{ $statCols[$col][1] }}">
                                 <button type="button" x-on:click="sortBy('{{ $col }}')" class="inline-flex items-center gap-1 uppercase hover:text-club"
                                     x-bind:class="sort === '{{ $col }}' && 'text-club '">
                                     <span x-show="sort === '{{ $col }}'" x-text="dir > 0 ? '▲' : '▼'" class="text-[9px]"></span>{{ $statCols[$col][0] }}
@@ -127,15 +136,15 @@
                             $idle = $club['career']['fielded'] == 0;
                             $sheets = in_array($p->position->value, $sheetPositions, true);
                         @endphp
-                        <tr wire:key="club-player-{{ $p->id }}" data-club-player x-show="pos === 'all' || pos === '{{ $p->position->value }}'"
+                        <tr wire:key="club-player-{{ $p->id }}" data-club-player data-pos-key="{{ $p->position->value }}" x-show="pos === 'all' || pos === '{{ $p->position->value }}'"
                             x-on:click="open = {{ $p->id }}; season = null"
                             data-total="{{ $careerExp }}" data-number="{{ $p->number ?? 999 }}" data-name="{{ $p->name }}" data-pos="{{ $posOrder[$p->position->value] ?? 9 }}"
                             @foreach ($tableCols as $col) data-season-{{ $col }}="{{ in_array($col, ['clean_sheets', 'defense'], true) && ! $sheets ? -1 : $club['season'][$col] }}" data-career-{{ $col }}="{{ in_array($col, ['clean_sheets', 'defense'], true) && ! $sheets ? -1 : $club['career'][$col] }}" @endforeach
                             class="{{ $idle ? 'text-zinc-400 dark:text-zinc-500' : 'text-ui-ink' }} cursor-pointer transition hover:bg-lech-50/70 dark:hover:bg-white/5">
-                            <td class="ps-4 pe-2 py-2 text-center">
+                            <td x-bind:class="sort === 'number' && 'bg-club/[0.07]'" class="ps-4 pe-2 py-2 text-center">
                                 <span class="{{ $posTone[$p->position->value] ?? 'bg-zinc-200 text-zinc-800' }} grid size-8 place-items-center rounded-lg text-xs font-black tabular-nums" title="{{ $p->position->label() }}">{{ $p->number ?? '–' }}</span>
                             </td>
-                            <td class="px-2 py-2">
+                            <td x-bind:class="sort === 'name' && 'bg-club/[0.07]'" class="px-2 py-2">
                                 <span class="flex items-center gap-1.5 whitespace-nowrap font-semibold {{ $idle ? '' : 'text-ui-ink' }}">
                                     {{ $p->name }}
                                     @if ($p->is_academy)
@@ -143,14 +152,14 @@
                                     @endif
                                 </span>
                             </td>
-                            <td class="px-2 py-2">
+                            <td x-bind:class="sort === 'total' && 'bg-club/[0.07]'" class="px-2 py-2">
                                 <div class="font-semibold tabular-nums text-club">{{ $exp($careerExp) }}</div>
                                 <div class="mt-1 h-1 w-24 overflow-hidden rounded-full bg-ui-raised">
                                     <div class="h-full rounded-full bg-gradient-to-r from-lech-400 to-lech-800" style="width: {{ $share }}%"></div>
                                 </div>
                             </td>
                             @foreach ($tableCols as $col)
-                                <td x-show="cols['{{ $col }}']" @if ($col === 'experience') x-cloak @endif class="px-2 py-2 text-right tabular-nums">
+                                <td x-show="cols['{{ $col }}']" x-bind:class="sort === '{{ $col }}' && 'bg-club/[0.07]'" @if ($col === 'experience') x-cloak @endif class="px-2 py-2 text-right tabular-nums">
                                     @if (in_array($col, ['clean_sheets', 'defense'], true) && ! $sheets)
                                         <span class="text-zinc-300 dark:text-zinc-600">·</span>
                                     @else
