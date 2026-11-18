@@ -20,7 +20,8 @@
             @endif
         </div>
         @if (isset($actions) && $actions->isNotEmpty())
-            <div class="flex shrink-0 items-center gap-2">{{ $actions }}</div>
+            {{-- Telefon: przełączniki w osobnym rzędzie pod tytułem, żeby tytuł i opis nie ściskały się w wąskiej kolumnie --}}
+            <div class="flex shrink-0 items-center gap-2 max-sm:order-last max-sm:w-full">{{ $actions }}</div>
         @endif
         @if ($share)
             <x-share-image :title="$title" class="text-white" />

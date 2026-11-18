@@ -284,7 +284,7 @@ new #[Layout('layouts::public')] class extends Component {
                         <x-ui.icon :name="$played ? 'flag' : 'clock'" variant="mini" class="text-lech-200" />
                         <span class="text-xs font-semibold uppercase tracking-wider">{{ $played ? __('Last matchday') : __('Next matchday') }}</span>
                     </div>
-                    <div class="flex items-center gap-2 text-xs">
+                    <div class="flex flex-wrap items-center gap-2 text-xs [&>span]:whitespace-nowrap">
                         <span class="rounded-full bg-white/15 px-2.5 py-1 font-semibold">{{ __('Matchday :number', ['number' => $matchday->number]) }}</span>
                         @if ($matchday->competitionLabel())
                             <span class="rounded-full bg-white/10 px-2.5 py-1 text-lech-100">{{ $matchday->competitionLabel() }}</span>
@@ -412,10 +412,11 @@ new #[Layout('layouts::public')] class extends Component {
                                 $tiles[] = [__('Lech players picked'), (string) ($status['players'] ?? 0), ($status['players'] ?? 0) > 0 ? 'done' : 'missing'];
                             @endphp
                             {{-- Jeden styl kafelków (szkło na niebieskim tle), stan typu kolorem paska i ikony: zielony gotowe, bursztynowy niepełne, czerwony brak --}}
-                            <div @class(['grid w-full gap-3', 'grid-cols-2 sm:grid-cols-4' => count($tiles) === 3, 'grid-cols-3' => count($tiles) === 2])>
+                            {{-- Telefon: kafelki w jednym rzędzie (po trzy albo dwa), przycisk pod nimi na całą szerokość --}}
+                            <div @class(['grid w-full gap-2 sm:gap-3', 'grid-cols-3 sm:grid-cols-4' => count($tiles) === 3, 'grid-cols-2 sm:grid-cols-3' => count($tiles) === 2])>
                                 @foreach ($tiles as [$label, $value, $state])
                                     <a href="{{ $tipUrl }}" wire:navigate @class([
-                                        'group relative flex min-h-24 flex-col justify-between gap-3 overflow-hidden rounded-xl border border-white/15 bg-white/10 px-4 py-3.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md',
+                                        'group relative flex min-h-20 flex-col justify-between gap-2 overflow-hidden rounded-xl border border-white/15 bg-white/10 px-2.5 py-3 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md sm:min-h-24 sm:gap-3 sm:px-4 sm:py-3.5',
                                     ])>
                                         <span @class([
                                             'absolute inset-x-0 top-0 h-1',
@@ -423,16 +424,16 @@ new #[Layout('layouts::public')] class extends Component {
                                             'bg-amber-400' => $state === 'partial',
                                             'bg-red-400' => $state === 'missing',
                                         ])></span>
-                                        <span class="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-wider text-lech-100">
+                                        <span class="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wide text-lech-100 sm:gap-2 sm:text-[11px] sm:tracking-wider">
                                             {{ $label }}
                                             <x-ui.icon :name="$state === 'done' ? 'check-circle' : ($state === 'partial' ? 'exclamation-circle' : 'plus-circle')" variant="mini"
                                                 :class="$state === 'done' ? 'text-green-400' : ($state === 'partial' ? 'text-amber-400' : 'text-red-400')" />
                                         </span>
-                                        <span class="font-display text-3xl font-bold leading-none tabular-nums text-white">{{ $value }}</span>
+                                        <span class="font-display text-2xl font-bold leading-none tabular-nums text-white sm:text-3xl">{{ $value }}</span>
                                     </a>
                                 @endforeach
                                 <a href="{{ $tipUrl }}" wire:navigate
-                                    class="col-span-full flex min-h-24 items-center justify-center gap-2 rounded-xl bg-lech-500 px-4 py-3 font-bold text-white shadow-lg shadow-lech-950/40 ring-1 ring-white/25 transition hover:-translate-y-0.5 hover:bg-lech-400 sm:col-span-1 sm:flex-col sm:gap-1.5">
+                                    class="col-span-full flex min-h-12 items-center justify-center gap-2 rounded-xl bg-lech-500 px-4 py-3 font-bold text-white shadow-lg shadow-lech-950/40 ring-1 ring-white/25 transition hover:-translate-y-0.5 hover:bg-lech-400 sm:col-span-1 sm:min-h-24 sm:flex-col sm:gap-1.5">
                                     <x-ui.icon name="pencil-square" class="size-6" />
                                     <span>{{ $this->myTip ? __('Change tip') : __('Tip now') }}</span>
                                 </a>

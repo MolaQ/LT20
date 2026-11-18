@@ -133,21 +133,22 @@
 
     <div class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
         {{-- Rozgrywki (w barwach systemu) i pozycje --}}
+        {{-- Telefon (18.11.2026): rozgrywki w siatce po dwa, przyciski tej samej wysokości i szerokości, pozycje na całą szerokość --}}
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-ui-line px-4 py-3">
-            <div class="flex flex-wrap gap-1.5">
+            <div class="grid w-full grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:flex-wrap">
                 <button type="button" x-on:click="set = 'all'; open = null" x-bind:class="set === 'all' ? 'bg-club text-club-ink border-club' : 'border-ui-line text-ui-muted hover:text-ui-ink'"
-                    class="rounded-full border px-3 py-1 text-xs font-bold transition">{{ __('All competitions') }}</button>
+                    class="col-span-2 h-8 truncate rounded-full border px-3 text-xs font-bold transition">{{ __('All competitions') }}</button>
                 <template x-for="[key, comp] in Object.entries(comps)" :key="key">
                     <button type="button" x-on:click="set = key; open = null" x-bind:style="styles[comp.key] || styles['league_1']"
                         x-bind:class="set === key ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-ui-surface' : 'opacity-80 hover:opacity-100'"
-                        class="comp-chip rounded-full px-3 py-1 text-xs font-bold transition" x-text="comp.label"></button>
+                        class="comp-chip h-8 truncate rounded-full px-3 text-xs font-bold transition" x-text="comp.label"></button>
                 </template>
             </div>
-            <div class="inline-flex rounded-full bg-ui-raised p-1">
+            <div class="flex w-full rounded-full bg-ui-raised p-1 sm:inline-flex sm:w-auto">
                 @foreach ($positions as $posKey => $posLabel)
                     <button type="button" x-on:click="pos = '{{ $posKey }}'" title="{{ $posKey === 'all' ? $posLabel : \App\Enums\PlayerPosition::from($posKey)->label() }}"
                         x-bind:class="pos === '{{ $posKey }}' ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-ui-ink'"
-                        class="min-w-9 rounded-full px-3 py-1 text-xs font-bold transition">{{ $posLabel }}</button>
+                        class="h-7 min-w-9 flex-1 rounded-full px-3 text-xs font-bold transition">{{ $posLabel }}</button>
                 @endforeach
             </div>
         </div>

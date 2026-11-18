@@ -8,14 +8,14 @@
 
 @if ($inline)
 <div x-data="uiCounter({{ (int) $min }}, {{ (int) $max }})" x-modelable="value" {{ $attributes->whereStartsWith('wire:model') }}
-    {{ $attributes->whereDoesntStartWith('wire:model')->class('flex items-center gap-3') }}>
+    {{ $attributes->whereDoesntStartWith('wire:model')->class('flex items-center gap-1.5 sm:gap-3') }}>
     <button type="button" @click="change(-1)" :disabled="{{ $disabled ? 'true' : 'false' }} || Number(value) <= {{ (int) $min }}"
-        class="grid size-10 place-items-center rounded-xl {{ $key }} text-xl font-bold ring-1 ring-white/20 transition active:bg-club active:text-club-ink disabled:opacity-40 sm:size-11"
+        class="grid size-9 place-items-center rounded-lg {{ $key }} text-lg font-bold ring-1 ring-white/20 transition active:bg-club active:text-club-ink disabled:opacity-40 sm:size-11 sm:text-xl"
         aria-label="{{ __('Less') }}">−</button>
-    <span class="ui-num min-w-12 text-center text-6xl font-extrabold leading-none sm:text-7xl" :class="bump && 'animate-ui-bump'" x-text="value === '' || value === null ? 0 : value"
+    <span class="ui-num min-w-9 text-center text-5xl font-extrabold leading-none sm:min-w-12 sm:text-7xl" :class="bump && 'animate-ui-bump'" x-text="value === '' || value === null ? 0 : value"
         aria-live="polite"></span>
     <button type="button" @click="change(1)" :disabled="{{ $disabled ? 'true' : 'false' }} || Number(value) >= {{ (int) $max }}"
-        class="grid size-10 place-items-center rounded-xl {{ $key }} text-xl font-bold ring-1 ring-white/20 transition active:bg-club active:text-club-ink disabled:opacity-40 sm:size-11"
+        class="grid size-9 place-items-center rounded-lg {{ $key }} text-lg font-bold ring-1 ring-white/20 transition active:bg-club active:text-club-ink disabled:opacity-40 sm:size-11 sm:text-xl"
         aria-label="{{ __('More') }}">+</button>
 </div>
 @else

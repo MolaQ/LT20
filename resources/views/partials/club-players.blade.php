@@ -77,11 +77,11 @@
 
         {{-- Filtr pozycji i przełączniki kolumn --}}
         <div class="flex flex-wrap items-center gap-2 border-b border-ui-line px-4 py-2.5">
-            <div class="inline-flex rounded-full bg-ui-raised p-1">
+            <div class="flex w-full rounded-full bg-ui-raised p-1 sm:inline-flex sm:w-auto">
                 @foreach (['all' => __('Everyone')] + collect(\App\Enums\PlayerPosition::cases())->mapWithKeys(fn ($pos) => [$pos->value => $pos->short()])->all() as $posKey => $posLabel)
                     <button type="button" x-on:click="pos = '{{ $posKey }}'" title="{{ $posKey === 'all' ? $posLabel : \App\Enums\PlayerPosition::from($posKey)->label() }}"
                         x-bind:class="pos === '{{ $posKey }}' ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-lech-700 '"
-                        class="min-w-9 rounded-full px-3 py-1 text-xs font-bold transition">{{ $posLabel }}</button>
+                        class="h-7 min-w-9 flex-1 rounded-full px-3 text-xs font-bold transition">{{ $posLabel }}</button>
                 @endforeach
             </div>
             <div class="flex flex-wrap items-center gap-1">
@@ -89,7 +89,7 @@
                 @foreach ($toggles as $colKey => [$colLabel, $on])
                     <button type="button" x-on:click="toggle('{{ $colKey }}')"
                         x-bind:class="cols['{{ $colKey }}'] ? 'border-lech-600 bg-ui-raised text-lech-800 dark:border-lech-400 dark:text-lech-100' : 'border-ui-line text-zinc-400 line-through '"
-                        class="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition">{{ $colLabel }}</button>
+                        class="h-7 rounded-full border px-2.5 text-[11px] font-semibold transition">{{ $colLabel }}</button>
                 @endforeach
             </div>
         </div>
