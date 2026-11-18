@@ -7,12 +7,7 @@
 --}}
 @php
     $styles = collect(\App\Support\CompetitionColors::order())->mapWithKeys(fn ($key) => [$key => \App\Support\CompetitionColors::style($key)])->all();
-    $posTone = [
-        'goalkeeper' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200',
-        'defender' => 'bg-sky-400 text-sky-950',
-        'midfielder' => 'bg-emerald-400 text-emerald-950',
-        'forward' => 'bg-rose-400 text-rose-950',
-    ];
+    $posTone = \App\Enums\PlayerPosition::tones();
     $positions = ['all' => __('Everyone')] + collect(\App\Enums\PlayerPosition::cases())->mapWithKeys(fn ($pos) => [$pos->value => $pos->short()])->all();
     // Kolumny tabeli: klucz => [skrót, opis]; czyste konta i obrona tylko bramkarzom i obrońcom.
     $cols = [

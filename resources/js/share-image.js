@@ -3,7 +3,9 @@
 // (cleanCopy) z klasą is-sharing, bez elementów [data-share-hide] i ze stopką z adresem strony.
 // Gotowy obrazek pokazuje się w podglądzie z przyciskami „Pobierz” i „Udostępnij”. Udostępnianie jest
 // osobnym kliknięciem, bo przeglądarka otwiera systemowe „Udostępnij” tylko zaraz po kliknięciu, a zdjęcie
-// trwa chwilę. Biblioteka html-to-image ładuje się przy najechaniu na przycisk (osobny plik po npm run build).
+// trwa chwilę. Każdy kanał dostaje ten sam podpis (labels.text, np. „#LechTYPER lechtyper.pl”): „Kopiuj” wkłada
+// do schowka obrazek razem z tekstem (wklejenie w poście na Facebooku, X czy w komunikatorze), „Udostępnij” przekazuje
+// tekst obok pliku, a X dostaje go w oknie nowego posta. Biblioteka html-to-image ładuje się przy najechaniu na przycisk (osobny plik po npm run build).
 
 const slug = (text) =>
     String(text)
@@ -23,6 +25,8 @@ const loadLibrary = () => (library ??= import('html-to-image'));
 
 // Podgląd gotowego obrazka (zwykły DOM ze stylami w atrybutach, bez zależności od klas Tailwinda).
 const showPreview = (blob, file, labels) => {
+    // Tekst posta: tytuł obrazka, pusta linia i podpis gry (czytelniej niż wszystko w jednej linii).
+    const fullText = labels.title + '\n\n' + labels.text;
     const url = URL.createObjectURL(blob);
     const overlay = document.createElement('div');
     overlay.setAttribute('role', 'dialog');
@@ -68,7 +72,7 @@ const showPreview = (blob, file, labels) => {
     const onKey = (e) => e.key === 'Escape' && close();
 
     button(labels.close, false, close);
-    button(labels.download, !navigator.canShare?.({ files: [file] }), () => {
+    button(labels.download, !(window.matchMedia?.('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })), () => {
         const a = document.createElement('a');
         a.href = url;
         a.download = file.name;
@@ -76,24 +80,51 @@ const showPreview = (blob, file, labels) => {
         a.click();
         a.remove();
     });
-    // X (główny kanał gry): zapis obrazka i okno nowego posta z tekstem, adresem strony i hashtagiem.
-    // X nie przyjmuje obrazka z linku, więc obrazek dołącza się z pobranego pliku (podpowiedź w dymku).
+    // X (główny kanał gry): okno nowego posta z tekstem (tytuł, pusta linia, „#LechTYPER lechtyper.pl”).
+    // X nie przyjmuje obrazka z linku, więc obrazek trafia najpierw do schowka (w poście wystarczy Ctrl+V),
+    // a gdy przeglądarka nie pozwala na schowek, zapisuje się jako plik do dołączenia.
     button(labels.x, false, () => {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        const text = labels.title + (labels.hashtag ? ' #' + labels.hashtag : '') + (labels.via ? ' ' + labels.via : '');
-        const intent = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(location.href.split('#')[0]);
-        window.open(intent, '_blank', 'noopener');
-        toast(labels.xHint, 'success');
+        const copied = navigator.clipboard?.write && window.ClipboardItem
+            ? navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(() => true, () => false)
+            : Promise.resolve(false);
+        const text = fullText + (labels.via ? ' ' + labels.via : '');
+        window.open('https://x.com/intent/post?text=' + encodeURIComponent(text), '_blank', 'noopener');
+        copied.then((ok) => {
+            if (!ok) {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+            toast(ok ? labels.xPaste : labels.xHint, 'success');
+        });
     });
-    if (navigator.canShare?.({ files: [file] })) {
+    // Schowek: obrazek i tekst naraz; przeglądarka bez obsługi dwóch typów dostaje sam obrazek, a tekst pokazuje się w dymku.
+    if (navigator.clipboard?.write && window.ClipboardItem) {
+        button(labels.copy, false, async () => {
+            try {
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob, 'text/plain': new Blob([fullText], { type: 'text/plain' }) })]);
+                toast(labels.copied, 'success');
+            } catch (e) {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    toast(labels.copiedImage.replace(':text', fullText), 'success');
+                } catch (e2) {
+                    console.error(e2);
+                    toast(labels.error);
+                }
+            }
+        });
+    }
+    // Systemowe „Udostępnij” tylko na telefonie i tablecie: na komputerze z Windows okno udostępniania często
+    // kończy się komunikatem „Spróbuj ponownie” (18.11.2026), tam lepsze są „Kopiuj obraz i tekst” i X.
+    const touch = window.matchMedia?.('(pointer: coarse)').matches;
+    if (touch && navigator.canShare?.({ files: [file] })) {
         button(labels.share, true, async () => {
             try {
-                await navigator.share({ files: [file], title: labels.title });
+                await navigator.share({ files: [file], title: labels.title, text: fullText });
             } catch (e) {
                 // Zamknięte okno udostępniania to nie błąd.
                 if (e.name !== 'AbortError') {

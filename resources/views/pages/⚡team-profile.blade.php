@@ -349,10 +349,13 @@ new #[Layout('layouts::public')] class extends Component {
 
     {{-- Rozgrywki w bieżącym sezonie: miejsce albo odpadnięcie, kliknięcie otwiera wyniki z wyróżnionym zespołem --}}
     @if (count($this->seasonCompetitions) > 0)
-        <x-ui.card class="space-y-4">
+        <x-ui.card data-share-target class="space-y-4">
             <div class="flex items-center justify-between gap-2">
                 <x-ui.heading size="lg">{{ __('Competitions this season') }}</x-ui.heading>
-                <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
+                <div class="flex items-center gap-2">
+                    <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
+                    <x-share-image :title="__('Competitions this season')" class="text-ui-muted" />
+                </div>
             </div>
             {{-- Cztery kafle po dwa w rzędzie, trzy i mniej w jednym rzędzie --}}
             <div @class([
@@ -396,8 +399,11 @@ new #[Layout('layouts::public')] class extends Component {
     @endif
 
     {{-- Gablota --}}
-    <x-ui.card class="space-y-4">
-        <x-ui.heading size="lg">{{ __('Trophy cabinet') }}</x-ui.heading>
+    <x-ui.card data-share-target class="space-y-4">
+        <div class="flex items-center justify-between gap-2">
+            <x-ui.heading size="lg">{{ __('Trophy cabinet') }}</x-ui.heading>
+            <x-share-image :title="__('Trophy cabinet')" class="text-ui-muted" />
+        </div>
 
         @if (count($this->cabinet) === 0)
             <x-ui.text>{{ __('No trophies yet.') }}</x-ui.text>

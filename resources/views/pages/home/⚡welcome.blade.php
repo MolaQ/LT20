@@ -489,7 +489,7 @@ new #[Layout('layouts::public')] class extends Component {
                     $nextMatchday = $this->matchday && $this->matchday->status !== MatchdayStatus::Played ? $this->matchday : null;
                     $formTones = ['W' => 'bg-green-600', 'D' => 'bg-zinc-400 dark:bg-zinc-500', 'L' => 'bg-red-600'];
                 @endphp
-                <section class="flex flex-col overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                <section data-share-target class="flex flex-col overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
                     {{-- Nagłówek w barwach rozgrywek --}}
                     <div class="comp-banner flex items-center justify-between gap-3 !rounded-none !border-x-0 !border-t-0 px-5 py-4 !shadow-none" style="{{ \App\Support\CompetitionColors::style($league['key']) }}">
                         <div class="relative min-w-0">
@@ -499,12 +499,15 @@ new #[Layout('layouts::public')] class extends Component {
                             </p>
                             <h2 class="truncate font-display text-xl font-bold">{{ $league['name'] }}</h2>
                         </div>
-                        @if ($league['mine'])
-                            <div class="relative text-right">
-                                <div class="font-display text-3xl font-bold leading-none tabular-nums">{{ $league['mine']['place'] }}.</div>
-                                <div class="text-[11px] font-semibold uppercase tracking-wide opacity-80">{{ __('place') }}</div>
-                            </div>
-                        @endif
+                        <div class="relative flex items-center gap-3">
+                            @if ($league['mine'])
+                                <div class="text-right">
+                                    <div class="font-display text-3xl font-bold leading-none tabular-nums">{{ $league['mine']['place'] }}.</div>
+                                    <div class="text-[11px] font-semibold uppercase tracking-wide opacity-80">{{ __('place') }}</div>
+                                </div>
+                            @endif
+                            <x-share-image :title="$league['name']" />
+                        </div>
                     </div>
 
                     {{-- Nagłówki kolumn: forma tylko od pierwszej kolejki z wynikiem i na szerszym ekranie --}}
@@ -598,10 +601,13 @@ new #[Layout('layouts::public')] class extends Component {
 
             @if ($stats = $this->seasonStats)
                 {{-- Ciekawostki sezonu: celność typów i najskuteczniejsi --}}
-                <section class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
-                    <div class="border-b border-ui-line px-5 py-4">
-                        <p class="text-[11px] font-bold uppercase tracking-widest text-club">{{ trans_choice('After :count matchday|After :count matchdays', $stats['matchdays'], ['count' => $stats['matchdays']]) }}</p>
-                        <h2 class="font-display text-lg font-semibold">{{ __('Season facts') }}</h2>
+                <section data-share-target class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
+                    <div class="flex items-center justify-between gap-3 border-b border-ui-line px-5 py-4">
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-bold uppercase tracking-widest text-club">{{ trans_choice('After :count matchday|After :count matchdays', $stats['matchdays'], ['count' => $stats['matchdays']]) }}</p>
+                            <h2 class="font-display text-lg font-semibold">{{ __('Season facts') }}</h2>
+                        </div>
+                        <x-share-image :title="__('Season facts')" class="text-ui-muted" />
                     </div>
                     <div class="grid grid-cols-3 divide-x divide-ui-line border-b border-ui-line text-center">
                         @foreach ([[$stats['outcome'] . '%', __('right outcomes')], [$stats['exact'] . '%', __('exact scores')], [$stats['exact_count'], __('exact hits')]] as [$value, $label])
