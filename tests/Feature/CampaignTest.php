@@ -13,7 +13,7 @@ use App\Support\Graphic;
 use App\Support\Referrals;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
-use Illuminate\Session\ArrayHandler;
+use Illuminate\Session\ArraySessionHandler;
 use Illuminate\Session\Store;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission as PermissionModel;
@@ -24,7 +24,7 @@ use Spatie\Permission\Models\Role;
 function campaignRequest(string $uri, array $headers = []): Request
 {
     $request = Request::create($uri, 'GET', server: collect($headers)->mapWithKeys(fn ($v, $k) => ['HTTP_'.strtoupper($k) => $v])->all());
-    $request->setLaravelSession(new Store('test', new ArrayHandler(10)));
+    $request->setLaravelSession(new Store('test', new ArraySessionHandler(10)));
 
     return $request;
 }
