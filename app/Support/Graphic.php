@@ -18,7 +18,7 @@ final class Graphic
 
     public function __construct(public readonly int $width, public readonly int $height)
     {
-        $image = imagecreatetruecolor($width * self::SCALE, $height * self::SCALE);
+        $image = imagecreatetruecolor(max(1, $width * self::SCALE), max(1, $height * self::SCALE));
         if ($image === false) {
             throw new RuntimeException('Cannot create the image.');
         }
@@ -38,7 +38,7 @@ final class Graphic
     {
         [$r, $g, $b] = self::rgb($hex);
 
-        return (int) imagecolorallocatealpha($this->image, $r, $g, $b, (int) round(127 * (1 - max(0, min(1, $opacity)))));
+        return (int) imagecolorallocatealpha($this->image, $r, $g, $b, max(0, min(127, (int) round(127 * (1 - $opacity)))));
     }
 
     /** Ukośny gradient przez całe tło (lewy górny róg → prawy dolny). */
@@ -51,7 +51,7 @@ final class Graphic
         $steps = $w + $h;
         for ($t = 0; $t <= $steps; $t += 2) {
             $k = $t / $steps;
-            $c = (int) imagecolorallocate($this->image, (int) ($r1 + ($r2 - $r1) * $k), (int) ($g1 + ($g2 - $g1) * $k), (int) ($b1 + ($b2 - $b1) * $k));
+            $c = (int) imagecolorallocate($this->image, self::channel($r1 + ($r2 - $r1) * $k), self::channel($g1 + ($g2 - $g1) * $k), self::channel($b1 + ($b2 - $b1) * $k));
             imagesetthickness($this->image, 3);
             imageline($this->image, $t, 0, 0, $t, $c);
         }
@@ -182,7 +182,7 @@ final class Graphic
     /** Gotowy PNG w docelowym rozmiarze. */
     public function png(): string
     {
-        $out = imagecreatetruecolor($this->width, $this->height);
+        $out = imagecreatetruecolor(max(1, $this->width), max(1, $this->height));
         if ($out === false) {
             throw new RuntimeException('Cannot create the image.');
         }
@@ -206,7 +206,13 @@ final class Graphic
         return is_file($path) ? $path : resource_path('fonts/Inter-Bold.otf');
     }
 
-    /** @return array{0: int, 1: int, 2: int} */
+    /** Składowa koloru w zakresie 0–255. @return int<0, 255> */
+    private static function channel(float|int $value): int
+    {
+        return max(0, min(255, (int) round($value)));
+    }
+
+    /** @return array{0: int<0, 255>, 1: int<0, 255>, 2: int<0, 255>} */
     public static function rgb(string $hex): array
     {
         $hex = ltrim(trim($hex), '#');
@@ -217,6 +223,6 @@ final class Graphic
             return [0, 0, 0];
         }
 
-        return [(int) hexdec(substr($hex, 0, 2)), (int) hexdec(substr($hex, 2, 2)), (int) hexdec(substr($hex, 4, 2))];
+        return [self::channel((int) hexdec(substr($hex, 0, 2))), self::channel((int) hexdec(substr($hex, 2, 2))), self::channel((int) hexdec(substr($hex, 4, 2)))];
     }
 }

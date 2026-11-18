@@ -76,11 +76,9 @@ final class OgImage
             if ($bar) {
                 $g->rect($x + 10, $top + 9, 5, $rowH - 18, 2, $bar);
             }
-            /** @var SeasonTeam|null $team */
-            $team = $row['team'];
             $base = $top + 32;
             $g->text($x + 46, $base, ($i + 1).'.', 22, '#94a3b8', 'SemiBold', 'right');
-            $g->text($x + 66, $base, (string) ($team?->name ?? '—'), 22, '#ffffff', 'Bold', maxWidth: 320);
+            $g->text($x + 66, $base, (string) $row['team']->name, 22, '#ffffff', 'Bold', maxWidth: 320);
             $g->text($x + 432, $base, (string) $row['played'], 22, '#e2e8f0', 'SemiBold', 'center');
             $g->text($x + 512, $base, $row['for'].':'.$row['against'], 22, '#e2e8f0', 'SemiBold', 'center');
             $g->text($x + $w - 30, $base, (string) $row['points'], 24, self::GOLD, 'Black', 'right');
