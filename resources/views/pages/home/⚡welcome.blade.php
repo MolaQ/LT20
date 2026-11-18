@@ -301,10 +301,12 @@ new #[Layout('layouts::public')] class extends Component {
                 @endphp
                 <div @class(['grid', 'lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]' => $squads !== []])>
                 {{-- Lewa część: mecz na niebieskim tle Lecha --}}
-                <div class="relative space-y-5 overflow-hidden bg-linear-to-br from-lech-900 via-lech-800 to-lech-600 px-5 py-5 text-white sm:px-8">
+                {{-- Kolumna na całą wysokość karty: tablica i odliczanie na środku, stan typu przy dolnej krawędzi --}}
+                <div class="relative flex flex-col justify-between gap-6 overflow-hidden bg-linear-to-br from-lech-900 via-lech-800 to-lech-600 px-5 py-6 text-white sm:px-8 sm:py-8">
                     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgb(255_255_255/0.12),transparent_60%)]"></div>
                     {{-- Tablica: gospodarz, wynik albo „vs”, gość --}}
-                    <div class="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
+                    <div class="relative my-auto flex flex-col gap-6">
+                    <div class="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-8">
                         @foreach ($sides as $index => $side)
                             @if ($index === 1)
                                 <div class="flex flex-col items-center gap-1">
@@ -313,16 +315,16 @@ new #[Layout('layouts::public')] class extends Component {
                                             <span>{{ $sides[0]['goals'] }}</span><span class="opacity-60">:</span><span>{{ $sides[1]['goals'] }}</span>
                                         </div>
                                     @else
-                                        <div class="rounded-lg bg-white/15 px-3 py-1.5 text-sm font-bold uppercase tracking-widest">vs</div>
+                                        <div class="grid size-12 place-items-center rounded-full bg-white/15 text-sm font-black uppercase tracking-widest ring-1 ring-white/25 sm:size-14 sm:text-base">vs</div>
                                     @endif
                                 </div>
                             @endif
                             <div class="{{ $index === 0 ? 'items-end text-right' : 'items-start text-left' }} flex min-w-0 flex-col gap-1">
                                 {{-- Barwy klubu (rywal z bazy w panelu Rywale, Lech na stałe) --}}
                                 @if ($stripe = \App\Models\Rival::stripe($side['lech'] ? \App\Models\Rival::LECH_COLORS : \App\Models\Rival::colorsFor($side['name'])))
-                                    <span class="mb-1 h-1.5 w-16 rounded-full shadow-sm ring-1 ring-black/10 sm:w-24 dark:ring-white/10" style="{{ $stripe }}"></span>
+                                    <span class="mb-1 h-2 w-20 rounded-full shadow-sm ring-1 ring-black/10 sm:w-32 dark:ring-white/10" style="{{ $stripe }}"></span>
                                 @endif
-                                <span class="{{ $side['lech'] ? 'drop-shadow-[0_0_14px_rgb(96_165_250/0.8)]' : '' }} truncate font-display text-base font-bold text-white sm:text-xl">{{ $side['name'] }}</span>
+                                <span class="{{ $side['lech'] ? 'drop-shadow-[0_0_14px_rgb(96_165_250/0.8)]' : '' }} font-display text-xl font-bold leading-tight text-white sm:text-3xl xl:text-4xl">{{ $side['name'] }}</span>
                                 <span class="rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lech-100">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
                             </div>
                         @endforeach
@@ -367,7 +369,7 @@ new #[Layout('layouts::public')] class extends Component {
                                         $width = $part === 0 ? $dayDigits : 2;
                                     @endphp
                                     <div class="flex flex-col items-center gap-1.5">
-                                        <div class="flex gap-[3px] text-3xl sm:text-4xl" role="timer" aria-label="{{ $unit }}">
+                                        <div class="flex gap-[3px] text-4xl sm:text-5xl" role="timer" aria-label="{{ $unit }}">
                                             @for ($d = 0; $d < $width; $d++)
                                                 <span class="flap" x-data="uiFlap('0')" x-effect="set(String(parts[{{ $part }}]).padStart({{ $width }}, '0').slice(-{{ $width }})[{{ $d }}])">
                                                     <span class="flap-half flap-top"><span x-text="cur"></span></span>
@@ -388,8 +390,10 @@ new #[Layout('layouts::public')] class extends Component {
                         </div>
                     @endif
 
+                    </div>
+
                     {{-- Akcje: typowanie albo wyniki --}}
-                    <div class="relative flex flex-wrap items-center justify-center gap-2 border-t border-white/15 pt-4">
+                    <div class="relative flex flex-wrap items-center justify-center gap-2 border-t border-white/15 pt-5">
                         @if ($played)
                             <x-ui.btn :href="route('results')" wire:navigate icon="trophy">{{ __('Results and tables') }}</x-ui.btn>
                         @elseif (!auth()->check())
@@ -407,24 +411,28 @@ new #[Layout('layouts::public')] class extends Component {
                                 }
                                 $tiles[] = [__('Lech players picked'), (string) ($status['players'] ?? 0), ($status['players'] ?? 0) > 0 ? 'done' : 'missing'];
                             @endphp
-                            <div @class(['grid w-full max-w-3xl gap-3', 'grid-cols-2 sm:grid-cols-4' => count($tiles) === 3, 'grid-cols-3' => count($tiles) === 2])>
+                            {{-- Jeden styl kafelków (szkło na niebieskim tle), stan typu kolorem paska i ikony: zielony gotowe, bursztynowy niepełne, czerwony brak --}}
+                            <div @class(['grid w-full gap-3', 'grid-cols-2 sm:grid-cols-4' => count($tiles) === 3, 'grid-cols-3' => count($tiles) === 2])>
                                 @foreach ($tiles as [$label, $value, $state])
                                     <a href="{{ $tipUrl }}" wire:navigate @class([
-                                        'group flex flex-col justify-between gap-2 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md',
-                                        'border-green-400/60 bg-green-500/25' => $state === 'done',
-                                        'border-amber-300/70 bg-amber-500/25' => $state === 'partial',
-                                        'border-dashed border-white/30 bg-white/5' => $state === 'missing',
+                                        'group relative flex min-h-24 flex-col justify-between gap-3 overflow-hidden rounded-xl border border-white/15 bg-white/10 px-4 py-3.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md',
                                     ])>
+                                        <span @class([
+                                            'absolute inset-x-0 top-0 h-1',
+                                            'bg-green-400' => $state === 'done',
+                                            'bg-amber-400' => $state === 'partial',
+                                            'bg-red-400' => $state === 'missing',
+                                        ])></span>
                                         <span class="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-wider text-lech-100">
                                             {{ $label }}
                                             <x-ui.icon :name="$state === 'done' ? 'check-circle' : ($state === 'partial' ? 'exclamation-circle' : 'plus-circle')" variant="mini"
-                                                :class="$state === 'done' ? 'text-green-300' : ($state === 'partial' ? 'text-amber-300' : 'text-lech-200')" />
+                                                :class="$state === 'done' ? 'text-green-400' : ($state === 'partial' ? 'text-amber-400' : 'text-red-400')" />
                                         </span>
-                                        <span class="font-display text-2xl font-bold leading-none tabular-nums text-white">{{ $value }}</span>
+                                        <span class="font-display text-3xl font-bold leading-none tabular-nums text-white">{{ $value }}</span>
                                     </a>
                                 @endforeach
                                 <a href="{{ $tipUrl }}" wire:navigate
-                                    class="col-span-full flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 font-bold text-lech-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:col-span-1 sm:flex-col sm:gap-1">
+                                    class="col-span-full flex min-h-24 items-center justify-center gap-2 rounded-xl bg-lech-500 px-4 py-3 font-bold text-white shadow-lg shadow-lech-950/40 ring-1 ring-white/25 transition hover:-translate-y-0.5 hover:bg-lech-400 sm:col-span-1 sm:flex-col sm:gap-1.5">
                                     <x-ui.icon name="pencil-square" class="size-6" />
                                     <span>{{ $this->myTip ? __('Change tip') : __('Tip now') }}</span>
                                 </a>
