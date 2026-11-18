@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Competition;
 use App\Models\CompetitionEntry;
 use App\Models\LechPlayer;
 use App\Models\Matchday;
@@ -27,10 +28,8 @@ final class MySquads
         $names = [];
         $teamId = SeasonTeam::where('season_id', $matchday->season_id)->where('user_id', $userId)->value('id');
         if ($teamId) {
-            foreach (CompetitionEntry::with('competition')->where('season_team_id', $teamId)->get() as $entry) {
-                if ($entry->competition) {
-                    $names[$entry->competition->type->scoreSet()->value] = (string) ($entry->competition->name ?: $entry->competition->type->label());
-                }
+            foreach (Competition::whereIn('id', CompetitionEntry::where('season_team_id', $teamId)->select('competition_id'))->get() as $competition) {
+                $names[$competition->type->scoreSet()->value] = (string) ($competition->name ?: $competition->type->label());
             }
         }
 
