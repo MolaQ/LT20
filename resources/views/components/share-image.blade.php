@@ -23,6 +23,7 @@
                 'close' => __('Close'),
                 'x' => __('Post on X'),
                 'xHint' => __('The image is saved: attach it to the post on X.'),
+                'xPaste' => __('The image is in the clipboard: paste it into the post on X (Ctrl+V).'),
                 'hashtag' => config('club.hashtag'),
                 // Podpis każdego udostępnienia: hashtag gry i adres strony.
                 'text' => trim((config('club.hashtag') ? '#'.config('club.hashtag').' ' : '').$brand),
