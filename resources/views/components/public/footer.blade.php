@@ -42,9 +42,11 @@
 
             <div>
                 <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-white/50">{{ __('Contact') }}</p>
-                <div class="mb-3"><x-coffee-button /></div>
+                {{-- Kawka i biuro: przyciski tej samej szerokości i wysokości --}}
+                <div class="flex max-w-xs flex-col gap-3">
+                <x-coffee-button class="h-11 w-full" />
                 <a href="{{ route('office') }}" wire:navigate
-                    class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 font-medium text-white ring-1 ring-white/15 transition hover:bg-white/15">
+                    class="inline-flex h-11 w-full items-center gap-2 rounded-full bg-white/10 px-3.5 font-medium text-white ring-1 ring-white/15 transition hover:bg-white/15">
                     <x-ui.icon name="inbox" variant="micro" class="size-4" />
                     {{ __('Complaints and requests office') }}
                     @if ($voting > 0)
@@ -52,6 +54,7 @@
                             title="{{ trans_choice(':count bot name is being voted on|:count bot names are being voted on', $voting, ['count' => $voting]) }}">{{ $voting }}</span>
                     @endif
                 </a>
+                </div>
             </div>
         </div>
 

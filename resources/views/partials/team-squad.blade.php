@@ -133,21 +133,22 @@
 
     <div class="overflow-hidden rounded-2xl border border-ui-line bg-ui-surface">
         {{-- Rozgrywki (w barwach systemu) i pozycje --}}
+        {{-- Telefon (18.11.2026): rozgrywki w siatce po dwa, przyciski tej samej wysokości i szerokości, pozycje na całą szerokość --}}
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-ui-line px-4 py-3">
-            <div class="flex flex-wrap gap-1.5">
+            <div class="grid w-full grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:flex-wrap">
                 <button type="button" x-on:click="set = 'all'; open = null" x-bind:class="set === 'all' ? 'bg-club text-club-ink border-club' : 'border-ui-line text-ui-muted hover:text-ui-ink'"
-                    class="rounded-full border px-3 py-1 text-xs font-bold transition">{{ __('All competitions') }}</button>
+                    class="col-span-2 h-8 truncate rounded-full border px-3 text-xs font-bold transition">{{ __('All competitions') }}</button>
                 <template x-for="[key, comp] in Object.entries(comps)" :key="key">
                     <button type="button" x-on:click="set = key; open = null" x-bind:style="styles[comp.key] || styles['league_1']"
                         x-bind:class="set === key ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-ui-surface' : 'opacity-80 hover:opacity-100'"
-                        class="comp-chip rounded-full px-3 py-1 text-xs font-bold transition" x-text="comp.label"></button>
+                        class="comp-chip h-8 truncate rounded-full px-3 text-xs font-bold transition" x-text="comp.label"></button>
                 </template>
             </div>
-            <div class="inline-flex rounded-full bg-ui-raised p-1">
+            <div class="flex w-full gap-1 rounded-full bg-ui-raised p-1 sm:inline-flex sm:w-auto">
                 @foreach ($positions as $posKey => $posLabel)
                     <button type="button" x-on:click="pos = '{{ $posKey }}'" title="{{ $posKey === 'all' ? $posLabel : \App\Enums\PlayerPosition::from($posKey)->label() }}"
-                        x-bind:class="pos === '{{ $posKey }}' ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-ui-ink'"
-                        class="min-w-9 rounded-full px-3 py-1 text-xs font-bold transition">{{ $posLabel }}</button>
+                        x-bind:class="pos === '{{ $posKey }}' ? '{{ $posKey === 'all' ? 'bg-club text-club-ink' : \App\Enums\PlayerPosition::tones()[$posKey] }} shadow ring-2 ring-white/70 dark:ring-white/30' : '{{ $posKey === 'all' ? 'text-ui-muted hover:text-ui-ink' : \App\Enums\PlayerPosition::tones()[$posKey].' opacity-45 hover:opacity-80' }}'"
+                        class="h-7 min-w-9 flex-1 rounded-full px-3 text-xs font-black transition">{{ $posLabel }}</button>
                 @endforeach
             </div>
         </div>
@@ -157,7 +158,7 @@
                 <thead class="bg-zinc-50 text-[11px] font-bold uppercase tracking-wider text-ui-muted dark:bg-white/5">
                     <tr>
                         @foreach (['number' => ['#', __('Number'), 'w-12 text-center ps-4'], 'name' => [__('Footballer'), __('Footballer'), 'text-left'], 'form' => [__('Form'), __('Form: experience from the last :count Lech matches', ['count' => \App\Support\MatchReport::FORM_MATCHES]), 'text-left']] + collect($cols)->map(fn ($c) => [$c[0], $c[1], 'text-right'])->all() + ['experience' => [__('Exp.'), __('Experience earned in this team'), 'text-left pe-4']] as $key => [$short, $long, $align])
-                            <th class="{{ $align }} whitespace-nowrap px-2 py-2" title="{{ $long }}">
+                            <th class="{{ $align }} whitespace-nowrap px-2 py-2" title="{{ $long }}" x-bind:class="sort === '{{ $key }}' && 'bg-club/[0.07]'">
                                 <button type="button" x-on:click="sortBy('{{ $key }}')" class="inline-flex items-center gap-1 uppercase hover:text-club" x-bind:class="sort === '{{ $key }}' && 'text-club'">
                                     {{ $short }}<span x-show="sort === '{{ $key }}'" x-text="dir > 0 ? '▲' : '▼'" class="text-[9px]"></span>
                                 </button>
@@ -165,22 +166,21 @@
                         @endforeach
                     </tr>
                 </thead>
-                <template x-for="p in list" :key="p.id">
+                <template x-for="(p, row) in list" :key="p.id">
                     <tbody class="border-t border-ui-line">
-                        <tr x-on:click="open = open === p.id ? null : p.id" x-bind:class="p.idle ? 'text-zinc-400 dark:text-zinc-500' : 'text-ui-ink'"
+                        <tr x-on:click="open = open === p.id ? null : p.id" x-bind:class="[p.idle ? 'text-zinc-400 dark:text-zinc-500' : 'text-ui-ink', row % 2 ? 'bg-zinc-50/80 dark:bg-white/[0.03]' : '']"
                             class="cursor-pointer transition hover:bg-lech-50/70 dark:hover:bg-white/5">
-                            <td class="py-2 pe-2 ps-4 text-center">
+                            <td x-bind:class="sort === 'number' && 'bg-club/[0.07]'" class="py-2 pe-2 ps-4 text-center">
                                 <span x-bind:class="tone[p.pos]" x-bind:title="p.posShort"
                                     class="grid size-8 place-items-center rounded-lg text-xs font-black tabular-nums" x-text="p.number ?? '–'"></span>
                             </td>
-                            <td class="px-2 py-2">
+                            <td x-bind:class="sort === 'name' && 'bg-club/[0.07]'" class="px-2 py-2">
                                 <span class="flex items-center gap-1.5 whitespace-nowrap font-semibold">
                                     <span x-text="p.name"></span>
-                                    <span class="text-[11px] font-medium text-ui-muted" x-text="p.posShort"></span>
                                     <template x-if="p.academy"><x-ui.icon name="academic-cap" variant="micro" class="shrink-0 text-lech-600 dark:text-lech-300" /></template>
                                 </span>
                             </td>
-                            <td class="px-2 py-2">
+                            <td x-bind:class="sort === 'form' && 'bg-club/[0.07]'" class="px-2 py-2">
                                 <span class="inline-flex items-center gap-2">
                                     <span class="min-w-7 text-right font-semibold tabular-nums" x-bind:class="! p.form && 'text-zinc-300 dark:text-zinc-600'" x-text="exp(p.form)"></span>
                                     <span class="flex h-10 items-end gap-[2px]" aria-hidden="true">
@@ -196,7 +196,7 @@
                                 </span>
                             </td>
                             @foreach (array_keys($cols) as $key)
-                                <td class="px-2 py-2 text-right tabular-nums">
+                                <td x-bind:class="sort === '{{ $key }}' && 'bg-club/[0.07]'" class="px-2 py-2 text-right tabular-nums">
                                     @if ($key === 'cards')
                                         <span class="inline-flex items-center gap-1 text-xs">
                                             <span x-show="p.s.yellow" class="inline-flex items-center gap-0.5"><span class="h-3 w-2 rounded-[2px] bg-yellow-400"></span><span x-text="p.s.yellow"></span></span>
@@ -210,7 +210,7 @@
                                     @endif
                                 </td>
                             @endforeach
-                            <td class="py-2 pe-4 ps-2">
+                            <td x-bind:class="sort === 'experience' && 'bg-club/[0.07]'" class="py-2 pe-4 ps-2">
                                 <span class="flex items-center gap-2">
                                     <span class="w-10 font-semibold tabular-nums text-club" x-text="exp(p.s.experience)"></span>
                                     <span class="h-1.5 w-16 overflow-hidden rounded-full bg-ui-raised">
