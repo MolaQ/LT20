@@ -263,6 +263,9 @@ new #[Layout('layouts::public')] class extends Component {
         @endif
     </x-ui.card>
 
+    {{-- Zaproszenia: premium za zaproszonych graczy --}}
+    <x-referral-card id="zapros" class="scroll-mt-20" />
+
     {{-- Premium mniej eksponowane (18.11.2026): stan premium dopiero pod ścianą wspierających --}}
     {{-- Stan premium gracza --}}
     @auth

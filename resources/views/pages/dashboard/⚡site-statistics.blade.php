@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\PageView;
+use App\Models\User;
+use App\Support\Referrals;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Carbon\CarbonInterface;
@@ -173,6 +175,29 @@ new class extends Component {
         return $out;
     }
 
+    /**
+     * Nowe konta w okresie według źródła pierwszego wejścia (users.signup_source, App\Support\Referrals);
+     * $confirmed liczy tylko konta z potwierdzonym adresem e-mail. @return array<string, int>
+     */
+    public function signupsBySource(bool $confirmed): array
+    {
+        $out = [];
+        $rows = User::where('created_at', '>=', $this->since())
+            ->when($confirmed, fn (Builder $q) => $q->whereNotNull('email_verified_at'))
+            ->select('signup_source', DB::raw('COUNT(*) as accounts'))->groupBy('signup_source')->toBase()->get();
+        foreach ($rows as $row) {
+            $name = match ($row->signup_source) {
+                null => __('Direct visits'),
+                Referrals::INVITE => __('Invitation link'),
+                default => (string) $row->signup_source,
+            };
+            $out[$name] = ($out[$name] ?? 0) + (int) $row->accounts;
+        }
+        arsort($out);
+
+        return $out;
+    }
+
     /** Wizyty według urządzenia. @return array<string, int> */
     #[Computed]
     public function devices(): array
@@ -250,14 +275,16 @@ new class extends Component {
         ['bounce', __('Single-page visits'), number_format($t['now']['bounce'], 0, ',', ' ').'%', true],
     ];
     // Ranking jako poziome słupki w jednym kolorze (wartość obok, tekst w kolorach tekstu).
-    $ranking = function (array $rows, string $title, string $unit) {
-        return ['rows' => $rows, 'title' => $title, 'unit' => $unit, 'max' => max(1, ...array_values($rows ?: [0]))];
+    $ranking = function (array $rows, string $title, string $unit, ?string $empty = null) {
+        return ['rows' => $rows, 'title' => $title, 'unit' => $unit, 'max' => max(1, ...array_values($rows ?: [0])), 'empty' => $empty ?? __('No visits in this period yet.')];
     };
     $rankings = [
         $ranking($this->sections, __('Sections'), __('page views')),
         $ranking($this->sources, __('Where visitors come from'), __('visits')),
         $ranking($this->devices, __('Devices'), __('visits')),
         $ranking($this->pages, __('Most viewed pages'), __('page views')),
+        $ranking($this->signupsBySource(false), __('New accounts by source'), __('accounts'), __('No new accounts in this period yet.')),
+        $ranking($this->signupsBySource(true), __('Confirmed accounts by source'), __('accounts'), __('No new accounts in this period yet.')),
     ];
 @endphp
 
@@ -331,7 +358,7 @@ new class extends Component {
                         </div>
                     </div>
                 @empty
-                    <x-ui.text>{{ __('No visits in this period yet.') }}</x-ui.text>
+                    <x-ui.text>{{ $block['empty'] }}</x-ui.text>
                 @endforelse
             </x-ui.card>
         @endforeach

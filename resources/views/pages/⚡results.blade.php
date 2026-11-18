@@ -70,6 +70,12 @@ new #[Layout('layouts::public')] class extends Component {
 
         $this->normalize();
 
+        // Podgląd linku (Facebook, X): obrazek tabeli po wybranej kolejce rysowany na serwerze.
+        if ($this->hasTable && $this->competition && $this->season) {
+            \App\Support\Seo::image(route('og.table', ['competition' => $this->competition->id, 'round' => max(1, $this->round)]));
+            \App\Support\Seo::description(__('Table').' · '.($this->competition->name ?: $this->competition->type->label()).' · '.$this->season->title.' · '.__('After matchday :number', ['number' => max(1, $this->round)]));
+        }
+
         $team = (int) request()->query('team', '0');
         if ($team > 0) {
             $this->focusTeamId = $team;

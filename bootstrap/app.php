@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Http\Middleware\RememberVisitSource;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SiteMaintenance;
 use App\Http\Middleware\TrackPageView;
@@ -27,8 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Język strony (konto, sesja, przeglądarka) ustawiamy przed resztą, żeby komunikaty były w dobrym języku.
         $middleware->web(append: [SetLocale::class, SiteMaintenance::class]);
 
-        // Odsłony stron publicznych do licznika w stopce (bez IP i ciasteczek).
-        $middleware->web(append: [TrackPageView::class]);
+        // Odsłony stron publicznych do licznika w stopce (bez IP i ciasteczek) i źródło wejścia gościa (rejestracje według źródła).
+        $middleware->web(append: [TrackPageView::class, RememberVisitSource::class]);
 
         $middleware->alias([
             'role' => RoleMiddleware::class,

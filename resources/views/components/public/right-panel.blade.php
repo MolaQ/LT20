@@ -44,4 +44,6 @@
     <hr class="border-ui-line">
     {{-- Kawka zamiast karty premium (18.11.2026): premium jest teraz tylko na stronie wsparcia --}}
     <x-coffee-button variant="card" />
+    {{-- Zaproszenia (kampania, 18.11.2026): link gracza i postęp do premium --}}
+    <x-referral-card />
 </div>
