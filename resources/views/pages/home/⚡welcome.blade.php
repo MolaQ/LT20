@@ -518,7 +518,7 @@ new #[Layout('layouts::public')] class extends Component {
                                         <span class="text-ui-muted">&middot;</span>
                                     @endif
                                 </span>
-                                <span @class(['min-w-0 flex-1 truncate font-semibold', 'italic' => $row['bot']])>{{ $row['name'] }}</span>
+                                <span @class(['min-w-0 flex-1 truncate font-semibold', 'italic' => $row['bot']])><x-supporter-name :user-id="$row['team']?->user_id">{{ $row['name'] }}</x-supporter-name></span>
                                 @if ($row['team'])
                                     <x-champion-trophies :team="$row['team']" />
                                 @endif

@@ -19,15 +19,15 @@ use Livewire\Component;
  * Strona zespołu (etap 14): punkty Hall of Fame i miejsce w rankingu wszech czasów, gablota z trofeami
  * oraz historia zakończonych sezonów (miejsca w rozgrywkach i zdobyte punkty).
  * W banerze licznik wyświetleń (oko, raz na sesję odwiedzającego, bez właściciela) i polubienia (niebieskie serduszko).
- * Zakładka „Kadra” (17.11.2026, ?widok=kadra): dorobek zawodników wystawionych przez drużynę (Support\TeamSquad),
+ * Zakładka „Kadra” (17.11.2026, domyślna; przegląd pod ?widok=przeglad): dorobek zawodników wystawionych przez drużynę (Support\TeamSquad),
  * swoją widzi każdy, cudzą tylko premium.
  */
 new #[Layout('layouts::public')] class extends Component {
     public User $user;
 
-    /** Zakładka: przegląd albo kadra. */
-    #[Url(as: 'widok', except: 'przeglad')]
-    public string $tab = 'przeglad';
+    /** Zakładka: kadra (domyślna, 17.11.2026) albo przegląd (?widok=przeglad). */
+    #[Url(as: 'widok', except: 'kadra')]
+    public string $tab = 'kadra';
 
     public function mount(User $user): void
     {
@@ -266,6 +266,13 @@ new #[Layout('layouts::public')] class extends Component {
 
 <div class="flex w-full flex-col gap-6">
     <x-page-banner :eyebrow="__('Hall of Fame')" :title="$user->team_name ?: $user->name">
+        {{-- Ranga wspierającego (App\Support\SupporterRanks): plakietka w kolorze rangi. --}}
+        @if ($supporterRank = \App\Support\SupporterRanks::forUser($user->id))
+            <p><span class="supporter-name inline-flex items-center gap-1 py-0.5 text-xs font-semibold text-white" style="--sr: {{ $supporterRank->color }}">
+                <x-ui.icon name="heart" variant="micro" class="size-3.5" style="color: {{ $supporterRank->color }}" />
+                {{ __(':rank of LechTYPER', ['rank' => $supporterRank->name]) }}
+            </span></p>
+        @endif
         <a href="{{ route('hall-of-fame') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-lech-100 hover:text-white hover:underline">
             <x-ui.icon name="arrow-left" variant="micro" /> {{ __('Full ranking') }}
         </a>
@@ -324,7 +331,7 @@ new #[Layout('layouts::public')] class extends Component {
 
     {{-- Zakładki: przegląd zespołu i kadra --}}
     <div class="flex gap-1 self-start rounded-2xl bg-ui-raised p-1" role="tablist">
-        @foreach (['przeglad' => [__('Overview'), 'home'], 'kadra' => [__('Roster'), 'user-group']] as $tabKey => [$tabLabel, $tabIcon])
+        @foreach (['kadra' => [__('Roster'), 'user-group'], 'przeglad' => [__('Overview'), 'home']] as $tabKey => [$tabLabel, $tabIcon])
             <button type="button" role="tab" wire:click="$set('tab', '{{ $tabKey }}')" aria-selected="{{ $tab === $tabKey ? 'true' : 'false' }}"
                 @class(['inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition', 'bg-ui-surface shadow' => $tab === $tabKey, 'text-ui-muted hover:text-ui-ink' => $tab !== $tabKey])>
                 <x-ui.icon :name="$tabIcon" variant="micro" /> {{ $tabLabel }}
@@ -332,7 +339,7 @@ new #[Layout('layouts::public')] class extends Component {
         @endforeach
     </div>
 
-    @if ($tab === 'kadra')
+    @if ($tab !== 'przeglad')
         @if ($this->teamSquad)
             @include('partials.team-squad', ['squad' => $this->teamSquad, 'teamName' => $user->team_name ?: $user->name])
         @else
@@ -388,21 +395,6 @@ new #[Layout('layouts::public')] class extends Component {
         </x-ui.card>
     @endif
 
-    {{-- Statystyki sezonu (jak zakładka Statystyki na /tips): swoje dla każdego, cudze w premium --}}
-    @if ($this->currentSeason)
-        <x-ui.card class="space-y-4">
-            <div class="flex items-center justify-between gap-2">
-                <x-ui.heading size="lg">{{ __('Statistics') }}</x-ui.heading>
-                <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
-            </div>
-            @if ($this->seasonStats)
-                @include('partials.player-stats-tiles', ['data' => $this->seasonStats, 'user' => $user])
-            @else
-                <x-premium-lock :title="__('Statistics')" :text="__('Your own statistics are free in My tips. With premium you also see the statistics of other players.')" />
-            @endif
-        </x-ui.card>
-    @endif
-
     {{-- Gablota --}}
     <x-ui.card class="space-y-4">
         <x-ui.heading size="lg">{{ __('Trophy cabinet') }}</x-ui.heading>
@@ -431,6 +423,21 @@ new #[Layout('layouts::public')] class extends Component {
             </div>
         @endif
     </x-ui.card>
+
+    {{-- Statystyki sezonu (jak zakładka Statystyki na /tips): swoje dla każdego, cudze w premium --}}
+    @if ($this->currentSeason)
+        <x-ui.card class="space-y-4">
+            <div class="flex items-center justify-between gap-2">
+                <x-ui.heading size="lg">{{ __('Statistics') }}</x-ui.heading>
+                <x-ui.badge color="zinc">{{ $this->currentSeason->title }}</x-ui.badge>
+            </div>
+            @if ($this->seasonStats)
+                @include('partials.player-stats-tiles', ['data' => $this->seasonStats, 'user' => $user])
+            @else
+                <x-premium-lock :title="__('Statistics')" :text="__('Your own statistics are free in My tips. With premium you also see the statistics of other players.')" />
+            @endif
+        </x-ui.card>
+    @endif
 
     {{-- Historia sezonów --}}
     @include('partials.team-history', ['history' => $this->history])

@@ -48,6 +48,8 @@ test('the own squad is free and other squads need premium', function () {
     $owner = User::factory()->create();
     $visitor = User::factory()->create();
 
-    $this->actingAs($owner)->get(route('team.show', ['user' => $owner, 'widok' => 'kadra']))->assertOk()->assertSee(__('players fielded by this team'));
-    $this->actingAs($visitor)->get(route('team.show', ['user' => $owner, 'widok' => 'kadra']))->assertOk()->assertDontSee(__('players fielded by this team'));
+    // Kadra to domyślna zakładka strony zespołu.
+    $this->actingAs($owner)->get(route('team.show', $owner))->assertOk()->assertSee(__('players fielded by this team'));
+    $this->actingAs($visitor)->get(route('team.show', $owner))->assertOk()->assertDontSee(__('players fielded by this team'));
+    $this->actingAs($owner)->get(route('team.show', ['user' => $owner, 'widok' => 'przeglad']))->assertOk()->assertSee(__('Trophy cabinet'));
 });

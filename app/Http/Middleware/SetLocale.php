@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Ustawia język strony: najpierw wybór z konta, potem z sesji (goście), potem język przeglądarki,
- * a na końcu APP_LOCALE. Obsługiwane języki są w config/club.php (locales).
+ * Ustawia język strony: najpierw wybór z konta, potem z sesji (goście), a bez wyboru pierwszy język z config/club.php
+ * (locales), czyli polski (17.11.2026: bez zgadywania z języka przeglądarki).
  */
 class SetLocale
 {
@@ -27,7 +27,6 @@ class SetLocale
         $candidates = [
             $request->user()?->locale,
             $request->hasSession() ? $request->session()->get('locale') : null,
-            $request->getPreferredLanguage($supported),
         ];
 
         foreach ($candidates as $locale) {
@@ -36,6 +35,6 @@ class SetLocale
             }
         }
 
-        return config('app.locale');
+        return $supported[0] ?? 'pl';
     }
 }

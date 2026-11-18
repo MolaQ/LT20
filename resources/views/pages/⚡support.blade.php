@@ -2,6 +2,7 @@
 
 use App\Models\Payment;
 use App\Support\Guide;
+use App\Support\SupporterRanks;
 use App\Support\Supporters;
 use App\Support\Premium;
 use App\Support\Przelewy24;
@@ -101,6 +102,34 @@ new #[Layout('layouts::public')] class extends Component {
         ];
     }
 
+    /**
+     * Ściana wspierających: rangi bez kwot, od największej sumy z 12 miesięcy.
+     *
+     * @return list<array{user: \App\Models\User|null, name: string, rank: \App\Models\SupporterRank}>
+     */
+    #[Computed]
+    public function wall(): array
+    {
+        return SupporterRanks::wall();
+    }
+
+    /** Ranga zalogowanego gracza (także gdy się ukrył), żeby mu podziękować. */
+    #[Computed]
+    public function myRank(): ?\App\Models\SupporterRank
+    {
+        return SupporterRanks::forTotal($this->supporter['total']);
+    }
+
+    /** Pokazuj mnie na ścianie wspierających i z tłem przy nazwie drużyny (domyślnie tak). */
+    public function toggleWall(): void
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+        $user->forceFill(['show_as_supporter' => !($user->show_as_supporter ?? true)])->save();
+        \Illuminate\Support\Once::flush();
+        unset($this->wall);
+    }
+
     /** Premium według cennika. */
     public function buy(string $plan): void
     {
@@ -195,9 +224,9 @@ new #[Layout('layouts::public')] class extends Component {
             <div class="max-w-3xl space-y-3 text-sm leading-relaxed text-ui-ink [&_a]:font-semibold [&_a]:text-club [&_a]:underline">{!! $this->coffee[1] !!}</div>
             <x-ui.text class="text-xs">
                 @auth
-                    {{ __('To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message: :email.', ['email' => auth()->user()->email]) }}
+                    {{ __('Write the e-mail of your LechTYPER account in the message (:email) and we will thank you on the supporters wall.', ['email' => auth()->user()->email]) }}
                 @else
-                    {{ __('To appear in the supporters ranking, write the e-mail of your LechTYPER account in the message.') }}
+                    {{ __('Write the e-mail of your LechTYPER account in the message and we will thank you on the supporters wall.') }}
                 @endauth
             </x-ui.text>
             <div>
@@ -233,8 +262,44 @@ new #[Layout('layouts::public')] class extends Component {
                     {{ __('Supporters ranking: :rank. place.', ['rank' => $this->supporter['rank']]) }}
                 @endif
             </x-ui.text>
+
+            {{-- Podziękowanie i przełącznik ściany: tylko dla wspierających z rangą --}}
+            @if ($this->myRank)
+                <div class="supporter-name space-y-2 py-3 pe-3 ps-4" style="--sr: {{ $this->myRank->color }}">
+                    <p class="flex items-center gap-2 font-semibold">
+                        <x-ui.icon name="heart" variant="micro" class="size-4" style="color: {{ $this->myRank->color }}" />
+                        {{ __('Thank you, :rank! Your support keeps LechTYPER going.', ['rank' => $this->myRank->name]) }}
+                    </p>
+                    <x-ui.switch :checked="auth()->user()->show_as_supporter ?? true" wire:click="toggleWall" :label="__('Show me on the supporters wall')"
+                        :description="__('Your team name gets a light background in the colour of your rank. Amounts are never shown.')" />
+                </div>
+            @endif
         </x-ui.card>
     @endauth
+
+    {{-- Ściana wspierających: rangi bez kwot, od największego wsparcia z 12 miesięcy --}}
+    <x-ui.card class="space-y-4">
+        <div>
+            <x-ui.heading size="lg">{{ __('Thank you!') }}</x-ui.heading>
+            <x-ui.text class="text-sm">{{ __('People who supported LechTYPER in the last 12 months, from the biggest support.') }}</x-ui.text>
+        </div>
+        @if ($this->wall === [])
+            <x-ui.text class="text-sm">{{ __('Nobody yet. Be the first!') }}</x-ui.text>
+        @else
+            <ul class="flex flex-wrap gap-2">
+                @foreach ($this->wall as $entry)
+                    <li wire:key="wall-{{ $loop->index }}" class="supporter-name flex items-center gap-2 py-1.5 pe-3 ps-3 text-sm" style="--sr: {{ $entry['rank']->color }}">
+                        @if ($entry['user'])
+                            <a href="{{ route('team.show', $entry['user']) }}" wire:navigate class="font-semibold hover:underline">{{ $entry['name'] }}</a>
+                        @else
+                            <span class="font-semibold italic">{{ $entry['name'] }}</span>
+                        @endif
+                        <span class="text-xs font-semibold" style="color: {{ $entry['rank']->color }}">{{ $entry['rank']->name }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </x-ui.card>
 
     {{-- Cennik premium i cegiełka: tylko przy płatnościach Przelewy24 (nie przy premium dla wszystkich) --}}
     @if ($this->sales)

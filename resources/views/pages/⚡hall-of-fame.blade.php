@@ -252,7 +252,7 @@ new #[Layout('layouts::public')] class extends Component {
                         <div class="relative flex items-center gap-3">
                             <span class="{{ $m['badge'] }} grid size-10 shrink-0 place-items-center rounded-full text-lg font-black shadow">{{ $row['rank'] }}</span>
                             <div class="min-w-0">
-                                <div class="{{ $row['bot'] ? 'italic' : '' }} truncate text-lg font-bold group-hover:underline">{{ $row['name'] }}</div>
+                                <div class="{{ $row['bot'] ? 'italic' : '' }} truncate text-lg font-bold group-hover:underline"><x-supporter-name :user-id="$row['bot'] ? null : $row['id']">{{ $row['name'] }}</x-supporter-name></div>
                                 <div class="text-xs text-white/70">{{ trans_choice(':count season|:count seasons', $row['seasons'], ['count' => $row['seasons']]) }}</div>
                             </div>
                         </div>
@@ -315,7 +315,7 @@ new #[Layout('layouts::public')] class extends Component {
                         class="{{ $mine ? 'bg-amber-50 dark:bg-amber-500/10' : '' }} grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-2.5 sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_4rem_7rem]">
                         <span class="{{ $row['rank'] <= 3 ? ($medal[$row['rank']]['badge'] ?? '') : 'bg-ui-raised text-ui-muted' }} grid size-8 place-items-center rounded-full text-xs font-black tabular-nums">{{ $row['rank'] }}</span>
                         <a href="{{ $row['url'] }}" wire:navigate class="{{ $row['bot'] ? 'italic' : '' }} truncate font-semibold hover:text-club hover:underline">
-                            {{ $row['name'] }}
+                            <x-supporter-name :user-id="$row['bot'] ? null : $row['id']">{{ $row['name'] }}</x-supporter-name>
                             @if ($mine)<span class="ms-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold not-italic text-amber-950">{{ __('You') }}</span>@endif
                         </a>
                         {{-- Punkty: na telefonie w pierwszym wierszu, na komputerze w ostatniej kolumnie --}}

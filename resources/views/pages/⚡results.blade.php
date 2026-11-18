@@ -985,7 +985,7 @@ new #[Layout('layouts::public')] class extends Component {
                                             </span>
                                         </td>
                                         <td class="max-w-56 truncate px-2 py-1.5">
-                                            <button type="button" wire:click="showTeam({{ $row['team']->id }})" class="truncate hover:text-club hover:underline {{ $row['team']->is_bot ? 'italic' : '' }}">{{ $row['team']->name }}</button>
+                                            <button type="button" wire:click="showTeam({{ $row['team']->id }})" class="truncate hover:text-club hover:underline {{ $row['team']->is_bot ? 'italic' : '' }}"><x-supporter-name :user-id="$row['team']->user_id">{{ $row['team']->name }}</x-supporter-name></button>
                                             <x-champion-trophies :team="$row['team']" class="ms-1" />
                                         </td>
                                         <td class="px-1.5 py-1.5 text-right tabular-nums">{{ $row['played'] }}</td>
