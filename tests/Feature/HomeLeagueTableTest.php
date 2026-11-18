@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\MatchdayStatus;
+use App\Enums\RoleName;
 use App\Enums\SeasonStatus;
 use App\Models\Competition;
 use App\Models\CompetitionEntry;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Support\HomeStats;
 use App\Support\MySquads;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 // Strona startowa: liga gracza (pięć miejsc wokół niego), czołówka Ekstraklasy dla gościa, puls kolejki i ciekawostki sezonu.
 
@@ -137,6 +139,9 @@ test('the tips page shows the competition tiles with squad, experience, form and
     $open = Matchday::create(['season_id' => $season->id, 'number' => 1, 'opponent' => 'GKS Katowice', 'is_home' => false, 'kickoff_at' => now()->addDays(3), 'status' => MatchdayStatus::Planned->value]);
     $ishak = LechPlayer::create(['name' => 'Mikael Ishak', 'number' => 9, 'position' => 'forward']);
     DesignatedPlayer::create(['matchday_id' => $open->id, 'user_id' => $me->id, 'score_set' => 'league', 'lech_player_id' => $ishak->id]);
+    // Typować może tylko konto z rolą.
+    Role::findOrCreate(RoleName::User->value, 'web');
+    $me->assignRole(RoleName::User->value);
 
     $this->actingAs($me)->get(route('tips', ['matchday_slug' => 'kolejka-1']))->assertOk()
         ->assertSee(__('Your competitions'))
