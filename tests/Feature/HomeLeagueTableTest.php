@@ -131,3 +131,16 @@ test('the next matchday shows the player squads with form and club experience, g
     Livewire::test('pages::home.welcome')->assertDontSee(__('Your squads in this matchday'));
     expect(MySquads::short('Mikael Ishak'))->toBe('M. Ishak')->and(MySquads::short('Ishak'))->toBe('Ishak');
 });
+
+test('the tips page shows the competition tiles with squad, experience, form and the score window', function () {
+    [$season, $me] = homeLeague();
+    $open = Matchday::create(['season_id' => $season->id, 'number' => 1, 'opponent' => 'GKS Katowice', 'is_home' => false, 'kickoff_at' => now()->addDays(3), 'status' => MatchdayStatus::Planned->value]);
+    $ishak = LechPlayer::create(['name' => 'Mikael Ishak', 'number' => 9, 'position' => 'forward']);
+    DesignatedPlayer::create(['matchday_id' => $open->id, 'user_id' => $me->id, 'score_set' => 'league', 'lech_player_id' => $ishak->id]);
+
+    $this->actingAs($me)->get(route('tips', ['matchday_slug' => 'kolejka-1']))->assertOk()
+        ->assertSee(__('Your competitions'))
+        ->assertSee(__('Avg. form'))
+        ->assertSee(__('Experience'))
+        ->assertSee('GKS Katowice');
+});

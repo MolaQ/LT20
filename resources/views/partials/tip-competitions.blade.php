@@ -4,26 +4,29 @@
     Rozgrywki, z których odpadł: wyszarzone, bez kliknięcia.
     16.11.2026: wyraźniej, że to przełącznik (ludzie nie wiedzieli, że poza Ekstraklasą trzeba ustawić też inne rozgrywki):
     nagłówek z liczbą rozgrywek, na wybranym kafelku „Teraz ustawiasz”, na pozostałych „Do ustawienia” albo „Ustawione”.
+    18.11.2026: kafelki na całą wysokość obok okna wyniku, w każdym skład, suma doświadczenia, średnia forma
+    i ikona na każde pytanie (miecze atak, tarcza obrona, znak zapytania bez odpowiedzi); braki jako bursztynowa plakietka
+    zamiast żółtej ramki. Blok można udostępnić obrazkiem.
 --}}
 @php
     $active = $this->activeQuestionSet();
     $lines = collect($this->setStatus)->keyBy('set');
 @endphp
-<div id="tip-competitions" class="flex scroll-mt-24 flex-col gap-2">
+<div id="tip-competitions" data-share-target class="flex flex-1 scroll-mt-24 flex-col gap-3">
     @php
         $playingCount = collect($this->myEntries)->filter(fn ($e) => isset($this->questionSets[$e['type']->scoreSet()->value]))->count();
     @endphp
-    <div>
-        <x-ui.heading size="lg">{{ __('Your competitions') }}</x-ui.heading>
-        <x-ui.text class="text-sm">{{ __('Pick a competition, then its squad and its questions.') }} {{ __('Everything saves automatically.') }}</x-ui.text>
-        @if ($playingCount > 1)
-            <div class="mt-2 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
-                <x-ui.icon name="arrows-right-left" variant="mini" class="mt-0.5 shrink-0" />
-                <span>{{ __('You play in :count competitions. Each has its own squad and questions: click every tile below and set them all.', ['count' => $playingCount]) }}</span>
-            </div>
-        @endif
+    <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+            <x-ui.heading size="lg">{{ __('Your competitions') }}</x-ui.heading>
+            <x-ui.text class="text-sm">
+                {{ $playingCount > 1 ? __('Click a tile to set its squad and questions.') : __('Pick a competition, then its squad and its questions.') }}
+                {{ __('Everything saves automatically.') }}
+            </x-ui.text>
+        </div>
+        <x-share-image :title="__('Your competitions').' · '.__('Matchday :number', ['number' => $this->matchday?->number])" class="text-ui-muted" />
     </div>
-    <div class="grid grid-cols-2 gap-2">
+    <div class="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5">
         @foreach ($this->myEntries as $entry)
             @php
                 $setValue = $entry['type']->scoreSet()->value;
@@ -35,13 +38,16 @@
             <button type="button" @if ($playing) wire:click="pickSet('{{ $setValue }}')" @else disabled @endif wire:key="tip-comp-{{ $entry['competition_id'] }}"
                 style="{{ \App\Support\CompetitionColors::style($entry['trophy']) }}" @if ($isActive) aria-current="true" @endif
                 @class([
-                    'comp-chip flex min-w-0 flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-start transition duration-200',
+                    'comp-chip flex min-w-0 flex-col items-start justify-between gap-2 rounded-xl px-3 py-3 text-start transition duration-200',
                     'shadow-md ring-2 ring-club/70' => $isActive,
                     'cursor-pointer opacity-90 ring-1 ring-black/10 hover:-translate-y-0.5 hover:opacity-100 hover:shadow-md active:scale-[.98] dark:ring-white/15' => $playing && !$isActive,
                     'cursor-default opacity-40 grayscale' => !$playing,
                 ])>
                 @php
                     $ready = count($line['players'] ?? []) > 0;
+                    $answered = $line['summary']['answered'] ?? 0;
+                    // Brak składu albo nie wszystkie pytania: bursztynowa plakietka z tym, czego brakuje.
+                    $missing = !$ready ? __('No squad') : ($questions > 0 && $answered < $questions ? __('Questions :done/:all', ['done' => $answered, 'all' => $questions]) : null);
                 @endphp
                 <span class="flex w-full items-center justify-between gap-2">
                     <span class="min-w-0 truncate text-sm font-semibold">{{ $entry['name'] }}</span>
@@ -49,26 +55,51 @@
                         <span @class([
                             'flex shrink-0 items-center gap-1 rounded-full px-2 py-px text-[10px] font-bold uppercase tracking-wide',
                             'bg-white text-zinc-900' => $isActive,
-                            'bg-black/25' => !$isActive,
+                            'bg-amber-400 text-amber-950' => !$isActive && $missing,
+                            'bg-black/25' => !$isActive && !$missing,
                         ])>
                             @if ($isActive)
                                 <x-ui.icon name="pencil" variant="micro" class="size-3" />{{ __('Now setting') }}
-                            @elseif ($ready)
-                                <x-ui.icon name="check" variant="micro" class="size-3" />{{ __('Set') }}
+                            @elseif ($missing)
+                                <x-ui.icon name="exclamation-circle" variant="micro" class="size-3" />{{ $missing }}
                             @else
-                                <span class="size-1.5 animate-pulse rounded-full bg-amber-300"></span>{{ __('To set') }}
+                                <x-ui.icon name="check" variant="micro" class="size-3" />{{ __('Set') }}
                             @endif
                         </span>
                     @endif
                 </span>
                 <span class="w-full truncate text-xs opacity-90">{{ $entry['status'] ?: '—' }}</span>
                 @if ($playing)
-                    <span class="flex items-center gap-2.5 text-xs font-semibold tabular-nums">
-                        <span class="flex items-center gap-0.5" title="{{ __('Fielded players') }}"><x-ui.icon name="user-group" variant="micro" />{{ count($line['players'] ?? []) }}/{{ $line['max'] ?? 0 }}</span>
-                        @if ($questions)
-                            <span class="flex items-center gap-0.5" title="{{ __('Answered questions') }}"><x-ui.icon name="question-mark-circle" variant="micro" />{{ $line['summary']['answered'] ?? 0 }}/{{ $questions }}</span>
-                        @endif
+                    {{-- Skład, suma doświadczenia w klubie gracza i średnia forma wystawionych --}}
+                    <span class="grid w-full grid-cols-3 gap-1.5 tabular-nums">
+                        @foreach ([
+                            [__('Squad'), 'user-group', count($line['players'] ?? []).'/'.($line['max'] ?? 0)],
+                            [__('Experience'), 'star', \App\Support\ClubStats::experience($line['experience'] ?? 0)],
+                            [__('Avg. form'), 'fire', isset($line['form']) ? \App\Support\ClubStats::experience($line['form']) : '–'],
+                        ] as [$statLabel, $statIcon, $statValue])
+                            <span class="min-w-0 rounded-lg bg-black/20 px-2 py-1.5">
+                                <span class="block truncate text-[9px] font-bold uppercase tracking-wider opacity-75">{{ $statLabel }}</span>
+                                <span class="flex items-center gap-1 text-sm font-bold"><x-ui.icon :name="$statIcon" variant="micro" class="size-3.5 shrink-0" />{{ $statValue }}</span>
+                            </span>
+                        @endforeach
                     </span>
+                    @if ($questions)
+                        {{-- Pytania: ikona na każde (miecze atak, tarcza obrona, znak zapytania bez odpowiedzi) --}}
+                        <span class="flex w-full items-center justify-between gap-2">
+                            <span class="text-[9px] font-bold uppercase tracking-wider opacity-75">{{ __('Questions') }}</span>
+                            <span class="flex flex-wrap justify-end gap-1">
+                                @foreach ($line['questions'] as $side)
+                                    @if ($side === 'attack')
+                                        <span class="grid size-6 place-items-center rounded-md text-white shadow-sm" style="background: var(--q-attack)" title="{{ __('Attack') }}"><x-ui.icon name="swords" variant="micro" class="size-3.5" /></span>
+                                    @elseif ($side === 'defense')
+                                        <span class="grid size-6 place-items-center rounded-md text-white shadow-sm" style="background: var(--q-defense)" title="{{ __('Defence') }}"><x-ui.icon name="shield" variant="micro" class="size-3.5" /></span>
+                                    @else
+                                        <span class="grid size-6 place-items-center rounded-md border-[1.5px] border-dashed border-current/60 text-[11px] font-bold opacity-80" title="{{ __('No answer') }}">?</span>
+                                    @endif
+                                @endforeach
+                            </span>
+                        </span>
+                    @endif
                 @else
                     <span class="rounded-full bg-black/25 px-2 py-px text-[11px] font-semibold">{{ __('You are out') }}</span>
                 @endif
