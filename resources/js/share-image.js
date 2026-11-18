@@ -72,7 +72,7 @@ const showPreview = (blob, file, labels) => {
     const onKey = (e) => e.key === 'Escape' && close();
 
     button(labels.close, false, close);
-    button(labels.download, !navigator.canShare?.({ files: [file] }), () => {
+    button(labels.download, !(window.matchMedia?.('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })), () => {
         const a = document.createElement('a');
         a.href = url;
         a.download = file.name;
@@ -118,7 +118,10 @@ const showPreview = (blob, file, labels) => {
             }
         });
     }
-    if (navigator.canShare?.({ files: [file] })) {
+    // Systemowe „Udostępnij” tylko na telefonie i tablecie: na komputerze z Windows okno udostępniania często
+    // kończy się komunikatem „Spróbuj ponownie” (18.11.2026), tam lepsze są „Kopiuj obraz i tekst” i X.
+    const touch = window.matchMedia?.('(pointer: coarse)').matches;
+    if (touch && navigator.canShare?.({ files: [file] })) {
         button(labels.share, true, async () => {
             try {
                 await navigator.share({ files: [file], title: labels.title, text: fullText });
