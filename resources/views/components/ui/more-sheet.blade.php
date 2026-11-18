@@ -11,7 +11,7 @@
         [route('hall-of-fame'), 'trophy', __('Hall of Fame')],
         [route('history'), 'clock', __('History')],
         [route('stars'), 'star', __('Stars')],
-        [route('support'), 'sparkles', __('Premium and support')],
+        [route('support'), 'heart', __('Support and premium')],
         [route('howto'), 'academic-cap', __('Guide for beginners')],
         [route('rules'), 'book-open', __('Rules')],
         [route('faq'), 'question-mark-circle', __('FAQ')],
@@ -28,6 +28,7 @@
 
 <x-ui.sheet name="more" :title="__('More')">
     <nav class="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="{{ __('More') }}">
+        <x-coffee-button variant="tile" />
         @foreach ($links as [$href, $icon, $label])
             <a href="{{ $href }}" wire:navigate
                 class="group flex items-center gap-2.5 rounded-xl border border-ui-line px-3 py-2.5 text-sm font-medium transition hover:border-club/40 hover:bg-ui-raised">

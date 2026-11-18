@@ -11,7 +11,7 @@
         [route('howto'), __('Guide for beginners')],
         [route('rules'), __('Rules')],
         [route('faq'), __('FAQ')],
-        [route('support'), __('Premium and support')],
+        [route('support'), __('Support and premium')],
         [route('hall-of-fame'), __('Hall of Fame')],
         [route('history'), __('History')],
         [route('stars'), __('Stars')],
@@ -42,6 +42,7 @@
 
             <div>
                 <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-white/50">{{ __('Contact') }}</p>
+                <div class="mb-3"><x-coffee-button /></div>
                 <a href="{{ route('office') }}" wire:navigate
                     class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 font-medium text-white ring-1 ring-white/15 transition hover:bg-white/15">
                     <x-ui.icon name="inbox" variant="micro" class="size-4" />

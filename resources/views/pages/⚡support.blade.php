@@ -239,6 +239,31 @@ new #[Layout('layouts::public')] class extends Component {
         </x-ui.callout>
     @endif
 
+    {{-- Ściana wspierających: rangi bez kwot, od największego wsparcia z 12 miesięcy --}}
+    <x-ui.card id="sciana" class="scroll-mt-20 space-y-4">
+        <div>
+            <x-ui.heading size="lg">{{ __('Thank you!') }}</x-ui.heading>
+            <x-ui.text class="text-sm">{{ __('People who supported LechTYPER in the last 12 months, from the biggest support.') }}</x-ui.text>
+        </div>
+        @if ($this->wall === [])
+            <x-ui.text class="text-sm">{{ __('Nobody yet. Be the first!') }}</x-ui.text>
+        @else
+            <ul class="flex flex-wrap gap-2">
+                @foreach ($this->wall as $entry)
+                    <li wire:key="wall-{{ $loop->index }}" class="supporter-name flex items-center gap-2 py-1.5 pe-3 ps-3 text-sm" style="--sr: {{ $entry['rank']->color }}">
+                        @if ($entry['user'])
+                            <a href="{{ route('team.show', $entry['user']) }}" wire:navigate class="font-semibold hover:underline">{{ $entry['name'] }}</a>
+                        @else
+                            <span class="font-semibold italic">{{ $entry['name'] }}</span>
+                        @endif
+                        <span class="text-xs font-semibold" style="color: {{ $entry['rank']->color }}">{{ $entry['rank']->name }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </x-ui.card>
+
+    {{-- Premium mniej eksponowane (18.11.2026): stan premium dopiero pod ścianą wspierających --}}
     {{-- Stan premium gracza --}}
     @auth
         <x-ui.card class="space-y-4">
@@ -276,30 +301,6 @@ new #[Layout('layouts::public')] class extends Component {
             @endif
         </x-ui.card>
     @endauth
-
-    {{-- Ściana wspierających: rangi bez kwot, od największego wsparcia z 12 miesięcy --}}
-    <x-ui.card class="space-y-4">
-        <div>
-            <x-ui.heading size="lg">{{ __('Thank you!') }}</x-ui.heading>
-            <x-ui.text class="text-sm">{{ __('People who supported LechTYPER in the last 12 months, from the biggest support.') }}</x-ui.text>
-        </div>
-        @if ($this->wall === [])
-            <x-ui.text class="text-sm">{{ __('Nobody yet. Be the first!') }}</x-ui.text>
-        @else
-            <ul class="flex flex-wrap gap-2">
-                @foreach ($this->wall as $entry)
-                    <li wire:key="wall-{{ $loop->index }}" class="supporter-name flex items-center gap-2 py-1.5 pe-3 ps-3 text-sm" style="--sr: {{ $entry['rank']->color }}">
-                        @if ($entry['user'])
-                            <a href="{{ route('team.show', $entry['user']) }}" wire:navigate class="font-semibold hover:underline">{{ $entry['name'] }}</a>
-                        @else
-                            <span class="font-semibold italic">{{ $entry['name'] }}</span>
-                        @endif
-                        <span class="text-xs font-semibold" style="color: {{ $entry['rank']->color }}">{{ $entry['rank']->name }}</span>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
-    </x-ui.card>
 
     {{-- Cennik premium i cegiełka: tylko przy płatnościach Przelewy24 (nie przy premium dla wszystkich) --}}
     @if ($this->sales)
