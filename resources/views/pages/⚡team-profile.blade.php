@@ -266,6 +266,13 @@ new #[Layout('layouts::public')] class extends Component {
 
 <div class="flex w-full flex-col gap-6">
     <x-page-banner :eyebrow="__('Hall of Fame')" :title="$user->team_name ?: $user->name">
+        {{-- Ranga wspierającego (App\Support\SupporterRanks): plakietka w kolorze rangi. --}}
+        @if ($supporterRank = \App\Support\SupporterRanks::forUser($user->id))
+            <p><span class="supporter-name inline-flex items-center gap-1 py-0.5 text-xs font-semibold text-white" style="--sr: {{ $supporterRank->color }}">
+                <x-ui.icon name="heart" variant="micro" class="size-3.5" style="color: {{ $supporterRank->color }}" />
+                {{ __(':rank of LechTYPER', ['rank' => $supporterRank->name]) }}
+            </span></p>
+        @endif
         <a href="{{ route('hall-of-fame') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-semibold text-lech-100 hover:text-white hover:underline">
             <x-ui.icon name="arrow-left" variant="micro" /> {{ __('Full ranking') }}
         </a>

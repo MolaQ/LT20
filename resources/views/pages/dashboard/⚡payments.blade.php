@@ -2,6 +2,7 @@
 
 use App\Actions\Payments\CompletePayment;
 use App\Models\Payment;
+use App\Models\SupporterRank;
 use App\Models\User;
 use App\Support\Audit;
 use App\Support\Supporters;
@@ -47,6 +48,18 @@ new class extends Component {
 
     // Księgowanie wiszącej wpłaty.
     public ?int $completeId = null;
+
+    /**
+     * Rangi wspierających do edycji: id (null = nowa), nazwa, próg w złotych i kolor.
+     *
+     * @var list<array{id: int|null, name: string, threshold: string, color: string}>
+     */
+    public array $ranks = [];
+
+    public function mount(): void
+    {
+        $this->loadRanks();
+    }
 
     public function render(): View
     {
@@ -152,7 +165,8 @@ new class extends Component {
     public function savePayment(CompletePayment $complete): void
     {
         $this->validate([
-            'userId' => ['required', 'exists:users,id'],
+            // Kawka z buycoffee.to bez konta trafia na ścianę jako „Anonimowy kibol”.
+            'userId' => [$this->source === 'buycoffee' ? 'nullable' : 'required', 'exists:users,id'],
             'kind' => ['required', 'in:' . Payment::KIND_PREMIUM . ',' . Payment::KIND_SUPPORT],
             'plan' => ['required_if:kind,' . Payment::KIND_PREMIUM, 'nullable', 'in:' . implode(',', array_keys(Premium::PLANS))],
             'amount' => ['required', 'numeric', 'min:1', 'max:100000'],
@@ -273,6 +287,66 @@ new class extends Component {
         $this->dispatch('ui-toast', text: __('Premium revoked.'));
     }
 
+    /* ==================================================================
+     | RANGI WSPIERAJĄCYCH
+     * ================================================================*/
+
+    public function addRank(): void
+    {
+        $this->ranks[] = ['id' => null, 'name' => '', 'threshold' => '', 'color' => '#3b82f6'];
+    }
+
+    public function removeRank(int $index): void
+    {
+        unset($this->ranks[$index]);
+        $this->ranks = array_values($this->ranks);
+    }
+
+    /** Zapis rang: usuwa brakujące, zmienia istniejące, dodaje nowe. */
+    public function saveRanks(): void
+    {
+        $this->validate([
+            'ranks.*.name' => ['required', 'string', 'max:40'],
+            'ranks.*.threshold' => ['required', 'numeric', 'min:0.01', 'max:1000000'],
+            'ranks.*.color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+        ], [], [
+            'ranks.*.name' => __('Rank name'),
+            'ranks.*.threshold' => __('From'),
+            'ranks.*.color' => __('Colour'),
+        ]);
+
+        $old = SupporterRank::orderBy('threshold')->get(['name', 'threshold', 'color'])->toArray();
+        $keep = [];
+        foreach ($this->ranks as $row) {
+            $values = [
+                'name' => trim($row['name']),
+                'threshold' => (int) round((float) str_replace(',', '.', $row['threshold']) * 100),
+                'color' => strtolower($row['color']),
+            ];
+            $rank = $row['id'] ? SupporterRank::find($row['id']) : null;
+            if ($rank) {
+                $rank->update($values);
+            } else {
+                $rank = SupporterRank::create($values);
+            }
+            $keep[] = $rank->id;
+        }
+        SupporterRank::whereNotIn('id', $keep)->delete();
+
+        Audit::log('supporter_ranks.saved', null, ['ranks' => $old], ['ranks' => SupporterRank::orderBy('threshold')->get(['name', 'threshold', 'color'])->toArray()]);
+        \Illuminate\Support\Once::flush();
+
+        $this->loadRanks();
+        $this->dispatch('ui-toast', variant: 'success', text: __('Ranks saved.'));
+    }
+
+    private function loadRanks(): void
+    {
+        $this->ranks = SupporterRank::orderBy('threshold')->orderBy('id')->get()
+            ->map(fn(SupporterRank $r) => ['id' => $r->id, 'name' => $r->name, 'threshold' => (string) ($r->threshold / 100), 'color' => $r->color])
+            ->values()->all();
+    }
+
     private function clearCaches(): void
     {
         unset($this->payments, $this->premiumUsers, $this->supporters, $this->selectedUser, $this->userResults);
@@ -331,7 +405,7 @@ new class extends Component {
                                 {{ ($payment->paid_at ?? $payment->created_at)->format('d.m.Y H:i') }}
                             </x-ui.table.cell>
                             <x-ui.table.cell>
-                                <div class="text-sm font-medium">{{ $payment->user?->name ?? '—' }}</div>
+                                <div class="text-sm font-medium">{{ $payment->user?->name ?? __('Anonymous kibol') }}</div>
                                 <div class="text-xs text-ui-muted">{{ $payment->user?->email }}</div>
                             </x-ui.table.cell>
                             <x-ui.table.cell class="text-sm">
@@ -404,6 +478,32 @@ new class extends Component {
                     <x-ui.text class="text-sm">{{ __('No payments in the last 12 months.') }}</x-ui.text>
                 @endforelse
             </x-ui.card>
+
+            {{-- Rangi wspierających: próg sumy z 12 miesięcy i kolor tła przy nazwie drużyny --}}
+            <x-ui.card class="space-y-3">
+                <div>
+                    <x-ui.heading>{{ __('Supporter ranks') }}</x-ui.heading>
+                    <x-ui.text class="text-xs">{{ __('Total of payments in the last 12 months. The colour is the light background next to the team name.') }}</x-ui.text>
+                </div>
+                @foreach ($ranks as $i => $rank)
+                    <div class="flex items-start gap-2" wire:key="rank-{{ $rank['id'] ?? 'new-' . $i }}">
+                        <input type="color" wire:model.live="ranks.{{ $i }}.color" class="mt-0.5 size-9 shrink-0 cursor-pointer rounded-lg border-0 bg-transparent p-0" aria-label="{{ __('Colour') }}">
+                        <div class="min-w-0 flex-1">
+                            <x-ui.input wire:model="ranks.{{ $i }}.name" maxlength="40" :aria-label="__('Rank name')" />
+                            <x-ui.error name="ranks.{{ $i }}.name" />
+                        </div>
+                        <div class="w-24 shrink-0">
+                            <x-ui.input type="number" step="1" min="1" wire:model="ranks.{{ $i }}.threshold" suffix="zł" :aria-label="__('From')" />
+                            <x-ui.error name="ranks.{{ $i }}.threshold" />
+                        </div>
+                        <x-ui.btn size="sm" variant="ghost" icon="trash" wire:click="removeRank({{ $i }})" :aria-label="__('Delete')" />
+                    </div>
+                @endforeach
+                <div class="flex flex-wrap justify-between gap-2">
+                    <x-ui.btn size="sm" variant="ghost" icon="plus" wire:click="addRank">{{ __('Add rank') }}</x-ui.btn>
+                    <x-ui.btn size="sm" variant="primary" wire:click="saveRanks">{{ __('Save') }}</x-ui.btn>
+                </div>
+            </x-ui.card>
         </div>
     </div>
 
@@ -414,10 +514,13 @@ new class extends Component {
 
             @include('partials.payments-user-picker')
 
-            <x-ui.radio.group wire:model="source" :label="__('Source')" variant="segmented">
+            <x-ui.radio.group wire:model.live="source" :label="__('Source')" variant="segmented">
                 <x-ui.radio value="manual" :label="__('By hand')" />
                 <x-ui.radio value="buycoffee" label="buycoffee.to" />
             </x-ui.radio.group>
+            @if ($source === 'buycoffee' && !$userId)
+                <x-ui.text class="text-xs">{{ __('Without a player the coffee appears on the supporters wall as an anonymous kibol.') }}</x-ui.text>
+            @endif
 
             <x-ui.radio.group wire:model.live="kind" :label="__('Type')" variant="segmented">
                 <x-ui.radio value="support" :label="__('Support')" />
