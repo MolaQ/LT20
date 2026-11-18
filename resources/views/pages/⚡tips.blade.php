@@ -402,7 +402,9 @@ new #[Layout('layouts::public')] class extends Component {
      * Stan każdych rozgrywek gracza (kafelki „Twoje rozgrywki”): barwy, wystawieni zawodnicy i pytania zestawu
      * (stan każdego pytania: attack / defense = odpowiedź z bonusem ataku / obrony, null = pominięte).
      *
-     * @return list<array{set: string, label: string, style: string, players: list<string>, max: int, questions: list<string|null>, summary: array{answered: int, attack: int, defense: int}}>
+     * 18.11.2026: suma doświadczenia wystawionych w klubie gracza i średnia forma (MatchReport::formTotals) na kafelek.
+     *
+     * @return list<array{set: string, label: string, style: string, players: list<string>, max: int, experience: float, form: float|null, questions: list<string|null>, summary: array{answered: int, attack: int, defense: int}}>
      */
     #[Computed]
     public function setStatus(): array
@@ -416,16 +418,21 @@ new #[Layout('layouts::public')] class extends Component {
         $answers = $this->myAnswers;
         $questions = $this->allQuestions->groupBy('score_set');
         $max = (int) \App\Support\Designation::value('max_players');
+        $experience = \App\Support\Squad::clubExperience((int) auth()->id(), null);
+        $form = \App\Support\MatchReport::formTotals();
 
-        return collect($this->questionSets)->map(function (array $set, string $value) use ($picks, $names, $answers, $questions, $max) {
+        return collect($this->questionSets)->map(function (array $set, string $value) use ($picks, $names, $answers, $questions, $max, $experience, $form) {
             $mine = $answers->get($value, collect());
+            $ids = collect($picks[$value] ?? []);
 
             return [
                 'set' => $value,
                 'label' => $set['label'],
                 'style' => $set['style'],
-                'players' => collect($picks[$value] ?? [])->map(fn ($id) => (string) ($names[$id] ?? '?'))->values()->all(),
+                'players' => $ids->map(fn ($id) => (string) ($names[$id] ?? '?'))->values()->all(),
                 'max' => $max,
+                'experience' => (float) $ids->sum(fn ($id) => (float) ($experience[$id] ?? 0)),
+                'form' => $ids->isEmpty() ? null : (float) $ids->avg(fn ($id) => (float) ($form[$id] ?? 0)),
                 'questions' => $questions->get($value, collect())->map(fn ($q) => $mine->get($q->id)?->side)->values()->all(),
                 'summary' => \App\Support\Questions::summary($mine),
             ];
@@ -760,57 +767,84 @@ new #[Layout('layouts::public')] class extends Component {
         Telefon: jeden krok naraz. Komputer: wszystko na jednym ekranie: wynik i obok wybór rozgrywek,
         pod nimi skład i pytania wybranych rozgrywek, karty składów, a na końcu to, jak typują inni. Wszystko zapisuje się samo.
     --}}
-    <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
+    <div class="grid gap-6 lg:grid-cols-2 lg:items-stretch">
         <div @class(['flex min-w-0 flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
-        <x-ui.card hero>
-            <div class="flex items-center justify-between gap-2 text-xs uppercase tracking-wider">
-                <span class="opacity-85">{{ __('Matchday :number', ['number' => $md->number]) }} · {{ $md->kickoff_at ? $md->kickoff_at->translatedFormat('D j M, H:i') : __('not set yet') }}</span>
+        {{--
+            Okno wyniku jak karta kolejki na stronie głównej (18.11.2026): niebieskie tło Lecha, drużyny z paskami barw klubów
+            (gospodarz po lewej), liczniki z przyciskami po bokach, szybkie wyniki i zapisany typ w środku karty.
+        --}}
+        @php
+            $tipSides = [
+                ['name' => config('club.name', config('club.short_name')), 'lech' => true, 'model' => 'lech'],
+                ['name' => $md->opponent, 'lech' => false, 'model' => 'opponent'],
+            ];
+            if (! $md->is_home) {
+                $tipSides = array_reverse($tipSides);
+            }
+        @endphp
+        <section class="relative flex flex-1 flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-linear-to-br from-lech-900 via-lech-800 to-lech-600 px-5 py-5 text-white shadow-md sm:px-7">
+            <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgb(255_255_255/0.12),transparent_60%)]"></div>
+            <div class="relative flex items-start justify-between gap-2 text-xs font-bold uppercase tracking-wider text-lech-100">
+                <span>
+                    {{ __('Matchday :number', ['number' => $md->number]) }} · {{ $md->kickoff_at ? $md->kickoff_at->translatedFormat('D j M, H:i') : __('not set yet') }}
+                    @if ($md->competitionLabel())
+                        · {{ $md->competitionLabel() }}
+                    @endif
+                </span>
                 <x-ui.chip :variant="$statusChip[0]">{{ $statusChip[1] }}</x-ui.chip>
             </div>
-            @if ($md->competitionLabel())
-                <div class="mt-0.5 text-xs opacity-70">{{ $md->competitionLabel() }}</div>
-            @endif
 
             @if (!$md->isFilled())
-                <p class="py-8 text-center opacity-85">{{ __('The opponent and date are not set yet, so tipping is not open.') }}</p>
+                <p class="relative py-8 text-center opacity-85">{{ __('The opponent and date are not set yet, so tipping is not open.') }}</p>
             @else
-                <div class="my-4 flex items-start justify-around">
-                    <x-ui.counter wire:model.live="lech" :label="mb_strtoupper(config('club.short_name'))" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
-                    <span class="pt-12 font-display text-5xl font-extrabold opacity-60">:</span>
-                    <x-ui.counter wire:model.live="opponent" :label="mb_strtoupper($md->opponent)" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
+                <div class="relative my-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
+                    @foreach ($tipSides as $index => $side)
+                        @if ($index === 1)
+                            <div class="grid size-11 place-items-center rounded-full bg-white/15 text-xs font-black uppercase tracking-widest ring-1 ring-white/25 sm:size-14 sm:text-sm">vs</div>
+                        @endif
+                        <div class="flex min-w-0 flex-col items-center gap-1.5 text-center">
+                            @if ($stripe = \App\Models\Rival::stripe($side['lech'] ? \App\Models\Rival::LECH_COLORS : \App\Models\Rival::colorsFor($side['name'])))
+                                <span class="h-2 w-20 rounded-full shadow-sm ring-1 ring-black/10 sm:w-28" style="{{ $stripe }}"></span>
+                            @endif
+                            <span class="{{ $side['lech'] ? 'drop-shadow-[0_0_14px_rgb(96_165_250/0.8)]' : '' }} max-w-full font-display text-lg font-bold leading-tight sm:text-2xl xl:text-3xl">{{ $side['name'] }}</span>
+                            <span class="rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lech-100">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
+                            <x-ui.counter inline class="mt-1" wire:model.live="{{ $side['model'] }}" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
+                        </div>
+                    @endforeach
                 </div>
 
                 @if ($played)
-                    <div class="flex flex-wrap justify-center gap-2">
+                    <div class="relative flex flex-wrap justify-center gap-2">
                         <x-ui.chip variant="club">{{ __('Final score: :score.', ['score' => config('club.short_name').' '.$md->lech_goals.':'.$md->opponent_goals]) }}</x-ui.chip>
                         @if ($first = $this->scores->first())
                             <x-ui.chip variant="gold">{{ __('Points for the tip: :points of 3.', ['points' => $first->tip_points]) }}</x-ui.chip>
                         @endif
                     </div>
                 @endif
-            @endif
-        </x-ui.card>
 
-        @if ($md->isFilled() && $this->isOpen)
-            <p class="text-center text-sm text-ui-muted">{{ __('Quick scores') }}</p>
-            <div class="flex flex-wrap justify-center gap-2">
-                @foreach ([[1, 0], [2, 0], [2, 1], [3, 1], [1, 1], [0, 0], [2, 2], [0, 1], [1, 2]] as [$quickLech, $quickOpp])
-                    <button type="button" wire:click="pick({{ $quickLech }}, {{ $quickOpp }})" @class([
-                        'ui-num rounded-xl px-3.5 py-2 text-lg font-bold transition active:scale-95',
-                        'bg-club text-club-ink' => (int) $this->lech === $quickLech && (int) $this->opponent === $quickOpp,
-                        'bg-ui-raised' => ! ((int) $this->lech === $quickLech && (int) $this->opponent === $quickOpp),
-                    ])>{{ $quickLech }}:{{ $quickOpp }}</button>
-                @endforeach
-            </div>
-        @endif
-
-        <p class="text-center text-sm text-ui-muted">
-            @if ($this->tip)
-                {{ __('Saved tip: :score, last change :time.', ['score' => $this->tip->score(), 'time' => $this->tip->saved_at->translatedFormat('j F, H:i:s')]) }}
-            @else
-                {{ __('You have not tipped this matchday yet.') }}
+                <div class="relative space-y-3 border-t border-white/15 pt-4">
+                    @if ($this->isOpen)
+                        <div class="flex flex-wrap justify-center gap-1.5" role="group" aria-label="{{ __('Quick scores') }}">
+                            @foreach ([[1, 0], [2, 0], [2, 1], [3, 1], [1, 1], [0, 0], [2, 2], [0, 1], [1, 2]] as [$quickLech, $quickOpp])
+                                <button type="button" wire:click="pick({{ $quickLech }}, {{ $quickOpp }})" @class([
+                                    'ui-num rounded-lg border px-3 py-1.5 text-sm font-bold transition active:scale-95',
+                                    'border-white bg-white text-lech-900' => (int) $this->lech === $quickLech && (int) $this->opponent === $quickOpp,
+                                    'border-white/20 bg-white/10 hover:bg-white/20' => ! ((int) $this->lech === $quickLech && (int) $this->opponent === $quickOpp),
+                                ])>{{ $quickLech }}:{{ $quickOpp }}</button>
+                            @endforeach
+                        </div>
+                    @endif
+                    <p class="flex items-center justify-center gap-1.5 text-center text-xs text-lech-100">
+                        @if ($this->tip)
+                            <x-ui.icon name="check-circle" variant="micro" class="text-green-400" />
+                            {{ __('Saved tip: :score, last change :time.', ['score' => $this->tip->score(), 'time' => $this->tip->saved_at->translatedFormat('j F, H:i:s')]) }}
+                        @else
+                            {{ __('You have not tipped this matchday yet.') }}
+                        @endif
+                    </p>
+                </div>
             @endif
-        </p>
+        </section>
 
         @if ($md->isFilled())
             <x-ui.button class="lg:hidden" wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => $steps['players']]) }}</x-ui.button>

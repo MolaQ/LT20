@@ -2526,5 +2526,10 @@
     "The game is free and made by a fan after hours. A coffee keeps the server running and new features coming.": "Gra jest darmowa i powstaje po godzinach, robiona przez kibica. Kawka utrzymuje serwer i pozwala dodawać nowe rzeczy.",
     "Supporters wall": "Ściana wspierających",
     "Support the project": "Wesprzyj projekt",
-    "Support and premium": "Wsparcie i premium"
+    "Support and premium": "Wsparcie i premium",
+    "Click a tile to set its squad and questions.": "Kliknij kafelek, żeby ustawić jego skład i pytania.",
+    "No squad": "Brak składu",
+    "Questions :done/:all": "Pytania :done/:all",
+    "Avg. form": "Śr. forma",
+    "No answer": "Bez odpowiedzi"
 }
