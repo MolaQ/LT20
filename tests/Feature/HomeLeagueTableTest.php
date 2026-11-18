@@ -126,6 +126,8 @@ test('the next matchday shows the player squads with form and club experience, g
         ->assertSee(__('Your squads in this matchday'))->assertSee('M. Ishak')
         ->assertSee(route('tips', ['matchday_slug' => 'kolejka-1']), false);
 
+    // Gość: wylogowanie, bo actingAs zostawia zalogowanego użytkownika w kolejnym teście komponentu.
+    auth()->forgetGuards();
     Livewire::test('pages::home.welcome')->assertDontSee(__('Your squads in this matchday'));
     expect(MySquads::short('Mikael Ishak'))->toBe('M. Ishak')->and(MySquads::short('Ishak'))->toBe('Ishak');
 });
