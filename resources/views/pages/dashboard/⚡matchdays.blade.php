@@ -562,6 +562,15 @@ new class extends Component {
                             <x-ui.btn size="sm" :variant="$started && !$played ? 'primary' : 'ghost'" icon="flag" :href="route('dashboard.results', $routeParams)" wire:navigate>
                                 {{ __('Result') }}
                             </x-ui.btn>
+                            {{-- Grafika przed meczem na Facebooka (kampania, 18.11.2026): post i relacja do pobrania --}}
+                            @if ($matchday->isFilled() && !$played)
+                                <x-ui.btn size="sm" variant="ghost" icon="photo" :href="route('dashboard.matchday-graphic', [$matchday, 'post'])" :title="__('Graphic for a Facebook post (1080×1350)')">
+                                    {{ __('Post graphic') }}
+                                </x-ui.btn>
+                                <x-ui.btn size="sm" variant="ghost" icon="device-phone-mobile" :href="route('dashboard.matchday-graphic', [$matchday, 'story'])" :title="__('Graphic for a story (1080×1920)')">
+                                    {{ __('Story') }}
+                                </x-ui.btn>
+                            @endif
                         </div>
                     </x-ui.card>
                 @endforeach

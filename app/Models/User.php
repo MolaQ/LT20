@@ -40,6 +40,9 @@ use Spatie\Permission\Traits\HasRoles;
  * @property int $profile_views
  * @property Carbon|null $inactivity_reset_at
  * @property bool|null $show_as_supporter pokazuj na ścianie wspierających (domyślnie tak)
+ * @property string|null $signup_source skąd przyszło konto: serwis (Facebook…), invite (link zapraszający), host strony albo null (App\Support\Referrals)
+ * @property int|null $referred_by kto zaprosił
+ * @property int $referral_rewards ile nagród premium za zaproszenia już dostał
  */
 #[Fillable(['name', 'email', 'password', 'team_name', 'locale'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'verification_code'])]

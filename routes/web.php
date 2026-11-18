@@ -3,6 +3,7 @@
 use App\Enums\Permission;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ManifestController;
+use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\Przelewy24Controller;
 use App\Http\Controllers\SiteUpdateChunkController;
 use App\Support\Sitemap;
@@ -43,6 +44,10 @@ Route::post('locale/{locale}', LocaleController::class)->name('locale.switch');
 
 // PWA: manifest z konfiguracji klubu i strona bez internetu (service worker: public/sw.js).
 Route::get('manifest.webmanifest', ManifestController::class)->name('manifest');
+
+// Obrazki podglądu linków (og:image) rysowane na serwerze: tabela po kolejce i profil drużyny.
+Route::get('og/tabela/{competition}/{round}.png', [OgImageController::class, 'table'])->whereNumber('round')->name('og.table');
+Route::get('og/druzyna/{user}.png', [OgImageController::class, 'team'])->name('og.team');
 Route::view('offline', 'offline')->name('offline');
 
 Route::post('payments/przelewy24/status', [Przelewy24Controller::class, 'status'])->name('przelewy24.status');
@@ -58,6 +63,10 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('panel/matchdays', 'pages::dashboard.matchdays')
         ->middleware('permission:'.Permission::SeasonList->value)
         ->name('dashboard.matchdays');
+    Route::get('panel/matchdays/{matchday}/grafika/{format}', [OgImageController::class, 'matchday'])
+        ->middleware('permission:'.Permission::SeasonList->value)
+        ->whereIn('format', ['post', 'story'])
+        ->name('dashboard.matchday-graphic');
     Route::livewire('panel/lech-calendar', 'pages::dashboard.lech-calendar')
         ->middleware('permission:'.Permission::SeasonList->value)
         ->name('dashboard.lech-calendar');

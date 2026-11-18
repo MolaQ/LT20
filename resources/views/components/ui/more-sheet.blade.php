@@ -17,6 +17,9 @@
         [route('faq'), 'question-mark-circle', __('FAQ')],
         [route('office'), 'inbox', __('Complaints and requests office')],
     ];
+    if (auth()->user()?->roles->isNotEmpty()) {
+        $links[] = [route('support').'#zapros', 'user-plus', __('Invite fans')];
+    }
     if (auth()->check()) {
         $links[] = [route('profile.edit'), 'cog', __('Settings')];
     }
