@@ -152,6 +152,14 @@ new class extends Component {
                                     </span>
                                 </div>
 
+                                {{-- Pytania: ile z odpowiedzią, premium też ile ataków i obron --}}
+                                @if ($rival['questions'])
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-ui-muted">{{ __('Questions') }}</span>
+                                        <x-question-sides :info="$rival['questions']" class="justify-end" />
+                                    </div>
+                                @endif
+
                                 @if (!$isPremium && $phase === \App\Support\Rivals::OPEN)
                                     <div class="flex items-center gap-2 text-xs text-ui-muted">
                                         <x-premium-badge />
