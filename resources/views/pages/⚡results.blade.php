@@ -721,21 +721,36 @@ new #[Layout('layouts::public')] class extends Component {
                         <h1 class="text-3xl font-semibold uppercase tracking-tight sm:text-4xl">
                             {{ $this->competition->name ?: $this->competition->type->label() }}
                         </h1>
-                        @if ($sponsor)
-                            <a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
-                                class="inline-flex items-center gap-2.5 text-xs opacity-90 hover:opacity-100">
-                                <span class="uppercase tracking-widest">{{ $sponsor->label ?: 'powered by' }}</span>
-                                @if ($sponsor->logoUrl())
-                                    <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="h-10 max-w-40 object-contain drop-shadow-sm">
-                                @else
-                                    <span class="font-semibold">{{ $sponsor->name }}</span>
-                                @endif
                             </a>
                         @endif
                     </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-col gap-3 md:items-end">
+                    {{-- Partner rozgrywek: wyraźna tabliczka z dużym logo, w barwach rozgrywek --}}
+                    @if ($sponsor)
+                        <a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
+                            class="comp-partner group flex items-center gap-4 rounded-2xl py-3 pl-3 pr-5 transition {{ $sponsor->url ? 'hover:-translate-y-0.5' : '' }}">
+                            <span class="comp-partner-logo flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl sm:size-20">
+                                @if ($sponsor->logoUrl())
+                                    <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="size-full object-contain p-1.5">
+                                @else
+                                    <span class="text-2xl font-black uppercase">{{ mb_substr($sponsor->name, 0, 1) }}</span>
+                                @endif
+                            </span>
+                            <span class="min-w-0">
+                                <span class="comp-accent block text-[10px] font-bold uppercase tracking-[0.2em]">{{ $sponsor->label ?: __('Competition partner') }}</span>
+                                <span class="block truncate text-lg font-bold leading-tight">{{ $sponsor->name }}</span>
+                                @if ($sponsor->url)
+                                    <span class="mt-0.5 inline-flex items-center gap-1 text-[11px] opacity-75 transition group-hover:opacity-100">
+                                        {{ __('Visit the partner') }} <x-ui.icon name="arrow-right" variant="micro" class="size-3 transition group-hover:translate-x-0.5" />
+                                    </span>
+                                @endif
+                            </span>
+                        </a>
+                    @endif
+
+                    <div class="flex flex-wrap gap-2">
                     @foreach ($navs as [$navLabel, $navMethod, $canBack, $canForward])
                         <div class="flex items-center gap-1.5 rounded-full bg-black/15 px-1.5 py-1">
                             <button type="button" wire:click="{{ $navMethod }}(-1)" @disabled(!$canBack) class="{{ $arrowClass }}"
@@ -749,6 +764,7 @@ new #[Layout('layouts::public')] class extends Component {
                             </button>
                         </div>
                     @endforeach
+                    </div>
                 </div>
             </div>
         </section>
