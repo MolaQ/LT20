@@ -590,3 +590,8 @@
 .cropper-round .cropper-face {
     border-radius: 50%;
 }
+
+/* Kolor tła koła w podglądzie kadru (pod obrazkiem, widać go tam, gdzie kadr wychodzi poza logo) */
+.cropper-round .cropper-view-box {
+    background: var(--circle-fill, transparent);
+}

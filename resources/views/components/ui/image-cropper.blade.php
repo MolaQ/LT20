@@ -65,7 +65,7 @@
     {{-- Edytor: pole kadrowania i narzędzia --}}
     {{-- data-sheet-nodrag: przeciąganie kadru na telefonie nie zamyka okna (arkusze i okna zamykane przeciągnięciem) --}}
     <div x-show="source" x-cloak class="space-y-2" data-sheet-nodrag>
-        <div wire:ignore :class="[shape === 'circle' && 'cropper-round', darkPreview && '!bg-slate-900 !bg-none']"
+        <div wire:ignore :class="[shape === 'circle' && 'cropper-round', darkPreview && '!bg-slate-900 !bg-none']" :style="shape === 'circle' && circleFill ? `--circle-fill: ${circleFill}` : ''"
             class="h-[40vh] min-h-56 overflow-hidden rounded-xl {{ $format === 'png' ? 'bg-[repeating-conic-gradient(#e4e4e7_0_25%,#fff_0_50%)] bg-[length:16px_16px]' : 'bg-zinc-900' }}">
             <img x-ref="image" :src="source" alt="{{ __('Cropping') }}" class="block max-w-full">
         </div>
@@ -87,6 +87,24 @@
 
             <button type="button" @click="destroy()" class="{{ $btn }}">{{ __('Cancel') }}</button>
         </div>
+
+        @if ($format === 'png' && $aspect === 'free')
+            {{-- Koło: całe logo w kole i kolor tła koła (domyślnie kolor rogu logo), reszta poza kołem przezroczysta --}}
+            <div x-show="shape === 'circle'" x-cloak class="flex flex-wrap items-center gap-2 rounded-lg bg-ui-raised/60 p-2 text-sm ring-1 ring-ui-line">
+                <button type="button" @click="fitCircle()" class="{{ $btn }} font-semibold"
+                    title="{{ __('Shrinks the logo so that all of it fits in the circle.') }}">{{ __('Whole logo in the circle') }}</button>
+                <span class="text-xs text-ui-muted">{{ __('Circle background') }}</span>
+                <span class="inline-flex overflow-hidden rounded-lg ring-1 ring-ui-line text-xs">
+                    <button type="button" @click="circleFill = null" :class="circleFill === null ? 'bg-club text-club-ink' : 'bg-ui-surface'"
+                        class="px-2.5 py-1.5 font-semibold">{{ __('Transparent') }}</button>
+                    <label class="flex cursor-pointer items-center gap-1.5 border-l border-ui-line px-2.5 py-1 font-semibold"
+                        :class="circleFill !== null ? 'bg-club text-club-ink' : 'bg-ui-surface'">{{ __('Color') }}
+                        <input type="color" :value="circleFill || cornerColor() || '#ffffff'" @input="circleFill = $event.target.value"
+                            class="h-5 w-7 cursor-pointer rounded border-0 bg-transparent p-0" aria-label="{{ __('Circle background') }}">
+                    </label>
+                </span>
+            </div>
+        @endif
 
         @if ($format === 'png')
             {{-- Tło i kolory (logo z przezroczystością) --}}

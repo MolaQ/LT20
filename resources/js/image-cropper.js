@@ -35,6 +35,8 @@ export function registerImageCropper() {
             backgroundRemoved: false,
             // Kształt kadru logo przy dowolnych proporcjach: 'free', 'square' (1:1) albo 'circle' (koło, reszta przezroczysta).
             shape: 'free',
+            // Kolor tła koła (np. niebieski z logo), null = przezroczyste. Wypełnia miejsce między logo a krawędzią koła.
+            circleFill: null,
 
             // Podgląd kadrowania na ciemnym tle (sprawdzenie wariantu logo na ciemne miniatury).
             darkPreview: false,
@@ -94,7 +96,9 @@ export function registerImageCropper() {
 
                 this.cropper = new Cropper(this.$refs.image, {
                     aspectRatio: this.aspect > 0 ? this.aspect : (this.shape === 'free' ? NaN : 1),
-                    viewMode: 1,
+                    // Logo o dowolnych proporcjach: kadr może wyjść poza obrazek (np. całe kwadratowe logo w kole),
+                    // zdjęcia i banery trzymają kadr w obrazku.
+                    viewMode: this.format === 'png' && ! (this.aspect > 0) ? 0 : 1,
                     autoCropArea: 1,
                     dragMode: this.aspect > 0 ? 'move' : 'crop',
                     // Kółko myszy przewija okno (np. formularz w oknie dialogowym); powiększanie przyciskami ＋ i －.
@@ -429,6 +433,48 @@ export function registerImageCropper() {
             setShape(shape) {
                 this.shape = shape;
                 this.cropper?.setAspectRatio(shape === 'free' ? NaN : 1);
+
+                if (shape === 'circle' && this.ready) {
+                    this.circleFill = this.cornerColor();
+                    this.fitCircle();
+                }
+            },
+
+            /** Całe logo w kole: pomniejsza obrazek tak, żeby zmieścił się w kole (przekątna = średnica), i centruje kadr. */
+            fitCircle() {
+                if (! this.cropper) {
+                    return;
+                }
+
+                const container = this.cropper.getContainerData();
+                const image = this.cropper.getImageData();
+                const diagonal = Math.hypot(image.naturalWidth, image.naturalHeight);
+                const ratio = (0.9 * Math.min(container.width, container.height)) / diagonal;
+
+                this.cropper.zoomTo(ratio);
+                const canvas = this.cropper.getCanvasData();
+                this.cropper.setCanvasData({ left: (container.width - canvas.width) / 2, top: (container.height - canvas.height) / 2 });
+
+                const side = diagonal * ratio;
+                this.cropper.setCropBoxData({ left: (container.width - side) / 2, top: (container.height - side) / 2, width: side, height: side });
+            },
+
+            /** Kolor rogu obrazka (tło logo, np. niebieskie) jako #rrggbb, albo null, gdy róg jest przezroczysty. */
+            cornerColor() {
+                const image = this.$refs.image;
+
+                if (! image?.naturalWidth) {
+                    return null;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 1;
+                canvas.height = 1;
+                const context = canvas.getContext('2d');
+                context.drawImage(image, 2, 2, 1, 1, 0, 0, 1, 1);
+                const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data;
+
+                return a < 200 ? null : '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
             },
 
             rotate(degrees) {
@@ -451,7 +497,9 @@ export function registerImageCropper() {
                     ? { width: this.width, height: Math.round(this.width / this.aspect) }
                     : (this.shape === 'free' ? { maxWidth: this.width, maxHeight: this.width } : { width: this.width, height: this.width });
 
-                let canvas = this.cropper.getCroppedCanvas({ ...size, imageSmoothingQuality: 'high', ...(png ? {} : { fillColor: '#fff' }) });
+                // Koło z kolorem tła: wypełnia miejsce wokół logo (i jego przezroczyste fragmenty) wybranym kolorem.
+                const fill = png ? (this.shape === 'circle' && this.circleFill ? { fillColor: this.circleFill } : {}) : { fillColor: '#fff' };
+                let canvas = this.cropper.getCroppedCanvas({ ...size, imageSmoothingQuality: 'high', ...fill });
 
                 if (this.shape === 'circle') {
                     const round = document.createElement('canvas');
@@ -520,6 +568,7 @@ export function registerImageCropper() {
                 this.picking = false;
                 this.ready = false;
                 this.shape = 'free';
+                this.circleFill = null;
 
                 if (this.$refs.input) {
                     this.$refs.input.value = '';

@@ -726,7 +726,7 @@ new #[Layout('layouts::public')] class extends Component {
                                 class="inline-flex items-center gap-2.5 text-xs opacity-90 hover:opacity-100">
                                 <span class="uppercase tracking-widest">{{ $sponsor->label ?: 'powered by' }}</span>
                                 @if ($sponsor->logoUrl())
-                                    <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="h-10 max-w-40 rounded-md bg-white object-contain p-1">
+                                    <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="h-10 max-w-40 object-contain drop-shadow-sm">
                                 @else
                                     <span class="font-semibold">{{ $sponsor->name }}</span>
                                 @endif
