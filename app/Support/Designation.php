@@ -31,6 +31,10 @@ class Designation
         'rest_hours_6' => 190,
         'rest_hours_7' => 220,
         'rest_hours_8' => 250,
+        // Zmęczony zawodnik (19.11.2026): jeśli w chwili gwizdka do końca regeneracji zostało najwyżej tyle godzin,
+        // można go wystawić i gra normalnie, ale regeneracja po tym meczu trwa tyle razy dłużej. 0 godzin = wyłączone.
+        'tired_threshold_hours' => 72,
+        'tired_rest_factor' => 2,
         // Doświadczenie, premia za skład: wyjściowa jedenastka, wejście z ławki.
         'exp_start' => 1,
         'exp_sub' => 0.5,

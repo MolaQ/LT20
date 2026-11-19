@@ -44,7 +44,11 @@ new class extends Component {
                 __($step % 2 === 1 ? 'Played under :minutes min' : 'Played :minutes min', ['minutes' => [1 => 45, 2 => 45, 3 => 90, 4 => 90, 5 => 105, 6 => 105, 7 => 120, 8 => 120][$step]]),
                 $step === 1 ? __('Hours of rest from the kickoff of the matchday in which the club fielded the player, for every playing time. A whole half counts in full, part of a half as half of it.') : null,
                 0, 500, 1,
-            ]])->all(),
+            ]])->all() + [
+                // Zmęczony zawodnik (19.11.2026): koniec regeneracji blisko, może grać, ale następna regeneracja dłuższa.
+                'tired_threshold_hours' => [__('Tired player: hours left'), __('A player who at the kickoff needs at most this many hours to finish his recovery can play, but his next recovery is longer. 0 turns it off.'), 0, 500, 1],
+                'tired_rest_factor' => [__('Tired player: recovery multiplier'), __('How many times longer the recovery after his match is.'), 1, 5, 0.5],
+            ],
             __('Experience') => [
                 'exp_start' => [__('Starting eleven'), __('Experience decides drawn cup ties before the tip time.'), 0, 10, 0.5],
                 'exp_sub' => [__('Substitute'), null, 0, 10, 0.5],

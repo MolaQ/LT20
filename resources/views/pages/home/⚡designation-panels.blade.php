@@ -99,6 +99,15 @@ new class extends Component {
         return $this->matchday ? Squad::locks(auth()->id(), null, $this->matchday) : [];
     }
 
+    /** @return array<int, true> zmęczeni: w regeneracji, ale koniec blisko, więc można ich wystawić (regeneracja po meczu dłuższa) */
+    #[Computed]
+    public function tired(): array
+    {
+        $matchday = $this->matchday;
+
+        return $matchday ? array_map(fn () => true, array_filter($this->locks, fn (int $freeAt) => Squad::isTired($freeAt, $matchday))) : [];
+    }
+
     /**
      * Barwy kart (klucz CompetitionColors): liga gracza, Puchar Polski, jego puchar europejski, Liga Legend.
      *
@@ -176,6 +185,9 @@ new class extends Component {
             $max = \App\Support\Designation::value('max_players');
             $picks = $this->picks;
             $locks = $this->locks;
+            $tired = $this->tired;
+            $tiredFactor = rtrim(rtrim(number_format(\App\Support\Designation::number('tired_rest_factor'), 1, ',', ''), '0'), ',');
+            $tiredTitle = __('Tired: he can play, but after this match his recovery takes :factor times longer.', ['factor' => $tiredFactor]);
             $squad = $this->squad;
             $colors = $this->setColors;
             $sets = collect($this->sets)->keyBy(fn ($set) => $set->value);
@@ -193,7 +205,8 @@ new class extends Component {
 
         @if ($part === 'select')
             @php
-                $available = $squad->filter(fn ($p) => !isset($locks[$p->id]));
+                // Zmęczeni (koniec regeneracji blisko) też są do wyboru, z oznaczeniem ×2.
+                $available = $squad->filter(fn ($p) => !isset($locks[$p->id]) || isset($tired[$p->id]));
             @endphp
             <div class="space-y-3">
                 <div class="flex flex-wrap items-end justify-between gap-2">
@@ -269,6 +282,9 @@ new class extends Component {
                                             <x-ui.icon name="academic-cap" variant="micro" class="inline opacity-70" />
                                         @endif
                                     </span>
+                                    @if (isset($tired[$player->id]))
+                                        <span class="shrink-0 rounded bg-yellow-400 px-1 text-[10px] font-bold text-zinc-900" title="{{ $tiredTitle }}">×{{ $tiredFactor }}</span>
+                                    @endif
                                     @if ($inSet)
                                         <x-ui.icon name="check-circle" variant="micro" class="size-4 shrink-0" />
                                     @endif
@@ -317,13 +333,16 @@ new class extends Component {
                                 <div class="relative z-10 mt-2 flex min-h-8 flex-col gap-1">
                                     @forelse ($mine as $player)
                                         @php
-                                            $forfeit = isset($locks[$player->id]);
+                                            $forfeit = isset($locks[$player->id]) && !isset($tired[$player->id]);
                                         @endphp
                                         <button type="button" wire:click.stop="toggle({{ $player->id }}, '{{ $setValue }}')" @disabled(!$open)
                                             class="{{ $forfeit ? 'bg-red-600 text-white' : 'bg-white/90 text-zinc-900' }} flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs font-semibold shadow-sm"
                                             title="{{ $forfeit ? __('This player rests now: the pick does not count.') : ($open ? __('Remove') : '') }}">
                                             <span class="w-4 shrink-0 text-[10px] opacity-60">{{ $player->position->short() }}</span>
                                             <span class="min-w-0 flex-1 truncate">{{ $player->name }}</span>
+                                            @if (isset($tired[$player->id]))
+                                                <span class="shrink-0 rounded bg-yellow-400 px-1 text-[10px] font-bold text-zinc-900" title="{{ $tiredTitle }}">×{{ $tiredFactor }}</span>
+                                            @endif
                                             <span class="shrink-0 text-[10px] tabular-nums opacity-60" title="{{ __('Experience in your club') }}">{{ $fmt($player->club_experience) }}</span>
                                             @if ($forfeit)
                                                 <x-ui.icon name="no-symbol" variant="micro" />
@@ -372,7 +391,10 @@ new class extends Component {
                                 <div class="flex max-w-full items-center gap-1.5 rounded-md border border-ui-line bg-ui-surface px-2 py-1 text-xs text-ui-muted" wire:key="rest-{{ $player->id }}">
                                     <span class="w-4 shrink-0 text-[10px] font-semibold uppercase">{{ $player->position->short() }}</span>
                                     <span class="min-w-0 truncate">{{ $player->name }}</span>
-                                    @if ($in && $open)
+                                    @if (isset($tired[$player->id]))
+                                        {{-- Zmęczony: można wystawić, regeneracja po meczu dłuższa --}}
+                                        <span class="shrink-0 rounded bg-yellow-400 px-1.5 py-0.5 text-[10px] font-bold text-zinc-900" title="{{ $tiredTitle }}">{{ __('Can play') }} ×{{ $tiredFactor }}</span>
+                                    @elseif ($in && $open)
                                         {{-- Wystawiony, a potem odpoczywający (raport wpisany później): wybór przepada, można zdjąć. --}}
                                         <button type="button" wire:click="toggle({{ $player->id }}, '{{ $in }}')" class="shrink-0 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white"
                                             title="{{ __('This player rests now: the pick does not count.') }}">{{ __('Remove') }}</button>

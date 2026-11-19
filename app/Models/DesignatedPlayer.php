@@ -27,12 +27,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $defense
  * @property float $experience
  * @property int $rest_hours
+ * @property float $rest_factor mnożnik regeneracji po tym meczu (zmęczony zawodnik: Designation tired_rest_factor, inaczej 1)
  */
 class DesignatedPlayer extends Model
 {
     protected $fillable = [
         'matchday_id', 'user_id', 'bot_id', 'score_set', 'lech_player_id',
-        'counted', 'matches', 'play_time', 'goals', 'assists', 'own_goals', 'clean_sheet', 'yellow', 'red', 'attack', 'defense', 'experience', 'rest_hours',
+        'counted', 'matches', 'play_time', 'goals', 'assists', 'own_goals', 'clean_sheet', 'yellow', 'red', 'attack', 'defense', 'experience', 'rest_hours', 'rest_factor',
     ];
 
     protected function casts(): array
@@ -43,6 +44,7 @@ class DesignatedPlayer extends Model
             'matches' => 'integer',
             'clean_sheet' => 'boolean',
             'play_time' => 'float',
+            'rest_factor' => 'float',
             'yellow' => 'integer',
             'red' => 'boolean',
             'experience' => 'float',

@@ -136,7 +136,13 @@ new #[Layout('layouts::public')] class extends Component {
                     @endif
                     <div @class(['rounded-xl p-4', 'bg-club/10' => $index === 0, 'bg-ui-raised/60' => $index === 1])>
                         <p class="font-semibold">{{ $who }}</p>
-                        <p class="mt-1 font-mono text-sm tabular-nums text-ui-muted">{{ $tipPts }} {{ __('tip') }} + {{ $attack }} {{ __('attack') }} − {{ $rivalDefence }} {{ __('rival defence') }} = <b class="text-ui-ink">{{ $goals }}</b></p>
+                        {{-- Atak i obrona symbolami z gry: miecze i tarcza w kolorach pytań (--q-attack, --q-defense) --}}
+                        <p class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm tabular-nums text-ui-muted">
+                            <span>{{ $tipPts }} {{ __('tip') }}</span> +
+                            <span class="inline-flex items-center gap-1 font-semibold" style="color: var(--q-attack)"><x-ui.icon name="swords" variant="micro" class="size-4" />{{ $attack }} {{ __('attack') }}</span> −
+                            <span class="inline-flex items-center gap-1 font-semibold" style="color: var(--q-defense)"><x-ui.icon name="shield" variant="micro" class="size-4" />{{ $rivalDefence }} {{ __('rival defence') }}</span>
+                            = <b class="text-base text-ui-ink">{{ $goals }}</b>
+                        </p>
                     </div>
                 @endforeach
             </div>
@@ -262,6 +268,7 @@ new #[Layout('layouts::public')] class extends Component {
                         ['squares-2x2', __('Recovery counts in your club in all competitions at once.')],
                         ['x-circle', __('A recovering player in your squad gives no points and no experience, but takes a place. Swap him for someone else.')],
                         ['eye', __('On the tipping page a recovering player has a coloured badge with the time when he is ready again.')],
+                        ...(\App\Support\Designation::value('tired_threshold_hours') > 0 ? [['bolt', __('Almost recovered: if at the kickoff at most :hours h of his recovery are left, he can play and counts normally, but afterwards he recovers :factor times longer. Handy before a break in the season.', ['hours' => \App\Support\Designation::value('tired_threshold_hours'), 'factor' => rtrim(rtrim(number_format(\App\Support\Designation::number('tired_rest_factor'), 1, ',', ''), '0'), ',')])]] : []),
                     ] as [$icon, $text])
                         <li class="flex items-start gap-2 rounded-xl bg-ui-raised/60 p-3">
                             <x-ui.icon :name="$icon" variant="mini" class="mt-0.5 size-4 shrink-0 text-club" />
@@ -417,27 +424,33 @@ new #[Layout('layouts::public')] class extends Component {
             <div class="rounded-2xl border border-ui-line bg-ui-surface p-5">
                 <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('How it scores') }}</p>
                 <ul class="mt-3 space-y-3 text-sm">
-                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg bg-green-100 font-bold text-green-800 dark:bg-green-500/20 dark:text-green-200">OF</span><span>{{ __('A hit marked as attack: +1 attack (your goals).') }}</span></li>
-                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg bg-sky-100 font-bold text-sky-800 dark:bg-sky-500/20 dark:text-sky-200">DEF</span><span>{{ __('A hit marked as defence: +1 defence (your rival scores less).') }}</span></li>
+                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg text-white shadow-sm" style="background: var(--q-attack)"><x-ui.icon name="swords" variant="micro" class="size-4" /></span><span>{{ __('A hit marked as attack: +1 attack (your goals).') }}</span></li>
+                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg text-white shadow-sm" style="background: var(--q-defense)"><x-ui.icon name="shield" variant="micro" class="size-4" /></span><span>{{ __('A hit marked as defence: +1 defence (your rival scores less).') }}</span></li>
                     <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg bg-red-100 font-bold text-red-800 dark:bg-red-500/20 dark:text-red-200">✕</span><span><b>{{ __('One miss sets the whole question bonus of that competition to zero.') }}</b> {{ __('Your players still count.') }}</span></li>
-                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg bg-ui-raised font-bold text-ui-muted">–</span><span>{{ __('You can skip any question: a skipped question gives nothing and takes nothing.') }}</span></li>
+                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg border-[1.5px] border-dashed border-ui-muted/60 font-bold text-ui-muted">?</span><span>{{ __('You can skip any question: a skipped question gives nothing and takes nothing.') }}</span></li>
                 </ul>
             </div>
 
             <div class="rounded-2xl border border-ui-line bg-ui-surface p-5">
                 <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Example: the same 5 questions, two players') }}</p>
                 <div class="mt-3 space-y-3">
-                    @foreach ([[__('Careful'), ['ok', 'ok', 'skip', 'skip', 'skip'], '+2'], [__('Risky'), ['ok', 'ok', 'ok', 'ok', 'miss'], '0']] as [$who, $marks, $bonus])
+                    @foreach ([[__('Careful'), ['attack', 'defense', 'skip', 'skip', 'skip'], '+2'], [__('Risky'), ['attack', 'attack', 'defense', 'attack', 'miss'], '0']] as [$who, $marks, $bonus])
                         <div class="flex items-center gap-3">
                             <span class="w-20 shrink-0 text-sm font-semibold">{{ $who }}</span>
                             <span class="flex flex-1 gap-1.5">
                                 @foreach ($marks as $mark)
-                                    <span @class([
-                                        'grid size-8 place-items-center rounded-lg text-sm font-bold',
-                                        'bg-green-500 text-white' => $mark === 'ok',
-                                        'bg-red-500 text-white' => $mark === 'miss',
-                                        'border border-dashed border-ui-line text-ui-muted' => $mark === 'skip',
-                                    ])>{{ ['ok' => '✓', 'miss' => '✕', 'skip' => '–'][$mark] }}</span>
+                                    {{-- Jak w grze: trafienie to miecze (atak) albo tarcza (obrona) w ich kolorach, pudło czerwone, pominięte puste --}}
+                                    @if ($mark === 'attack' || $mark === 'defense')
+                                        <span class="grid size-8 place-items-center rounded-lg text-white shadow-sm" style="background: var(--q-{{ $mark }})" title="{{ $mark === 'attack' ? __('Attack') : __('Defence') }}">
+                                            <x-ui.icon :name="$mark === 'attack' ? 'swords' : 'shield'" variant="micro" class="size-4" />
+                                        </span>
+                                    @else
+                                        <span @class([
+                                            'grid size-8 place-items-center rounded-lg text-sm font-bold',
+                                            'bg-red-500 text-white' => $mark === 'miss',
+                                            'border-[1.5px] border-dashed border-ui-muted/60 text-ui-muted' => $mark === 'skip',
+                                        ])>{{ $mark === 'miss' ? '✕' : '?' }}</span>
+                                    @endif
                                 @endforeach
                             </span>
                             <span @class(['rounded-full px-2.5 py-1 font-display font-bold tabular-nums', 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200' => $bonus !== '0', 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200' => $bonus === '0'])>{{ $bonus }}</span>
