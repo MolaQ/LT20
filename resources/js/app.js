@@ -102,6 +102,30 @@ window.addEventListener('beforeinstallprompt', (e) => {
     window.dispatchEvent(new CustomEvent('ui-installable'));
 });
 
+// Blokada przewijania strony pod otwartym arkuszem, oknem albo menu (19.11.2026, zgłoszenie z Safari na iPhonie).
+// Każde okno blokuje pod własnym kluczem, a strona przewija się znowu, gdy zamknie się ostatnie.
+const scrollLocks = new Set();
+window.uiScrollLock = (key, on) => {
+    on ? scrollLocks.add(key) : scrollLocks.delete(key);
+    const root = document.documentElement;
+    const body = document.body;
+    if (scrollLocks.size > 0 && !root.dataset.scrollLocked) {
+        // Szerokość paska przewijania na komputerze, żeby strona nie przeskoczyła w bok.
+        const gap = window.innerWidth - root.clientWidth;
+        root.dataset.scrollLocked = '1';
+        root.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+        if (gap > 0) {
+            body.style.paddingRight = gap + 'px';
+        }
+    } else if (scrollLocks.size === 0 && root.dataset.scrollLocked) {
+        delete root.dataset.scrollLocked;
+        root.style.overflow = '';
+        body.style.overflow = '';
+        body.style.paddingRight = '';
+    }
+};
+
 document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
 
@@ -123,10 +147,14 @@ document.addEventListener('alpine:init', () => {
     }));
 
     // Arkusz od dołu: otwierany zdarzeniem, zamykany tłem, klawiszem Esc albo przeciągnięciem w dół.
+    // Przeciągać można cały arkusz (palcem, gdy jego treść jest przewinięta do góry) albo uchwyt (myszą).
+    // Gdy arkusz jest otwarty, strona pod nim się nie przewija.
     Alpine.data('uiSheet', (name) => ({
         open: false,
         drag: 0,
         startY: null,
+        startAt: 0,
+        lockKey: 'sheet-' + name + '-' + Math.random().toString(36).slice(2),
         init() {
             window.addEventListener('ui-sheet', (e) => {
                 // { name } otwiera, { name, open: false } zamyka (też z serwera: $this->dispatch('ui-sheet', name: …, open: false)).
@@ -134,6 +162,10 @@ document.addEventListener('alpine:init', () => {
                     e.detail.open === false ? this.close() : (this.open = true);
                 }
             });
+            this.$watch('open', (value) => window.uiScrollLock(this.lockKey, value));
+        },
+        destroy() {
+            window.uiScrollLock(this.lockKey, false);
         },
         close() {
             // Zdarzenie close na oknie (jak we Flux: @close="resetForm"), tylko gdy było otwarte.
@@ -143,24 +175,59 @@ document.addEventListener('alpine:init', () => {
             this.open = false;
             this.drag = 0;
         },
+        // Uchwyt (mysz i rysik): ciągnięcie w dół.
         down(e) {
-            if (e.target.closest('a,button,input,select,textarea')) {
+            if (e.pointerType === 'touch' || e.target.closest('a,button,input,select,textarea')) {
                 return;
             }
             this.startY = e.clientY;
+            this.startAt = Date.now();
             e.currentTarget.setPointerCapture(e.pointerId);
         },
         move(e) {
-            if (this.startY !== null) {
+            if (this.startY !== null && e.pointerType !== 'touch') {
                 this.drag = Math.max(0, e.clientY - this.startY);
             }
         },
         up() {
+            this.finish();
+        },
+        // Palec w dowolnym miejscu arkusza: w dół zamyka, ale tylko gdy treść jest przewinięta do samej góry.
+        touchStart(e) {
+            if (e.touches.length !== 1 || e.target.closest('input,select,textarea,[data-sheet-nodrag]')) {
+                this.startY = null;
+                return;
+            }
+            this.startY = e.touches[0].clientY;
+            this.startAt = Date.now();
+        },
+        touchMove(e) {
             if (this.startY === null) {
                 return;
             }
+            const dy = e.touches[0].clientY - this.startY;
+            const scroller = e.currentTarget;
+            if (this.drag === 0 && (dy <= 0 || scroller.scrollTop > 0)) {
+                // Ruch w górę albo przewijanie treści: zwykłe przewijanie arkusza, bez przeciągania.
+                if (dy < 0 || scroller.scrollTop > 0) {
+                    this.startY = null;
+                }
+                return;
+            }
+            e.preventDefault();
+            this.drag = Math.max(0, dy);
+        },
+        touchEnd() {
+            this.finish();
+        },
+        finish() {
+            if (this.startY === null && this.drag === 0) {
+                return;
+            }
+            // Daleko albo szybkim ruchem w dół: zamknij.
+            const flick = this.drag > 40 && Date.now() - this.startAt < 250;
             this.startY = null;
-            if (this.drag > 80) {
+            if (this.drag > 90 || flick) {
                 this.close();
             }
             this.drag = 0;
