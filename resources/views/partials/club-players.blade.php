@@ -41,7 +41,7 @@
     $posOrder = array_flip(\App\Enums\PlayerPosition::values());
     $defaults = collect($toggles)->map(fn ($t) => $t[1])->all();
 @endphp
-<div class="space-y-3" x-on:keydown.escape.window="open = null" x-init="stripe(); $watch('pos', () => stripe())"
+<div class="space-y-3" x-on:keydown.escape.window="open = null" x-init="stripe(); $watch('pos', () => stripe()); $watch('open', (v) => window.uiScrollLock('club-player', v !== null))"
     x-data="{
         open: null, season: null, pos: 'all', scope: 'season', sort: 'total', dir: -1,
         cols: Object.assign({{ json_encode($defaults) }}, (() => { try { return JSON.parse(localStorage.getItem('club-cols') || '{}') } catch (e) { return {} } })()),

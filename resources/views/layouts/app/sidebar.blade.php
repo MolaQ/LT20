@@ -75,7 +75,7 @@
     @include('partials.club-theme')
 </head>
 
-<body class="min-h-screen bg-ui-bg font-sans text-ui-ink antialiased" x-data="{ nav: false }" @keydown.escape.window="nav = false">
+<body class="min-h-screen bg-ui-bg font-sans text-ui-ink antialiased" x-data="{ nav: false }" x-effect="window.uiScrollLock('panel-nav', nav)" @keydown.escape.window="nav = false">
     <x-maintenance-notice />
 
     @php
