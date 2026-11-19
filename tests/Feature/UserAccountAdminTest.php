@@ -22,8 +22,8 @@ test('an admin changes the name, team, email and password of a player', function
     $admin = accountAdmin();
     $user = User::factory()->create(['team_name' => 'Stara Drużyna', 'email' => 'stary@example.com']);
 
-    Livewire::actingAs($admin)->test('pages::dashboard.users')
-        ->call('editAccount', $user->id)
+    Livewire::actingAs($admin)->test('pages::dashboard.user-account')
+        ->call('open', $user->id)
         ->assertSet('accountEmail', 'stary@example.com')
         ->set('accountName', 'Nowe Imię')
         ->set('accountTeam', '  Nowa   Drużyna ')
@@ -48,15 +48,15 @@ test('an empty password keeps the old one and a taken email or team is rejected'
     User::factory()->create(['team_name' => 'Zajęta', 'email' => 'zajety@example.com']);
     $user = User::factory()->create(['team_name' => 'Moja', 'password' => 'StareHaslo123!']);
 
-    Livewire::actingAs($admin)->test('pages::dashboard.users')
-        ->call('editAccount', $user->id)
+    Livewire::actingAs($admin)->test('pages::dashboard.user-account')
+        ->call('open', $user->id)
         ->set('accountTeam', 'zajęta')
         ->set('accountEmail', 'zajety@example.com')
         ->call('saveAccount')
         ->assertHasErrors(['accountTeam', 'accountEmail']);
 
-    Livewire::actingAs($admin)->test('pages::dashboard.users')
-        ->call('editAccount', $user->id)
+    Livewire::actingAs($admin)->test('pages::dashboard.user-account')
+        ->call('open', $user->id)
         ->set('accountName', 'Inna nazwa')
         ->call('saveAccount')
         ->assertHasNoErrors();
@@ -67,8 +67,8 @@ test('an empty password keeps the old one and a taken email or team is rejected'
 test('switching off the confirmation makes the email unconfirmed', function () {
     $user = User::factory()->create(['team_name' => 'Drużyna']);
 
-    Livewire::actingAs(accountAdmin())->test('pages::dashboard.users')
-        ->call('editAccount', $user->id)
+    Livewire::actingAs(accountAdmin())->test('pages::dashboard.user-account')
+        ->call('open', $user->id)
         ->set('accountVerified', false)
         ->call('saveAccount')
         ->assertHasNoErrors();
@@ -79,7 +79,7 @@ test('switching off the confirmation makes the email unconfirmed', function () {
 test('only an admin can edit accounts', function () {
     $user = User::factory()->create();
 
-    Livewire::actingAs(User::factory()->create())->test('pages::dashboard.users')
-        ->call('editAccount', $user->id)
+    Livewire::actingAs(User::factory()->create())->test('pages::dashboard.user-account')
+        ->call('open', $user->id)
         ->assertForbidden();
 });

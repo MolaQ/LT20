@@ -2,13 +2,8 @@
 
 use App\Enums\RoleName;
 use App\Models\User;
-use App\Support\Audit;
 use App\Support\Roster;
-use App\Support\TeamRules;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -37,14 +32,6 @@ new class extends Component {
     public string $userName = '';
     /** @var array<int, string> nazwy zaznaczonych ról */
     public array $selected = [];
-
-    // Ręczna edycja konta: nazwa, drużyna, e-mail, nowe hasło (puste = bez zmiany).
-    public ?int $accountId = null;
-    public string $accountName = '';
-    public string $accountTeam = '';
-    public string $accountEmail = '';
-    public string $accountPassword = '';
-    public bool $accountVerified = false;
 
     /** @var array<int, string> id zaznaczonych kont do akcji zbiorczych (zdjęcie bana, zdjęcie Inactive) */
     public array $checked = [];
@@ -320,97 +307,6 @@ new class extends Component {
         $this->dispatch('ui-toast', text: __('Email of :name confirmed.', ['name' => $user->name]), variant: 'success');
     }
 
-    /* ------------------------------------------------------------------
-     | Ręczna edycja konta (admin): nazwa, nazwa drużyny, e-mail i hasło
-     * ----------------------------------------------------------------*/
-
-    public function editAccount(int $id): void
-    {
-        $this->authorizeAdmin();
-
-        $user = User::findOrFail($id);
-
-        $this->accountId = $user->id;
-        $this->accountName = $user->name;
-        $this->accountTeam = (string) $user->team_name;
-        $this->accountEmail = $user->email;
-        $this->accountPassword = '';
-        $this->accountVerified = $user->hasVerifiedEmail();
-        $this->resetValidation();
-
-        $this->dispatch('ui-sheet', name: 'user-account');
-    }
-
-    public function saveAccount(): void
-    {
-        $this->authorizeAdmin();
-
-        $user = User::findOrFail($this->accountId);
-        $this->accountName = Str::squish($this->accountName);
-        $this->accountTeam = TeamRules::normalize(['team_name' => $this->accountTeam])['team_name'];
-        $this->accountEmail = Str::lower(trim($this->accountEmail));
-
-        // Konto bez drużyny (np. sam admin) może jej dalej nie mieć; nazwa, która już była, nie może zniknąć.
-        $teamRules = TeamRules::name($user->id);
-        if (blank($user->team_name)) {
-            $teamRules[0] = 'nullable';
-        }
-
-        $this->validate([
-            'accountName' => ['required', 'string', 'max:255'],
-            'accountTeam' => $teamRules,
-            'accountEmail' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class, 'email')->ignore($user->id)],
-            'accountPassword' => ['nullable', 'string', Password::default()],
-        ], [], [
-            'accountName' => __('Name'),
-            'accountTeam' => __('Team name'),
-            'accountEmail' => __('Email'),
-            'accountPassword' => __('New password'),
-        ]);
-
-        $fields = ['name', 'team_name', 'email'];
-        $old = $user->only($fields) + ['email_confirmed' => $user->hasVerifiedEmail()];
-
-        $user->fill([
-            'name' => $this->accountName,
-            'team_name' => $this->accountTeam !== '' ? $this->accountTeam : null,
-            'email' => $this->accountEmail,
-        ]);
-
-        // Potwierdzenie adresu: przełącznik w oknie (nowy adres bez potwierdzenia wymaga kodu przy logowaniu).
-        if ($this->accountVerified && !$user->hasVerifiedEmail()) {
-            $user->forceFill(['email_verified_at' => now(), 'verification_code' => null, 'verification_code_expires_at' => null]);
-        } elseif (!$this->accountVerified) {
-            $user->email_verified_at = null;
-        }
-
-        $passwordChanged = $this->accountPassword !== '';
-        if ($passwordChanged) {
-            $user->password = $this->accountPassword; // cast „hashed” szyfruje hasło
-            $user->setRememberToken(Str::random(60)); // „zapamiętaj mnie” na innych urządzeniach przestaje działać
-        }
-
-        $user->save();
-
-        $new = $user->only($fields) + ['email_confirmed' => $user->hasVerifiedEmail()];
-        if ($passwordChanged) {
-            $old['password'] = '•••';
-            $new['password'] = __('changed');
-        }
-        Audit::log('user.updated', $user, array_diff_assoc($old, $new), array_diff_assoc($new, $old));
-
-        $this->dispatch('ui-sheet', name: 'user-account', open: false);
-        $this->dispatch('ui-toast', text: __('Account of :name saved.', ['name' => $user->name]), variant: 'success');
-        $this->resetAccount();
-        unset($this->stats, $this->users);
-    }
-
-    public function resetAccount(): void
-    {
-        $this->reset('accountId', 'accountName', 'accountTeam', 'accountEmail', 'accountPassword', 'accountVerified');
-        $this->resetValidation();
-    }
-
     public function resetForm(): void
     {
         $this->reset('userId', 'userName', 'selected');
@@ -428,7 +324,7 @@ new class extends Component {
 };
 ?>
 
-<div class="flex h-full w-full flex-1 flex-col gap-6">
+<div class="flex h-full w-full flex-1 flex-col gap-6" x-on:account-saved.window="$wire.$refresh()">
 
     {{-- Nagłówek --}}
     <div>
@@ -580,12 +476,10 @@ new class extends Component {
                     </x-ui.table.cell>
                     <x-ui.table.cell class="text-ui-muted">{{ $user->created_at?->format('Y-m-d') }}</x-ui.table.cell>
                     <x-ui.table.cell align="end">
-                        <div class="flex justify-end gap-1">
-                            <x-ui.btn variant="ghost" size="sm" icon="user" inset="top bottom"
-                                wire:click="editAccount({{ $user->id }})" :aria-label="__('Edit account')" :tooltip="__('Edit account')" />
-                            <x-ui.btn variant="ghost" size="sm" icon="pencil-square" inset="top bottom"
-                                wire:click="edit({{ $user->id }})" :aria-label="__('Edit roles')" :tooltip="__('Edit roles')" />
-                        </div>
+                        <x-ui.btn variant="ghost" size="sm" icon="user" inset="top bottom"
+                            x-on:click="$dispatch('user-account', { id: {{ $user->id }} })" :aria-label="__('Edit account')" />
+                        <x-ui.btn variant="ghost" size="sm" icon="pencil-square" inset="top bottom"
+                            wire:click="edit({{ $user->id }})" :aria-label="__('Edit roles')" />
                     </x-ui.table.cell>
                 </x-ui.table.row>
             @empty
@@ -598,8 +492,8 @@ new class extends Component {
         </x-ui.table.rows>
     </x-ui.table>
 
-    {{-- Modal: ręczna edycja konta (osobny plik: duży szablon przekraczał limit wyrażeń Livewire) --}}
-    @include('partials.dashboard.user-account-modal')
+    {{-- Ręczna edycja konta: nazwa, drużyna, e-mail, hasło (osobny komponent) --}}
+    <livewire:pages::dashboard.user-account />
 
     {{-- Modal: role użytkownika --}}
     <x-ui.modal name="user-roles" class="w-full md:w-[30rem]" @close="$wire.resetForm()">
