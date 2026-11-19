@@ -196,7 +196,7 @@ class Guide
             .'</ul><p>'.self::text('A substitute who did not come on needs no recovery. Recovery counts in your club in all competitions at once. A player still recovering at the kickoff gives nothing: no points and no experience.', [], $locale).'</p>';
 
         if (Designation::value('tired_threshold_hours') > 0) {
-            $body .= '<p><strong>'.self::text('Tired player:', [], $locale).'</strong> '.self::text('if at the kickoff at most :hours h of his recovery are left, he plays and counts normally, but after that match he recovers :factor times longer.', ['hours' => Designation::value('tired_threshold_hours'), 'factor' => $factor], $locale).'</p>';
+            $body .= '<p><strong>'.self::text('Almost recovered (yellow):', [], $locale).'</strong> '.self::text('if at the kickoff at most :hours h of his recovery are left, he plays and counts normally, but after that match he recovers :factor times longer.', ['hours' => Designation::value('tired_threshold_hours'), 'factor' => $factor], $locale).'</p>';
         }
 
         return [[self::text('Recovery', [], $locale), $body]];

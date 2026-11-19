@@ -20,7 +20,7 @@ new class extends Component {
 
     public function render(): View
     {
-        return $this->view()->title(__('Site colors'));
+        return $this->view()->title(__('Site colours'));
     }
 
     public function save(): void
@@ -35,7 +35,7 @@ new class extends Component {
 
         $old = SiteColors::saved();
         SiteColors::save($this->colors);
-        Audit::log('site_colors.saved', null, $old, SiteColors::saved(), __('Site colors'));
+        Audit::log('site_colors.saved', null, $old, SiteColors::saved(), __('Site colours'));
 
         // Pełne przeładowanie: nowe kolory są w <head> całej strony.
         $this->redirect(route('dashboard.site-colors'));
@@ -70,8 +70,8 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <x-ui.heading size="xl" level="1">{{ __('Site colors') }}</x-ui.heading>
-            <x-ui.subheading>{{ __('Colors of the whole site and the panel. Changes show in the preview right away and on the site after saving.') }}</x-ui.subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Site colours') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Colours of the whole site and the panel. Changes show in the preview right away and on the site after saving.') }}</x-ui.subheading>
         </div>
         <div class="flex flex-wrap gap-2">
             <x-ui.btn variant="ghost" icon="arrow-uturn-left" wire:click="restoreAll">{{ __('Restore all defaults') }}</x-ui.btn>
@@ -80,7 +80,7 @@ new class extends Component {
     </div>
 
     @if (session('status') === 'site-colors-saved')
-        <x-ui.callout variant="success" icon="check-circle">{{ __('Colors saved.') }}</x-ui.callout>
+        <x-ui.callout variant="success" icon="check-circle">{{ __('Colours saved.') }}</x-ui.callout>
     @endif
 
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">

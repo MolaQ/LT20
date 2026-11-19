@@ -47,7 +47,7 @@ final class SiteColors
     public static function groups(): array
     {
         return [
-            'club' => __('Club colors'),
+            'club' => __('Club colours'),
             'bars' => __('Bars and banners'),
             'light' => __('Light theme'),
             'states' => __('Good and bad'),
@@ -60,8 +60,8 @@ final class SiteColors
     public static function labels(): array
     {
         return [
-            'primary' => __('Club color'),
-            'primary_dark' => __('Club color in the dark theme'),
+            'primary' => __('Club colour'),
+            'primary_dark' => __('Club colour in the dark theme'),
             'deep' => __('Dark theme background'),
             'accent' => __('Accent (points, premium)'),
             'bar_from' => __('Bar gradient start'),
