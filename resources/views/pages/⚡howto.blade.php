@@ -186,6 +186,10 @@ new #[Layout('layouts::public')] class extends Component {
             ]);
             $fullMatch = \App\Support\Designation::value('rest_hours_4');
             $scale = max(170, $fullMatch + 20);
+            // Zmęczony („na żółto”): w chwili gwizdka zostało najwyżej tyle godzin regeneracji; 0 = zasada wyłączona
+            $tiredHours = \App\Support\Designation::value('tired_threshold_hours');
+            $tiredFactor = rtrim(rtrim(number_format(\App\Support\Designation::number('tired_rest_factor'), 1, ',', ''), '0'), ',');
+            $isTired = fn (float $after) => $tiredHours > 0 && $after > 0 && $after < $fullMatch && $fullMatch - $after <= $tiredHours;
             $examples = [
                 [__('Sunday 15:00'), 0, __('Kickoff of the matchday. Your player plays the whole match (90 min).')],
                 [__('Wednesday 18:00'), 75, null],
@@ -214,6 +218,13 @@ new #[Layout('layouts::public')] class extends Component {
                     @endforeach
                 </div>
                 <p class="text-xs text-ui-muted">{{ __('The clock shows the time on the pitch, extra time is the second, smaller circle. A substitute who did not come on needs no recovery.') }}</p>
+                {{-- Zmęczony („na żółto”): może grać, ale po meczu regeneruje się dłużej --}}
+                @if ($tiredHours > 0)
+                    <div class="flex items-start gap-3 rounded-xl border border-amber-400/60 bg-amber-50 p-3 text-sm dark:border-amber-400/40 dark:bg-amber-500/10">
+                        <span class="mt-0.5 inline-flex shrink-0 items-center rounded-md bg-amber-400 px-1.5 py-0.5 text-xs font-bold text-amber-950">×{{ $tiredFactor }}</span>
+                        <span><b>{{ __('Almost recovered (yellow):') }}</b> {{ __('if at the kickoff at most :hours h of his recovery are left, he can play and counts normally, but after this match he needs :factor times longer to recover. Handy before a break in the season.', ['hours' => $tiredHours, 'factor' => $tiredFactor]) }}</span>
+                    </div>
+                @endif
             </div>
 
             {{-- 2. Przykład na osi czasu --}}
@@ -231,7 +242,7 @@ new #[Layout('layouts::public')] class extends Component {
                         @endphp
                         {{-- Pierwszy znacznik przy lewej krawędzi, żeby podpis nie wychodził poza ramkę na telefonie --}}
                         <div @class(['absolute top-2.5 flex flex-col', 'items-start' => $after === 0, '-translate-x-1/2 items-center' => $after !== 0]) style="left: {{ $after === 0 ? 0 : min(94, $left) }}%">
-                            <span class="size-6 rounded-full border-4 border-ui-surface {{ $after === 0 ? 'bg-club' : ($ready ? 'bg-green-600' : 'bg-red-600') }}"></span>
+                            <span class="size-6 rounded-full border-4 border-ui-surface {{ $after === 0 ? 'bg-club' : ($ready ? 'bg-green-600' : ($isTired($after) ? 'bg-amber-400' : 'bg-red-600')) }}"></span>
                             <span class="mt-1 whitespace-nowrap text-center text-[11px] font-semibold leading-tight">{{ $when }}</span>
                             @if ($after > 0)
                                 <span class="whitespace-nowrap text-[10px] tabular-nums text-ui-muted">+{{ str_replace('.', ',', (string) $after) }} h</span>
@@ -247,13 +258,20 @@ new #[Layout('layouts::public')] class extends Component {
                         <div @class([
                             'rounded-xl border p-3 text-sm',
                             'border-club/40 bg-club/5' => $after === 0,
-                            'border-red-500/40 bg-red-500/5' => $after > 0 && !$ready,
+                            'border-red-500/40 bg-red-500/5' => $after > 0 && !$ready && !$isTired($after),
+                            'border-amber-400/60 bg-amber-400/10' => $isTired($after),
                             'border-green-500/40 bg-green-500/5' => $after > 0 && $ready,
                         ])>
-                            <p class="font-semibold">{{ $when }}</p>
+                            <p class="flex items-center gap-2 font-semibold">{{ $when }}
+                                @if ($isTired($after))
+                                    <span class="rounded bg-amber-400 px-1 text-[10px] font-bold text-amber-950">×{{ $tiredFactor }}</span>
+                                @endif
+                            </p>
                             <p class="mt-0.5 text-ui-muted">
                                 @if ($after === 0)
                                     {{ $what }}
+                                @elseif ($isTired($after))
+                                    {{ __('Almost recovered (:hours h left): he can play and counts, but afterwards he needs :factor times longer to recover.', ['hours' => str_replace('.', ',', (string) ($fullMatch - $after)), 'factor' => $tiredFactor]) }}
                                 @elseif ($ready)
                                     {{ __('Recovered: you can pick him again.') }}
                                 @else
@@ -274,7 +292,6 @@ new #[Layout('layouts::public')] class extends Component {
                         ['squares-2x2', __('Recovery counts in your club in all competitions at once.')],
                         ['x-circle', __('A recovering player in your squad gives no points and no experience, but takes a place. Swap him for someone else.')],
                         ['eye', __('On the tipping page a recovering player has a coloured badge with the time when he is ready again.')],
-                        ...(\App\Support\Designation::value('tired_threshold_hours') > 0 ? [['bolt', __('Almost recovered: if at the kickoff at most :hours h of his recovery are left, he can play and counts normally, but afterwards he recovers :factor times longer. Handy before a break in the season.', ['hours' => \App\Support\Designation::value('tired_threshold_hours'), 'factor' => rtrim(rtrim(number_format(\App\Support\Designation::number('tired_rest_factor'), 1, ',', ''), '0'), ',')])]] : []),
                     ] as [$icon, $text])
                         <li class="flex items-start gap-2 rounded-xl bg-ui-raised/60 p-3">
                             <x-ui.icon :name="$icon" variant="mini" class="mt-0.5 size-4 shrink-0 text-club" />
