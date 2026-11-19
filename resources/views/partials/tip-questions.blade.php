@@ -29,13 +29,23 @@
         {{-- Bonus: po rozstrzygnięciu wynik, wcześniej to, co do zgarnięcia, i ryzyko (ile pytań z odpowiedzią) --}}
         <div class="flex flex-col gap-1 rounded-xl bg-ui-raised/60 px-3 py-2">
             @if ($bonus)
-                <b class="text-sm">{{ $bonus['missed'] ? __('One miss: question bonuses wiped.') : __('Question bonus: attack +:a, defence +:d', ['a' => $bonus['attack'], 'd' => $bonus['defense']]) }}</b>
+                {{-- Wynik osobno dla ataku i obrony: pudło zeruje tylko swoją stronę --}}
+                <div class="flex flex-wrap items-center gap-2 text-sm font-bold">
+                    <span>{{ __('Question bonus') }}:</span>
+                    @foreach (['attack' => ['swords', 'var(--q-attack)'], 'defense' => ['shield', 'var(--q-defense)']] as $side => [$icon, $color])
+                        @if ($bonus[$side.'_missed'])
+                            <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-red-800 dark:bg-red-500/20 dark:text-red-200"><x-ui.icon :name="$icon" variant="micro" class="size-3.5" /> 0 · {{ __('miss') }}</span>
+                        @else
+                            <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-white" style="background: {{ $color }}"><x-ui.icon :name="$icon" variant="micro" class="size-3.5" /> +{{ $bonus[$side] }}</span>
+                        @endif
+                    @endforeach
+                </div>
             @else
                 <b class="text-sm">{{ $answers->isEmpty() ? __('No questions answered: no bonus, no risk.') : __('Up for grabs: attack +:a, defence +:d', ['a' => $attack, 'd' => $defense]) }}</b>
                 <div class="h-1.5 overflow-hidden rounded-full bg-ui-line" role="meter" aria-valuemin="0" aria-valuemax="{{ $questions->count() }}" aria-valuenow="{{ $answers->count() }}" aria-label="{{ __('Risk') }}">
                     <i class="block h-full bg-linear-to-r from-good via-gold to-bad transition-[width] duration-500" style="width: {{ round(100 * $answers->count() / max(1, $questions->count())) }}%"></i>
                 </div>
-                <small class="text-xs text-ui-muted">{{ __('Click again to take an answer back. One miss wipes both question bonuses in this competition.') }}</small>
+                <small class="text-xs text-ui-muted">{{ __('Click again to take an answer back. A miss in an attack question wipes the attack bonus, a miss in a defence question wipes the defence bonus.') }}</small>
             @endif
         </div>
 

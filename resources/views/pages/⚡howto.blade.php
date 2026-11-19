@@ -426,72 +426,89 @@ new #[Layout('layouts::public')] class extends Component {
     <section id="questions" class="scroll-mt-24 space-y-4">
         <x-howto.part-heading number="4" :title="__('Questions and the bonus')" :lead="__('Every competition has up to :count yes/no questions about the match, e.g. “Will Lech have more corners?”. Each answer is a bet: you choose whether a hit adds attack or defence.', ['count' => $perSet])" />
 
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 lg:grid-cols-2">
             <div class="rounded-2xl border border-ui-line bg-ui-surface p-5">
                 <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('How it scores') }}</p>
-                <ul class="mt-3 space-y-3 text-sm">
-                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg text-white shadow-sm" style="background: var(--q-attack)"><x-ui.icon name="swords" variant="micro" class="size-4" /></span><span>{{ __('A hit marked as attack: +1 attack (your goals).') }}</span></li>
-                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg text-white shadow-sm" style="background: var(--q-defense)"><x-ui.icon name="shield" variant="micro" class="size-4" /></span><span>{{ __('A hit marked as defence: +1 defence (your rival scores less).') }}</span></li>
-                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg bg-red-100 font-bold text-red-800 dark:bg-red-500/20 dark:text-red-200">✕</span><span><b>{{ __('One miss sets the whole question bonus of that competition to zero.') }}</b> {{ __('Your players still count.') }}</span></li>
-                    <li class="flex gap-3"><span class="grid size-8 shrink-0 place-items-center rounded-lg border-[1.5px] border-dashed border-ui-muted/60 font-bold text-ui-muted">?</span><span>{{ __('You can skip any question: a skipped question gives nothing and takes nothing.') }}</span></li>
-                </ul>
+                {{-- Dwie strony, dwa osobne bonusy: każda ma swoje trafienia i swoje pudło --}}
+                <div class="mt-3 grid gap-3 min-[420px]:grid-cols-2">
+                    @foreach ([
+                        'attack' => [__('Attack'), __('adds goals to your score'), __('One miss: attack bonus 0')],
+                        'defense' => [__('Defence'), __('takes goals from your rival'), __('One miss: defence bonus 0')],
+                    ] as $side => [$label, $what, $miss])
+                        <div class="rounded-xl border p-3" style="border-color: color-mix(in srgb, var(--q-{{ $side }}) 45%, transparent); background: color-mix(in srgb, var(--q-{{ $side }}) 10%, transparent)">
+                            <p class="flex items-center gap-2 font-display text-base font-bold" style="color: var(--q-{{ $side }})">
+                                <x-ui.icon :name="$side === 'attack' ? 'swords' : 'shield'" variant="micro" class="size-5" /> {{ $label }}
+                            </p>
+                            <p class="mt-0.5 text-xs text-ui-muted">{{ $what }}</p>
+                            <p class="mt-3 flex items-center gap-2.5 text-sm"><x-howto.q-mark :mark="$side" /> <span>{{ __('Every hit') }}: <b>+1</b></span></p>
+                            <p class="mt-2.5 flex items-center gap-2.5 text-sm"><x-howto.q-mark :mark="'miss-'.$side" /> <b>{{ $miss }}</b></p>
+                        </div>
+                    @endforeach
+                </div>
+                {{-- Najważniejsza zasada: pudło zeruje tylko swoją stronę --}}
+                <div class="mt-3 flex gap-3 rounded-xl border border-red-300 bg-red-50 p-3 text-sm dark:border-red-400/40 dark:bg-red-500/10">
+                    <x-ui.icon name="exclamation-triangle" variant="mini" class="mt-0.5 size-5 text-red-500 dark:text-red-300" />
+                    <span><b>{{ __('A miss wipes only its own side.') }}</b> {{ __('A miss in an attack question takes the attack bonus, your defence bonus stays. A miss in a defence question takes the defence bonus, your attack stays.') }} {{ __('Your players still count.') }}</span>
+                </div>
+                <p class="mt-3 flex items-center gap-2.5 text-sm text-ui-muted"><x-howto.q-mark mark="skip" /> {{ __('You can skip any question: a skipped question gives nothing and takes nothing.') }}</p>
             </div>
 
             <div class="rounded-2xl border border-ui-line bg-ui-surface p-5">
-                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Example: the same 5 questions, two players') }}</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">{{ __('Example: the same 5 questions, three players') }}</p>
                 <div class="mt-3 space-y-3">
-                    @foreach ([[__('Careful'), ['attack', 'defense', 'skip', 'skip', 'skip'], '+2'], [__('Risky'), ['attack', 'attack', 'defense', 'attack', 'miss'], '0']] as [$who, $marks, $bonus])
-                        <div class="flex items-center gap-3">
-                            <span class="w-20 shrink-0 text-sm font-semibold">{{ $who }}</span>
-                            <span class="flex flex-1 gap-1.5">
-                                @foreach ($marks as $mark)
-                                    {{-- Jak w grze: trafienie to miecze (atak) albo tarcza (obrona) w ich kolorach, pudło czerwone, pominięte puste --}}
-                                    @if ($mark === 'attack' || $mark === 'defense')
-                                        <span class="grid size-8 place-items-center rounded-lg text-white shadow-sm" style="background: var(--q-{{ $mark }})" title="{{ $mark === 'attack' ? __('Attack') : __('Defence') }}">
-                                            <x-ui.icon :name="$mark === 'attack' ? 'swords' : 'shield'" variant="micro" class="size-4" />
-                                        </span>
-                                    @else
-                                        <span @class([
-                                            'grid size-8 place-items-center rounded-lg text-sm font-bold',
-                                            'bg-red-500 text-white' => $mark === 'miss',
-                                            'border-[1.5px] border-dashed border-ui-muted/60 text-ui-muted' => $mark === 'skip',
-                                        ])>{{ $mark === 'miss' ? '✕' : '?' }}</span>
-                                    @endif
-                                @endforeach
-                            </span>
-                            {{-- Bonus rozpisany na atak i obronę, żeby nowy gracz widział, skąd się bierze --}}
-                            @if ($bonus === '0')
-                                <span class="rounded-full bg-red-100 px-2.5 py-1 font-display font-bold tabular-nums text-red-800 dark:bg-red-500/20 dark:text-red-200">0</span>
-                            @else
-                                <span class="flex shrink-0 flex-col items-end gap-0.5 text-xs font-bold tabular-nums">
-                                    <span class="inline-flex items-center gap-1" style="color: var(--q-attack)">+{{ count(array_keys($marks, 'attack', true)) }} <x-ui.icon name="swords" variant="micro" class="size-3.5" /></span>
-                                    <span class="inline-flex items-center gap-1" style="color: var(--q-defense)">+{{ count(array_keys($marks, 'defense', true)) }} <x-ui.icon name="shield" variant="micro" class="size-3.5" /></span>
+                    @foreach ([
+                        [__('Careful'), ['attack', 'defense', 'skip', 'skip', 'skip']],
+                        [__('Risky'), ['attack', 'attack', 'defense', 'attack', 'miss-attack']],
+                        [__('Unlucky'), ['attack', 'attack', 'miss-defense', 'defense', 'skip']],
+                    ] as [$who, $marks])
+                        <div>
+                            <p class="text-sm font-semibold">{{ $who }}</p>
+                            <div class="mt-1 flex items-center gap-3">
+                                <span class="flex flex-1 gap-1.5">
+                                    @foreach ($marks as $mark)
+                                        <x-howto.q-mark :mark="$mark" />
+                                    @endforeach
                                 </span>
-                            @endif
+                                {{-- Bonus rozpisany na atak i obronę; strona z pudłem przekreślona do zera --}}
+                                <span class="flex w-[5.5rem] shrink-0 flex-col gap-1 text-xs font-bold tabular-nums">
+                                    @foreach (['attack' => 'swords', 'defense' => 'shield'] as $side => $icon)
+                                        @php $hits = count(array_keys($marks, $side, true)); @endphp
+                                        @if (in_array('miss-'.$side, $marks, true))
+                                            <span class="inline-flex items-center justify-end gap-1 rounded-full bg-red-50 px-2 py-0.5 text-red-500 dark:bg-red-500/15 dark:text-red-300"><s class="font-semibold opacity-70">+{{ $hits }}</s> 0 <x-ui.icon :name="$icon" variant="micro" class="size-3.5" /></span>
+                                        @else
+                                            <span class="inline-flex items-center justify-end gap-1 rounded-full px-2 py-0.5" style="color: var(--q-{{ $side }}); background: color-mix(in srgb, var(--q-{{ $side }}) 14%, transparent)">+{{ $hits }} <x-ui.icon :name="$icon" variant="micro" class="size-3.5" /></span>
+                                        @endif
+                                    @endforeach
+                                </span>
+                            </div>
                         </div>
                     @endforeach
                 </div>
                 {{-- Legenda symboli: te same co na stronie typowania --}}
                 <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-ui-line pt-3 text-xs text-ui-muted">
-                    <span class="flex items-center gap-1.5"><span class="grid size-5 place-items-center rounded text-white" style="background: var(--q-attack)"><x-ui.icon name="swords" variant="micro" class="size-3" /></span>{{ __('hit, attack') }}</span>
-                    <span class="flex items-center gap-1.5"><span class="grid size-5 place-items-center rounded text-white" style="background: var(--q-defense)"><x-ui.icon name="shield" variant="micro" class="size-3" /></span>{{ __('hit, defence') }}</span>
-                    <span class="flex items-center gap-1.5"><span class="grid size-5 place-items-center rounded bg-red-500 text-[10px] font-bold text-white">✕</span>{{ __('miss') }}</span>
-                    <span class="flex items-center gap-1.5"><span class="grid size-5 place-items-center rounded border-[1.5px] border-dashed border-ui-muted/60 text-[10px] font-bold">?</span>{{ __('skipped') }}</span>
+                    <span class="flex items-center gap-1.5"><x-howto.q-mark mark="attack" small /> {{ __('hit, attack') }}</span>
+                    <span class="flex items-center gap-1.5"><x-howto.q-mark mark="defense" small /> {{ __('hit, defence') }}</span>
+                    <span class="flex items-center gap-1.5"><x-howto.q-mark mark="miss-attack" small /> {{ __('miss (the corner shows its side)') }}</span>
+                    <span class="flex items-center gap-1.5"><x-howto.q-mark mark="skip" small /> {{ __('skipped') }}</span>
                 </div>
-                <p class="mt-3 text-sm text-ui-muted">{{ __('Four hits and one miss give 0. Two sure hits give +2.') }}</p>
+                <p class="mt-3 text-sm text-ui-muted">{{ __('Risky missed an attack question: his attack bonus drops from +3 to 0, but the defence +1 stays. Unlucky missed in defence: he loses the defence, his attack +2 stays.') }}</p>
             </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-3">
+        {{-- Strategie w kolorach, żeby część nie była jednolita --}}
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             @foreach ([
-                ['shield-check', __('Play it safe'), __('Answer only the questions you are sure about. A small bonus is better than none.')],
-                ['fire', __('Go all in'), __('Answer everything when you feel the match. A big bonus wins duels, but one miss takes all of it.')],
-                ['squares-2x2', __('Mix it up'), __('Every competition has its own questions and its own bonus: risk in one, play safe in another.')],
-            ] as [$icon, $title, $text])
-                <div class="rounded-2xl border border-ui-line bg-ui-surface p-5">
-                    <x-ui.icon :name="$icon" class="size-7 text-club" />
-                    <p class="mt-2 font-semibold">{{ $title }}</p>
-                    <p class="mt-1 text-sm text-ui-muted">{{ $text }}</p>
+                ['shield-check', '#059669', __('Play it safe'), __('Answer only the questions you are sure about. A small bonus is better than none.')],
+                ['fire', '#dc2626', __('Go all in'), __('Answer everything when you feel the match. A big bonus wins duels, but one miss takes the whole bonus of its side.')],
+                ['scale', '#7c3aed', __('Split the risk'), __('Put your sure answers on one side and the risky ones on the other. A miss then costs only one side.')],
+                ['squares-2x2', '#0284c7', __('Mix it up'), __('Every competition has its own questions and its own bonus: risk in one, play safe in another.')],
+            ] as [$icon, $color, $title, $text])
+                <div class="flex gap-4 rounded-2xl border border-ui-line border-t-4 bg-ui-surface p-4 sm:block sm:p-5" style="border-top-color: {{ $color }}">
+                    <span class="grid size-10 shrink-0 place-items-center rounded-xl text-white shadow-sm" style="background: {{ $color }}"><x-ui.icon :name="$icon" variant="mini" class="size-5" /></span>
+                    <div class="min-w-0">
+                        <p class="font-semibold sm:mt-3">{{ $title }}</p>
+                        <p class="mt-1 text-sm text-ui-muted">{{ $text }}</p>
+                    </div>
                 </div>
             @endforeach
         </div>

@@ -36,7 +36,7 @@ use Illuminate\Support\Facades\DB;
  *     w kolejnych kolejkach. Czy gra, wynika zawsze z eliminated_round, więc przeliczenie kolejki,
  *     które zmieni awans, zmienia też to. Złota Piłka i Złote Rękawice liczą się z team_scores, więc też tego nie widzą.
  * Bonusy ataku i obrony (offense_bonus, defense_bonus): dorobek desygnowanych zawodników (gole, asysty, czyste konto)
- * plus bonus z pytań kolejki (Support\Questions, osobno w question_offense / question_defense; jedno pudło zeruje oba).
+ * plus bonus z pytań kolejki (Support\Questions, osobno w question_offense / question_defense; pudło zeruje bonus tylko swojej strony).
  * Można wywołać wielokrotnie: przeliczenie nadpisuje poprzednie wyniki tej kolejki.
  * Runda rozgrywek = numer kolejki.
  */
