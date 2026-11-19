@@ -371,7 +371,7 @@ new class extends Component {
                     <x-ui.table.cell align="end">
                         @if ($req->status === \App\Enums\TeamNameRequestStatus::Pending)
                             <div class="flex justify-end gap-2">
-                                <x-ui.btn size="sm" variant="primary" icon="check" x-on:click="$dispatch('confirm-action', { message: @js(__('Approve this change?')), run: () => $wire.approve({{ $req->id }}) })">
+                                <x-ui.btn size="sm" variant="primary" icon="check" x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Approve this change?')) }}, run: () => $wire.approve({{ $req->id }}) })">
                                     {{ __('Approve') }}
                                 </x-ui.btn>
                                 <x-ui.btn size="sm" variant="ghost" icon="x-mark" wire:click="confirmReject({{ $req->id }})">

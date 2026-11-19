@@ -133,7 +133,7 @@ new class extends Component {
             @if ($flag)<x-ui.text class="text-xs">{{ __('Approved by :name · :time. While the files are replaced the site shows a technical break page. This page refreshes itself.', ['name' => $flag['kto'] ?? '—', 'time' => $flag['czas'] ?? '']) }}</x-ui.text>@endif
             @if ($flag && ! $locked)
                 <x-ui.btn variant="danger" size="sm" icon="x-mark"
-                    x-on:click="$dispatch('confirm-action', { message: @js(__('Withdraw the approval and remove the uploaded package?')), danger: true, run: () => $wire.cancel() })">
+                    x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Withdraw the approval and remove the uploaded package?')) }}, danger: true, run: () => $wire.cancel() })">
                     {{ __('Withdraw and remove the package') }}</x-ui.btn>
             @endif
         </x-ui.card>
@@ -170,7 +170,7 @@ new class extends Component {
                 <x-ui.input type="password" wire:model="password" :label="__('Confirm with your password')" autocomplete="current-password" viewable class="min-w-0 flex-1" />
                 <x-ui.btn type="submit" variant="primary" icon="arrow-up-tray" wire:loading.attr="disabled">{{ __('Install') }}</x-ui.btn>
                 <x-ui.btn variant="danger" icon="trash"
-                    x-on:click="$dispatch('confirm-action', { message: @js(__('Remove the uploaded package?')), danger: true, run: () => $wire.cancel() })">{{ __('Remove the package') }}</x-ui.btn>
+                    x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Remove the uploaded package?')) }}, danger: true, run: () => $wire.cancel() })">{{ __('Remove the package') }}</x-ui.btn>
             </form>
         </x-ui.card>
     @else
