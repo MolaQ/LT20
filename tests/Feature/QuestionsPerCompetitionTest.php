@@ -54,8 +54,8 @@ test('each competition has its own questions, answers and bonus', function () {
     $cupA->update(['correct' => true]);
 
     $bonuses = Questions::bonusesFor($matchday->fresh());
-    expect($bonuses[$user->id]['league'])->toBe(['attack' => 0, 'defense' => 1, 'missed' => false])
-        ->and($bonuses[$user->id]['cup'])->toBe(['attack' => 0, 'defense' => 0, 'missed' => true]);
+    expect($bonuses[$user->id]['league'])->toBe(['attack' => 0, 'defense' => 1, 'attack_missed' => false, 'defense_missed' => false])
+        ->and($bonuses[$user->id]['cup'])->toBe(['attack' => 0, 'defense' => 0, 'attack_missed' => true, 'defense_missed' => false]);
 });
 
 test('skipping a question removes the answer', function () {

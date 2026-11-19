@@ -282,17 +282,22 @@ class MatchReport
     }
 
     /**
-     * Godziny odpoczynku po występie (R6): podstawa + godziny za każdą połowę, część połowy jako pół.
+     * Godziny odpoczynku po występie (R6): osobne ustawienie dla każdego czasu gry (rest_hours_1 … rest_hours_8),
+     * stopień = 2 × całe połowy + części połów (część połowy liczy się jako pół).
      *
      * @param  array<string, float>  $settings
      */
     public static function restHours(int $full, int $partial, array $settings): int
     {
-        if ($full + $partial === 0) {
-            return 0;
-        }
+        $step = self::restStep($full, $partial);
 
-        return (int) round(($settings['rest_base_hours'] ?? 10) + ($full + $partial / 2) * ($settings['rest_hours_per_half'] ?? 60));
+        return $step === 0 ? 0 : (int) round($settings['rest_hours_'.$step] ?? 0);
+    }
+
+    /** Stopień odpoczynku 1-8 (0 = nie zagrał): 2 × całe połowy + części połów. */
+    public static function restStep(int $full, int $partial): int
+    {
+        return $full + $partial === 0 ? 0 : max(1, min(8, 2 * $full + $partial));
     }
 
     /**

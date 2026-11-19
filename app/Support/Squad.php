@@ -76,7 +76,8 @@ class Squad
         }
 
         $kickoff = $matchday->kickoff_at ?? now();
-        $longest = self::restHoursFor(4, 0);
+        // Najdłuższy odpoczynek z ustawień (stopnie nie muszą rosnąć), razy mnożnik zmęczonego zawodnika.
+        $longest = (int) ceil(max(array_map(fn (int $step) => Designation::value('rest_hours_'.$step), range(1, 8))) * max(1, Designation::number('tired_rest_factor')));
 
         $previous = Matchday::where('id', '!=', $matchday->id)
             ->whereNotNull('kickoff_at')
@@ -92,13 +93,14 @@ class Squad
         $picks = DesignatedPlayer::whereIn('matchday_id', $previous->keys())
             ->where(fn ($q) => $q->whereIn('user_id', $userIds)->orWhereIn('bot_id', $botIds))
             ->where(fn ($q) => $q->whereNull('counted')->orWhere(fn ($q) => $q->where('counted', true)->where('matches', '>', 0)))
-            ->get(['matchday_id', 'user_id', 'bot_id', 'lech_player_id']);
+            ->get(['matchday_id', 'user_id', 'bot_id', 'lech_player_id', 'rest_factor']);
 
         $locks = [];
 
         foreach ($picks as $pick) {
             $played = $previous[$pick->matchday_id];
-            $hours = (int) (self::report($played)[$pick->lech_player_id]['rest_hours'] ?? 0);
+            // Zmęczony zawodnik w tamtym meczu: regeneracja razy mnożnik zapisany przy wyborze.
+            $hours = (int) round((self::report($played)[$pick->lech_player_id]['rest_hours'] ?? 0) * max(1, (float) $pick->rest_factor));
             $freeAt = $played->kickoff_at->getTimestamp() + $hours * 3600;
 
             if ($hours > 0 && $freeAt > $kickoff->getTimestamp()) {
@@ -120,6 +122,28 @@ class Squad
     public static function hoursLeft(int $freeAt): int
     {
         return max(0, (int) ceil(($freeAt - now()->getTimestamp()) / 3600));
+    }
+
+    /**
+     * Zmęczony zawodnik: w chwili gwizdka kolejki do końca regeneracji zostało najwyżej tired_threshold_hours.
+     * Można go wystawić i gra normalnie, ale regeneracja po tym meczu trwa tired_rest_factor razy dłużej.
+     */
+    public static function isTired(int $freeAt, Matchday $matchday): bool
+    {
+        $threshold = Designation::value('tired_threshold_hours');
+        $kickoff = ($matchday->kickoff_at ?? now())->getTimestamp();
+
+        return $threshold > 0 && $freeAt - $kickoff <= $threshold * 3600;
+    }
+
+    /**
+     * Zawodnicy klubu, których nie można wystawić w kolejce (regeneracja bez zmęczonych): id => wolny od.
+     *
+     * @return array<int, int>
+     */
+    public static function blocked(?int $userId, ?int $botId, Matchday $matchday): array
+    {
+        return array_filter(self::locks($userId, $botId, $matchday), fn (int $freeAt) => ! self::isTired($freeAt, $matchday));
     }
 
     /**
@@ -190,7 +214,7 @@ class Squad
             throw new DomainException(__('This player is unavailable.'));
         }
 
-        if ($freeAt = self::locks($user->id, null, $matchday)[$playerId] ?? 0) {
+        if ($freeAt = self::blocked($user->id, null, $matchday)[$playerId] ?? 0) {
             throw new DomainException(__('This player rests until :date.', ['date' => Carbon::createFromTimestamp($freeAt, config('app.timezone'))->format('d.m, H:i')]));
         }
 
@@ -294,7 +318,10 @@ class Squad
 
         foreach ($picks as $pick) {
             $club = self::clubKey($pick->user_id, $pick->bot_id);
-            $locked = isset($locks[$club][$pick->lech_player_id]);
+            $freeAt = $locks[$club][$pick->lech_player_id] ?? null;
+            // Zmęczony (koniec regeneracji blisko): gra normalnie, ale następna regeneracja trwa dłużej.
+            $tired = $freeAt !== null && self::isTired($freeAt, $matchday);
+            $locked = $freeAt !== null && ! $tired;
             $r = $report[$pick->lech_player_id] ?? null;
             // W kadrze meczowej (jedenastka albo ławka): doświadczenie za powołanie i kartki; zagrał: reszta dorobku.
             $inSquad = ! $locked && $r !== null;
@@ -315,7 +342,8 @@ class Squad
                 // Wystawiony przez klub, a nieobecny w kadrze meczowej Lecha: samo wystawienie daje premię jak ławka (0,5).
                 // Wychowanek: doświadczenie z protokołu jest już podwojone, tu podwajamy samą premię za wystawienie.
                 'experience' => $inSquad ? (float) $r['experience'] : ($locked ? 0 : Designation::number('exp_sub') * ($pick->player?->is_academy ? MatchReport::ACADEMY_EXPERIENCE : 1)),
-                'rest_hours' => $played ? (int) $r['rest_hours'] : 0,
+                'rest_hours' => $played ? (int) round($r['rest_hours'] * ($tired ? max(1, Designation::number('tired_rest_factor')) : 1)) : 0,
+                'rest_factor' => $tired ? max(1, Designation::number('tired_rest_factor')) : 1,
             ];
             $set = $pick->score_set->value;
             $values['matches'] = $matches[$club][$set] ?? 0;

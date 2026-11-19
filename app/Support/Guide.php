@@ -122,6 +122,7 @@ class Guide
             [__('Puchar Polski'), __('The favourite plays on the left and the winner takes the better seed of the pair. A draw goes to the team whose fielded players have more experience in the club, then to the team whose tip was saved first (every save gets its own number; bots and missing tips come last, then the higher seed), shown as “after penalties”.')],
             [__('European cups'), __('Liga Mistrzów, Europy and Konferencji have 24 teams each; a team plays in only one of them. Matchdays 1-5: four groups of six, everyone plays everyone once, league points and tie-breakers. The top four of each group go through, the fifth and sixth places are out. Teams from the same group place are ranked against each other: seeds 1-4 are the group winners, 5-8 the runners-up, 9-12 the third places and 13-16 the fourth places. Matchdays 6-9: round of 16 (1-16, 2-15 …), quarter-final, semi-final and final, played like Puchar Polski, so the best group winner can meet the second best only in the final.')],
             ...self::experienceRules(),
+            ...self::recoveryRules(),
             [__('Promotion and relegation'), __('After the season bots go to the bottom of every table, then 4 teams go up and 4 go down, and finally every bot swaps places with the best human below it, so humans fill the leagues from the top. Bots beyond place 512 of the list rest for a season. The top 3 of leagues 1–10 play in Liga Mistrzów, Europy and Konferencji next season.')],
             [__('Liga Legend'), __('All teams run by people play. Every matchday each team plays two duels in a cycle: 1-2, 2-3 … and the first with the last (matchday 1 from the pre-season list, then by the current table, the higher team on the left). The table is a league table (3 points for a win, 1 for a draw, criteria as in the leagues) and counts from matchday 1. Two losses in one matchday knock the team out: its results stay in the table, but it no longer plays. A draw is not a loss. When two teams are left, they play one match. After matchday 9 the top of the whole table wins.')],
             [__('Individual awards'), __('Season MVP: correct outcomes plus your players\' attack and defence points in league matches. Golden Ball: the most goals in the whole season from all competitions (points for the tip plus your players\' attack points, without the rival\'s own goals). Golden Boot: the most attack points of your players (goals and assists) from all competitions. Golden Gloves: the most defence points of your players (clean sheets) in league matches. On a tie the team with more trophies this season wins, then the higher league place. Top scorer of a league: the most goals in its table, on a tie the higher place. All awards give Hall of Fame points.')],
@@ -176,6 +177,33 @@ class Guide
      * Tłumaczenie do HTML zasad (bez znaczników z tłumaczeń).
      *
      * @param  array<string, int|string>  $replace
+     */
+    /**
+     * Zasada regeneracji po meczu (19.11.2026): godziny dla czasów gry i zmęczony zawodnik, liczby z ustawień (Designation).
+     * Też w migracji dla zasad z panelu.
+     *
+     * @return array<int, array{0: string, 1: string}>
+     */
+    public static function recoveryRules(?string $locale = null): array
+    {
+        $h = fn (int $step): string => Designation::value('rest_hours_'.$step).' h';
+        $factor = rtrim(rtrim(number_format(Designation::number('tired_rest_factor'), 1, ',', ''), '0'), ',');
+
+        $body = '<p>'.self::text('A Lech player who played needs recovery in your club before he can play for it again. It is counted from the kickoff of the matchday in which you fielded him and depends on his time on the pitch:', [], $locale).'</p><ul>'
+            .'<li>'.self::text('less than 45 min: :a, 45 min: :b,', ['a' => $h(1), 'b' => $h(2)], $locale).'</li>'
+            .'<li>'.self::text('less than 90 min: :a, 90 min: :b,', ['a' => $h(3), 'b' => $h(4)], $locale).'</li>'
+            .'<li>'.self::text('with extra time: less than 105 min: :a, 105 min: :b, less than 120 min: :c, 120 min: :d.', ['a' => $h(5), 'b' => $h(6), 'c' => $h(7), 'd' => $h(8)], $locale).'</li>'
+            .'</ul><p>'.self::text('A substitute who did not come on needs no recovery. Recovery counts in your club in all competitions at once. A player still recovering at the kickoff gives nothing: no points and no experience.', [], $locale).'</p>';
+
+        if (Designation::value('tired_threshold_hours') > 0) {
+            $body .= '<p><strong>'.self::text('Tired player:', [], $locale).'</strong> '.self::text('if at the kickoff at most :hours h of his recovery are left, he plays and counts normally, but after that match he recovers :factor times longer.', ['hours' => Designation::value('tired_threshold_hours'), 'factor' => $factor], $locale).'</p>';
+        }
+
+        return [[self::text('Recovery', [], $locale), $body]];
+    }
+
+    /**
+     * @param  array<string, mixed>  $replace
      */
     private static function text(string $key, array $replace, ?string $locale): string
     {

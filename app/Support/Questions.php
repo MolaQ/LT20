@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\DB;
  *  - gracz odpowiada na pytania zestawów rozgrywek, w których jeszcze gra; może pominąć dowolne pytanie,
  *    a każde, na które odpowiada, oznacza jako atak (OF) albo obrona (DEF),
  *  - trafione pytanie ataku = +1 do ataku, trafione pytanie obrony = +1 do obrony w tych rozgrywkach,
- *  - jedno pudło zeruje oba bonusy z pytań w tych rozgrywkach (zawodnicy liczą się dalej),
+ *  - pudło zeruje bonus tylko swojej strony w tych rozgrywkach: pudło w pytaniu ataku zeruje atak z pytań,
+ *    pudło w pytaniu obrony zeruje obronę z pytań (decyzja MolaQ z 19.11.2026; zawodnicy liczą się dalej),
  *  - pytanie unieważnione (voided) nie liczy się nikomu i niczego nie zeruje.
  */
 final class Questions
@@ -126,17 +127,17 @@ final class Questions
     }
 
     /**
-     * Bonus z pytań: trafione ataku i obrony, a przy choćby jednym pudle zero i zero.
-     * Pytania bez wpisanej odpowiedzi admina na razie się nie liczą.
+     * Bonus z pytań osobno dla ataku i obrony: trafienia danej strony, a przy choćby jednym pudle tej strony zero.
+     * Pudło w pytaniu ataku nie rusza obrony i odwrotnie. Pytania bez wpisanej odpowiedzi admina na razie się nie liczą.
      *
      * @param  Collection<int, MatchdayQuestion>  $questions
      * @param  Collection<int, QuestionAnswer>  $answers  id pytania => odpowiedź gracza
-     * @return array{attack: int, defense: int, missed: bool}
+     * @return array{attack: int, defense: int, attack_missed: bool, defense_missed: bool}
      */
     public static function bonus(Collection $questions, Collection $answers): array
     {
-        $attack = 0;
-        $defense = 0;
+        $hits = ['attack' => 0, 'defense' => 0];
+        $missed = ['attack' => false, 'defense' => false];
 
         foreach ($questions as $question) {
             $answer = $answers->get($question->id);
@@ -145,20 +146,27 @@ final class Questions
                 continue;
             }
 
-            if ($answer->answer !== $question->correct) {
-                return ['attack' => 0, 'defense' => 0, 'missed' => true];
-            }
+            $side = $answer->side === 'defense' ? 'defense' : 'attack';
 
-            $answer->side === 'defense' ? $defense++ : $attack++;
+            if ($answer->answer !== $question->correct) {
+                $missed[$side] = true;
+            } else {
+                $hits[$side]++;
+            }
         }
 
-        return ['attack' => $attack, 'defense' => $defense, 'missed' => false];
+        return [
+            'attack' => $missed['attack'] ? 0 : $hits['attack'],
+            'defense' => $missed['defense'] ? 0 : $hits['defense'],
+            'attack_missed' => $missed['attack'],
+            'defense_missed' => $missed['defense'],
+        ];
     }
 
     /**
      * Bonusy z pytań wszystkich graczy kolejki naraz (rozliczenie): user_id => typ rozgrywek => bonus z jego zestawu.
      *
-     * @return array<int, array<int|string, array{attack: int, defense: int, missed: bool}>>
+     * @return array<int, array<int|string, array{attack: int, defense: int, attack_missed: bool, defense_missed: bool}>>
      */
     public static function bonusesFor(Matchday $matchday): array
     {
@@ -170,7 +178,7 @@ final class Questions
 
         $bySet = $questions->groupBy('score_set');
 
-        /** @var array<int, array<int|string, array{attack: int, defense: int, missed: bool}>> $out */
+        /** @var array<int, array<int|string, array{attack: int, defense: int, attack_missed: bool, defense_missed: bool}>> $out */
         $out = [];
         foreach (QuestionAnswer::whereIn('matchday_question_id', $questions->pluck('id'))->get()->groupBy(['user_id', 'score_set']) as $userId => $answersBySet) {
             foreach ($answersBySet as $set => $answers) {

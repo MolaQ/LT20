@@ -90,7 +90,7 @@ it('normalizes the exit before the entry', function () {
 });
 
 it('takes the rest hours from the settings', function () {
-    $settings = ['rest_base_hours' => 0.0, 'rest_hours_per_half' => 24.0] + reportSettings();
+    $settings = ['rest_hours_3' => 36.0] + reportSettings();
     $r = MatchReport::compute([reportAppearance(1, PlayerPosition::Forward, off: 3)], 0, false, $settings)[1];
 
     expect($r['rest_hours'])->toBe(36);
