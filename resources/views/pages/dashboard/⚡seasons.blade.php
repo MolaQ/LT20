@@ -48,6 +48,9 @@ new class extends Component {
     public $logo = null; // nowo wgrany plik (tymczasowy)
     public ?string $currentLogoPath = null; // logo zapisane w bazie
     public bool $removeLogo = false;
+    public $banner = null; // nowo wgrany baner sponsora (tymczasowy)
+    public ?string $currentBannerPath = null; // baner zapisany w bazie
+    public bool $removeBanner = false;
 
     // --- usuwanie ---
     public ?int $deleteId = null;
@@ -114,6 +117,21 @@ new class extends Component {
         $n = (int) $n;
 
         return $n >= Roman::MIN && $n <= Roman::MAX ? Roman::toRoman($n) : null;
+    }
+
+    /** Podgląd baneru sponsora w formularzu: świeżo wgrany plik albo baner z bazy. */
+    #[Computed]
+    public function bannerPreview(): ?string
+    {
+        if ($this->banner && $this->banner->isPreviewable()) {
+            return $this->banner->temporaryUrl();
+        }
+
+        if ($this->currentBannerPath && !$this->removeBanner) {
+            return asset('storage/' . $this->currentBannerPath);
+        }
+
+        return null;
     }
 
     /** Adres obrazka do podglądu w formularzu: świeżo wgrany plik albo logo z bazy. */
@@ -191,6 +209,8 @@ new class extends Component {
             'sponsorUrl' => ['nullable', 'url:http,https', 'max:255'],
             // Obraz (SVG odrzuca reguła "image"), kwadrat, 200-2000 px, do 2 MB.
             'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048', 'dimensions:ratio=1/1,min_width=200,min_height=200,max_width=2000,max_height=2000'],
+            // Baner: szeroki obraz (tło paska sezonu), 1200-4000 px szerokości, do 4 MB.
+            'banner' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:4096', 'dimensions:min_width=1200,min_height=200,max_width=4000,max_height=2000'],
         ];
     }
 
@@ -209,13 +229,14 @@ new class extends Component {
             'sponsorName' => __('Sponsor name'),
             'sponsorUrl' => __('Sponsor website'),
             'logo' => __('Sponsor logo'),
+            'banner' => __('Sponsor banner'),
         ];
     }
 
     /** Walidacja na żywo: numer, slogan, sponsor i logo sprawdzają się od razu po zmianie. */
     public function updated(string $property): void
     {
-        if (!in_array($property, ['number', 'slogan', 'sponsorName', 'sponsorUrl', 'logo'], true)) {
+        if (!in_array($property, ['number', 'slogan', 'sponsorName', 'sponsorUrl', 'logo', 'banner'], true)) {
             return;
         }
 
@@ -223,8 +244,8 @@ new class extends Component {
             $this->validateOnly($property);
         } catch (ValidationException $e) {
             // Niepoprawny plik odrzucamy od razu, żeby nie trafił do zapisu.
-            if ($property === 'logo') {
-                $this->reset('logo');
+            if (in_array($property, ['logo', 'banner'], true)) {
+                $this->reset($property);
             }
 
             throw $e;
@@ -259,6 +280,7 @@ new class extends Component {
         $this->sponsorName = (string) $season->sponsor_name;
         $this->sponsorUrl = (string) $season->sponsor_url;
         $this->currentLogoPath = $season->sponsor_logo_path;
+        $this->currentBannerPath = $season->sponsor_banner_path;
 
         $this->dispatch('ui-sheet', name: 'season-form');
     }
@@ -286,6 +308,15 @@ new class extends Component {
             $logoPath = null;
         }
 
+        $oldBannerPath = $season->sponsor_banner_path;
+        $bannerPath = $oldBannerPath;
+
+        if ($this->banner) {
+            $bannerPath = $this->banner->store('sponsors', 'public');
+        } elseif ($this->removeBanner) {
+            $bannerPath = null;
+        }
+
         try {
             $season
                 ->fill([
@@ -294,12 +325,16 @@ new class extends Component {
                     'sponsor_name' => $this->sponsorName !== '' ? $this->sponsorName : null,
                     'sponsor_url' => $this->sponsorUrl !== '' ? $this->sponsorUrl : null,
                     'sponsor_logo_path' => $logoPath,
+                    'sponsor_banner_path' => $bannerPath,
                 ])
                 ->save();
         } catch (UniqueConstraintViolationException) {
             // Ktoś zajął numer między walidacją a zapisem: sprzątamy świeżo wgrany plik.
             if ($logoPath && $logoPath !== $oldLogoPath) {
                 Storage::disk('public')->delete($logoPath);
+            }
+            if ($bannerPath && $bannerPath !== $oldBannerPath) {
+                Storage::disk('public')->delete($bannerPath);
             }
 
             $this->addError('number', __('This season number is already used.'));
@@ -310,6 +345,9 @@ new class extends Component {
         // Stary plik kasujemy dopiero po udanym zapisie.
         if ($oldLogoPath && $oldLogoPath !== $logoPath) {
             Storage::disk('public')->delete($oldLogoPath);
+        }
+        if ($oldBannerPath && $oldBannerPath !== $bannerPath) {
+            Storage::disk('public')->delete($oldBannerPath);
         }
 
         $after = $this->snapshot($season);
@@ -361,9 +399,18 @@ new class extends Component {
         }
     }
 
+    public function clearBanner(): void
+    {
+        $this->reset('banner');
+
+        if ($this->currentBannerPath) {
+            $this->removeBanner = true;
+        }
+    }
+
     public function resetForm(): void
     {
-        $this->reset('seasonId', 'number', 'slogan', 'sponsorName', 'sponsorUrl', 'logo', 'currentLogoPath', 'removeLogo');
+        $this->reset('seasonId', 'number', 'slogan', 'sponsorName', 'sponsorUrl', 'logo', 'currentLogoPath', 'removeLogo', 'banner', 'currentBannerPath', 'removeBanner');
         $this->resetValidation();
     }
 
@@ -384,6 +431,7 @@ new class extends Component {
             'sponsor_name' => $season->sponsor_name,
             'sponsor_url' => $season->sponsor_url,
             'sponsor_logo' => $season->sponsor_logo_path ? basename($season->sponsor_logo_path) : null,
+            'sponsor_banner' => $season->sponsor_banner_path ? basename($season->sponsor_banner_path) : null,
         ];
     }
 
@@ -601,6 +649,9 @@ new class extends Component {
 
         if ($season->sponsor_logo_path) {
             Storage::disk('public')->delete($season->sponsor_logo_path);
+        }
+        if ($season->sponsor_banner_path) {
+            Storage::disk('public')->delete($season->sponsor_banner_path);
         }
 
         $season->delete();
@@ -865,13 +916,43 @@ new class extends Component {
                 <x-ui.error name="logo" />
             </div>
 
+            {{-- Baner: szeroka grafika, tło paska sezonu na stronie głównej --}}
+            <div class="space-y-2">
+                <x-ui.label>{{ __('Sponsor banner') }}</x-ui.label>
+
+                @if ($this->bannerPreview)
+                    <img src="{{ $this->bannerPreview }}" alt="{{ __('Sponsor banner') }}"
+                        class="aspect-[4/1] w-full rounded-lg border border-ui-line object-cover">
+                @else
+                    <div class="flex aspect-[4/1] w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 text-zinc-400 dark:border-zinc-600">
+                        <x-ui.icon name="photo" class="size-8" />
+                    </div>
+                @endif
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="file" wire:model="banner" accept="image/png,image/jpeg,image/webp"
+                        class="block min-w-0 flex-1 text-sm text-ui-muted file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-200 dark:file:bg-zinc-700 dark:file:text-zinc-100 dark:hover:file:bg-zinc-600">
+
+                    @if ($this->bannerPreview)
+                        <x-ui.btn type="button" size="xs" variant="ghost" icon="trash" wire:click="clearBanner">
+                            {{ __('Remove banner') }}
+                        </x-ui.btn>
+                    @endif
+                </div>
+
+                <div wire:loading wire:target="banner" class="text-sm text-ui-muted">{{ __('Uploading...') }}</div>
+
+                <x-ui.text class="text-sm">{{ __('Background of the season bar on the home page. PNG, JPG or WebP, 1200–4000 px wide (best 1920×480), up to 4 MB.') }}</x-ui.text>
+                <x-ui.error name="banner" />
+            </div>
+
             <div class="flex justify-end gap-2">
                 <x-ui.modal.close>
                     <x-ui.btn variant="ghost" type="button">{{ __('Cancel') }}</x-ui.btn>
                 </x-ui.modal.close>
 
                 {{-- Przycisk jest zablokowany na czas wysyłania pliku --}}
-                <x-ui.btn variant="primary" type="submit" wire:loading.attr="disabled" wire:target="logo">
+                <x-ui.btn variant="primary" type="submit" wire:loading.attr="disabled" wire:target="logo,banner">
                     <span wire:loading.remove wire:target="save">{{ __('Save changes') }}</span>
                     <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
                 </x-ui.btn>

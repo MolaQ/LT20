@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $slogan
  * @property string|null $sponsor_name
  * @property string|null $sponsor_logo_path
+ * @property string|null $sponsor_banner_path
  * @property string|null $sponsor_url
  * @property SeasonStatus $status
  * @property-read string $title nazwa sezonu, np. „IV sezon” (akcesor title())
@@ -31,6 +32,7 @@ class Season extends Model
         'slogan',
         'sponsor_name',
         'sponsor_logo_path',
+        'sponsor_banner_path',
         'sponsor_url',
         'status',
     ];
@@ -139,6 +141,14 @@ class Season extends Model
     {
         return Attribute::get(fn () => $this->sponsor_logo_path
             ? asset('storage/'.$this->sponsor_logo_path)
+            : null);
+    }
+
+    /** $season->sponsor_banner_url  ->  adres szerokiego baneru sponsora (tło paska sezonu) albo null. */
+    protected function sponsorBannerUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->sponsor_banner_path
+            ? asset('storage/'.$this->sponsor_banner_path)
             : null);
     }
 

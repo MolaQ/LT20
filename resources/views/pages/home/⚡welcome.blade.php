@@ -237,7 +237,7 @@ new #[Layout('layouts::public')] class extends Component {
         @endphp
 
         {{-- Baner sezonu (wzór dla banerów innych stron: x-page-banner) --}}
-        <x-page-banner :title="$season->title" :subtitle="filled($season->slogan) ? $season->slogan : null">
+        <x-page-banner :title="$season->title" :subtitle="filled($season->slogan) ? $season->slogan : null" :image="$season->sponsor_banner_url">
             <x-slot:aside>
                 @if ($season->sponsor_logo_url || filled($season->sponsor_name))
                     @php
