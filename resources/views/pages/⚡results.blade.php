@@ -723,10 +723,10 @@ new #[Layout('layouts::public')] class extends Component {
                         </h1>
                         @if ($sponsor)
                             <a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
-                                class="inline-flex items-center gap-2 text-xs opacity-80 hover:opacity-100">
-                                <span class="uppercase tracking-widest">powered by</span>
+                                class="inline-flex items-center gap-2.5 text-xs opacity-90 hover:opacity-100">
+                                <span class="uppercase tracking-widest">{{ $sponsor->label ?: 'powered by' }}</span>
                                 @if ($sponsor->logoUrl())
-                                    <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="h-7 max-w-28 rounded bg-white object-contain p-0.5">
+                                    <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="h-10 max-w-40 rounded-md bg-white object-contain p-1">
                                 @else
                                     <span class="font-semibold">{{ $sponsor->name }}</span>
                                 @endif

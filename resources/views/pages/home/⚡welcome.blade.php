@@ -237,7 +237,7 @@ new #[Layout('layouts::public')] class extends Component {
         @endphp
 
         {{-- Baner sezonu (wzór dla banerów innych stron: x-page-banner) --}}
-        <x-page-banner :title="$season->title" :subtitle="filled($season->slogan) ? $season->slogan : null">
+        <x-page-banner :title="$season->title" :subtitle="filled($season->slogan) ? $season->slogan : null" :image="$season->sponsor_banner_url">
             <x-slot:aside>
                 @if ($season->sponsor_logo_url || filled($season->sponsor_name))
                     @php
@@ -245,15 +245,18 @@ new #[Layout('layouts::public')] class extends Component {
                     @endphp
                     <{{ $sponsorTag }}
                         @if (filled($season->sponsor_url)) href="{{ $season->sponsor_url }}" target="_blank" rel="noopener sponsored" @endif
-                        class="flex shrink-0 items-center gap-3 self-start rounded-xl bg-white/10 px-4 py-3 backdrop-blur transition hover:bg-white/20 md:self-auto">
-                        <span class="text-xs uppercase tracking-widest text-lech-200">powered by</span>
+                        class="flex shrink-0 items-center gap-4 self-start rounded-2xl bg-black/30 p-3 pe-5 ring-1 ring-white/15 backdrop-blur transition hover:bg-black/40 md:self-auto">
                         @if ($season->sponsor_logo_url)
                             <img src="{{ $season->sponsor_logo_url }}" alt="{{ $season->sponsor_name ?? '' }}"
-                                class="h-12 w-12 rounded-md bg-white object-contain p-1">
+                                class="size-16 rounded-xl bg-white object-contain p-1.5 shadow-lg sm:size-20">
                         @endif
-                        @if (filled($season->sponsor_name))
-                            <span class="font-semibold">{{ $season->sponsor_name }}</span>
-                        @endif
+                        <span class="grid gap-0.5">
+                            {{-- Napis z panelu Sezony („Sponsor sezonu”, „Patron medialny”…), domyślnie „powered by” --}}
+                            <span class="text-[11px] font-semibold uppercase tracking-widest text-lech-200">{{ $season->sponsor_label ?: 'powered by' }}</span>
+                            @if (filled($season->sponsor_name))
+                                <span class="text-lg font-bold leading-tight">{{ $season->sponsor_name }}</span>
+                            @endif
+                        </span>
                     </{{ $sponsorTag }}>
                 @endif
             </x-slot:aside>

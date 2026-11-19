@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Sponsor rozgrywek (przypisywany do rozgrywek w danym sezonie w panelu „Sponsorzy”).
  *
  * @property string $name
+ * @property string|null $label
  * @property string|null $url
  * @property string|null $logo_path
  */
 class Sponsor extends Model
 {
-    protected $fillable = ['name', 'url', 'logo_path'];
+    protected $fillable = ['name', 'label', 'url', 'logo_path'];
 
     public function competitions(): HasMany
     {

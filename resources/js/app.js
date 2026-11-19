@@ -3,6 +3,9 @@
 
 import './news-editor';
 import './share-image';
+import { registerImageCropper } from './image-cropper';
+
+registerImageCropper();
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

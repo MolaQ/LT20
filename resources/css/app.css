@@ -584,3 +584,9 @@
         opacity: 0.8;
     }
 }
+
+/* Kadr logo w kształcie koła (x-ui.image-cropper, kształt „Koło”) */
+.cropper-round .cropper-view-box,
+.cropper-round .cropper-face {
+    border-radius: 50%;
+}

@@ -280,12 +280,10 @@ new class extends Component {
             <x-ui.heading size="lg">{{ __('Upload icon') }}</x-ui.heading>
             <x-ui.text>{{ \App\Support\HallOfFame::trophies()[$iconKey] ?? '' }}</x-ui.text>
 
-            <input type="file" wire:model="icon" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm">
+            {{-- Edytor ikony: kwadrat 1:1, usuwanie tła i kolorów --}}
+            <x-ui.image-cropper model="icon" aspect="1/1" format="png" :width="512"
+                :current="$icon && ! $errors->has('icon') ? $icon->temporaryUrl() : null" />
             <x-ui.error name="icon" />
-
-            @if ($icon && !$errors->has('icon'))
-                <img src="{{ $icon->temporaryUrl() }}" alt="" class="size-24 rounded object-contain">
-            @endif
 
             <div class="flex justify-end gap-2">
                 <x-ui.modal.close>
