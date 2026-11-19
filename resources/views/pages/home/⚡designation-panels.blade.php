@@ -273,9 +273,11 @@ new class extends Component {
                                         <x-ui.icon name="check-circle" variant="micro" class="size-4 shrink-0" />
                                     @endif
                                 </span>
-                                <span class="flex w-full min-w-0 items-center gap-2 overflow-hidden text-[11px] tabular-nums">
-                                    <span class="shrink-0 font-semibold opacity-70" title="{{ $player->position->label() }}">{{ $player->number }}<span class="uppercase"> · {{ $player->position->short() }}</span></span>
-                                    <span class="flex items-center gap-0.5 {{ $in ? 'opacity-90' : 'text-amber-600 dark:text-amber-400' }}" title="{{ __('Form: experience from the last :count Lech matches', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}"><x-ui.icon name="fire" variant="micro" class="size-3" />{{ $fmt($player->lech_form) }}</span>
+                                {{-- Stałe szerokości kolumn: numer 1 i 99 wyglądają tak samo, płomień i gwiazdka zawsze w tym samym miejscu. --}}
+                                <span class="flex w-full min-w-0 items-center gap-1 overflow-hidden text-[11px] tabular-nums">
+                                    <span class="w-4 shrink-0 text-right font-semibold opacity-70">{{ $player->number }}</span>
+                                    <span class="w-3 shrink-0 font-semibold uppercase opacity-70" title="{{ $player->position->label() }}">{{ $player->position->short() }}</span>
+                                    <span class="flex w-8 shrink-0 items-center gap-0.5 {{ $in ? 'opacity-90' : 'text-amber-600 dark:text-amber-400' }}" title="{{ __('Form: experience from the last :count Lech matches', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}"><x-ui.icon name="fire" variant="micro" class="size-3" />{{ $fmt($player->lech_form) }}</span>
                                     <span class="flex items-center gap-0.5 opacity-75" title="{{ __('Experience in your club') }}"><x-ui.icon name="star" variant="micro" class="size-3" />{{ $fmt($player->club_experience) }}</span>
                                 </span>
                             </button>
