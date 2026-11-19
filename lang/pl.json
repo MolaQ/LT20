@@ -2643,7 +2643,6 @@
     "Kickoff of the matchday. Your player plays the whole match (90 min).": "Gwizdek kolejki. Twój zawodnik gra cały mecz (90 min).",
     "How recovery works": "Jak działa regeneracja",
     "Like in real football: a player who played needs time to recover before he can play for your club again. The longer he was on the pitch, the longer it takes.": "Jak w prawdziwej piłce: zawodnik, który zagrał, potrzebuje czasu na regenerację, zanim znów zagra w Twoim klubie. Im dłużej był na boisku, tym dłużej to trwa.",
-    "Time on the pitch decides how long": "Czas na boisku decyduje, jak długo",
     "Example: counted from the kickoff": "Przykład: liczone od gwizdka",
     "Recovered: you can pick him again.": "Po regeneracji: możesz go znów wystawić.",
     "Still recovering: if you pick him, the pick gives nothing.": "Jeszcze w regeneracji: jeśli go wystawisz, wybór nic nie da.",
@@ -2696,5 +2695,6 @@
     "a whole half": "cała połowa",
     "the whole match": "cały mecz",
     "teal circle: extra time": "turkusowe kółko: dogrywka",
-    "A substitute who did not come on needs no recovery.": "Rezerwowy, który nie wszedł, nie potrzebuje regeneracji."
+    "A substitute who did not come on needs no recovery.": "Rezerwowy, który nie wszedł, nie potrzebuje regeneracji.",
+    "Time on the pitch decides how long the recovery takes": "Czas na boisku decyduje, jak długo trwa regeneracja"
 }

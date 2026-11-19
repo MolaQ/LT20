@@ -207,7 +207,7 @@ new #[Layout('layouts::public')] class extends Component {
 
             {{-- 1. Ile trwa regeneracja: czas gry => godziny --}}
             <div class="space-y-2">
-                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">1. {{ __('Time on the pitch decides how long') }}</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">1. {{ __('Time on the pitch decides how long the recovery takes') }}</p>
                 {{-- Legenda zegara czasu gry: ten sam symbol co przy zawodniku na stronie typowania --}}
                 <div class="rounded-xl bg-ui-raised/60 p-3">
                     <p class="text-sm">{{ __('The clock next to a player shows his time on the pitch: the filled part of the circle is the part of the match he played.') }}</p>
