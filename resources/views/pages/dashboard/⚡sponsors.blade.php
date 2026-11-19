@@ -70,7 +70,11 @@ new class extends Component {
     #[Computed]
     public function sponsors()
     {
-        return Sponsor::withCount('competitions')->orderBy('name')->get();
+        // Kliknięcia w blok partnera: łącznie i z ostatnich 30 dni.
+        return Sponsor::withCount('competitions')
+            ->withSum('clicks as clicks_total', 'clicks')
+            ->withSum(['clicks as clicks_recent' => fn($q) => $q->where('day', '>=', now()->subDays(29)->toDateString())], 'clicks')
+            ->orderBy('name')->get();
     }
 
     /** Rozgrywki sezonu w kolejności typów (ligi od Ekstraklasy). */
@@ -215,6 +219,10 @@ new class extends Component {
                     <div class="min-w-0 flex-1">
                         <div class="truncate text-sm font-medium">{{ $sponsor->name }}</div>
                         <div class="text-xs text-ui-muted">{{ trans_choice(':count competition|:count competitions', $sponsor->competitions_count, ['count' => $sponsor->competitions_count]) }}</div>
+                        <div class="flex items-center gap-1 text-xs text-ui-muted" title="{{ __('Clicks on the partner block') }}">
+                            <x-ui.icon name="arrow-trending-up" variant="micro" class="size-3.5" />
+                            {{ __('Clicks: :total (last 30 days: :recent)', ['total' => (int) $sponsor->clicks_total, 'recent' => (int) $sponsor->clicks_recent]) }}
+                        </div>
                     </div>
                     @can(\App\Enums\Permission::SeasonEdit->value)
                         <x-ui.btn size="xs" variant="ghost" icon="pencil" wire:click="openForm({{ $sponsor->id }})" :aria-label="__('Edit')" />

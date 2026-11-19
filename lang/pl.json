@@ -2695,5 +2695,7 @@
     "A substitute who did not come on needs no recovery.": "Rezerwowy, który nie wszedł, nie potrzebuje regeneracji.",
     "Time on the pitch decides how long the recovery takes": "Czas na boisku decyduje, jak długo trwa regeneracja",
     "Last seen": "Ostatnio widziany",
-    "No visit recorded yet": "Brak zapisanej wizyty"
+    "No visit recorded yet": "Brak zapisanej wizyty",
+    "Clicks on the partner block": "Kliknięcia w blok partnera",
+    "Clicks: :total (last 30 days: :recent)": "Kliknięcia: :total (ostatnie 30 dni: :recent)"
 }

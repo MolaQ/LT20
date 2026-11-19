@@ -1,14 +1,14 @@
 @props(['competition'])
 {{--
     Blok partnera rozgrywek w barwach tych rozgrywek: napis (np. „Partner rozgrywek”), nazwa rozgrywek, duże logo,
-    nazwa partnera; cały blok jest linkiem do strony partnera. Prawy panel wyników (równa wysokość z banerem rozgrywek) i telefon (nad banerem).
+    nazwa partnera; cały blok jest linkiem do strony partnera przez licznik kliknięć. Prawy panel wyników (równa wysokość z banerem rozgrywek) i telefon (nad banerem).
 --}}
 @php
     $sponsor = $competition->sponsor;
     $colorKey = $competition->trophyKey();
     $dashed = \App\Support\CompetitionColors::dashed($colorKey) ? 'comp-dashed' : '';
 @endphp
-<a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
+<a @if ($sponsor->url) href="{{ route('sponsor.click', $sponsor) }}" target="_blank" rel="noopener sponsored" @endif
     {{ $attributes->class(['comp-banner group flex flex-col justify-center gap-2.5 rounded-2xl px-4 py-3 transition', $dashed, 'hover:brightness-110' => (bool) $sponsor->url]) }}
     style="{{ \App\Support\CompetitionColors::style($colorKey) }}">
     <span class="relative z-10 flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-widest">

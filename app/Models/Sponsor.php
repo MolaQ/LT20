@@ -22,6 +22,12 @@ class Sponsor extends Model
         return $this->hasMany(Competition::class);
     }
 
+    /** @return HasMany<SponsorClick, $this> */
+    public function clicks(): HasMany
+    {
+        return $this->hasMany(SponsorClick::class);
+    }
+
     public function logoUrl(): ?string
     {
         return $this->logo_path ? asset('storage/'.$this->logo_path) : null;
