@@ -202,6 +202,9 @@ class Guide
         return [[self::text('Recovery', [], $locale), $body]];
     }
 
+    /**
+     * @param  array<string, mixed>  $replace
+     */
     private static function text(string $key, array $replace, ?string $locale): string
     {
         $text = __($key, $replace, $locale);
