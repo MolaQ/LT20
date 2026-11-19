@@ -355,6 +355,10 @@ new #[Layout('layouts::public')] class extends Component {
                     <ul class="mt-3 space-y-1.5 text-sm">
                         <li class="flex gap-2"><x-ui.icon name="check-circle" variant="micro" class="mt-0.5 text-green-600 dark:text-green-400" /> {{ __('Fielded and played: everything he earned in the Lech match.') }}</li>
                         <li class="flex gap-2"><x-ui.icon name="check-circle" variant="micro" class="mt-0.5 text-green-600 dark:text-green-400" /> {{ __('Fielded, but not in the Lech matchday squad: :value, like the bench.', ['value' => $num($exp('exp_sub'))]) }}</li>
+                        {{-- Zmęczony („na żółto”): gra i liczy się normalnie, ale po meczu regeneruje się dłużej --}}
+                        @if (\App\Support\Designation::value('tired_threshold_hours') > 0)
+                            <li class="flex gap-2"><span class="mt-0.5 inline-flex h-4 shrink-0 items-center rounded bg-amber-400 px-1 text-[10px] font-bold leading-none text-amber-950">×{{ $num(\App\Support\Designation::number('tired_rest_factor')) }}</span> <span><b>{{ __('Almost recovered (yellow):') }}</b> {{ __('he can play and counts normally, but after this match he needs :factor times longer to recover.', ['factor' => $num(\App\Support\Designation::number('tired_rest_factor'))]) }}</span></li>
+                        @endif
                         <li class="flex gap-2"><x-ui.icon name="no-symbol" variant="micro" class="mt-0.5 text-red-600 dark:text-red-400" /> {{ __('Resting player: the pick does not count and gives nothing.') }}</li>
                     </ul>
                 </div>

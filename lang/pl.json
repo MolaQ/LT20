@@ -2689,5 +2689,7 @@
     "Risky missed an attack question: his attack bonus drops from +3 to 0, but the defence +1 stays. Unlucky missed in defence: he loses the defence, his attack +2 stays.": "Ryzykant spudłował w pytaniu ataku: jego bonus ataku spada z +3 do 0, ale obrona +1 zostaje. Pechowiec spudłował w obronie: traci obronę, atak +2 zostaje.",
     "Answer everything when you feel the match. A big bonus wins duels, but one miss takes the whole bonus of its side.": "Odpowiadaj na wszystko, gdy czujesz mecz. Duży bonus wygrywa pojedynki, ale jedno pudło zabiera cały bonus swojej strony.",
     "Split the risk": "Rozłóż ryzyko",
-    "Put your sure answers on one side and the risky ones on the other. A miss then costs only one side.": "Pewne odpowiedzi daj na jedną stronę, ryzykowne na drugą. Pudło kosztuje wtedy tylko jedną stronę."
+    "Put your sure answers on one side and the risky ones on the other. A miss then costs only one side.": "Pewne odpowiedzi daj na jedną stronę, ryzykowne na drugą. Pudło kosztuje wtedy tylko jedną stronę.",
+    "Almost recovered (yellow):": "Prawie zregenerowany (na żółto):",
+    "he can play and counts normally, but after this match he needs :factor times longer to recover.": "może grać i liczy się normalnie, ale po tym meczu potrzebuje :factor razy więcej czasu na regenerację."
 }
