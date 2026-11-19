@@ -2635,5 +2635,7 @@
     "Leave empty to keep the current password. Give the new password to the player yourself.": "Zostaw puste, żeby nie zmieniać hasła. Nowe hasło przekaż graczowi sam.",
     "Changes are saved in the change log. The player is not notified.": "Zmiany trafiają do dziennika zmian. Gracz nie dostaje powiadomienia.",
     "Account of :name saved.": "Zapisano konto :name.",
-    "changed": "zmienione"
+    "changed": "zmienione",
+    "Questions: :answered of :total (attack :attack, defence :defence)": "Pytania: :answered z :total (atak :attack, obrona :defence)",
+    "Questions: :answered of :total": "Pytania: :answered z :total"
 }

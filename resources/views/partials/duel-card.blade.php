@@ -255,6 +255,14 @@
                     </dl>
                 @endif
 
+                {{-- Pytania kolejki: ile z odpowiedzią (premium i po wynikach: ile ataków i obron), Rivals::questions --}}
+                @if ($side['questions'] ?? null)
+                    <div class="{{ $mirror }} flex items-center justify-between gap-2 border-t border-lech-200/70 pt-2 text-xs dark:border-lech-800">
+                        <span class="{{ $labelClass }}">{{ __('Questions') }}</span>
+                        <x-question-sides :info="$side['questions']" @class(['justify-end' => $left]) />
+                    </div>
+                @endif
+
                 {{--
                     Wystawieni zawodnicy (desygnowanie): przed gwizdkiem liczba (premium: pozycje),
                     po gwizdku pozycje B O P N (premium: nazwiska), Rivals::lineup.

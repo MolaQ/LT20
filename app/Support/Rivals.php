@@ -10,6 +10,8 @@ use App\Models\CompetitionEntry;
 use App\Models\DesignatedPlayer;
 use App\Models\Fixture;
 use App\Models\Matchday;
+use App\Models\MatchdayQuestion;
+use App\Models\QuestionAnswer;
 use App\Models\Season;
 use App\Models\SeasonTeam;
 use App\Models\TeamScore;
@@ -107,6 +109,7 @@ final class Rivals
                     ? DesignatedPlayer::where('matchday_id', $matchday->id)->where('score_set', $set)->where('user_id', $rival->user_id)->count()
                     : null,
                 'resting' => $rival && $premium ? count(Squad::locks($rival->user_id, $rival->bot_id, $matchday)) : null,
+                'questions' => $rival && ! $rival->is_bot ? self::questions($rival->user_id, $matchday, $set, $phase, $premium) : null,
             ];
 
             if ($rival && ! $rival->is_bot) {
@@ -203,6 +206,7 @@ final class Rivals
             }
 
             $side['lineup'] = $team && $matchday ? self::lineup($team, $side['score'], $matchday, $set, $phase, $premium) : null;
+            $side['questions'] = $team && $matchday && ! $team->is_bot ? self::questions($team->user_id, $matchday, $set->value, $phase, $premium) : null;
 
             $sides[] = $side;
         }
@@ -256,6 +260,36 @@ final class Rivals
                 'label' => $d->player?->position->short().' '.$d->player?->name,
                 'tone' => $phase !== self::PLAYED ? null : ((int) $d->attack > 0 ? 'attack' : ((int) $d->defense > 0 ? 'defense' : null)),
             ])->values()->all() : null,
+        ];
+    }
+
+    /**
+     * Pytania kolejki rywala w zestawie rozgrywek: wszyscy widzą, na ile pytań odpowiedział, premium (i wszyscy
+     * po wynikach) także ile wybrał ataków (miecze) i obron (tarcze), ale nie przy których pytaniach.
+     * Brak pytań w zestawie albo brak gracza (bot, wolny los) = null.
+     *
+     * @return array{total: int, answered: int, attack: int|null, defense: int|null}|null
+     */
+    private static function questions(?int $userId, Matchday $matchday, string $set, string $phase, bool $premium): ?array
+    {
+        if ($userId === null) {
+            return null;
+        }
+
+        $ids = MatchdayQuestion::where('matchday_id', $matchday->id)->where('score_set', $set)->pluck('id');
+
+        if ($ids->isEmpty()) {
+            return null;
+        }
+
+        $sides = QuestionAnswer::whereIn('matchday_question_id', $ids)->where('user_id', $userId)->pluck('side');
+        $split = $premium || $phase === self::PLAYED;
+
+        return [
+            'total' => $ids->count(),
+            'answered' => $sides->count(),
+            'attack' => $split ? $sides->filter(fn ($side) => $side === 'attack')->count() : null,
+            'defense' => $split ? $sides->filter(fn ($side) => $side === 'defense')->count() : null,
         ];
     }
 
