@@ -60,7 +60,7 @@
                     class="h-9 min-w-0 flex-1 rounded-lg border border-ui-line bg-ui-surface px-3 text-sm focus:border-club focus:outline-none">
                 <input type="text" x-model="socialLabel" maxlength="60" :placeholder="@js($socials)[social]"
                     class="h-9 w-36 rounded-lg border border-ui-line bg-ui-surface px-3 text-sm focus:border-club focus:outline-none" aria-label="{{ __('Label') }}">
-                <x-ui.btn size="sm" variant="primary" type="button" @click="addSocial(@js($socials))">{{ __('Insert') }}</x-ui.btn>
+                <x-ui.btn size="sm" variant="primary" type="button" @click="addSocial({{ \Illuminate\Support\Js::from($socials) }})">{{ __('Insert') }}</x-ui.btn>
             </div>
         </div>
 

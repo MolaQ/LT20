@@ -230,7 +230,7 @@ new class extends Component {
 
             <x-ui.text>{{ __('Sent') }}: {{ $pending->created_at->format('Y-m-d H:i') }}</x-ui.text>
 
-            <x-ui.btn size="sm" variant="ghost" x-on:click="$dispatch('confirm-action', { message: @js(__('Cancel this request?')), run: () => $wire.cancelRequest() })">
+            <x-ui.btn size="sm" variant="ghost" x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Cancel this request?')) }}, run: () => $wire.cancelRequest() })">
                 {{ __('Cancel request') }}
             </x-ui.btn>
         </div>
