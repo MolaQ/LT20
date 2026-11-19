@@ -69,6 +69,8 @@ new #[Layout('layouts::public')] class extends Component {
         $this->key = $competition_slug ?? $this->legacyKey((string) request()->query('c', ''));
 
         $this->normalize();
+        // Panel partnera w prawej kolumnie pokazuje wybrane rozgrywki.
+        $this->dispatch('results-competition', id: (int) $this->competition?->id);
 
         // Podgląd linku (Facebook, X): obrazek tabeli po wybranej kolejce rysowany na serwerze.
         if ($this->hasTable && $this->competition && $this->season) {
@@ -149,6 +151,7 @@ new #[Layout('layouts::public')] class extends Component {
         $this->js('history.replaceState(history.state, "", ' . json_encode($this->pageUrl()) . ')');
         // Panel meczu Lecha w prawej kolumnie pokazuje wybraną kolejkę.
         $this->dispatch('results-matchday', id: (int) $this->matchday?->id);
+        $this->dispatch('results-competition', id: (int) $this->competition?->id);
     }
 
     /** Poprawia wybór rozgrywek i kolejki po wejściu na stronę albo po zmianie sezonu. */
@@ -704,6 +707,26 @@ new #[Layout('layouts::public')] class extends Component {
             ];
         @endphp
         <section class="comp-banner {{ $dashed }} rounded-2xl px-5 py-6 sm:px-8" style="{{ \App\Support\CompetitionColors::style($colorKey) }}">
+            {{-- Partner rozgrywek na telefonie i tablecie: tabliczka na górze banera. Na dużych ekranach jest w prawym panelu. --}}
+            @if ($sponsor)
+                <a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
+                    class="comp-partner group relative z-10 mb-5 flex items-center gap-3 rounded-2xl py-2.5 pl-2.5 pr-4 xl:hidden">
+                    <span class="comp-partner-logo flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+                        @if ($sponsor->logoUrl())
+                            <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="size-full object-contain p-1">
+                        @else
+                            <span class="text-xl font-black uppercase">{{ mb_substr($sponsor->name, 0, 1) }}</span>
+                        @endif
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="comp-accent block text-[10px] font-bold uppercase tracking-[0.2em]">{{ $sponsor->label ?: __('Competition partner') }}</span>
+                        <span class="block truncate text-base font-bold leading-tight">{{ $sponsor->name }}</span>
+                    </span>
+                    @if ($sponsor->url)
+                        <x-ui.icon name="chevron-right" variant="micro" class="shrink-0 opacity-75 transition group-hover:translate-x-0.5" />
+                    @endif
+                </a>
+            @endif
             <div class="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                 <div class="flex min-w-0 items-center gap-4">
                     <div class="comp-badge {{ $dashed }} flex size-20 shrink-0 items-center justify-center rounded-full shadow-lg" title="{{ __('Trophy to win') }}">
@@ -721,36 +744,10 @@ new #[Layout('layouts::public')] class extends Component {
                         <h1 class="text-3xl font-semibold uppercase tracking-tight sm:text-4xl">
                             {{ $this->competition->name ?: $this->competition->type->label() }}
                         </h1>
-                            </a>
-                        @endif
                     </div>
                 </div>
 
-                <div class="flex flex-col gap-3 md:items-end">
-                    {{-- Partner rozgrywek: wyraźna tabliczka z dużym logo, w barwach rozgrywek --}}
-                    @if ($sponsor)
-                        <a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
-                            class="comp-partner group flex items-center gap-4 rounded-2xl py-3 pl-3 pr-5 transition {{ $sponsor->url ? 'hover:-translate-y-0.5' : '' }}">
-                            <span class="comp-partner-logo flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl sm:size-20">
-                                @if ($sponsor->logoUrl())
-                                    <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="size-full object-contain p-1.5">
-                                @else
-                                    <span class="text-2xl font-black uppercase">{{ mb_substr($sponsor->name, 0, 1) }}</span>
-                                @endif
-                            </span>
-                            <span class="min-w-0">
-                                <span class="comp-accent block text-[10px] font-bold uppercase tracking-[0.2em]">{{ $sponsor->label ?: __('Competition partner') }}</span>
-                                <span class="block truncate text-lg font-bold leading-tight">{{ $sponsor->name }}</span>
-                                @if ($sponsor->url)
-                                    <span class="mt-0.5 inline-flex items-center gap-1 text-[11px] opacity-75 transition group-hover:opacity-100">
-                                        {{ __('Visit the partner') }} <x-ui.icon name="arrow-right" variant="micro" class="size-3 transition group-hover:translate-x-0.5" />
-                                    </span>
-                                @endif
-                            </span>
-                        </a>
-                    @endif
-
-                    <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2">
                     @foreach ($navs as [$navLabel, $navMethod, $canBack, $canForward])
                         <div class="flex items-center gap-1.5 rounded-full bg-black/15 px-1.5 py-1">
                             <button type="button" wire:click="{{ $navMethod }}(-1)" @disabled(!$canBack) class="{{ $arrowClass }}"
@@ -764,7 +761,6 @@ new #[Layout('layouts::public')] class extends Component {
                             </button>
                         </div>
                     @endforeach
-                    </div>
                 </div>
             </div>
         </section>
