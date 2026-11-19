@@ -1,7 +1,7 @@
 @props(['competition'])
 {{--
     Blok partnera rozgrywek w barwach tych rozgrywek: napis (np. „Partner rozgrywek”), nazwa rozgrywek, duże logo,
-    nazwa partnera i link. Prawy panel wyników (równa wysokość z banerem rozgrywek) i telefon (nad banerem).
+    nazwa partnera; cały blok jest linkiem do strony partnera. Prawy panel wyników (równa wysokość z banerem rozgrywek) i telefon (nad banerem).
 --}}
 @php
     $sponsor = $competition->sponsor;
@@ -23,13 +23,7 @@
             <span class="comp-partner-logo flex size-16 shrink-0 items-center justify-center rounded-xl text-2xl font-black uppercase">{{ mb_substr($sponsor->name, 0, 1) }}</span>
         @endif
         <span class="min-w-0">
-            <span class="block truncate text-lg font-bold leading-tight">{{ $sponsor->name }}</span>
-            @if ($sponsor->url)
-                <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold opacity-80 transition group-hover:opacity-100">
-                    {{ __('Visit the partner') }}
-                    <x-ui.icon name="chevron-right" variant="micro" class="transition group-hover:translate-x-0.5" />
-                </span>
-            @endif
+            <span class="line-clamp-2 text-lg font-bold leading-tight">{{ $sponsor->name }}</span>
         </span>
     </span>
 </a>
