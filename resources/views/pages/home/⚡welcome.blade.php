@@ -307,7 +307,7 @@ new #[Layout('layouts::public')] class extends Component {
                 {{-- Kolumna na całą wysokość karty: tablica i odliczanie na środku, stan typu przy dolnej krawędzi --}}
                 <div class="relative flex flex-col justify-between gap-6 overflow-hidden bg-linear-to-br from-lech-900 via-lech-800 to-lech-600 px-5 py-6 text-white sm:px-8 sm:py-8">
                     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgb(255_255_255/0.12),transparent_60%)]"></div>
-                    {{-- Tablica: gospodarz, wynik albo „vs”, gość --}}
+                    {{-- Tablica: gospodarz (zawsze z lewej, więc bez plakietek dom/wyjazd), wynik albo „vs”, gość --}}
                     <div class="relative my-auto flex flex-col gap-6">
                     <div class="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-8">
                         @foreach ($sides as $index => $side)
@@ -328,7 +328,6 @@ new #[Layout('layouts::public')] class extends Component {
                                     <span class="mb-1 h-2 w-20 rounded-full shadow-sm ring-1 ring-black/10 sm:w-32 dark:ring-white/10" style="{{ $stripe }}"></span>
                                 @endif
                                 <span class="{{ $side['lech'] ? 'drop-shadow-[0_0_14px_rgb(96_165_250/0.8)]' : '' }} font-display text-xl font-bold leading-tight text-white sm:text-3xl xl:text-4xl">{{ $side['name'] }}</span>
-                                <span class="rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lech-100">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
                             </div>
                         @endforeach
                     </div>

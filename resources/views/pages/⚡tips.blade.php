@@ -807,7 +807,6 @@ new #[Layout('layouts::public')] class extends Component {
                                 <span class="h-2 w-20 rounded-full shadow-sm ring-1 ring-black/10 sm:w-28" style="{{ $stripe }}"></span>
                             @endif
                             <span class="{{ $side['lech'] ? 'drop-shadow-[0_0_14px_rgb(96_165_250/0.8)]' : '' }} max-w-full font-display text-lg font-bold leading-tight sm:text-2xl xl:text-3xl">{{ $side['name'] }}</span>
-                            <span class="rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lech-100">{{ $index === 0 ? __('HOME') : __('AWAY') }}</span>
                             <x-ui.counter inline class="mt-1" wire:model.live="{{ $side['model'] }}" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
                         </div>
                     @endforeach
