@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Http\Controllers\BannerController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\OgImageController;
@@ -49,6 +50,11 @@ Route::get('manifest.webmanifest', ManifestController::class)->name('manifest');
 Route::get('og/tabela/{competition}/{round}.png', [OgImageController::class, 'table'])->whereNumber('round')->name('og.table');
 Route::get('og/druzyna/{user}.png', [OgImageController::class, 'team'])->name('og.team');
 Route::view('offline', 'offline')->name('offline');
+
+// Rotator banerów partnerów: kliknięcie z przekierowaniem, wyświetlenia z rotatora i statystyki partnera.
+Route::get('b/{campaign}', [BannerController::class, 'click'])->whereNumber('campaign')->name('banner.click');
+Route::post('b/views', [BannerController::class, 'views'])->middleware('throttle:60,1')->name('banner.views');
+Route::livewire('partner/{token}', 'pages::partner-stats')->name('partner.stats');
 
 Route::post('payments/przelewy24/status', [Przelewy24Controller::class, 'status'])->name('przelewy24.status');
 
@@ -112,6 +118,9 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('panel/sponsors', 'pages::dashboard.sponsors')
         ->middleware('permission:season-list')
         ->name('dashboard.sponsors');
+    Route::livewire('panel/banners', 'pages::dashboard.banners')
+        ->middleware('permission:season-list')
+        ->name('dashboard.banners');
     Route::livewire('panel/hall-of-fame', 'pages::dashboard.hall-of-fame')
         ->middleware('permission:season-list')
         ->name('dashboard.hall-of-fame');

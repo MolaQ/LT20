@@ -55,6 +55,7 @@
             $item('user-group', 'dashboard.designation-settings', __('Line-ups'), show: $canSeasons),
             $item('cpu-chip', 'dashboard.bots', __('Bots'), show: $canSeasons),
             $item('megaphone', 'dashboard.sponsors', __('Sponsors'), show: $canSeasons),
+            $item('photo', 'dashboard.banners', __('Partner banners'), show: $canSeasons),
             $item('swatch', 'dashboard.competition-colors', __('Competition colors'), show: $canSeasons),
             $item('paint-brush', 'dashboard.site-colors', __('Site colors'), show: $canRoles),
             $item('wrench-screwdriver', 'dashboard.maintenance', __('Maintenance mode'), show: $canRoles),
