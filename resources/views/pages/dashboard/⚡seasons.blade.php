@@ -942,7 +942,7 @@ new class extends Component {
 
                 <div wire:loading wire:target="banner" class="text-sm text-ui-muted">{{ __('Uploading...') }}</div>
 
-                <x-ui.text class="text-sm">{{ __('Background of the season bar on the home page. PNG, JPG or WebP, 1200–4000 px wide (best 1920×480), up to 4 MB.') }}</x-ui.text>
+                <x-ui.text class="text-sm">{{ __('Background of the season bar on the home page. PNG, JPG or WebP, 1200–4000 px wide (best 1920×400), up to 4 MB. Keep the important part in the middle: phones show the center of the image.') }}</x-ui.text>
                 <x-ui.error name="banner" />
             </div>
 
