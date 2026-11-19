@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Http\Middleware\RememberVisitSource;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SiteMaintenance;
+use App\Http\Middleware\TrackLastSeen;
 use App\Http\Middleware\TrackPageView;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -30,6 +31,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Odsłony stron publicznych do licznika w stopce (bez IP i ciasteczek) i źródło wejścia gościa (rejestracje według źródła).
         $middleware->web(append: [TrackPageView::class, RememberVisitSource::class]);
+
+        // Ostatnia aktywność zalogowanego konta (kolumna „Ostatnio widziany” w panelu użytkowników).
+        $middleware->web(append: [TrackLastSeen::class]);
 
         $middleware->alias([
             'role' => RoleMiddleware::class,

@@ -39,6 +39,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property array<string, bool>|null $push_prefs
  * @property int $profile_views
  * @property Carbon|null $inactivity_reset_at
+ * @property Carbon|null $last_seen_at ostatnia aktywność (App\Http\Middleware\TrackLastSeen)
  * @property bool|null $show_as_supporter pokazuj na ścianie wspierających (domyślnie tak)
  * @property string|null $signup_source skąd przyszło konto: serwis (Facebook…), invite (link zapraszający), host strony albo null (App\Support\Referrals)
  * @property int|null $referred_by kto zaprosił
@@ -73,6 +74,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'premium_until' => 'datetime',
             'inactivity_reset_at' => 'datetime',
+            'last_seen_at' => 'datetime',
             'verification_code_expires_at' => 'datetime',
             'push_prefs' => 'array',
             'show_as_supporter' => 'boolean',
