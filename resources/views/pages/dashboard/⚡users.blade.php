@@ -386,8 +386,9 @@ new class extends Component {
         </x-ui.btn>
         @if ($checkedCount > 0)
             <x-ui.btn size="sm" variant="ghost" icon="x-mark" wire:click="clearChecked">{{ __('Clear selection') }}</x-ui.btn>
-            <x-ui.btn size="sm" icon="lock-open" x-on:click="$dispatch('confirm-action', { message: @js(__('Remove the ban from the selected accounts?')), run: () => $wire.releaseRole(@js(\App\Enums\RoleName::Banned->value)) })">{{ __('Remove ban') }}</x-ui.btn>
-            <x-ui.btn size="sm" icon="arrow-uturn-left" x-on:click="$dispatch('confirm-action', { message: @js(__('Remove Inactive from the selected accounts?')), run: () => $wire.releaseRole(@js(\App\Enums\RoleName::Inactive->value)) })">{{ __('Remove Inactive') }}</x-ui.btn>
+            {{-- Js::from zamiast dyrektywy js w atrybucie komponentu: Livewire brał wtedy resztę szablonu za jej wyrażenie i przekraczał limit wyrażeń regularnych --}}
+            <x-ui.btn size="sm" icon="lock-open" x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Remove the ban from the selected accounts?')) }}, run: () => $wire.releaseRole({{ \Illuminate\Support\Js::from(\App\Enums\RoleName::Banned->value) }}) })">{{ __('Remove ban') }}</x-ui.btn>
+            <x-ui.btn size="sm" icon="arrow-uturn-left" x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Remove Inactive from the selected accounts?')) }}, run: () => $wire.releaseRole({{ \Illuminate\Support\Js::from(\App\Enums\RoleName::Inactive->value) }}) })">{{ __('Remove Inactive') }}</x-ui.btn>
         @endif
     </div>
 
