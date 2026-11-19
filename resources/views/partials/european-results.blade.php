@@ -82,11 +82,13 @@
                         <tbody class="bg-ui-surface text-ui-ink">
                             @foreach ($table->values() as $index => $row)
                                 @php
-                                    $zoneClass = $index < $advance ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-zinc-400 text-ui-muted';
+                                    // Pasek strefy cieniem w pierwszej komórce (jak w tabelach lig): ramka wiersza tabeli się nie rysuje.
+                                    $zoneBar = $index < $advance ? 'shadow-[inset_4px_0_0_#22c55e]' : 'shadow-[inset_4px_0_0_#a1a1aa]';
+                                    $zoneClass = $index < $advance ? '' : 'text-ui-muted';
                                 @endphp
                                 <tr wire:key="group-{{ $group }}-{{ $row['entry_id'] }}"
                                     class="{{ $zoneClass }} border-b border-zinc-100 last:border-b-0 dark:border-zinc-700/50 {{ $this->highlighted($row['team']->id) ? 'bg-amber-50 font-semibold dark:bg-amber-900/20' : '' }}">
-                                    <td class="px-3 py-1.5 text-right tabular-nums text-ui-muted">{{ $index + 1 }}.</td>
+                                    <td class="{{ $zoneBar }} px-3 py-1.5 text-right tabular-nums text-ui-muted">{{ $index + 1 }}.</td>
                                     <td class="max-w-44 truncate px-2 py-1.5">
                                         <button type="button" wire:click="showTeam({{ $row['team']->id }})" class="truncate hover:text-club hover:underline {{ $row['team']->is_bot ? 'italic' : '' }}">{{ $row['team']->name }}</button>
                                         <x-champion-trophies :team="$row['team']" class="ms-1" />
