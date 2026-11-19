@@ -145,7 +145,7 @@ test('the tips page shows the competition tiles with squad, experience, form and
 
     $this->actingAs($me)->get(route('tips', ['matchday_slug' => 'kolejka-1']))->assertOk()
         ->assertSee(__('Your competitions'))
-        ->assertSee(__('Avg. form'))
-        ->assertSee(__('Experience'))
+        ->assertSee(__('Form'))
+        ->assertSee(__('Exp.'))
         ->assertSee('GKS Katowice');
 });

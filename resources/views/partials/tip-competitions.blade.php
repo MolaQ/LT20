@@ -1,5 +1,6 @@
 {{--
-    „Twoje rozgrywki” obok wyniku: kafelek na każde rozgrywki gracza w sezonie, po dwa w wierszu, z etapem albo miejscem.
+    „Twoje rozgrywki” obok wyniku: kafelek na każde rozgrywki gracza w sezonie, po dwa w wierszu (na wąskim telefonie
+    jeden, 19.11.2026: w dwóch kolumnach nazwy i podpisy były ucięte do kilku liter), z etapem albo miejscem.
     Rozgrywki, w których gracz jeszcze gra: klik wybiera je dla składu i pytań, na kafelku wystawieni zawodnicy i odpowiedzi.
     Rozgrywki, z których odpadł: wyszarzone, bez kliknięcia.
     16.11.2026: wyraźniej, że to przełącznik (ludzie nie wiedzieli, że poza Ekstraklasą trzeba ustawić też inne rozgrywki):
@@ -26,7 +27,7 @@
         </div>
         <x-share-image :title="__('Your competitions').' · '.__('Matchday :number', ['number' => $this->matchday?->number])" class="text-ui-muted" />
     </div>
-    <div class="grid flex-1 auto-rows-fr grid-cols-2 gap-2.5">
+    <div class="grid flex-1 auto-rows-fr grid-cols-1 gap-2.5 min-[480px]:grid-cols-2">
         @foreach ($this->myEntries as $entry)
             @php
                 $setValue = $entry['type']->scoreSet()->value;
@@ -50,7 +51,7 @@
                     $missing = !$ready ? __('No squad') : ($questions > 0 && $answered < $questions ? __('Questions :done/:all', ['done' => $answered, 'all' => $questions]) : null);
                 @endphp
                 <span class="flex w-full items-center justify-between gap-2">
-                    <span class="min-w-0 truncate text-sm font-semibold">{{ $entry['name'] }}</span>
+                    <span class="min-w-0 truncate text-sm font-semibold" title="{{ $entry['name'] }}">{{ $entry['name'] }}</span>
                     @if ($playing)
                         <span @class([
                             'flex shrink-0 items-center gap-1 rounded-full px-2 py-px text-[10px] font-bold uppercase tracking-wide',
@@ -74,11 +75,11 @@
                     <span class="grid w-full grid-cols-3 gap-1.5 tabular-nums">
                         @foreach ([
                             [__('Squad'), 'user-group', count($line['players'] ?? []).'/'.($line['max'] ?? 0)],
-                            [__('Experience'), 'star', \App\Support\ClubStats::experience($line['experience'] ?? 0)],
-                            [__('Avg. form'), 'fire', isset($line['form']) ? \App\Support\ClubStats::experience($line['form']) : '–'],
+                            [__('Exp.'), 'star', \App\Support\ClubStats::experience($line['experience'] ?? 0)],
+                            [__('Form'), 'fire', isset($line['form']) ? \App\Support\ClubStats::experience($line['form']) : '–'],
                         ] as [$statLabel, $statIcon, $statValue])
                             <span class="min-w-0 rounded-lg bg-black/20 px-2 py-1.5">
-                                <span class="block truncate text-[9px] font-bold uppercase tracking-wider opacity-75">{{ $statLabel }}</span>
+                                <span class="block truncate text-[10px] font-bold uppercase tracking-wide opacity-75">{{ $statLabel }}</span>
                                 <span class="flex items-center gap-1 text-sm font-bold"><x-ui.icon :name="$statIcon" variant="micro" class="size-3.5 shrink-0" />{{ $statValue }}</span>
                             </span>
                         @endforeach

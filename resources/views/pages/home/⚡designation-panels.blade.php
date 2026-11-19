@@ -260,25 +260,31 @@ new class extends Component {
                             <button type="button" wire:click="toggle({{ $player->id }})" wire:key="avail-{{ $player->id }}" @disabled(!$open || $full)
                                 x-show="pos === '' || pos === '{{ $player->position->value }}'" title="{{ $title }}"
                                 @if ($in) style="{{ \App\Support\CompetitionColors::style($colors[$in] ?? 'league_1') }}" @endif
-                                class="{{ $in ? 'comp-chip font-medium shadow-sm' : 'border border-ui-line hover:border-club/40 hover:bg-ui-raised/60' }} {{ $full && !$in ? 'opacity-50' : '' }} flex min-w-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition disabled:cursor-default">
-                                <span class="w-4 shrink-0 text-[10px] font-semibold uppercase opacity-70">{{ $player->position->short() }}</span>
-                                <span class="w-4 shrink-0 text-right text-[10px] tabular-nums opacity-60">{{ $player->number }}</span>
-                                <span class="min-w-0 flex-1 truncate">
-                                    {{ $player->name }}
-                                    @if ($player->is_academy)
-                                        <x-ui.icon name="academic-cap" variant="micro" class="inline opacity-70" />
+                                class="{{ $in ? 'comp-chip shadow-sm' : 'border border-ui-line hover:border-club/40 hover:bg-ui-raised/60' }} {{ $full && !$in ? 'opacity-50' : '' }} flex min-w-0 flex-col gap-0.5 rounded-lg px-2.5 py-1.5 text-left transition disabled:cursor-default">
+                                {{-- Dwie linie (19.11.2026): na telefonie w jednej linii nazwisko miało jedną literę. Góra: nazwisko na całą szerokość i znacznik; dół: numer, pozycja, forma, doświadczenie. --}}
+                                <span class="flex w-full min-w-0 items-center gap-1">
+                                    <span class="min-w-0 flex-1 truncate text-[13px] font-semibold">
+                                        {{ $player->name }}
+                                        @if ($player->is_academy)
+                                            <x-ui.icon name="academic-cap" variant="micro" class="inline opacity-70" />
+                                        @endif
+                                    </span>
+                                    @if ($inSet)
+                                        <x-ui.icon name="check-circle" variant="micro" class="size-4 shrink-0" />
                                     @endif
                                 </span>
-                                @if ($inSet)
-                                    <x-ui.icon name="check-circle" variant="micro" class="shrink-0" />
-                                @endif
-                                <span class="flex shrink-0 items-center gap-0.5 text-[10px] tabular-nums {{ $in ? 'opacity-80' : 'text-amber-600 dark:text-amber-400' }}" title="{{ __('Form: experience from the last :count Lech matches', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}"><x-ui.icon name="fire" variant="micro" class="size-3" />{{ $fmt($player->lech_form) }}</span>
-                                <span class="shrink-0 text-[10px] tabular-nums opacity-70" title="{{ __('Experience in your club') }}">{{ $fmt($player->club_experience) }}</span>
+                                {{-- Stałe szerokości kolumn: numer 1 i 99 wyglądają tak samo, płomień i gwiazdka zawsze w tym samym miejscu. --}}
+                                <span class="flex w-full min-w-0 items-center gap-1 overflow-hidden text-[11px] tabular-nums">
+                                    <span class="w-4 shrink-0 text-right font-semibold opacity-70">{{ $player->number }}</span>
+                                    <span class="w-3 shrink-0 font-semibold uppercase opacity-70" title="{{ $player->position->label() }}">{{ $player->position->short() }}</span>
+                                    <span class="flex w-8 shrink-0 items-center gap-0.5 {{ $in ? 'opacity-90' : 'text-amber-600 dark:text-amber-400' }}" title="{{ __('Form: experience from the last :count Lech matches', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}"><x-ui.icon name="fire" variant="micro" class="size-3" />{{ $fmt($player->lech_form) }}</span>
+                                    <span class="flex items-center gap-0.5 opacity-75" title="{{ __('Experience in your club') }}"><x-ui.icon name="star" variant="micro" class="size-3" />{{ $fmt($player->club_experience) }}</span>
+                                </span>
                             </button>
                         @endforeach
                     </div>
                 </section>
-                <x-ui.text class="text-xs">{{ __('Next to a player: the flame shows his form (experience from the last :count Lech matches), the last number his experience in your club. A player can be in only one competition type per matchday: clicking him with another type selected moves him there.', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}</x-ui.text>
+                <x-ui.text class="text-xs">{{ __('Under a player: the flame shows his form (experience from the last :count Lech matches), the star his experience in your club. A player can be in only one competition type per matchday: clicking him with another type selected moves him there.', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}</x-ui.text>
             </div>
         @else
             @php
