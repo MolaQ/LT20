@@ -76,7 +76,8 @@ class Squad
         }
 
         $kickoff = $matchday->kickoff_at ?? now();
-        $longest = self::restHoursFor(4, 0);
+        // Najdłuższy odpoczynek z ustawień (stopnie nie muszą rosnąć).
+        $longest = max(array_map(fn (int $step) => Designation::value('rest_hours_'.$step), range(1, 8)));
 
         $previous = Matchday::where('id', '!=', $matchday->id)
             ->whereNotNull('kickoff_at')

@@ -20,10 +20,17 @@ class Designation
         // R4: tyle punktów ataku rywala zabiera czyste konto bramkarza i obrońcy (Lech nie stracił gola w meczu, zawodnik zagrał).
         'clean_sheet_goalkeeper' => 1,
         'clean_sheet_defender' => 1,
-        // R6: odpoczynek w godzinach od gwizdka kolejki, w której klub wystawił zawodnika: podstawa + godziny za połowę gry
-        // (część połowy liczy się jako pół): <45 = 40 h, 45 = 70 h, <90 = 100 h, 90 = 130 h … 120 = 250 h. Ławka bez wejścia: 0.
-        'rest_base_hours' => 10,
-        'rest_hours_per_half' => 60,
+        // R6: odpoczynek w godzinach od gwizdka kolejki, w której klub wystawił zawodnika, osobno dla każdego czasu gry
+        // (19.11.2026, wcześniej podstawa + godziny za połowę). Klucz rest_hours_{n}: n = 2 × całe połowy + części połów,
+        // czyli 1 = część 1. połowy, 2 = cała połowa, 3 = do 90 min bez całości … 8 = cały mecz z dogrywką. Ławka bez wejścia: 0.
+        'rest_hours_1' => 40,
+        'rest_hours_2' => 70,
+        'rest_hours_3' => 100,
+        'rest_hours_4' => 130,
+        'rest_hours_5' => 160,
+        'rest_hours_6' => 190,
+        'rest_hours_7' => 220,
+        'rest_hours_8' => 250,
         // Doświadczenie, premia za skład: wyjściowa jedenastka, wejście z ławki.
         'exp_start' => 1,
         'exp_sub' => 0.5,

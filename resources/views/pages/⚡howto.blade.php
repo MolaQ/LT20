@@ -162,6 +162,116 @@ new #[Layout('layouts::public')] class extends Component {
             @endforeach
         </div>
 
+        {{--
+            Regeneracja po meczu (19.11.2026): grafika dla początkujących. Godziny z ustawień (Designation, rest_hours_1-8),
+            przykład na osi czasu: kolejka w niedzielę o 15:00, następne w środę o 18:00 (+75 h) i w sobotę o 20:30 (+149,5 h).
+        --}}
+        @php
+            $restSteps = collect(range(1, 8))->map(fn (int $step) => [
+                'step' => $step,
+                'hours' => \App\Support\Designation::value('rest_hours_'.$step),
+                'label' => __($step % 2 === 1 ? 'under :minutes min' : ':minutes min', ['minutes' => [1 => 45, 2 => 45, 3 => 90, 4 => 90, 5 => 105, 6 => 105, 7 => 120, 8 => 120][$step]]),
+            ]);
+            $fullMatch = \App\Support\Designation::value('rest_hours_4');
+            $scale = max(170, $fullMatch + 20);
+            $examples = [
+                [__('Sunday 15:00'), 0, __('Kickoff of the matchday. Your player plays the whole match (90 min).')],
+                [__('Wednesday 18:00'), 75, null],
+                [__('Saturday 20:30'), 149.5, null],
+            ];
+        @endphp
+        <div id="recovery" class="scroll-mt-24 space-y-5 rounded-2xl border border-ui-line bg-ui-surface p-5">
+            <div class="flex items-start gap-3">
+                <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-500"><x-ui.icon name="clock" class="size-6" /></span>
+                <div>
+                    <p class="font-display text-lg font-semibold">{{ __('How recovery works') }}</p>
+                    <p class="mt-1 text-sm text-ui-muted">{{ __('Like in real football: a player who played needs time to recover before he can play for your club again. The longer he was on the pitch, the longer it takes.') }}</p>
+                </div>
+            </div>
+
+            {{-- 1. Ile trwa regeneracja: czas gry => godziny --}}
+            <div class="space-y-2">
+                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">1. {{ __('Time on the pitch decides how long') }}</p>
+                <div class="grid grid-cols-4 gap-2 text-center text-sm">
+                    @foreach ($restSteps as $rest)
+                        <div class="rounded-lg border border-ui-line p-2">
+                            <div class="flex justify-center"><x-match-clock :to="$rest['step']" /></div>
+                            <div class="mt-1 text-[11px] text-ui-muted">{{ $rest['label'] }}</div>
+                            <div class="{{ \App\Support\Squad::lockColor($rest['hours']) }} mt-1 whitespace-nowrap rounded px-1 font-bold tabular-nums">{{ $rest['hours'] }} h</div>
+                        </div>
+                    @endforeach
+                </div>
+                <p class="text-xs text-ui-muted">{{ __('The clock shows the time on the pitch, extra time is the second, smaller circle. A substitute who did not come on needs no recovery.') }}</p>
+            </div>
+
+            {{-- 2. Przykład na osi czasu --}}
+            <div class="space-y-3">
+                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">2. {{ __('Example: counted from the kickoff') }}</p>
+                <div class="relative h-24 sm:h-20">
+                    {{-- Oś i pasek regeneracji --}}
+                    <div class="absolute inset-x-0 top-4 h-3 rounded-full bg-ui-raised"></div>
+                    <div class="absolute left-0 top-4 h-3 rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400" style="width: {{ round($fullMatch / $scale * 100, 2) }}%"></div>
+                    <div class="absolute top-0 -translate-x-1/2 text-[11px] font-bold tabular-nums text-ui-ink" style="left: {{ round($fullMatch / $scale * 100, 2) }}%">{{ $fullMatch }} h</div>
+                    @foreach ($examples as [$when, $after])
+                        @php
+                            $ready = $after >= $fullMatch;
+                            $left = round($after / $scale * 100, 2);
+                        @endphp
+                        {{-- Pierwszy znacznik przy lewej krawędzi, żeby podpis nie wychodził poza ramkę na telefonie --}}
+                        <div @class(['absolute top-2.5 flex flex-col', 'items-start' => $after === 0, '-translate-x-1/2 items-center' => $after !== 0]) style="left: {{ $after === 0 ? 0 : min(94, $left) }}%">
+                            <span class="size-6 rounded-full border-4 border-ui-surface {{ $after === 0 ? 'bg-club' : ($ready ? 'bg-green-600' : 'bg-red-600') }}"></span>
+                            <span class="mt-1 whitespace-nowrap text-center text-[11px] font-semibold leading-tight">{{ $when }}</span>
+                            @if ($after > 0)
+                                <span class="whitespace-nowrap text-[10px] tabular-nums text-ui-muted">+{{ str_replace('.', ',', (string) $after) }} h</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+                <div class="grid gap-2 sm:grid-cols-3">
+                    @foreach ($examples as [$when, $after, $what])
+                        @php
+                            $ready = $after >= $fullMatch;
+                        @endphp
+                        <div @class([
+                            'rounded-xl border p-3 text-sm',
+                            'border-club/40 bg-club/5' => $after === 0,
+                            'border-red-500/40 bg-red-500/5' => $after > 0 && !$ready,
+                            'border-green-500/40 bg-green-500/5' => $after > 0 && $ready,
+                        ])>
+                            <p class="font-semibold">{{ $when }}</p>
+                            <p class="mt-0.5 text-ui-muted">
+                                @if ($after === 0)
+                                    {{ $what }}
+                                @elseif ($ready)
+                                    {{ __('Recovered: you can pick him again.') }}
+                                @else
+                                    {{ __('Still recovering: if you pick him, the pick gives nothing.') }}
+                                @endif
+                            </p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- 3. Zasady w punktach --}}
+            <div class="space-y-2">
+                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">3. {{ __('Good to know') }}</p>
+                <ul class="grid gap-2 text-sm sm:grid-cols-2">
+                    @foreach ([
+                        ['flag', __('Counted from the kickoff of the matchday in which you fielded him, not from the end of the match.')],
+                        ['squares-2x2', __('Recovery counts in your club in all competitions at once.')],
+                        ['x-circle', __('A recovering player in your squad gives no points and no experience, but takes a place. Swap him for someone else.')],
+                        ['eye', __('On the tipping page a recovering player has a coloured badge with the time when he is ready again.')],
+                    ] as [$icon, $text])
+                        <li class="flex items-start gap-2 rounded-xl bg-ui-raised/60 p-3">
+                            <x-ui.icon :name="$icon" variant="mini" class="mt-0.5 size-4 shrink-0 text-club" />
+                            <span>{{ $text }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+
         {{-- Przełączanie rozgrywek: najczęstszy błąd nowych graczy --}}
         <div class="overflow-hidden rounded-2xl border-2 border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10">
             <div class="grid gap-5 p-5 md:grid-cols-[1.2fr_1fr] md:items-center">

@@ -395,7 +395,7 @@ new class extends Component {
                     </section>
                 @endif
 
-                <x-ui.text class="text-xs">{{ __('A fielded player who played rests in your club for some hours from the kickoff (from 40 h for part of the first half to 250 h for the whole match with extra time).') }}</x-ui.text>
+                <x-ui.text class="text-xs">{{ __('A fielded player who played needs recovery in your club, counted from the kickoff: from :min h for part of a half to :max h for the whole match with extra time.', ['min' => \App\Support\Designation::value('rest_hours_1'), 'max' => \App\Support\Designation::value('rest_hours_8')]) }} <a href="{{ route('howto') }}#recovery" wire:navigate class="font-semibold text-club hover:underline">{{ __('How recovery works') }}</a></x-ui.text>
             </div>
         @endif
     @endif

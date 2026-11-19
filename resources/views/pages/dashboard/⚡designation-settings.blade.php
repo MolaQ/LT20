@@ -39,10 +39,12 @@ new class extends Component {
                 'clean_sheet_goalkeeper' => [__('Goalkeeper'), __('Attack points taken from the rival when Lech concedes no goal and the player played.'), 0, 10, 1],
                 'clean_sheet_defender' => [__('Defender'), null, 0, 10, 1],
             ],
-            __('Rest') => [
-                'rest_base_hours' => [__('Base hours'), __('A fielded player who played rests in this club for these hours from the kickoff of that matchday (all competition types).'), 0, 500, 1],
-                'rest_hours_per_half' => [__('Hours per half'), __('Added for every half played, part of a half counts as half.'), 0, 200, 1],
-            ],
+            // Odpoczynek osobno dla każdego czasu gry (19.11.2026): stopień 1-8 jak przyciski zejścia w raporcie meczu.
+            __('Rest') => collect(range(1, 8))->mapWithKeys(fn (int $step) => ['rest_hours_'.$step => [
+                __($step % 2 === 1 ? 'Played under :minutes min' : 'Played :minutes min', ['minutes' => [1 => 45, 2 => 45, 3 => 90, 4 => 90, 5 => 105, 6 => 105, 7 => 120, 8 => 120][$step]]),
+                $step === 1 ? __('Hours of rest from the kickoff of the matchday in which the club fielded the player, for every playing time. A whole half counts in full, part of a half as half of it.') : null,
+                0, 500, 1,
+            ]])->all(),
             __('Experience') => [
                 'exp_start' => [__('Starting eleven'), __('Experience decides drawn cup ties before the tip time.'), 0, 10, 0.5],
                 'exp_sub' => [__('Substitute'), null, 0, 10, 0.5],
@@ -136,15 +138,11 @@ new class extends Component {
             {{-- Podgląd: godziny odpoczynku dla przycisków zejścia w raporcie meczu (zawodnik od początku meczu). --}}
             <x-ui.card class="space-y-3">
                 <x-ui.heading size="lg">{{ __('Rest after the match') }}</x-ui.heading>
-                @php
-                    $base = (float) str_replace(',', '.', (string) ($values['rest_base_hours'] ?? 0));
-                    $perHalf = (float) str_replace(',', '.', (string) ($values['rest_hours_per_half'] ?? 0));
-                @endphp
                 <div class="grid grid-cols-4 gap-2 text-center text-sm">
                     @foreach (\App\Support\MatchReport::OFF_LABELS as $slot => $label)
                         @php
                             [$full, $partial] = \App\Support\MatchReport::halves(0, $slot);
-                            $hours = (int) round($base + ($full + $partial / 2) * $perHalf);
+                            $hours = (int) round((float) str_replace(',', '.', (string) ($values['rest_hours_'.\App\Support\MatchReport::restStep($full, $partial)] ?? 0)));
                         @endphp
                         <div class="rounded-lg border border-ui-line p-2 ">
                             <div class="flex justify-center"><x-match-clock :to="$slot" :title="\App\Support\MatchReport::phase($slot, long: true)" /></div>
