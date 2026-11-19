@@ -18,7 +18,7 @@
     <span class="relative z-10 flex items-center gap-4">
         {{-- Logo tak, jak je skadrowano (np. w kole z przezroczystym tłem), bez białej podkładki; podkładka tylko pod literą --}}
         @if ($sponsor->logoUrl())
-            <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="size-16 shrink-0 object-contain drop-shadow-[0_6px_10px_rgb(0_0_0/0.45)]">
+            <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="size-16 shrink-0 object-contain drop-shadow-[0_10px_16px_rgb(0_0_0/0.65)]">
         @else
             <span class="comp-partner-logo flex size-16 shrink-0 items-center justify-center rounded-xl text-2xl font-black uppercase">{{ mb_substr($sponsor->name, 0, 1) }}</span>
         @endif
