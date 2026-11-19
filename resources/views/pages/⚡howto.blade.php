@@ -207,17 +207,26 @@ new #[Layout('layouts::public')] class extends Component {
 
             {{-- 1. Ile trwa regeneracja: czas gry => godziny --}}
             <div class="space-y-2">
-                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">1. {{ __('Time on the pitch decides how long') }}</p>
-                <div class="grid grid-cols-4 gap-2 text-center text-sm">
+                <p class="text-xs font-bold uppercase tracking-wider text-ui-muted">1. {{ __('Time on the pitch decides how long the recovery takes') }}</p>
+                {{-- Legenda zegara czasu gry: ten sam symbol co przy zawodniku na stronie typowania --}}
+                <div class="rounded-xl bg-ui-raised/60 p-3">
+                    <p class="text-sm">{{ __('The clock next to a player shows his time on the pitch: the filled part of the circle is the part of the match he played.') }}</p>
+                    <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-4">
+                        @foreach ([[1, __('part of a half')], [2, __('a whole half')], [4, __('the whole match')], [6, __('teal circle: extra time')]] as [$to, $text])
+                            <span class="flex items-center gap-2"><x-match-clock :to="$to" class="origin-left scale-125" /> <span class="ml-1">{{ $text }}</span></span>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-center text-sm min-[480px]:grid-cols-4">
                     @foreach ($restSteps as $rest)
-                        <div class="rounded-lg border border-ui-line p-2">
-                            <div class="flex justify-center"><x-match-clock :to="$rest['step']" /></div>
-                            <div class="mt-1 text-[11px] text-ui-muted">{{ $rest['label'] }}</div>
-                            <div class="{{ \App\Support\Squad::lockColor($rest['hours']) }} mt-1 whitespace-nowrap rounded px-1 font-bold tabular-nums">{{ $rest['hours'] }} h</div>
+                        <div class="flex flex-col items-center rounded-lg border border-ui-line p-2">
+                            <x-match-clock :to="$rest['step']" class="my-1 scale-125" />
+                            <div class="mt-1 text-[11px] leading-tight text-ui-muted">{{ $rest['label'] }}</div>
+                            <div class="{{ \App\Support\Squad::lockColor($rest['hours']) }} mt-auto w-full whitespace-nowrap rounded px-1 pt-0.5 font-bold tabular-nums">{{ $rest['hours'] }} h</div>
                         </div>
                     @endforeach
                 </div>
-                <p class="text-xs text-ui-muted">{{ __('The clock shows the time on the pitch, extra time is the second, smaller circle. A substitute who did not come on needs no recovery.') }}</p>
+                <p class="text-xs text-ui-muted">{{ __('A substitute who did not come on needs no recovery.') }}</p>
                 {{-- Zmęczony („na żółto”): może grać, ale po meczu regeneruje się dłużej --}}
                 @if ($tiredHours > 0)
                     <div class="flex items-start gap-3 rounded-xl border border-amber-400/60 bg-amber-50 p-3 text-sm dark:border-amber-400/40 dark:bg-amber-500/10">

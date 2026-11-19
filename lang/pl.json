@@ -2643,8 +2643,6 @@
     "Kickoff of the matchday. Your player plays the whole match (90 min).": "Gwizdek kolejki. Twój zawodnik gra cały mecz (90 min).",
     "How recovery works": "Jak działa regeneracja",
     "Like in real football: a player who played needs time to recover before he can play for your club again. The longer he was on the pitch, the longer it takes.": "Jak w prawdziwej piłce: zawodnik, który zagrał, potrzebuje czasu na regenerację, zanim znów zagra w Twoim klubie. Im dłużej był na boisku, tym dłużej to trwa.",
-    "Time on the pitch decides how long": "Czas na boisku decyduje, jak długo",
-    "The clock shows the time on the pitch, extra time is the second, smaller circle. A substitute who did not come on needs no recovery.": "Zegar pokazuje czas na boisku, dogrywka to drugie, mniejsze kółko. Rezerwowy, który nie wszedł, nie potrzebuje regeneracji.",
     "Example: counted from the kickoff": "Przykład: liczone od gwizdka",
     "Recovered: you can pick him again.": "Po regeneracji: możesz go znów wystawić.",
     "Still recovering: if you pick him, the pick gives nothing.": "Jeszcze w regeneracji: jeśli go wystawisz, wybór nic nie da.",
@@ -2691,5 +2689,12 @@
     "Put your sure answers on one side and the risky ones on the other. A miss then costs only one side.": "Pewne odpowiedzi daj na jedną stronę, ryzykowne na drugą. Pudło kosztuje wtedy tylko jedną stronę.",
     "Almost recovered (yellow):": "Prawie zregenerowany (na żółto):",
     "if at the kickoff at most :hours h of his recovery are left, he can play and counts normally, but after this match he needs :factor times longer to recover. Handy before a break in the season.": "gdy w chwili gwizdka zostało mu najwyżej :hours h regeneracji, może grać i liczy się normalnie, ale po tym meczu potrzebuje :factor razy więcej czasu na regenerację. Przydaje się przed przerwą w rozgrywkach.",
-    "Almost recovered (:hours h left): he can play and counts, but afterwards he needs :factor times longer to recover.": "Prawie zregenerowany (zostało :hours h): może grać i się liczy, ale potem potrzebuje :factor razy więcej czasu na regenerację."
+    "Almost recovered (:hours h left): he can play and counts, but afterwards he needs :factor times longer to recover.": "Prawie zregenerowany (zostało :hours h): może grać i się liczy, ale potem potrzebuje :factor razy więcej czasu na regenerację.",
+    "The clock next to a player shows his time on the pitch: the filled part of the circle is the part of the match he played.": "Zegar przy zawodniku pokazuje jego czas na boisku: zamalowana część koła to część meczu, którą zagrał.",
+    "part of a half": "część połowy",
+    "a whole half": "cała połowa",
+    "the whole match": "cały mecz",
+    "teal circle: extra time": "turkusowe kółko: dogrywka",
+    "A substitute who did not come on needs no recovery.": "Rezerwowy, który nie wszedł, nie potrzebuje regeneracji.",
+    "Time on the pitch decides how long the recovery takes": "Czas na boisku decyduje, jak długo trwa regeneracja"
 }
