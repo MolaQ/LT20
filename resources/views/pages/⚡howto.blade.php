@@ -155,13 +155,19 @@ new #[Layout('layouts::public')] class extends Component {
         <x-howto.part-heading number="2" :title="__('Squad and competitions')" :lead="__('For every competition you pick up to :count Lech players. What they do in the real match adds attack or defence to your team.', ['count' => $maxPlayers])" />
 
         <div class="grid gap-4 md:grid-cols-3">
+            {{-- Atak i obrona tymi samymi symbolami i kolorami co na stronie typowania (miecze, tarcza: --q-attack, --q-defense) --}}
             @foreach ([
-                ['bolt', __('Goal or assist'), __('+1 attack for every goal and every assist of your player.'), 'text-green-600 dark:text-green-400'],
-                ['shield-check', __('Clean sheet'), __('A goalkeeper or defender who played in a match without a conceded goal: +1 defence, so your rival scores one goal less.'), 'text-club'],
-                ['clock', __('Rest'), __('A player who played needs rest before you can pick him again. The longer he played, the longer the rest, so rotate your squad.'), 'text-amber-500'],
-            ] as [$icon, $title, $text, $color])
+                ['swords', __('Goal or assist'), __('+1 attack for every goal and every assist of your player.'), 'background: var(--q-attack)', __('Attack')],
+                ['shield', __('Clean sheet'), __('A goalkeeper or defender who played in a match without a conceded goal: +1 defence, so your rival scores one goal less.'), 'background: var(--q-defense)', __('Defence')],
+                ['clock', __('Rest'), __('A player who played needs rest before you can pick him again. The longer he played, the longer the rest, so rotate your squad.'), 'background: #64748b', null],
+            ] as [$icon, $title, $text, $style, $tag])
                 <div class="rounded-2xl border border-ui-line bg-ui-surface p-5">
-                    <x-ui.icon :name="$icon" class="size-7 {{ $color }}" />
+                    <span class="flex items-center gap-2">
+                        <span class="grid size-10 place-items-center rounded-xl text-white shadow-sm" style="{{ $style }}"><x-ui.icon :name="$icon" variant="micro" class="size-5" /></span>
+                        @if ($tag)
+                            <span class="rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" style="{{ $style }}">{{ $tag }}</span>
+                        @endif
+                    </span>
                     <p class="mt-2 font-semibold">{{ $title }}</p>
                     <p class="mt-1 text-sm text-ui-muted">{{ $text }}</p>
                 </div>
@@ -453,9 +459,24 @@ new #[Layout('layouts::public')] class extends Component {
                                     @endif
                                 @endforeach
                             </span>
-                            <span @class(['rounded-full px-2.5 py-1 font-display font-bold tabular-nums', 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-200' => $bonus !== '0', 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200' => $bonus === '0'])>{{ $bonus }}</span>
+                            {{-- Bonus rozpisany na atak i obronę, żeby nowy gracz widział, skąd się bierze --}}
+                            @if ($bonus === '0')
+                                <span class="rounded-full bg-red-100 px-2.5 py-1 font-display font-bold tabular-nums text-red-800 dark:bg-red-500/20 dark:text-red-200">0</span>
+                            @else
+                                <span class="flex shrink-0 flex-col items-end gap-0.5 text-xs font-bold tabular-nums">
+                                    <span class="inline-flex items-center gap-1" style="color: var(--q-attack)">+{{ count(array_keys($marks, 'attack', true)) }} <x-ui.icon name="swords" variant="micro" class="size-3.5" /></span>
+                                    <span class="inline-flex items-center gap-1" style="color: var(--q-defense)">+{{ count(array_keys($marks, 'defense', true)) }} <x-ui.icon name="shield" variant="micro" class="size-3.5" /></span>
+                                </span>
+                            @endif
                         </div>
                     @endforeach
+                </div>
+                {{-- Legenda symboli: te same co na stronie typowania --}}
+                <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-ui-line pt-3 text-xs text-ui-muted">
+                    <span class="flex items-center gap-1.5"><span class="grid size-5 place-items-center rounded text-white" style="background: var(--q-attack)"><x-ui.icon name="swords" variant="micro" class="size-3" /></span>{{ __('hit, attack') }}</span>
+                    <span class="flex items-center gap-1.5"><span class="grid size-5 place-items-center rounded text-white" style="background: var(--q-defense)"><x-ui.icon name="shield" variant="micro" class="size-3" /></span>{{ __('hit, defence') }}</span>
+                    <span class="flex items-center gap-1.5"><span class="grid size-5 place-items-center rounded bg-red-500 text-[10px] font-bold text-white">✕</span>{{ __('miss') }}</span>
+                    <span class="flex items-center gap-1.5"><span class="grid size-5 place-items-center rounded border-[1.5px] border-dashed border-ui-muted/60 text-[10px] font-bold">?</span>{{ __('skipped') }}</span>
                 </div>
                 <p class="mt-3 text-sm text-ui-muted">{{ __('Four hits and one miss give 0. Two sure hits give +2.') }}</p>
             </div>

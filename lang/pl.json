@@ -2676,5 +2676,9 @@
     "A substitute who did not come on needs no recovery. Recovery counts in your club in all competitions at once. A player still recovering at the kickoff gives nothing: no points and no experience.": "Rezerwowy, który nie wszedł, nie potrzebuje regeneracji. Regeneracja obowiązuje w Twoim klubie we wszystkich rozgrywkach naraz. Zawodnik, który w chwili gwizdka jest jeszcze w regeneracji, nic nie daje: ani punktów, ani doświadczenia.",
     "Tired player:": "Zmęczony zawodnik:",
     "if at the kickoff at most :hours h of his recovery are left, he plays and counts normally, but after that match he recovers :factor times longer.": "jeśli w chwili gwizdka zostało mu najwyżej :hours h regeneracji, gra i liczy się normalnie, ale po tym meczu regeneruje się :factor razy dłużej.",
-    "Recovery": "Regeneracja"
+    "Recovery": "Regeneracja",
+    "hit, attack": "trafienie, atak",
+    "hit, defence": "trafienie, obrona",
+    "miss": "pudło",
+    "skipped": "pominięte"
 }
