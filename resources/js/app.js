@@ -4,8 +4,10 @@
 import './news-editor';
 import './share-image';
 import { registerImageCropper } from './image-cropper';
+import { registerBannerRotator } from './banner-rotator';
 
 registerImageCropper();
+registerBannerRotator();
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

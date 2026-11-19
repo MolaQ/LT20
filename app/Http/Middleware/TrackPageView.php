@@ -16,7 +16,8 @@ use Throwable;
  */
 class TrackPageView
 {
-    private const BOTS = '/bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|monitor|curl|wget|python|http-client/i';
+    // Publiczne: korzysta też licznik banerów partnerów (BannerController).
+    public const BOTS = '/bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|monitor|curl|wget|python|http-client/i';
 
     public function handle(Request $request, Closure $next): Response
     {

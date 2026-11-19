@@ -9,7 +9,7 @@
 @php
     $seo = \App\Support\Seo::current();
     $seoTitle = filled($title ?? null) && $title !== config('app.name') ? $title.' - '.config('app.name') : config('app.name');
-    $noindex = $seo['noindex'] || request()->is('panel', 'panel/*', 'settings', 'settings/*', 'login', 'register', 'forgot-password', 'reset-password/*', 'email/*', 'user/*');
+    $noindex = $seo['noindex'] || request()->is('panel', 'panel/*', 'settings', 'settings/*', 'login', 'register', 'forgot-password', 'reset-password/*', 'email/*', 'user/*', 'partner/*');
 @endphp
 <meta name="description" content="{{ $seo['description'] }}">
 @if ($noindex)

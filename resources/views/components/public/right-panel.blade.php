@@ -7,6 +7,8 @@
     @auth
         <livewire:pages::home.rivals-panel />
     @endauth
+    {{-- Banery partnerów (rotator, 300×250) --}}
+    <x-banner-panel />
     {{-- 3 najnowsze newsy: miniatura (pierwszy obrazek z treści albo data), tytuł, kiedy i początek treści. --}}
     @php
         $latestNews = \Illuminate\Support\Facades\Schema::hasTable('news')
