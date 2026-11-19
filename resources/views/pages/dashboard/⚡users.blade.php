@@ -98,7 +98,7 @@ new class extends Component {
 
     private function sortableColumns(): array
     {
-        return ['name', 'email', 'roles_count', 'created_at'];
+        return ['name', 'email', 'roles_count', 'created_at', 'last_seen_at'];
     }
 
     private function safeSortBy(): string
@@ -413,6 +413,10 @@ new class extends Component {
                 wire:click="sort('created_at')">
                 {{ __('Joined') }}
             </x-ui.table.column>
+            <x-ui.table.column sortable :sorted="$sortBy === 'last_seen_at'" :direction="$sortDirection"
+                wire:click="sort('last_seen_at')">
+                {{ __('Last seen') }}
+            </x-ui.table.column>
             <x-ui.table.column />
         </x-ui.table.columns>
 
@@ -476,6 +480,14 @@ new class extends Component {
                         </div>
                     </x-ui.table.cell>
                     <x-ui.table.cell class="text-ui-muted">{{ $user->created_at?->format('Y-m-d') }}</x-ui.table.cell>
+                    {{-- Ostatnia aktywność: „5 minut temu”, pełna data w podpowiedzi; puste przed pierwszą wizytą po wdrożeniu --}}
+                    <x-ui.table.cell class="whitespace-nowrap text-ui-muted">
+                        @if ($user->last_seen_at)
+                            <span title="{{ $user->last_seen_at->format('Y-m-d H:i') }}">{{ $user->last_seen_at->diffForHumans() }}</span>
+                        @else
+                            <span title="{{ __('No visit recorded yet') }}">–</span>
+                        @endif
+                    </x-ui.table.cell>
                     <x-ui.table.cell align="end">
                         <x-ui.btn variant="ghost" size="sm" icon="user" inset="top bottom"
                             x-on:click="$dispatch('user-account', { id: {{ $user->id }} })" :aria-label="__('Edit account')" />
@@ -485,7 +497,7 @@ new class extends Component {
                 </x-ui.table.row>
             @empty
                 <x-ui.table.row>
-                    <x-ui.table.cell colspan="7" class="py-10 text-center text-ui-muted">
+                    <x-ui.table.cell colspan="8" class="py-10 text-center text-ui-muted">
                         {{ __('No users match your filters.') }}
                     </x-ui.table.cell>
                 </x-ui.table.row>
