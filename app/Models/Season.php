@@ -144,7 +144,11 @@ class Season extends Model
             : null);
     }
 
-    /** $season->sponsor_banner_url  ->  adres szerokiego baneru sponsora (tło paska sezonu) albo null. */
+    /**
+     * $season->sponsor_banner_url  ->  adres szerokiego baneru sponsora (tło paska sezonu) albo null.
+     *
+     * @return Attribute<string|null, never>
+     */
     protected function sponsorBannerUrl(): Attribute
     {
         return Attribute::get(fn () => $this->sponsor_banner_path
