@@ -116,7 +116,7 @@ new class extends Component {
             'startsOn' => ['nullable', 'date'],
             'endsOn' => array_filter(['nullable', 'date', $this->startsOn !== '' ? 'after_or_equal:startsOn' : null]),
             'image' => [$campaign->exists && $campaign->slot->value === $this->place ? 'nullable' : 'required',
-                'image', 'mimes:png,jpg,jpeg,webp', 'max:4096', $this->placeEnum()->dimensions()],
+                'image', 'mimes:png,jpg,jpeg,webp', 'max:4096', $this->slotEnum()->dimensions()],
         ], [], [
             'name' => __('Partner'), 'place' => __('Place'), 'caption' => __('Text'), 'url' => __('Link'),
             'weight' => __('Weight'), 'startsOn' => __('From'), 'endsOn' => __('Until'), 'image' => __('Banner'),
@@ -300,7 +300,7 @@ new class extends Component {
             <div class="space-y-2" wire:key="banner-image-{{ $place }}">
                 <x-ui.label>{{ __('Banner') }}</x-ui.label>
                 {{-- Proporcje wymuszone przez miejsce: pasek sezonu 24:5, prawa kolumna 6:5 (300×250) --}}
-                <x-ui.image-cropper model="image" :aspect="$this->placeEnum()->aspect()" format="jpeg" :width="$this->placeEnum()->width()" :label="__('Choose banner')"
+                <x-ui.image-cropper model="image" :aspect="$this->slotEnum()->aspect()" format="jpeg" :width="$this->slotEnum()->width()" :label="__('Choose banner')"
                     :current="$image && ! $errors->has('image') ? $image->temporaryUrl() : ($editId ? \App\Models\BannerCampaign::find($editId)?->imageUrl() : null)" />
                 <x-ui.error name="image" />
             </div>
