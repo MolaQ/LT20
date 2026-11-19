@@ -44,6 +44,7 @@ new class extends Component {
     public string $number = '';
     public string $slogan = '';
     public string $sponsorName = '';
+    public string $sponsorLabel = ''; // napis przy logo, puste = „powered by”
     public string $sponsorUrl = '';
     public $logo = null; // nowo wgrany plik (tymczasowy)
     public ?string $currentLogoPath = null; // logo zapisane w bazie
@@ -205,6 +206,7 @@ new class extends Component {
             'number' => ['required', 'integer', 'min:' . Roman::MIN, 'max:' . Roman::MAX, Rule::unique('seasons', 'number')->ignore($this->seasonId)],
             'slogan' => ['nullable', 'string', 'max:120'],
             'sponsorName' => ['nullable', 'string', 'max:80'],
+            'sponsorLabel' => ['nullable', 'string', 'max:40'],
             // Tylko http/https: wyklucza adresy typu javascript:...
             'sponsorUrl' => ['nullable', 'url:http,https', 'max:255'],
             // Obraz (SVG odrzuca reguła "image"), kwadrat, 200-2000 px, do 2 MB.
@@ -227,6 +229,7 @@ new class extends Component {
             'number' => __('Season number'),
             'slogan' => __('Slogan'),
             'sponsorName' => __('Sponsor name'),
+            'sponsorLabel' => __('Label next to the logo'),
             'sponsorUrl' => __('Sponsor website'),
             'logo' => __('Sponsor logo'),
             'banner' => __('Sponsor banner'),
@@ -236,7 +239,7 @@ new class extends Component {
     /** Walidacja na żywo: numer, slogan, sponsor i logo sprawdzają się od razu po zmianie. */
     public function updated(string $property): void
     {
-        if (!in_array($property, ['number', 'slogan', 'sponsorName', 'sponsorUrl', 'logo', 'banner'], true)) {
+        if (!in_array($property, ['number', 'slogan', 'sponsorName', 'sponsorLabel', 'sponsorUrl', 'logo', 'banner'], true)) {
             return;
         }
 
@@ -278,6 +281,7 @@ new class extends Component {
         $this->number = (string) $season->number;
         $this->slogan = (string) $season->slogan;
         $this->sponsorName = (string) $season->sponsor_name;
+        $this->sponsorLabel = (string) $season->sponsor_label;
         $this->sponsorUrl = (string) $season->sponsor_url;
         $this->currentLogoPath = $season->sponsor_logo_path;
         $this->currentBannerPath = $season->sponsor_banner_path;
@@ -323,6 +327,7 @@ new class extends Component {
                     'number' => (int) $this->number,
                     'slogan' => $this->slogan !== '' ? $this->slogan : null,
                     'sponsor_name' => $this->sponsorName !== '' ? $this->sponsorName : null,
+                    'sponsor_label' => $this->sponsorLabel !== '' ? $this->sponsorLabel : null,
                     'sponsor_url' => $this->sponsorUrl !== '' ? $this->sponsorUrl : null,
                     'sponsor_logo_path' => $logoPath,
                     'sponsor_banner_path' => $bannerPath,
@@ -410,7 +415,7 @@ new class extends Component {
 
     public function resetForm(): void
     {
-        $this->reset('seasonId', 'number', 'slogan', 'sponsorName', 'sponsorUrl', 'logo', 'currentLogoPath', 'removeLogo', 'banner', 'currentBannerPath', 'removeBanner');
+        $this->reset('seasonId', 'number', 'slogan', 'sponsorName', 'sponsorLabel', 'sponsorUrl', 'logo', 'currentLogoPath', 'removeLogo', 'banner', 'currentBannerPath', 'removeBanner');
         $this->resetValidation();
     }
 
@@ -419,6 +424,7 @@ new class extends Component {
         $this->number = trim($this->number);
         $this->slogan = Str::squish($this->slogan);
         $this->sponsorName = Str::squish($this->sponsorName);
+        $this->sponsorLabel = Str::squish($this->sponsorLabel);
         $this->sponsorUrl = trim($this->sponsorUrl);
     }
 
@@ -429,6 +435,7 @@ new class extends Component {
             'number' => $season->number,
             'slogan' => $season->slogan,
             'sponsor_name' => $season->sponsor_name,
+            'sponsor_label' => $season->sponsor_label,
             'sponsor_url' => $season->sponsor_url,
             'sponsor_logo' => $season->sponsor_logo_path ? basename($season->sponsor_logo_path) : null,
             'sponsor_banner' => $season->sponsor_banner_path ? basename($season->sponsor_banner_path) : null,
@@ -878,71 +885,32 @@ new class extends Component {
 
             <x-ui.input wire:model.live.blur="sponsorName" :label="__('Sponsor name')" maxlength="80" />
 
+            <x-ui.input wire:model.live.blur="sponsorLabel" :label="__('Label next to the logo')" maxlength="40"
+                list="sponsor-labels" placeholder="powered by" />
+            @include('partials.sponsor-labels')
+
             <x-ui.input wire:model.live.blur="sponsorUrl" type="url" :label="__('Sponsor website')"
                 placeholder="https://" maxlength="255" />
 
-            {{-- Logo: wybór pliku, podgląd, usuwanie --}}
+            {{-- Logo: edytor (kadr 1:1, tło, kolory), podgląd, usuwanie --}}
             <div class="space-y-2">
                 <x-ui.label>{{ __('Sponsor logo') }}</x-ui.label>
-
-                <div class="flex items-center gap-4">
-                    @if ($this->logoPreview)
-                        <img src="{{ $this->logoPreview }}" alt="{{ __('Sponsor logo') }}"
-                            class="size-20 rounded-lg border border-ui-line object-cover ">
-                    @else
-                        <div
-                            class="flex size-20 items-center justify-center rounded-lg border border-dashed border-zinc-300 text-zinc-400 dark:border-zinc-600">
-                            <x-ui.icon name="photo" class="size-8" />
-                        </div>
-                    @endif
-
-                    <div class="min-w-0 flex-1 space-y-2">
-                        <input type="file" wire:model="logo" accept="image/png,image/jpeg,image/webp"
-                            class="block w-full text-sm text-ui-muted file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-200 dark:file:bg-zinc-700 dark:file:text-zinc-100 dark:hover:file:bg-zinc-600">
-
-                        <div wire:loading wire:target="logo" class="text-sm text-ui-muted">{{ __('Uploading...') }}
-                        </div>
-
-                        @if ($this->logoPreview)
-                            <x-ui.btn type="button" size="xs" variant="ghost" icon="trash"
-                                wire:click="clearLogo">
-                                {{ __('Remove logo') }}
-                            </x-ui.btn>
-                        @endif
-                    </div>
-                </div>
-
-                <x-ui.text class="text-sm">{{ __('PNG, JPG or WebP, square, 200–2000 px, up to 2 MB.') }}</x-ui.text>
+                <x-ui.image-cropper model="logo" aspect="1/1" format="png" :width="600" :current="$this->logoPreview"
+                    :label="__('Choose logo')" :hint="__('PNG, JPG or WebP. After choosing, crop it to a square and remove the background if needed.')" />
+                @if ($this->logoPreview)
+                    <x-ui.btn type="button" size="xs" variant="ghost" icon="trash" wire:click="clearLogo">{{ __('Remove logo') }}</x-ui.btn>
+                @endif
                 <x-ui.error name="logo" />
             </div>
 
-            {{-- Baner: szeroka grafika, tło paska sezonu na stronie głównej --}}
+            {{-- Baner: szeroka grafika, tło paska sezonu na stronie głównej (kadr 24:5 = 1920×400) --}}
             <div class="space-y-2">
                 <x-ui.label>{{ __('Sponsor banner') }}</x-ui.label>
-
+                <x-ui.image-cropper model="banner" aspect="24/5" format="jpeg" :width="1920" :current="$this->bannerPreview"
+                    :label="__('Choose banner')" :hint="__('Background of the season bar on the home page. After choosing, set the crop: phones show the middle of the image.')" />
                 @if ($this->bannerPreview)
-                    <img src="{{ $this->bannerPreview }}" alt="{{ __('Sponsor banner') }}"
-                        class="aspect-[4/1] w-full rounded-lg border border-ui-line object-cover">
-                @else
-                    <div class="flex aspect-[4/1] w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 text-zinc-400 dark:border-zinc-600">
-                        <x-ui.icon name="photo" class="size-8" />
-                    </div>
+                    <x-ui.btn type="button" size="xs" variant="ghost" icon="trash" wire:click="clearBanner">{{ __('Remove banner') }}</x-ui.btn>
                 @endif
-
-                <div class="flex flex-wrap items-center gap-2">
-                    <input type="file" wire:model="banner" accept="image/png,image/jpeg,image/webp"
-                        class="block min-w-0 flex-1 text-sm text-ui-muted file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-200 dark:file:bg-zinc-700 dark:file:text-zinc-100 dark:hover:file:bg-zinc-600">
-
-                    @if ($this->bannerPreview)
-                        <x-ui.btn type="button" size="xs" variant="ghost" icon="trash" wire:click="clearBanner">
-                            {{ __('Remove banner') }}
-                        </x-ui.btn>
-                    @endif
-                </div>
-
-                <div wire:loading wire:target="banner" class="text-sm text-ui-muted">{{ __('Uploading...') }}</div>
-
-                <x-ui.text class="text-sm">{{ __('Background of the season bar on the home page. PNG, JPG or WebP, 1200–4000 px wide (best 1920×400), up to 4 MB. Keep the important part in the middle: phones show the center of the image.') }}</x-ui.text>
                 <x-ui.error name="banner" />
             </div>
 

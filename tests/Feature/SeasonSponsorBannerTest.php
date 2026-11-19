@@ -3,6 +3,7 @@
 use App\Enums\Permission;
 use App\Enums\SeasonStatus;
 use App\Models\Season;
+use App\Models\Sponsor;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +27,9 @@ test('an admin uploads a sponsor banner and the home page shows it', function ()
 
     Livewire::actingAs(seasonEditor())->test('pages::dashboard.seasons')
         ->call('edit', $season->id)
-        ->set('banner', UploadedFile::fake()->image('baner.png', 1920, 480))
+        ->set('banner', UploadedFile::fake()->image('baner.jpg', 1920, 400))
+        ->set('sponsorName', 'KKSLech.com')
+        ->set('sponsorLabel', 'Patron medialny')
         ->call('save')
         ->assertHasNoErrors();
 
@@ -34,7 +37,10 @@ test('an admin uploads a sponsor banner and the home page shows it', function ()
     expect($path)->not->toBeNull();
     Storage::disk('public')->assertExists($path);
 
-    $this->get(route('home'))->assertOk()->assertSee('storage/'.$path, false);
+    $this->get(route('home'))->assertOk()
+        ->assertSee('storage/'.$path, false)
+        ->assertSee('Patron medialny')
+        ->assertSee('KKSLech.com');
 });
 
 test('a too narrow banner is rejected and removing the banner deletes the file', function () {
@@ -56,4 +62,17 @@ test('a too narrow banner is rejected and removing the banner deletes the file',
 
     expect($season->fresh()->sponsor_banner_path)->toBeNull();
     Storage::disk('public')->assertMissing($path);
+});
+
+test('a competition sponsor gets its own label', function () {
+    Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
+
+    Livewire::actingAs(seasonEditor())->test('pages::dashboard.sponsors')
+        ->call('openForm')
+        ->set('name', 'Pizzeria')
+        ->set('label', 'Sponsor ligi')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Sponsor::firstOrFail()->label)->toBe('Sponsor ligi');
 });

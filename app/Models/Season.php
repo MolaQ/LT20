@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $number
  * @property string|null $slogan
  * @property string|null $sponsor_name
+ * @property string|null $sponsor_label
  * @property string|null $sponsor_logo_path
  * @property string|null $sponsor_banner_path
  * @property string|null $sponsor_url
@@ -31,6 +32,7 @@ class Season extends Model
         'number',
         'slogan',
         'sponsor_name',
+        'sponsor_label',
         'sponsor_logo_path',
         'sponsor_banner_path',
         'sponsor_url',

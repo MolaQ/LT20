@@ -27,6 +27,7 @@ new class extends Component {
     // Formularz sponsora.
     public ?int $editId = null;
     public string $name = '';
+    public string $label = ''; // napis przy logo, puste = „powered by”
     public string $url = '';
     public $logo = null;
 
@@ -90,13 +91,14 @@ new class extends Component {
     public function openForm(?int $id = null): void
     {
         $this->authorizeEdit();
-        $this->reset('editId', 'name', 'url', 'logo');
+        $this->reset('editId', 'name', 'label', 'url', 'logo');
         $this->resetValidation();
 
         if ($id) {
             $sponsor = Sponsor::findOrFail($id);
             $this->editId = $sponsor->id;
             $this->name = $sponsor->name;
+            $this->label = (string) $sponsor->label;
             $this->url = (string) $sponsor->url;
         }
 
@@ -109,13 +111,14 @@ new class extends Component {
 
         $this->validate([
             'name' => ['required', 'string', 'max:100'],
+            'label' => ['nullable', 'string', 'max:40'],
             'url' => ['nullable', 'url', 'max:255'],
             'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
-        ], [], ['name' => __('Name'), 'url' => __('Website'), 'logo' => __('Logo')]);
+        ], [], ['name' => __('Name'), 'label' => __('Label next to the logo'), 'url' => __('Website'), 'logo' => __('Logo')]);
 
         $sponsor = $this->editId ? Sponsor::findOrFail($this->editId) : new Sponsor();
-        $old = $sponsor->only(['name', 'url']);
-        $sponsor->fill(['name' => trim($this->name), 'url' => $this->url ?: null]);
+        $old = $sponsor->only(['name', 'label', 'url']);
+        $sponsor->fill(['name' => trim($this->name), 'label' => trim($this->label) ?: null, 'url' => $this->url ?: null]);
 
         if ($this->logo) {
             if ($sponsor->logo_path) {
@@ -125,10 +128,10 @@ new class extends Component {
         }
 
         $sponsor->save();
-        Audit::log($this->editId ? 'sponsor.updated' : 'sponsor.created', null, $old, $sponsor->only(['name', 'url']), $sponsor->name);
+        Audit::log($this->editId ? 'sponsor.updated' : 'sponsor.created', null, $old, $sponsor->only(['name', 'label', 'url']), $sponsor->name);
 
         $this->dispatch('ui-sheet', name: 'sponsor-form', open: false);
-        $this->reset('editId', 'name', 'url', 'logo');
+        $this->reset('editId', 'name', 'label', 'url', 'logo');
         unset($this->sponsors);
         $this->dispatch('ui-toast', variant: 'success', text: __('Sponsor saved.'));
     }
@@ -259,14 +262,15 @@ new class extends Component {
         <div class="space-y-4">
             <x-ui.heading size="lg">{{ $editId ? __('Edit sponsor') : __('New sponsor') }}</x-ui.heading>
             <x-ui.input wire:model="name" :label="__('Name')" />
+            <x-ui.input wire:model="label" :label="__('Label next to the logo')" maxlength="40" list="sponsor-labels" placeholder="powered by" />
+            @include('partials.sponsor-labels')
             <x-ui.input wire:model="url" type="url" :label="__('Website')" placeholder="https://" />
             <div class="space-y-2">
                 <x-ui.label>{{ __('Logo') }}</x-ui.label>
-                <input type="file" wire:model="logo" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm">
+                {{-- Edytor logo: kadr, kształt, usuwanie tła i kolorów --}}
+                <x-ui.image-cropper model="logo" aspect="free" format="png" :width="600" :label="__('Choose logo')"
+                    :current="$logo && ! $errors->has('logo') ? $logo->temporaryUrl() : ($editId ? \App\Models\Sponsor::find($editId)?->logoUrl() : null)" />
                 <x-ui.error name="logo" />
-                @if ($logo && !$errors->has('logo'))
-                    <img src="{{ $logo->temporaryUrl() }}" alt="" class="h-16 object-contain">
-                @endif
             </div>
             <div class="flex justify-end gap-2">
                 <x-ui.modal.close>
