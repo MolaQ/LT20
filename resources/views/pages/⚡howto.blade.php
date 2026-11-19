@@ -37,6 +37,8 @@ new #[Layout('layouts::public')] class extends Component {
         $parts = [
             ['tip', '1', __('Your tip and points')],
             ['squad', '2', __('Squad and competitions')],
+            // Regeneracja to blok części 2: skrót z zegarem zamiast numeru
+            ['recovery', null, __('Recovery')],
             ['experience', '3', __('Experience and form')],
             ['questions', '4', __('Questions and the bonus')],
             ['match', '5', __('Your first match')],
@@ -83,7 +85,13 @@ new #[Layout('layouts::public')] class extends Component {
         <nav class="flex flex-wrap gap-2 pt-2" aria-label="{{ __('Parts of the guide') }}">
             @foreach ($parts as [$anchor, $number, $label])
                 <a href="#{{ $anchor }}" class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold transition hover:bg-white/20">
-                    <span class="grid size-5 place-items-center rounded-full bg-white text-xs font-bold text-lech-900">{{ $number }}</span>{{ $label }}
+                    <span class="grid size-5 place-items-center rounded-full bg-white text-xs font-bold text-lech-900">
+                        @if ($number)
+                            {{ $number }}
+                        @else
+                            <x-ui.icon name="clock" variant="micro" class="size-3.5" />
+                        @endif
+                    </span>{{ $label }}
                 </a>
             @endforeach
         </nav>
