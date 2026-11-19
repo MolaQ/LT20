@@ -2636,6 +2636,8 @@
     "Changes are saved in the change log. The player is not notified.": "Zmiany trafiają do dziennika zmian. Gracz nie dostaje powiadomienia.",
     "Account of :name saved.": "Zapisano konto :name.",
     "changed": "zmienione",
+    "Questions: :answered of :total (attack :attack, defence :defence)": "Pytania: :answered z :total (atak :attack, obrona :defence)",
+    "Questions: :answered of :total": "Pytania: :answered z :total",
     "Shrinks the logo so that all of it fits in the circle.": "Pomniejsza logo tak, żeby całe zmieściło się w kole.",
     "Whole logo in the circle": "Całe logo w kole",
     "Circle background": "Tło koła",

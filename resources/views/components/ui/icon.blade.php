@@ -5,7 +5,7 @@
 @props(['name', 'variant' => 'outline'])
 
 @php
-    $custom = in_array($name, ['start', 'results', 'tip', 'club', 'more', 'chevron', 'swords', 'shield'], true);
+    $custom = in_array($name, ['start', 'results', 'tip', 'club', 'more', 'chevron', 'swords', 'shield', 'battle'], true);
     $solid = in_array($variant, ['solid', 'mini', 'micro'], true);
     $hero = $custom ? null : (once(fn () => require resource_path('icons/heroicons.php'))[$solid ? 'solid' : 'outline'][$name] ?? null);
     $sized = str_contains((string) $attributes->get('class'), 'size-');
@@ -23,6 +23,10 @@
         @case('shield')
             {{-- Tarcza: pytanie obrony --}}
             <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" /><path d="M12 7v10" />
+            @break
+        @case('battle')
+            {{-- Skrzyżowane miecze na tarczy: pytanie z odpowiedzią, bez zdradzania strony bonusu --}}
+            <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" /><path d="m9 9 6 6" /><path d="m15 9-6 6" /><path d="m8.5 13.5 2 2" /><path d="m15.5 13.5-2 2" />
             @break
         @case('start')
             <path d="M3 11 12 4l9 7" /><path d="M5 10v10h14V10" />

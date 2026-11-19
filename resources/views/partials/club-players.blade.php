@@ -84,13 +84,13 @@
             </div>
         </x-slot:actions>
 
-        {{-- Filtr pozycji i przełączniki kolumn --}}
+        {{-- Filtr pozycji i przełączniki kolumn (przyciski rosną od własnej szerokości: „Wszyscy” nie chowa się pod pozycjami) --}}
         <div class="flex flex-wrap items-center gap-2 border-b border-ui-line px-4 py-2.5">
             <div class="flex w-full gap-1 rounded-full bg-ui-raised p-1 sm:inline-flex sm:w-auto">
                 @foreach (['all' => __('Everyone')] + collect(\App\Enums\PlayerPosition::cases())->mapWithKeys(fn ($pos) => [$pos->value => $pos->short()])->all() as $posKey => $posLabel)
                     <button type="button" x-on:click="pos = '{{ $posKey }}'" title="{{ $posKey === 'all' ? $posLabel : \App\Enums\PlayerPosition::from($posKey)->label() }}"
                         x-bind:class="pos === '{{ $posKey }}' ? '{{ $posKey === 'all' ? 'bg-club text-club-ink' : \App\Enums\PlayerPosition::tones()[$posKey] }} shadow ring-2 ring-white/70 dark:ring-white/30' : '{{ $posKey === 'all' ? 'text-ui-muted hover:text-ui-ink' : \App\Enums\PlayerPosition::tones()[$posKey].' opacity-45 hover:opacity-80' }}'"
-                        class="h-7 min-w-9 flex-1 rounded-full px-3 text-xs font-black transition">{{ $posLabel }}</button>
+                        class="h-7 min-w-9 flex-[1_0_auto] whitespace-nowrap rounded-full px-3 text-xs font-black transition">{{ $posLabel }}</button>
                 @endforeach
             </div>
             <div class="flex flex-wrap items-center gap-1">
