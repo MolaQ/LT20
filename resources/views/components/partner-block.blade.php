@@ -1,0 +1,36 @@
+@props(['competition'])
+{{--
+    Blok partnera rozgrywek w barwach tych rozgrywek: napis (np. „Partner rozgrywek”), nazwa rozgrywek, duże logo,
+    nazwa partnera i link. Prawy panel wyników (równa wysokość z banerem rozgrywek) i telefon (nad banerem).
+--}}
+@php
+    $sponsor = $competition->sponsor;
+    $colorKey = $competition->trophyKey();
+    $dashed = \App\Support\CompetitionColors::dashed($colorKey) ? 'comp-dashed' : '';
+@endphp
+<a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
+    {{ $attributes->class(['comp-banner group flex flex-col justify-center gap-2.5 rounded-2xl px-4 py-3 transition', $dashed, 'hover:brightness-110' => (bool) $sponsor->url]) }}
+    style="{{ \App\Support\CompetitionColors::style($colorKey) }}">
+    <span class="relative z-10 flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-widest">
+        <span class="comp-accent">{{ $sponsor->label ?: __('Competition partner') }}</span>
+        <span class="truncate opacity-80">{{ $competition->name ?: $competition->type->label() }}</span>
+    </span>
+    <span class="relative z-10 flex items-center gap-4">
+        <span class="comp-partner-logo flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+            @if ($sponsor->logoUrl())
+                <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="size-full object-contain p-1">
+            @else
+                <span class="text-2xl font-black uppercase">{{ mb_substr($sponsor->name, 0, 1) }}</span>
+            @endif
+        </span>
+        <span class="min-w-0">
+            <span class="block truncate text-lg font-bold leading-tight">{{ $sponsor->name }}</span>
+            @if ($sponsor->url)
+                <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold opacity-80 transition group-hover:opacity-100">
+                    {{ __('Visit the partner') }}
+                    <x-ui.icon name="chevron-right" variant="micro" class="transition group-hover:translate-x-0.5" />
+                </span>
+            @endif
+        </span>
+    </span>
+</a>

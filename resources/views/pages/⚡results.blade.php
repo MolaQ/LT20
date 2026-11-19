@@ -706,28 +706,13 @@ new #[Layout('layouts::public')] class extends Component {
                 [__('Season'), 'shiftSeason', (bool) $older, (bool) $newer],
             ];
         @endphp
-        <section class="comp-banner {{ $dashed }} rounded-2xl px-5 py-6 sm:px-8" style="{{ \App\Support\CompetitionColors::style($colorKey) }}">
-            {{-- Partner rozgrywek na telefonie i tablecie: tabliczka na górze banera. Na dużych ekranach jest w prawym panelu. --}}
-            @if ($sponsor)
-                <a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
-                    class="comp-partner group relative z-10 mb-5 flex items-center gap-3 rounded-2xl py-2.5 pl-2.5 pr-4 xl:hidden">
-                    <span class="comp-partner-logo flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl">
-                        @if ($sponsor->logoUrl())
-                            <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="size-full object-contain p-1">
-                        @else
-                            <span class="text-xl font-black uppercase">{{ mb_substr($sponsor->name, 0, 1) }}</span>
-                        @endif
-                    </span>
-                    <span class="min-w-0 flex-1">
-                        <span class="comp-accent block text-[10px] font-bold uppercase tracking-[0.2em]">{{ $sponsor->label ?: __('Competition partner') }}</span>
-                        <span class="block truncate text-base font-bold leading-tight">{{ $sponsor->name }}</span>
-                    </span>
-                    @if ($sponsor->url)
-                        <x-ui.icon name="chevron-right" variant="micro" class="shrink-0 opacity-75 transition group-hover:translate-x-0.5" />
-                    @endif
-                </a>
-            @endif
-            <div class="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        {{-- Partner rozgrywek na telefonie i tablecie: osobny blok nad banerem. Na dużych ekranach jest w prawym panelu. --}}
+        @if ($sponsor)
+            <x-partner-block :competition="$this->competition" class="xl:hidden" />
+        @endif
+        {{-- Na dużych ekranach ta sama wysokość co blok partnera w prawym panelu. --}}
+        <section class="comp-banner {{ $dashed }} rounded-2xl px-5 py-6 sm:px-8 xl:flex xl:min-h-[8.5rem] xl:items-center" style="{{ \App\Support\CompetitionColors::style($colorKey) }}">
+            <div class="relative z-10 flex w-full flex-col gap-5 md:flex-row md:items-center md:justify-between">
                 <div class="flex min-w-0 items-center gap-4">
                     <div class="comp-badge {{ $dashed }} flex size-20 shrink-0 items-center justify-center rounded-full shadow-lg" title="{{ __('Trophy to win') }}">
                         @if (isset($bannerIcons[$colorKey]))
