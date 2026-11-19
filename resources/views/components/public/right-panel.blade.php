@@ -1,6 +1,7 @@
 <div class="space-y-4">
-    {{-- Strona wyników: mecz Lecha wybranej kolejki na samej górze (okno ze szczegółami typów). --}}
+    {{-- Strona wyników: na samej górze partner wybranych rozgrywek, pod nim mecz Lecha wybranej kolejki (okno ze szczegółami typów). --}}
     @if (request()->routeIs('results'))
+        <livewire:pages::home.partner-panel />
         <livewire:pages::home.lech-match-panel />
     @endif
     {{-- Rywale gracza w kolejce: nad informacją o premium (tylko zalogowani gracze z zespołem). --}}

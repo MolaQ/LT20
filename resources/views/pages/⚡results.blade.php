@@ -69,6 +69,8 @@ new #[Layout('layouts::public')] class extends Component {
         $this->key = $competition_slug ?? $this->legacyKey((string) request()->query('c', ''));
 
         $this->normalize();
+        // Panel partnera w prawej kolumnie pokazuje wybrane rozgrywki.
+        $this->dispatch('results-competition', id: (int) $this->competition?->id);
 
         // Podgląd linku (Facebook, X): obrazek tabeli po wybranej kolejce rysowany na serwerze.
         if ($this->hasTable && $this->competition && $this->season) {
@@ -149,6 +151,7 @@ new #[Layout('layouts::public')] class extends Component {
         $this->js('history.replaceState(history.state, "", ' . json_encode($this->pageUrl()) . ')');
         // Panel meczu Lecha w prawej kolumnie pokazuje wybraną kolejkę.
         $this->dispatch('results-matchday', id: (int) $this->matchday?->id);
+        $this->dispatch('results-competition', id: (int) $this->competition?->id);
     }
 
     /** Poprawia wybór rozgrywek i kolejki po wejściu na stronę albo po zmianie sezonu. */
@@ -703,8 +706,13 @@ new #[Layout('layouts::public')] class extends Component {
                 [__('Season'), 'shiftSeason', (bool) $older, (bool) $newer],
             ];
         @endphp
-        <section class="comp-banner {{ $dashed }} rounded-2xl px-5 py-6 sm:px-8" style="{{ \App\Support\CompetitionColors::style($colorKey) }}">
-            <div class="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        {{-- Partner rozgrywek na telefonie i tablecie: osobny blok nad banerem. Na dużych ekranach jest w prawym panelu. --}}
+        @if ($sponsor)
+            <x-partner-block :competition="$this->competition" class="xl:hidden" />
+        @endif
+        {{-- Na dużych ekranach ta sama wysokość co blok partnera w prawym panelu. --}}
+        <section class="comp-banner {{ $dashed }} rounded-2xl px-5 py-6 sm:px-8 xl:flex xl:min-h-[8.5rem] xl:items-center" style="{{ \App\Support\CompetitionColors::style($colorKey) }}">
+            <div class="relative z-10 flex w-full flex-col gap-5 md:flex-row md:items-center md:justify-between">
                 <div class="flex min-w-0 items-center gap-4">
                     <div class="comp-badge {{ $dashed }} flex size-20 shrink-0 items-center justify-center rounded-full shadow-lg" title="{{ __('Trophy to win') }}">
                         @if (isset($bannerIcons[$colorKey]))
@@ -721,17 +729,6 @@ new #[Layout('layouts::public')] class extends Component {
                         <h1 class="text-3xl font-semibold uppercase tracking-tight sm:text-4xl">
                             {{ $this->competition->name ?: $this->competition->type->label() }}
                         </h1>
-                        @if ($sponsor)
-                            <a @if ($sponsor->url) href="{{ $sponsor->url }}" target="_blank" rel="noopener sponsored" @endif
-                                class="inline-flex items-center gap-2.5 text-xs opacity-90 hover:opacity-100">
-                                <span class="uppercase tracking-widest">{{ $sponsor->label ?: 'powered by' }}</span>
-                                @if ($sponsor->logoUrl())
-                                    <img src="{{ $sponsor->logoUrl() }}" alt="{{ $sponsor->name }}" class="h-10 max-w-40 rounded-md bg-white object-contain p-1">
-                                @else
-                                    <span class="font-semibold">{{ $sponsor->name }}</span>
-                                @endif
-                            </a>
-                        @endif
                     </div>
                 </div>
 
