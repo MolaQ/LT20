@@ -25,7 +25,7 @@ new class extends Component {
 
     public function render(): View
     {
-        return $this->view()->title(__('Competition colors'));
+        return $this->view()->title(__('Competition colours'));
     }
 
     #[Computed]
@@ -62,8 +62,8 @@ new class extends Component {
         );
         CompetitionColors::flush();
 
-        Audit::log('competition_colors.saved', null, [], [], __('Competition colors'));
-        $this->dispatch('ui-toast', variant: 'success', text: __('Colors saved.'));
+        Audit::log('competition_colors.saved', null, [], [], __('Competition colours'));
+        $this->dispatch('ui-toast', variant: 'success', text: __('Colours saved.'));
     }
 
     /** Przywraca barwy domyślne jednych rozgrywek (zapis dopiero po „Zapisz”). */
@@ -82,8 +82,8 @@ new class extends Component {
 <div class="flex h-full w-full flex-1 flex-col gap-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <x-ui.heading size="xl" level="1">{{ __('Competition colors') }}</x-ui.heading>
-            <x-ui.subheading>{{ __('Background gradient, accent and text color of each competition, used in banners, badges and winner marks. Backgrounds without yellow, orange or red; gold only as an accent.') }}</x-ui.subheading>
+            <x-ui.heading size="xl" level="1">{{ __('Competition colours') }}</x-ui.heading>
+            <x-ui.subheading>{{ __('Background gradient, accent and text colour of each competition, used in banners, badges and winner marks. Backgrounds without yellow, orange or red; gold only as an accent.') }}</x-ui.subheading>
         </div>
         @can(\App\Enums\Permission::SeasonEdit->value)
             <x-ui.btn variant="primary" icon="check" wire:click="save">{{ __('Save') }}</x-ui.btn>

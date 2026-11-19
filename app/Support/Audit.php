@@ -101,7 +101,7 @@ class Audit
             'competition.deleted' => __('Competition deleted'),
             'competition.sponsor' => __('Competition sponsor changed'),
             'competition_colors.saved' => __('Competition colours changed'),
-            'site_colors.saved' => __('Site colors changed'),
+            'site_colors.saved' => __('Site colours changed'),
             'european_qualification.updated' => __('European qualification order changed'),
             'european_qualification.reset' => __('European qualification order reset'),
 

@@ -130,7 +130,7 @@ final class Rivals
                 if ($score) {
                     $row['tipped'] = $score->has_tip;
                     $row['tip'] = $score->has_tip ? $score->tip_lech.':'.$score->tip_opponent : null;
-                    $row['bonus'] = (string) __('Offense :offense, defense :defense', ['offense' => $score->offense_bonus, 'defense' => $score->defense_bonus]);
+                    $row['bonus'] = (string) __('Attack :offense, defence :defense', ['offense' => $score->offense_bonus, 'defense' => $score->defense_bonus]);
                 }
             }
 

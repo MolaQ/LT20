@@ -187,7 +187,7 @@ new class extends Component {
             $locks = $this->locks;
             $tired = $this->tired;
             $tiredFactor = rtrim(rtrim(number_format(\App\Support\Designation::number('tired_rest_factor'), 1, ',', ''), '0'), ',');
-            $tiredTitle = __('Tired: he can play, but after this match his recovery takes :factor times longer.', ['factor' => $tiredFactor]);
+            $tiredTitle = __('Almost recovered: he can play, but after this match his recovery takes :factor times longer.', ['factor' => $tiredFactor]);
             $squad = $this->squad;
             $colors = $this->setColors;
             $sets = collect($this->sets)->keyBy(fn ($set) => $set->value);
