@@ -2660,7 +2660,6 @@
     "A player who at the kickoff needs at most this many hours to finish his recovery can play, but his next recovery is longer. 0 turns it off.": "Zawodnik, któremu w chwili gwizdka zostało najwyżej tyle godzin regeneracji, może zagrać, ale jego następna regeneracja jest dłuższa. 0 wyłącza tę zasadę.",
     "Tired player: recovery multiplier": "Zmęczony zawodnik: mnożnik regeneracji",
     "How many times longer the recovery after his match is.": "Ile razy dłużej trwa regeneracja po jego meczu.",
-    "Almost recovered: if at the kickoff at most :hours h of his recovery are left, he can play and counts normally, but afterwards he recovers :factor times longer. Handy before a break in the season.": "Prawie zregenerowany: jeśli w chwili gwizdka zostało mu najwyżej :hours h regeneracji, może zagrać i liczy się normalnie, ale potem regeneruje się :factor razy dłużej. Przydaje się przed przerwą w rozgrywkach.",
     "A Lech player who played needs recovery in your club before he can play for it again. It is counted from the kickoff of the matchday in which you fielded him and depends on his time on the pitch:": "Zawodnik Lecha, który zagrał, potrzebuje regeneracji w Twoim klubie, zanim znów w nim zagra. Liczy się ją od gwizdka kolejki, w której go wystawiłeś, i zależy od czasu na boisku:",
     "less than 45 min: :a, 45 min: :b,": "mniej niż 45 min: :a, 45 min: :b,",
     "less than 90 min: :a, 90 min: :b,": "mniej niż 90 min: :a, 90 min: :b,",
@@ -2691,5 +2690,6 @@
     "Split the risk": "Rozłóż ryzyko",
     "Put your sure answers on one side and the risky ones on the other. A miss then costs only one side.": "Pewne odpowiedzi daj na jedną stronę, ryzykowne na drugą. Pudło kosztuje wtedy tylko jedną stronę.",
     "Almost recovered (yellow):": "Prawie zregenerowany (na żółto):",
-    "he can play and counts normally, but after this match he needs :factor times longer to recover.": "może grać i liczy się normalnie, ale po tym meczu potrzebuje :factor razy więcej czasu na regenerację."
+    "if at the kickoff at most :hours h of his recovery are left, he can play and counts normally, but after this match he needs :factor times longer to recover. Handy before a break in the season.": "gdy w chwili gwizdka zostało mu najwyżej :hours h regeneracji, może grać i liczy się normalnie, ale po tym meczu potrzebuje :factor razy więcej czasu na regenerację. Przydaje się przed przerwą w rozgrywkach.",
+    "Almost recovered (:hours h left): he can play and counts, but afterwards he needs :factor times longer to recover.": "Prawie zregenerowany (zostało :hours h): może grać i się liczy, ale potem potrzebuje :factor razy więcej czasu na regenerację."
 }
