@@ -228,7 +228,7 @@ final class Badges
     /** @return list<int> id zakończonych sezonów */
     private static function finishedSeasons(): array
     {
-        return array_map('intval', DB::table('seasons')->where('status', SeasonStatus::Finished->value)->pluck('id')->all());
+        return array_values(array_map('intval', DB::table('seasons')->where('status', SeasonStatus::Finished->value)->pluck('id')->all()));
     }
 
     /** Typy i pytania: prorok, pod prąd, snajper, seria, komplet, wszystkowiedzący, żelazny kibic, ranny ptaszek. */
@@ -270,7 +270,7 @@ final class Badges
                 if ($result['exact'] && self::PROPHET_PERCENT * $total > $scores[$tip->lech_goals.':'.$tip->opponent_goals] * 100) {
                     $counts['prophet'][$userId] = ($counts['prophet'][$userId] ?? 0) + 1;
                 }
-                if ($result['outcome'] && self::AGAINST_PERCENT * $total >= $outcomes[$tip->lech_goals <=> $tip->opponent_goals] * 100) {
+                if ($result['outcome'] && self::AGAINST_PERCENT * $total >= ($outcomes[$tip->lech_goals <=> $tip->opponent_goals] ?? 0) * 100) {
                     $counts['against'][$userId] = ($counts['against'][$userId] ?? 0) + 1;
                 }
                 if ($tip->save_order !== null && ($first === null || (int) $tip->save_order < (int) $first->save_order)) {
