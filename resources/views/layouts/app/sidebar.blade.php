@@ -1,7 +1,7 @@
 {{--
     Panel admina w wyglądzie 2.0 (bez Flux): boczne menu (na telefonie wysuwane), treść, dymki i okno potwierdzenia skorupy.
-    Menu według kolejności pracy: sezon i jego kolejki (mecz, typy, wynik), rozgrywki, gracze, treści,
-    a na końcu rzadko zmieniane ustawienia. Kalendarz Lecha to zakładka „Kolejek”, lista kontrolna jest na pulpicie.
+    Menu według kolejności pracy: kolejka (mecz, pytania, typy, wynik), rozgrywki i sezony, gracze, promocja,
+    ustawienia gry, a na końcu rzadko zmieniane ustawienia systemowe. Kalendarz Lecha to zakładka „Kolejek”, lista kontrolna jest na pulpicie.
 --}}
 @php
     $user = auth()->user();
@@ -22,40 +22,42 @@
     $item = fn (string $icon, string $route, string $label, array $active = [], int $badge = 0, string $tone = 'amber', bool $show = true) => compact('icon', 'route', 'label', 'active', 'badge', 'tone', 'show');
 
     $groups = [
-        [__('Season'), $canSeasons, [
+        [__('Matchday'), $canSeasons, [
             $item('sparkles', 'dashboard.matchday-wizard', __('Matchday wizard')),
-            $item('calendar-days', 'dashboard.seasons', __('Seasons')),
             $item('calendar', 'dashboard.matchdays', __('Matchdays'), ['dashboard.matchdays', 'dashboard.lech-calendar']),
-            $item('users', 'dashboard.lech-squad', __('Lech squad')),
-            $item('swatch', 'dashboard.rivals', __('Rivals')),
-            $item('check-badge', 'dashboard.tips', __('Tips overview')),
             $item('question-mark-circle', 'dashboard.questions', __('Questions')),
+            $item('check-badge', 'dashboard.tips', __('Tips overview')),
             $item('flag', 'dashboard.results', __('Results')),
         ]],
         [__('Competitions'), $canSeasons, [
+            $item('calendar-days', 'dashboard.seasons', __('Seasons')),
             $item('list-bullet', 'dashboard.season-teams', __('Team list')),
             $item('trophy', 'dashboard.competitions', __('Competitions')),
             $item('table-cells', 'dashboard.fixtures', __('Fixtures')),
             $item('globe-europe-africa', 'dashboard.european-qualification', __('European qualification')),
+            $item('users', 'dashboard.lech-squad', __('Lech squad')),
+            $item('swatch', 'dashboard.rivals', __('Rivals')),
         ]],
         [__('Players'), $canRoles || $canRequests, [
             $item('users', 'dashboard.users', __('Users'), show: $canRoles),
             $item('cpu-chip', 'dashboard.automats', __('Automats'), show: $canRoles),
             $item('identification', 'dashboard.team-requests', __('Team requests'), badge: $requests, show: $canRequests),
             $item('banknotes', 'dashboard.payments', __('Payments'), show: $canRoles),
-        ]],
-        [__('Site content'), $canNews || $canRoles, [
-            $item('newspaper', 'dashboard.news', __('News'), show: $canNews),
-            $item('book-open', 'dashboard.guide', __('Rules, FAQ and coffee'), show: $canNews),
-            $item('chart-bar', 'dashboard.site-statistics', __('Visit statistics'), show: $canRoles),
             $item('inbox', 'dashboard.office', __('Complaints and requests office'), badge: $office, show: $canRoles),
         ]],
-        [__('Game settings'), $canSeasons || $canRoles || $canLogs, [
+        [__('Marketing'), $canNews || $canSeasons || $canRoles, [
+            $item('newspaper', 'dashboard.news', __('News'), show: $canNews),
+            $item('megaphone', 'dashboard.sponsors', __('Sponsors'), show: $canSeasons),
+            $item('photo', 'dashboard.banners', __('Partner banners'), show: $canSeasons),
+            $item('chart-bar', 'dashboard.site-statistics', __('Visit statistics'), show: $canRoles),
+        ]],
+        [__('Game settings'), $canSeasons || $canNews, [
             $item('star', 'dashboard.hall-of-fame', __('Hall of Fame'), show: $canSeasons),
             $item('user-group', 'dashboard.designation-settings', __('Line-ups'), show: $canSeasons),
             $item('cpu-chip', 'dashboard.bots', __('Bots'), show: $canSeasons),
-            $item('megaphone', 'dashboard.sponsors', __('Sponsors'), show: $canSeasons),
-            $item('photo', 'dashboard.banners', __('Partner banners'), show: $canSeasons),
+            $item('book-open', 'dashboard.guide', __('Rules, FAQ and coffee'), show: $canNews),
+        ]],
+        [__('System'), $canSeasons || $canRoles || $canLogs, [
             $item('swatch', 'dashboard.competition-colors', __('Competition colours'), show: $canSeasons),
             $item('paint-brush', 'dashboard.site-colors', __('Site colours'), show: $canRoles),
             $item('wrench-screwdriver', 'dashboard.maintenance', __('Maintenance mode'), show: $canRoles),
