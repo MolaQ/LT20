@@ -28,7 +28,6 @@
             $item('question-mark-circle', 'dashboard.questions', __('Questions')),
             $item('check-badge', 'dashboard.tips', __('Tips overview')),
             $item('flag', 'dashboard.results', __('Results')),
-            $item('photo', 'dashboard.matchday-graphics', __('Matchday graphics')),
         ]],
         [__('Competitions'), $canSeasons, [
             $item('calendar-days', 'dashboard.seasons', __('Seasons')),
