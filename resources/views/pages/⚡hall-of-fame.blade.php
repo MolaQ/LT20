@@ -229,11 +229,15 @@ new #[Layout('layouts::public')] class extends Component {
                 </button>
             @endforeach
         </div>
-        @auth
-            @if ($kind === 'users' && $this->ranking->contains('id', $me))
-                <x-ui.btn size="sm" icon="map-pin" wire:click="jumpToMe">{{ __('My place') }}</x-ui.btn>
-            @endif
-        @endauth
+        <div class="flex flex-wrap items-center gap-2">
+            {{-- Wyścig o nagrody indywidualne bieżącego sezonu --}}
+            <x-ui.btn size="sm" icon="sparkles" :href="route('awards')" wire:navigate>{{ __('Race for the awards') }}</x-ui.btn>
+            @auth
+                @if ($kind === 'users' && $this->ranking->contains('id', $me))
+                    <x-ui.btn size="sm" icon="map-pin" wire:click="jumpToMe">{{ __('My place') }}</x-ui.btn>
+                @endif
+            @endauth
+        </div>
     </div>
 
     @if ($this->ranking->isEmpty())

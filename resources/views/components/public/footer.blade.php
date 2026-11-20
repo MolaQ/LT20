@@ -12,6 +12,7 @@
         [route('rules'), __('Rules')],
         [route('faq'), __('FAQ')],
         [route('support'), __('Support and premium')],
+        [route('awards'), __('Race for the awards')],
         [route('hall-of-fame'), __('Hall of Fame')],
         [route('history'), __('History')],
         [route('stars'), __('Stars')],

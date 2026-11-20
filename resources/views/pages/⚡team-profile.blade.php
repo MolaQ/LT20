@@ -20,12 +20,13 @@ use Livewire\Component;
  * oraz historia zakończonych sezonów (miejsca w rozgrywkach i zdobyte punkty).
  * W banerze licznik wyświetleń (oko, raz na sesję odwiedzającego, bez właściciela) i polubienia (niebieskie serduszko).
  * Zakładka „Kadra” (17.11.2026, domyślna; przegląd pod ?widok=przeglad): dorobek zawodników wystawionych przez drużynę (Support\TeamSquad),
- * swoją widzi każdy, cudzą tylko premium.
+ * swoją widzi każdy, cudzą tylko premium. Zakładka „Nagrody” (?widok=nagrody, 20.11.2026): miejsce drużyny w wyścigu o nagrody
+ * indywidualne sezonu i sąsiedzi w tabeli (Support\AwardRace), pełne tabele na /nagrody.
  */
 new #[Layout('layouts::public')] class extends Component {
     public User $user;
 
-    /** Zakładka: kadra (domyślna, 17.11.2026) albo przegląd (?widok=przeglad). */
+    /** Zakładka: kadra (domyślna, 17.11.2026), przegląd (?widok=przeglad) albo nagrody (?widok=nagrody). */
     #[Url(as: 'widok', except: 'kadra')]
     public string $tab = 'kadra';
 
@@ -257,6 +258,50 @@ new #[Layout('layouts::public')] class extends Component {
         return $allowed ? \App\Support\TeamSquad::for($this->user->id, $this->currentSeason) : null;
     }
 
+    /**
+     * Wyścig o nagrody: dla każdej nagrody i ligi drużyny miejsce i wycinek tabeli wokół niej (pusto bez rozliczonej kolejki).
+     *
+     * @return array<string, array{label: string, icon: string, grad: string, rank: int, rows: list<array<string, mixed>>, leader: array<string, mixed>}>
+     */
+    #[Computed]
+    public function awardRace(): array
+    {
+        $season = \App\Support\AwardRace::season();
+        if (! $season || ! \App\Support\AwardRace::data($season)['last']) {
+            return [];
+        }
+
+        $team = collect(\App\Support\AwardRace::data($season)['rows'])->firstWhere('user_id', $this->user->id);
+        if (! $team) {
+            return [];
+        }
+
+        $tables = [];
+        foreach (\App\Support\AwardRace::meta() as $key => $meta) {
+            $tables[$key] = $meta + ['rows' => \App\Support\AwardRace::ranking($season, $key)];
+        }
+
+        // Król strzelców ligi drużyny.
+        $competitionId = \App\Support\AwardRace::leagueOf($season, $team['team_id']);
+        $competition = $competitionId ? \App\Models\Competition::find($competitionId) : null;
+        if ($competition) {
+            $tables['scorers'] = ['label' => __('Top scorer: :league', ['league' => \App\Support\AwardRace::leagues($season)[$competitionId]['name']]), 'icon' => 'flag', 'grad' => 'from-sky-500 to-blue-700',
+                'rows' => \App\Support\AwardRace::scorers($competition)];
+        }
+
+        $out = [];
+        foreach ($tables as $key => $table) {
+            $around = \App\Support\AwardRace::around($table['rows'], $team['team_id']);
+            $mine = collect($around)->firstWhere('team_id', $team['team_id']);
+            if (! $mine) {
+                continue;
+            }
+            $out[$key] = ['label' => $table['label'], 'icon' => $table['icon'], 'grad' => $table['grad'], 'rank' => $mine['rank'], 'rows' => $around, 'leader' => $table['rows'][0]];
+        }
+
+        return $out;
+    }
+
     #[Computed]
     public function icons(): array
     {
@@ -332,7 +377,7 @@ new #[Layout('layouts::public')] class extends Component {
 
     {{-- Zakładki: przegląd zespołu i kadra --}}
     <div class="flex gap-1 self-start rounded-2xl bg-ui-raised p-1" role="tablist">
-        @foreach (['kadra' => [__('Roster'), 'user-group'], 'przeglad' => [__('Overview'), 'home']] as $tabKey => [$tabLabel, $tabIcon])
+        @foreach (['kadra' => [__('Roster'), 'user-group'], 'przeglad' => [__('Overview'), 'home'], 'nagrody' => [__('Awards'), 'trophy']] as $tabKey => [$tabLabel, $tabIcon])
             <button type="button" role="tab" wire:click="$set('tab', '{{ $tabKey }}')" aria-selected="{{ $tab === $tabKey ? 'true' : 'false' }}"
                 @class(['inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition', 'bg-ui-surface shadow' => $tab === $tabKey, 'text-ui-muted hover:text-ui-ink' => $tab !== $tabKey])>
                 <x-ui.icon :name="$tabIcon" variant="micro" /> {{ $tabLabel }}
@@ -340,7 +385,9 @@ new #[Layout('layouts::public')] class extends Component {
         @endforeach
     </div>
 
-    @if ($tab !== 'przeglad')
+    @if ($tab === 'nagrody')
+        @include('partials.team-awards', ['race' => $this->awardRace, 'teamName' => $user->team_name ?: $user->name, 'mine' => auth()->id() === $user->id])
+    @elseif ($tab !== 'przeglad')
         @if ($this->teamSquad)
             @include('partials.team-squad', ['squad' => $this->teamSquad, 'teamName' => $user->team_name ?: $user->name])
         @else

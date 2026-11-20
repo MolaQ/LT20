@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Support\AwardRace;
 use App\Support\Champions;
 use App\Support\CompetitionHistory;
 use App\Support\HallOfFame;
@@ -24,6 +25,7 @@ abstract class TestCase extends BaseTestCase
      * @var list<class-string>
      */
     private const STATIC_CACHES = [
+        AwardRace::class,
         Champions::class,
         CompetitionHistory::class,
         HallOfFame::class,
