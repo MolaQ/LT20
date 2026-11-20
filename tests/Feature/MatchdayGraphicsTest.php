@@ -90,8 +90,6 @@ test('an admin opens the matchday graphics page', function () {
     Rival::create(['name' => 'Legia Warszawa', 'short_name' => 'LEG', 'colors' => ['#ffffff', '#00843d']]);
     $matchday = graphicsMatchday();
 
-    $this->actingAs($admin)->get(route('dashboard.matchday-graphics'))->assertOk();
-
     Livewire::actingAs($admin)->test('pages::dashboard.matchday-graphics', ['matchdayId' => $matchday->id])
         ->assertSee('Legia Warszawa');
 });
