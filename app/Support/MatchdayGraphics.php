@@ -4,12 +4,14 @@ namespace App\Support;
 
 use App\Enums\CompetitionType;
 use App\Models\Competition;
+use App\Models\CompetitionEntry;
 use App\Models\Fixture;
 use App\Models\Matchday;
 use App\Models\MatchdayQuestion;
 use App\Models\QuestionAnswer;
 use App\Models\Rival;
 use App\Models\Season;
+use App\Models\SeasonTeam;
 use App\Models\TeamScore;
 use App\Models\Tip;
 
@@ -150,8 +152,8 @@ final class MatchdayGraphics
 
             if ($competition->type === CompetitionType::Cup) {
                 // Miejsce na liście zespołów: im niżej numer, tym wyżej zespół.
-                $best = $fixtures->filter(fn (Fixture $f) => $f->home?->seasonTeam && $f->away?->seasonTeam)
-                    ->sortBy(fn (Fixture $f) => ($f->home?->seasonTeam->position ?? 0) + ($f->away?->seasonTeam->position ?? 0))->first();
+                $best = $fixtures->filter(fn (Fixture $f) => self::team($f->home) && self::team($f->away))
+                    ->sortBy(fn (Fixture $f) => (self::team($f->home)?->position ?? 0) + (self::team($f->away)?->position ?? 0))->first();
                 if ($best) {
                     $hits['cup'] = self::row($competition->name, $best, '', '');
                 }
@@ -168,8 +170,8 @@ final class MatchdayGraphics
 
             $scored = $fixtures->filter(fn (Fixture $f) => isset($places[$f->home_entry_id], $places[$f->away_entry_id]))
                 ->map(function (Fixture $f) use ($places) {
-                    $home = $places[$f->home_entry_id];
-                    $away = $places[$f->away_entry_id];
+                    $home = $places[(int) $f->home_entry_id];
+                    $away = $places[(int) $f->away_entry_id];
 
                     return ['fixture' => $f, 'home' => $home, 'away' => $away,
                         'score' => $home['place'] + $away['place'] + abs($home['points'] - $away['points'])];
@@ -204,13 +206,21 @@ final class MatchdayGraphics
         ]));
     }
 
+    /** Zespół wpisu w rozgrywkach (albo dorobku kolejki); relacje bez typów generycznych, więc sprawdzamy klasę. */
+    private static function team(mixed $model): ?SeasonTeam
+    {
+        $team = ($model instanceof CompetitionEntry || $model instanceof TeamScore) ? $model->seasonTeam : null;
+
+        return $team instanceof SeasonTeam ? $team : null;
+    }
+
     /** @return array{competition: string, home: string, away: string, home_note: string, away_note: string} */
     private static function row(string $competition, Fixture $fixture, string $homeNote, string $awayNote): array
     {
         return [
             'competition' => $competition,
-            'home' => (string) $fixture->home?->seasonTeam?->name,
-            'away' => (string) $fixture->away?->seasonTeam?->name,
+            'home' => (string) self::team($fixture->home)?->name,
+            'away' => (string) self::team($fixture->away)?->name,
             'home_note' => $homeNote,
             'away_note' => $awayNote,
         ];
@@ -231,7 +241,8 @@ final class MatchdayGraphics
             ->orderBy('tip_order')
             ->limit(3)
             ->get()
-            ->map(fn (TeamScore $s) => ['name' => (string) $s->seasonTeam?->name, 'goals' => $s->offense])
+            ->map(fn (TeamScore $s) => ['name' => (string) self::team($s)?->name, 'goals' => $s->offense])
+            ->values()
             ->all();
     }
 
@@ -276,9 +287,9 @@ final class MatchdayGraphics
 
         return [
             'percent' => $percent,
-            'outcome' => $outcome,
+            'outcome' => (string) $outcome,
             'exact' => $exact->isNotEmpty(),
-            'names' => $names->take(self::NAMES)->all(),
+            'names' => $names->take(self::NAMES)->values()->all(),
             'more' => max(0, $names->count() - self::NAMES),
         ];
     }

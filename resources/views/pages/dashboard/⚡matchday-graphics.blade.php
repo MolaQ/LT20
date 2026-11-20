@@ -143,10 +143,10 @@ new class extends Component
                         {!! $top !!}
                         <div class="my-auto flex items-center justify-between">
                             @foreach ([$home, $away] as $i => $team)
-                                <div class="w-[38%] text-center">
-                                    <div class="mx-auto grid size-16 place-items-center rounded-full text-lg font-black shadow-xl ring-4 ring-white/80" style="background: {{ $team['colors'][0] }}; color: {{ $team['ink'] }}">{{ $team['short'] }}</div>
-                                    <div class="mt-2 text-sm font-extrabold leading-tight" style="color: {{ $team['ink'] }}">{{ $team['name'] }}</div>
-                                    <div class="mx-auto mt-1.5 h-1.5 w-12 rounded-full" style="background: {{ $stripe($team['colors']) }}"></div>
+                                {{-- Bez herbów: duża nazwa w barwie napisu dla tła drużyny i pasek jej barw --}}
+                                <div class="w-[40%] text-center">
+                                    <div @class(['font-black uppercase leading-none tracking-tight drop-shadow', 'text-lg' => mb_strlen($team['name']) <= 12, 'text-base' => mb_strlen($team['name']) > 12 && mb_strlen($team['name']) <= 16, 'text-sm' => mb_strlen($team['name']) > 16]) style="color: {{ $team['ink'] }}">{{ $team['name'] }}</div>
+                                    <div class="mx-auto mt-2 h-1.5 w-14 rounded-full ring-1 ring-black/20" style="background: {{ $stripe($team['colors']) }}"></div>
                                 </div>
                                 @if ($i === 0)
                                     <div class="grid size-10 shrink-0 place-items-center rounded-full bg-lech-950 text-xs font-black text-amber-300 ring-2 ring-amber-300">VS</div>

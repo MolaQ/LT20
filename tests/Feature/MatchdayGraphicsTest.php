@@ -93,6 +93,5 @@ test('an admin opens the matchday graphics page', function () {
     $this->actingAs($admin)->get(route('dashboard.matchday-graphics'))->assertOk();
 
     Livewire::actingAs($admin)->test('pages::dashboard.matchday-graphics', ['matchdayId' => $matchday->id])
-        ->assertSee('Legia Warszawa')
-        ->assertSee('LEG');
+        ->assertSee('Legia Warszawa');
 });
