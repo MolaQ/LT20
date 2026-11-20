@@ -143,7 +143,7 @@ final class AwardRace
             $rows = [];
             foreach (Standings::for($competition)->values() as $index => $row) {
                 $team = $row['team'];
-                if (! $team || (! $team->user_id && ! $team->bot_id)) {
+                if (! $team->user_id && ! $team->bot_id) {
                     continue;
                 }
                 $rows[] = [
@@ -192,7 +192,7 @@ final class AwardRace
                 'bot' => $team->user_id === null,
                 'name' => $team->name,
                 'url' => $team->profileUrl(),
-                'tier' => $team->league->value,
+                'tier' => League::forPosition($team->position)->value,
                 'position' => $team->position,
                 'outcomes' => 0, 'attack' => 0, 'defense' => 0, 'mvp' => 0, 'goals' => 0, 'boot' => 0, 'gloves' => 0,
                 'prev' => ['mvp' => 0, 'goals' => 0, 'boot' => 0, 'gloves' => 0],
