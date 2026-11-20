@@ -111,6 +111,9 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('panel/tips', 'pages::dashboard.tips-overview')
         ->middleware('permission:season-list')
         ->name('dashboard.tips');
+    Route::livewire('panel/graphics', 'pages::dashboard.matchday-graphics')
+        ->middleware('permission:season-list')
+        ->name('dashboard.matchday-graphics');
     Route::livewire('panel/matchday-wizard', 'pages::dashboard.matchday-wizard')
         ->middleware('permission:season-list')
         ->name('dashboard.matchday-wizard');

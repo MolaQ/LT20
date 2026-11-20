@@ -209,10 +209,15 @@ document.addEventListener('alpine:init', () => {
                 const prepared = cleanCopy(target);
                 holder = prepared.holder;
                 const copy = prepared.copy;
-                copy.appendChild(footer);
+                // Grafika o stałej szerokości (data-share-size, np. grafiki kolejki 1080 px): bez stopki,
+                // bo ma własną markę, a skala obrazka wynika z żądanej szerokości.
+                const size = Number(target.dataset.shareSize || 0);
+                if (!size) {
+                    copy.appendChild(footer);
+                }
 
                 const options = {
-                    pixelRatio: 2,
+                    pixelRatio: size ? size / target.getBoundingClientRect().width : 2,
                     // Obrazek, który się nie wczyta (np. z innej domeny), zamienia się w przezroczysty zamiast przerywać zdjęcie.
                     imagePlaceholder: 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
                     backgroundColor: getComputedStyle(document.body).backgroundColor,
