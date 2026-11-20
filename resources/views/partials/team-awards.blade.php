@@ -8,11 +8,13 @@
         <x-ui.text>{{ __('The race for the awards starts after the first settled matchday of the season.') }}</x-ui.text>
     </x-ui.card>
 @else
+    <section data-share-target class="space-y-3">
     <div class="flex flex-wrap items-center justify-between gap-2">
         <x-ui.text class="text-sm">{{ __(':team in the race for the individual awards of the season: its place and the teams around it.', ['team' => $teamName]) }}</x-ui.text>
         <a href="{{ route('awards') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-bold text-club hover:underline">
             {{ __('Full tables') }} <x-ui.icon name="arrow-right" variant="micro" />
         </a>
+        <x-share-image :title="__('Race for the awards')" class="text-ui-muted" />
     </div>
     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         @foreach ($race as $key => $block)
@@ -41,4 +43,5 @@
             </a>
         @endforeach
     </div>
+    </section>
 @endif
