@@ -275,9 +275,11 @@ new #[Layout('layouts::public')] class extends Component {
     @else
         {{-- Moje miejsca: bez szukania i przewijania --}}
         @if ($this->mine !== [])
-            <section class="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 dark:border-amber-400/40 dark:bg-amber-500/10">
+            <section data-share-target class="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 dark:border-amber-400/40 dark:bg-amber-500/10">
                 <div class="mb-3 flex items-center gap-2 text-sm font-bold text-amber-900 dark:text-amber-200">
-                    <x-ui.icon name="user" variant="mini" class="size-5" /> {{ __('Your places: :team', ['team' => $race['rows'][$myTeam]['name']]) }}
+                    <x-ui.icon name="user" variant="mini" class="size-5" />
+                    <span class="min-w-0 flex-1">{{ __('Your places: :team', ['team' => $race['rows'][$myTeam]['name']]) }}</span>
+                    <x-share-image :title="__('My places in the race for the awards')" />
                 </div>
                 <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
                     @foreach ($this->mine as $key => $row)
@@ -312,7 +314,12 @@ new #[Layout('layouts::public')] class extends Component {
             </section>
         @endif
 
-        {{-- Podium nagród (z ikonami pucharów z panelu, bez nich z domyślnym pucharem) --}}
+        {{-- Podium nagród (z ikonami pucharów z panelu, bez nich z domyślnym pucharem), z przyciskiem obrazka na sociale --}}
+        <section data-share-target class="space-y-2">
+        <div class="flex items-center justify-between gap-2">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-ui-muted">{{ __('Race leaders') }}</h2>
+            <x-share-image :title="__('Race for the awards')" class="text-ui-muted" />
+        </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($this->podiums as $key => $podium)
                 <button type="button" wire:click="show('{{ $key }}')" wire:key="podium-{{ $key }}"
@@ -338,6 +345,7 @@ new #[Layout('layouts::public')] class extends Component {
                 </button>
             @endforeach
         </div>
+        </section>
 
         {{-- Zakładki nagród --}}
         <div class="flex gap-1 overflow-x-auto rounded-2xl bg-ui-raised p-1" role="tablist">
