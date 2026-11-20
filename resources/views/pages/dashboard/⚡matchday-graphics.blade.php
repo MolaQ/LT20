@@ -141,11 +141,16 @@ new class extends Component
                     <div class="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/60"></div>
                     <div class="relative flex h-full flex-col p-4">
                         {!! $top !!}
+                        @php
+                            // Jedna wielkość nazw dla obu drużyn, według najdłuższego słowa (słowa się nie dzielą).
+                            $longest = max(array_map('mb_strlen', preg_split('/\s+/u', $home['name'] . ' ' . $away['name']) ?: ['']));
+                            $nameSize = match (true) { $longest <= 6 => 'text-lg', $longest <= 8 => 'text-base', $longest <= 10 => 'text-sm', default => 'text-xs' };
+                        @endphp
                         <div class="my-auto flex items-center justify-between">
                             @foreach ([$home, $away] as $i => $team)
                                 {{-- Bez herbów: duża nazwa w barwie napisu dla tła drużyny i pasek jej barw --}}
                                 <div class="w-[40%] text-center">
-                                    <div @class(['font-black uppercase leading-none tracking-tight drop-shadow', 'text-lg' => mb_strlen($team['name']) <= 12, 'text-base' => mb_strlen($team['name']) > 12 && mb_strlen($team['name']) <= 16, 'text-sm' => mb_strlen($team['name']) > 16]) style="color: {{ $team['ink'] }}">{{ $team['name'] }}</div>
+                                    <div class="{{ $nameSize }} font-black uppercase leading-none tracking-tight break-words drop-shadow" style="color: {{ $team['ink'] }}">{{ $team['name'] }}</div>
                                     <div class="mx-auto mt-2 h-1.5 w-14 rounded-full ring-1 ring-black/20" style="background: {{ $stripe($team['colors']) }}"></div>
                                 </div>
                                 @if ($i === 0)
@@ -154,8 +159,9 @@ new class extends Component
                             @endforeach
                         </div>
                         <div class="rounded-lg bg-lech-950/90 p-2 text-center">
-                            <div class="text-[10px] uppercase tracking-widest text-lech-200">{{ $when }}</div>
-                            <div class="mt-0.5 text-xs font-bold">{{ __('Tips until :time · score + questions', ['time' => $md->kickoff_at->translatedFormat('D H:i')]) }}</div>
+                            <div class="text-[10px] uppercase tracking-wide text-lech-200">{{ $when }}</div>
+                            <div class="mt-0.5 text-xs font-bold">{{ __('Tips until :time', ['time' => $md->kickoff_at->translatedFormat('D H:i')]) }}</div>
+                            <div class="text-[11px] text-lech-100">{{ __('score · questions · line-ups') }}</div>
                             <div class="mt-1">{!! $cta !!}</div>
                         </div>
                     </div>

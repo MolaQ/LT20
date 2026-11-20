@@ -2770,7 +2770,6 @@
     "Tip at :site": "Typuj na :site",
     "Tipping is closed": "Typowanie zamknięte",
     "Tipping is closed, so the image shows how the fans answered.": "Typowanie jest zamknięte, więc grafika pokazuje, jak odpowiadali kibice.",
-    "Tips until :time · score + questions": "Typowanie do :time · wynik + pytania",
     "Top games of matchday :n in the game: :games. Follow them at :site.": "Hity :n. kolejki w grze: :games. Śledź je na :site.",
     "Top games of the matchday": "Hity kolejki",
     "Until tipping closes": "Do końca typowania",
@@ -2831,5 +2830,7 @@
     "The whole Legends League season without being knocked out": "Cały sezon Ligi Legend bez odpadnięcia",
     "Tipping sniper": "Snajper typowania",
     "Unbeaten": "Niepokonany",
-    "Veteran": "Weteran"
+    "Veteran": "Weteran",
+    "Tips until :time": "Typowanie do :time",
+    "score · questions · line-ups": "wynik · pytania · składy"
 }
