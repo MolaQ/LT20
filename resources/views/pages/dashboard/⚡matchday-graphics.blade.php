@@ -159,7 +159,8 @@ new class extends Component
                             @endforeach
                         </div>
                         <div class="rounded-lg bg-lech-950/90 p-2 text-center">
-                            <div class="text-[10px] uppercase tracking-wide text-lech-200">{{ $when }}</div>
+                            {{-- Rozgrywki i data; godzina tylko w linii o typowaniu (typowanie trwa do pierwszego gwizdka) --}}
+                            <div class="text-[10px] uppercase tracking-wide text-lech-200">{{ trim(($md->competitionLabel() ?? '') . ' · ' . $md->kickoff_at->translatedFormat('l j.m'), ' ·') }}</div>
                             <div class="mt-0.5 text-xs font-bold">{{ __('Tips until :time', ['time' => $md->kickoff_at->translatedFormat('D H:i')]) }}</div>
                             <div class="text-[11px] text-lech-100">{{ __('score · questions · line-ups') }}</div>
                             <div class="mt-1">{!! $cta !!}</div>
