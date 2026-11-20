@@ -1150,7 +1150,6 @@
     "Any amount from 5 zł. You get premium for the highest price list option the amount covers.": "Dowolna kwota od 5 zł. Dostajesz premium według najwyższej opcji cennika, na którą wystarcza kwota.",
     "European leagues and Liga Legend are created by hand and filled with teams from the list.": "Ligi europejskie i Liga Legend są tworzone ręcznie i uzupełniane zespołami z listy.",
     "Every payment supports the development of LechTYPER": "Każda wpłata wspiera rozwój #LechTYPER",
-    "League points are multiplied by the league multiplier.": "Punkty ligowe mnożymy przez mnożnik poziomu ligi.",
     "Payments in the last 12 months.": "Wpłaty z ostatnich 12 miesięcy.",
     "Supporters ranking: :rank. place.": "Ranking wspierających: :rank. miejsce.",
     "Tipping is always free. Premium gives extras and supports the development of LechTYPER.": "Typowanie jest zawsze darmowe. Premium daje dodatki i wspiera rozwój #LechTYPER.",
@@ -2734,5 +2733,7 @@
     "Your places: :team": "Twoje miejsca: :team",
     "leader, :gap ahead": "lider, :gap przewagi",
     "My places in the race for the awards": "Moje miejsca w wyścigu o nagrody",
-    "Race leaders": "Liderzy wyścigu"
+    "Race leaders": "Liderzy wyścigu",
+    "Places 1-3, promotion and the top scorer are multiplied by the league multiplier. League matches give the same points in every league.": "Miejsca 1-3, awans i króla strzelców mnożymy przez mnożnik poziomu ligi. Mecze ligowe dają tyle samo punktów w każdej lidze.",
+    "League matches (the same in every league)": "Mecze ligowe (tak samo w każdej lidze)"
 }

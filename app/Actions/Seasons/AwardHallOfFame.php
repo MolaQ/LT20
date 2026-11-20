@@ -99,9 +99,9 @@ class AwardHallOfFame
         $multiplier = HallOfFame::multiplier($tier);
         $promoted = Standings::zoneSizes($competition)['up'];
 
-        // Mecze: na bieżąco z terminarza.
+        // Mecze: na bieżąco z terminarza, bez mnożnika (tyle samo w każdej lidze, 20.11.2026).
         foreach ($this->results($competition) as $result) {
-            $points = ($result['won'] * HallOfFame::value('league_win') + $result['drawn'] * HallOfFame::value('league_draw')) * $multiplier;
+            $points = $result['won'] * HallOfFame::value('league_win') + $result['drawn'] * HallOfFame::value('league_draw');
             $this->addOwner($competition, $result['team'], $result['owner'], 'matches', $points, null, ['won' => $result['won'], 'drawn' => $result['drawn']]);
         }
 
