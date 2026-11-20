@@ -29,6 +29,8 @@ Route::livewire('my-stats', 'pages::my-stats')->middleware(['auth', 'verified'])
 Route::livewire('hall-of-fame', 'pages::hall-of-fame')->name('hall-of-fame');
 Route::livewire('history/{key_slug?}', 'pages::history')->name('history');
 Route::livewire('stars', 'pages::stars')->name('stars');
+// Wyścig o nagrody indywidualne sezonu na żywo (MVP, Złota Piłka, Złoty But, Złote Rękawice, królowie strzelców).
+Route::livewire('nagrody', 'pages::awards')->name('awards');
 Route::livewire('teams/{user}', 'pages::team-profile')->name('team.show');
 Route::livewire('bots/{bot}', 'pages::bot-profile')->name('bot.show');
 
