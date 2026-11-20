@@ -204,7 +204,7 @@ new class extends Component {
     <x-ui.card class="space-y-6">
         <div class="space-y-1">
             <x-ui.heading size="lg">{{ __('Point values') }}</x-ui.heading>
-            <x-ui.text>{{ __('League points are multiplied by the league multiplier.') }}</x-ui.text>
+            <x-ui.text>{{ __('Places 1-3, promotion and the top scorer are multiplied by the league multiplier. League matches give the same points in every league.') }}</x-ui.text>
         </div>
 
         @foreach (\App\Support\HallOfFame::groups() as $group => $fields)

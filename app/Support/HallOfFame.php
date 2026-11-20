@@ -13,25 +13,24 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Hall of Fame (regulamin, punkt 12): punktacja wszech czasów za sukcesy w zakończonych sezonach.
  * Wartości są konfigurowalne w panelu (tabela hall_of_fame_settings), tu są wartości domyślne.
- * Punkty ligowe mnożymy przez mnożnik poziomu. Wartości domyślne ułożone są tak, żeby tytuły dawały punkty
- * zgodnie z ważnością rozgrywek (pełny tytuł z meczami i awansem):
- *   Liga Legend (zwycięzca 500 + pojedynki i przetrwane kolejki, wstępnie) > Ekstraklasa 500 > Puchar Polski 450
- *   > MVP 400 > Złota Piłka 360 > Złote Rękawice 330 > Liga Mistrzów 300 > Liga Europy 250 > Liga Konferencji 180
- *   (za samo zwycięstwo; z meczami grupowymi i premiami za etapy zdobywca LM ma do 445, mniej niż Puchar Polski)
- *   > I liga 168 > II liga 144 … > podwórkowa 12.
+ * Spłaszczenie lig (20.11.2026, po symulacji 30 × 6 sezonów): wszyscy typują ten sam mecz Lecha, więc liga nie może
+ * decydować o miejscu w rankingu wszech czasów. Mecze ligowe dają tyle samo w każdej lidze (3 za wygraną, 1 za remis,
+ * bez mnożnika), a mnożnik poziomu (od 3 w Ekstraklasie do 1 w podwórkowej) dotyczy tylko miejsc 1-3, awansu
+ * i króla strzelców. Mistrz Ekstraklasy: 3 × (100 + 10) + mecze ≈ 350, mistrz podwórkowej: 100 + 15 + 10 + mecze ≈ 150.
+ * Pozostałe trofea według ważności: Liga Legend (500 + pojedynki i przetrwane kolejki) > Puchar Polski 450 > MVP 400
+ * > Złota Piłka 360 > Złoty But 345 > Złote Rękawice 330 > Liga Mistrzów 300 > Liga Europy 250 > Liga Konferencji 180.
  */
 final class HallOfFame
 {
     /** @var array<string, int|float> */
     public const DEFAULTS = [
-        // Mnożniki poziomów (League 1-11).
-        // Ekstraklasa wyraźnie wyżej niż reszta: między nią a I ligą są nagrody indywidualne i ligi europejskie.
-        'multiplier_1' => 10, 'multiplier_2' => 2.8, 'multiplier_3' => 2.4, 'multiplier_4' => 2, 'multiplier_5' => 1.6,
-        'multiplier_6' => 1.3, 'multiplier_7' => 1, 'multiplier_8' => 0.8, 'multiplier_9' => 0.6, 'multiplier_10' => 0.4,
-        'multiplier_11' => 0.2,
-        // Ligi i podwórkowa (× mnożnik poziomu): mistrz Ekstraklasy 500, I ligi 140 + awans 28, podwórkowej 10 + awans 2.
-        'league_champion' => 50, 'league_second' => 25, 'league_third' => 15, 'league_promotion' => 10,
-        'league_top_scorer' => 10, 'league_win' => 1, 'league_draw' => 0.5,
+        // Mnożniki poziomów (League 1-11), tylko dla miejsc 1-3, awansu i króla strzelców: różnica najwyżej 3×.
+        'multiplier_1' => 3, 'multiplier_2' => 2.6, 'multiplier_3' => 2.3, 'multiplier_4' => 2, 'multiplier_5' => 1.8,
+        'multiplier_6' => 1.6, 'multiplier_7' => 1.4, 'multiplier_8' => 1.3, 'multiplier_9' => 1.2, 'multiplier_10' => 1.1,
+        'multiplier_11' => 1,
+        // Ligi i podwórkowa: miejsca, awans i król strzelców × mnożnik poziomu, mecze bez mnożnika (tyle samo w każdej lidze).
+        'league_champion' => 100, 'league_second' => 50, 'league_third' => 30, 'league_promotion' => 15,
+        'league_top_scorer' => 10, 'league_win' => 3, 'league_draw' => 1,
         // Puchar Polski (zaraz po Ekstraklasie): za wygraną w każdej rundzie (razem 75), zwycięzca finału osobno (375), łącznie 450.
         'cup_round_1' => 2, 'cup_round_2' => 2, 'cup_round_3' => 3, 'cup_round_4' => 5, 'cup_round_5' => 8,
         'cup_round_6' => 12, 'cup_round_7' => 18, 'cup_round_8' => 25, 'cup_winner' => 375,
@@ -125,6 +124,8 @@ final class HallOfFame
                 'league_third' => __('Third place'),
                 'league_promotion' => __('Promotion'),
                 'league_top_scorer' => __('Top scorer'),
+            ],
+            __('League matches (the same in every league)') => [
                 'league_win' => __('Match won'),
                 'league_draw' => __('Match drawn'),
             ],
