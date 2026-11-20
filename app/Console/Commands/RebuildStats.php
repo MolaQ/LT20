@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Badges;
 use App\Support\GameStars;
 use App\Support\PageCache;
 use App\Support\SeasonArchive;
@@ -9,7 +10,7 @@ use Illuminate\Console\Command;
 
 /**
  * Przelicza od zera gotowe dane statystyk: tabelę Gwiazd gry (star_stats) ze wszystkich rozliczonych kolejek
- * i czyści archiwum zakończonych sezonów (season_archives, policzy się samo przy pierwszym wejściu).
+ * i odznaki graczy, i czyści archiwum zakończonych sezonów (season_archives, policzy się samo przy pierwszym wejściu).
  * Potrzebne raz po migracji (16.10.2026) i po ręcznych zmianach w bazie; dalej wszystko odświeża ScoreMatchday i FinishSeason.
  */
 class RebuildStats extends Command
@@ -26,8 +27,9 @@ class RebuildStats extends Command
         $started = microtime(true);
         SeasonArchive::forget();
         $seasons = GameStars::rebuildEverything();
+        $badges = Badges::rebuild();
         PageCache::flush();
-        $this->info(sprintf('Statistics rebuilt: %d seasons, %.1f s.', $seasons, microtime(true) - $started));
+        $this->info(sprintf('Statistics rebuilt: %d seasons, %d badge rows, %.1f s.', $seasons, $badges, microtime(true) - $started));
 
         return self::SUCCESS;
     }
