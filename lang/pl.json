@@ -2504,9 +2504,6 @@
     "Change squads": "Zmień składy",
     "Your squads in this matchday": "Twoje składy w tej kolejce",
     "Flame: player form. Last number: experience in your club.": "Płomień: forma zawodnika. Ostatnia liczba: doświadczenie w Twoim klubie.",
-    "Copy image and text": "Kopiuj obraz i tekst",
-    "Copied: paste the image and text into your post.": "Skopiowane: wklej obraz i tekst do posta.",
-    "Image copied. Add the text: :text": "Obraz skopiowany. Dopisz tekst: :text",
     "The image is in the clipboard: paste it into the post on X (Ctrl+V).": "Obrazek jest w schowku: wklej go w poście na X (Ctrl+V).",
     "Do you like LechTYPER?": "Podoba Ci się LechTYPER?",
     "The game is free and made by a fan after hours. A coffee keeps the server running and new features coming.": "Gra jest darmowa i powstaje po godzinach, robiona przez kibica. Kawka utrzymuje serwer i pozwala dodawać nowe rzeczy.",
@@ -2733,6 +2730,7 @@
     "Without bots": "Bez botów",
     "Your places: :team": "Twoje miejsca: :team",
     "leader, :gap ahead": "lider, :gap przewagi",
+    "Post on X: the button copies the image and opens a new post with the text ready. In the post press Ctrl+V (on a phone: hold and choose Paste) to add the image.": "Publikacja na X: przycisk kopiuje obrazek i otwiera nowy post z gotowym tekstem. W poście naciśnij Ctrl+V (na telefonie: przytrzymaj palec i wybierz Wklej), żeby dodać obrazek.",
     "My places in the race for the awards": "Moje miejsca w wyścigu o nagrody",
     "Race leaders": "Liderzy wyścigu"
 }

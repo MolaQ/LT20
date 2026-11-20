@@ -27,9 +27,7 @@
                 'hashtag' => config('club.hashtag'),
                 // Podpis każdego udostępnienia: hashtag gry i adres strony.
                 'text' => trim((config('club.hashtag') ? '#'.config('club.hashtag').' ' : '').$brand),
-                'copy' => __('Copy image and text'),
-                'copied' => __('Copied: paste the image and text into your post.'),
-                'copiedImage' => __('Image copied. Add the text: :text'),
+                'xSteps' => __('Post on X: the button copies the image and opens a new post with the text ready. In the post press Ctrl+V (on a phone: hold and choose Paste) to add the image.'),
                 'via' => config('club.x_handle'),
             ];
         @endphp
