@@ -153,7 +153,7 @@ final class MatchdayGraphics
             if ($competition->type === CompetitionType::Cup) {
                 // Miejsce na liście zespołów: im niżej numer, tym wyżej zespół.
                 $best = $fixtures->filter(fn (Fixture $f) => self::team($f->home) && self::team($f->away))
-                    ->sortBy(fn (Fixture $f) => (self::team($f->home)?->position ?? 0) + (self::team($f->away)?->position ?? 0))->first();
+                    ->sortBy(fn (Fixture $f) => (self::team($f->home)->position ?? 0) + (self::team($f->away)->position ?? 0))->first();
                 if ($best) {
                     $hits['cup'] = self::row($competition->name, $best, '', '');
                 }
@@ -233,7 +233,7 @@ final class MatchdayGraphics
      */
     public static function scorers(Matchday $matchday): array
     {
-        return TeamScore::where('matchday_id', $matchday->id)
+        return array_values(TeamScore::where('matchday_id', $matchday->id)
             ->where('score_set', CompetitionType::League->value)
             ->whereNotNull('user_id')
             ->with(['seasonTeam.user:id,name,team_name', 'seasonTeam.bot:id,name'])
@@ -242,8 +242,7 @@ final class MatchdayGraphics
             ->limit(3)
             ->get()
             ->map(fn (TeamScore $s) => ['name' => (string) self::team($s)?->name, 'goals' => $s->offense])
-            ->values()
-            ->all();
+            ->all());
     }
 
     /**
@@ -289,7 +288,7 @@ final class MatchdayGraphics
             'percent' => $percent,
             'outcome' => (string) $outcome,
             'exact' => $exact->isNotEmpty(),
-            'names' => $names->take(self::NAMES)->values()->all(),
+            'names' => array_values($names->take(self::NAMES)->all()),
             'more' => max(0, $names->count() - self::NAMES),
         ];
     }
