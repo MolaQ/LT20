@@ -17,6 +17,7 @@ use App\Models\TeamScore;
 use App\Models\Tip;
 use App\Models\User;
 use App\Support\Audit;
+use App\Support\Badges;
 use App\Support\CupBracket;
 use App\Support\EuropeanCup;
 use App\Support\HallOfFame;
@@ -61,6 +62,8 @@ class FinishSeason
             SeasonArchive::forget($season->id);
             // Statystyki zakończonego sezonu od razu do archiwum.
             DB::afterCommit(fn () => PlayerStats::warm($season->id));
+            // Odznaki za zakończony sezon i trofea, przypisane do ostatniej kolejki sezonu.
+            DB::afterCommit(fn () => Badges::rebuild(Matchday::where('season_id', $season->id)->orderByDesc('number')->first()));
 
             $season = Season::query()->lockForUpdate()->findOrFail($season->id);
 

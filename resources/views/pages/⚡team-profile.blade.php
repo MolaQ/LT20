@@ -259,6 +259,17 @@ new #[Layout('layouts::public')] class extends Component {
     }
 
     /**
+     * Odznaki drużyny (App\Support\Badges): wszystkie, z postępem i zdobytym stopniem.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    #[Computed]
+    public function badges(): array
+    {
+        return \App\Support\Badges::forUser($this->user->id);
+    }
+
+    /**
      * Wyścig o nagrody: dla każdej nagrody i ligi drużyny miejsce i wycinek tabeli wokół niej (pusto bez rozliczonej kolejki).
      *
      * @return array<string, array{label: string, icon: string, grad: string, rank: int, rows: list<array<string, mixed>>, leader: array<string, mixed>}>
@@ -376,8 +387,8 @@ new #[Layout('layouts::public')] class extends Component {
     </x-page-banner>
 
     {{-- Zakładki: przegląd zespołu i kadra --}}
-    <div class="flex gap-1 self-start rounded-2xl bg-ui-raised p-1" role="tablist">
-        @foreach (['kadra' => [__('Roster'), 'user-group'], 'przeglad' => [__('Overview'), 'home'], 'nagrody' => [__('Awards'), 'trophy']] as $tabKey => [$tabLabel, $tabIcon])
+    <div class="flex max-w-full gap-1 self-start overflow-x-auto rounded-2xl bg-ui-raised p-1" role="tablist">
+        @foreach (['kadra' => [__('Roster'), 'user-group'], 'przeglad' => [__('Overview'), 'home'], 'nagrody' => [__('Awards'), 'trophy'], 'odznaki' => [__('Badges'), 'check-badge']] as $tabKey => [$tabLabel, $tabIcon])
             <button type="button" role="tab" wire:click="$set('tab', '{{ $tabKey }}')" aria-selected="{{ $tab === $tabKey ? 'true' : 'false' }}"
                 @class(['inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition', 'bg-ui-surface shadow' => $tab === $tabKey, 'text-ui-muted hover:text-ui-ink' => $tab !== $tabKey])>
                 <x-ui.icon :name="$tabIcon" variant="micro" /> {{ $tabLabel }}
@@ -385,7 +396,9 @@ new #[Layout('layouts::public')] class extends Component {
         @endforeach
     </div>
 
-    @if ($tab === 'nagrody')
+    @if ($tab === 'odznaki')
+        @include('partials.team-badges', ['badges' => $this->badges, 'teamName' => $user->team_name ?: $user->name])
+    @elseif ($tab === 'nagrody')
         @include('partials.team-awards', ['race' => $this->awardRace, 'teamName' => $user->team_name ?: $user->name, 'mine' => auth()->id() === $user->id])
     @elseif ($tab !== 'przeglad')
         @if ($this->teamSquad)

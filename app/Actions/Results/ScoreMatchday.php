@@ -11,6 +11,7 @@ use App\Models\Matchday;
 use App\Models\SeasonTeam;
 use App\Models\TeamScore;
 use App\Models\Tip;
+use App\Support\Badges;
 use App\Support\EuropeanCup;
 use App\Support\GameStars;
 use App\Support\LegendsLeague;
@@ -62,6 +63,8 @@ class ScoreMatchday
             DB::afterCommit(fn () => GameStars::rebuild($matchday->season_id));
             // Statystyki sezonu gracza liczone od razu (zamiast przy pierwszym wejściu na /tips).
             DB::afterCommit(fn () => PlayerStats::warm($matchday->season_id));
+            // Odznaki graczy (po Gwiazdach gry, bo „Łowca talentów” liczy gole z ich sum).
+            DB::afterCommit(fn () => Badges::rebuild($matchday));
 
             $kickoff = ($matchday->kickoff_at ?? now())->format('Y-m-d H:i:s.u');
 

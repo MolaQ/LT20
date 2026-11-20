@@ -335,6 +335,32 @@ new class extends Component
                     @endif
                 @endif
 
+                {{-- Odznaki kolejki: kto zdobył nową odznakę albo wyższy stopień po tej kolejce --}}
+                @php $earnedBadges = \App\Support\Badges::earnedIn($md); @endphp
+                @if ($earnedBadges !== [])
+                    @php $shown = array_slice($earnedBadges, 0, 6); @endphp
+                    <x-graphic-card :title="__('Badges of the matchday')" :when="__('After the match')"
+                        :text="__('New badges after matchday :n: :list. Check yours at :site.', ['n' => $md->number, 'list' => collect($shown)->map(fn ($b) => $b['name'] . ' (' . $b['label'] . ')')->implode(', '), 'site' => $site]) . $hashtag"
+                        :badge="count($earnedBadges) > 6 ? __('The image shows 6 of :n badges.', ['n' => count($earnedBadges)]) : ''">
+                        <div class="flex h-full flex-col p-4">
+                            {!! $top !!}
+                            <div class="mt-3 text-lg font-black leading-tight">{{ __('Badges of the matchday') }}</div>
+                            <div class="my-auto space-y-1.5">
+                                @foreach ($shown as $earned)
+                                    <div class="flex items-center gap-2 rounded-lg bg-white/10 px-2 py-1 text-xs">
+                                        <x-badge-icon :badge="$earned['badge']" :tier="$earned['tier']" :icon="$earned['icon']" class="size-7" />
+                                        <div class="min-w-0 flex-1">
+                                            <div class="truncate font-semibold">{{ $earned['name'] }}</div>
+                                            <div class="truncate text-[10px] text-lech-200">{{ $earned['label'] }}</div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            {!! $cta !!}
+                        </div>
+                    </x-graphic-card>
+                @endif
+
                 {{-- Wyścig o nagrody: liderzy po ostatniej rozliczonej kolejce --}}
                 @php $leaders = $md->season ? MatchdayGraphics::awardLeaders($md->season) : []; @endphp
                 @if ($leaders !== [])
