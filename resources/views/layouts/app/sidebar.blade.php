@@ -28,6 +28,7 @@
             $item('question-mark-circle', 'dashboard.questions', __('Questions')),
             $item('check-badge', 'dashboard.tips', __('Tips overview')),
             $item('flag', 'dashboard.results', __('Results')),
+            $item('photo', 'dashboard.matchday-graphics', __('Matchday graphics')),
         ]],
         [__('Competitions'), $canSeasons, [
             $item('calendar-days', 'dashboard.seasons', __('Seasons')),
@@ -46,6 +47,7 @@
             $item('inbox', 'dashboard.office', __('Complaints and requests office'), badge: $office, show: $canRoles),
         ]],
         [__('Marketing'), $canNews || $canSeasons || $canRoles, [
+            $item('photo', 'dashboard.matchday-graphics', __('Matchday graphics'), show: $canSeasons),
             $item('newspaper', 'dashboard.news', __('News'), show: $canNews),
             $item('megaphone', 'dashboard.sponsors', __('Sponsors'), show: $canSeasons),
             $item('photo', 'dashboard.banners', __('Partner banners'), show: $canSeasons),
