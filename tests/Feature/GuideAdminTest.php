@@ -7,7 +7,7 @@ use App\Support\Guide;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission as PermissionModel;
 
-// Zasady gry i FAQ edytowane w panelu (Treści → Zasady i FAQ): kopia tekstów domyślnych, edycja, kolejność, przywracanie.
+// Zasady gry i FAQ edytowane w panelu (Ustawienia gry → Zasady i FAQ): kopia tekstów domyślnych, edycja, kolejność, przywracanie.
 
 function guideAdmin(): User
 {
