@@ -1,11 +1,11 @@
 // Obrazek na sociale (premium, Admin zawsze): przycisk x-share-image robi PNG z najbliższego elementu
 // z atrybutem data-share-target (tabela, wyniki, kolejka, news...). Zdjęcie robi się z oczyszczonej kopii
 // (cleanCopy) z klasą is-sharing, bez elementów [data-share-hide] i ze stopką z adresem strony.
-// Gotowy obrazek pokazuje się w podglądzie z przyciskami „Pobierz” i „Udostępnij”. Udostępnianie jest
-// osobnym kliknięciem, bo przeglądarka otwiera systemowe „Udostępnij” tylko zaraz po kliknięciu, a zdjęcie
-// trwa chwilę. Każdy kanał dostaje ten sam podpis (labels.text, np. „#LechTYPER lechtyper.pl”): „Kopiuj” wkłada
-// do schowka obrazek razem z tekstem (wklejenie w poście na Facebooku, X czy w komunikatorze), „Udostępnij” przekazuje
-// tekst obok pliku, a X dostaje go w oknie nowego posta. Biblioteka html-to-image ładuje się przy najechaniu na przycisk (osobny plik po npm run build).
+// Gotowy obrazek pokazuje się w podglądzie z dwoma przyciskami (20.11.2026): „Pobierz” i „Opublikuj na X”
+// (na telefonie dodatkowo systemowe „Udostępnij”). Pod obrazkiem stoi instrukcja: X nie przyjmuje obrazka z linku,
+// więc „Opublikuj na X” najpierw kopiuje obrazek do schowka, a potem otwiera nowy post z gotowym tekstem
+// (labels.text, np. „#LechTYPER lechtyper.pl”) i w poście wystarczy Ctrl+V. Wspólny schowek „obraz + tekst”
+// usunęliśmy, bo X i Facebook wklejały z niego tylko obrazek. Biblioteka html-to-image ładuje się przy najechaniu na przycisk (osobny plik po npm run build).
 
 const slug = (text) =>
     String(text)
@@ -48,6 +48,11 @@ const showPreview = (blob, file, labels) => {
     img.alt = '';
     img.style.cssText = 'display:block;max-width:100%;max-height:60vh;object-fit:contain;border-radius:10px;border:1px solid var(--ui-line,#d6dfee)';
 
+    // Instrukcja publikacji na X (po kliknięciu zamienia się w wynik: skopiowane albo zapisane).
+    const note = document.createElement('p');
+    note.textContent = labels.xSteps;
+    note.style.cssText = 'margin:0;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.45;background:rgba(11,78,162,.08)';
+
     const buttons = document.createElement('div');
     buttons.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end';
 
@@ -72,7 +77,7 @@ const showPreview = (blob, file, labels) => {
     const onKey = (e) => e.key === 'Escape' && close();
 
     button(labels.close, false, close);
-    button(labels.download, !(window.matchMedia?.('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })), () => {
+    button(labels.download, false, () => {
         const a = document.createElement('a');
         a.href = url;
         a.download = file.name;
@@ -80,49 +85,39 @@ const showPreview = (blob, file, labels) => {
         a.click();
         a.remove();
     });
-    // X (główny kanał gry): okno nowego posta z tekstem (tytuł, pusta linia, „#LechTYPER lechtyper.pl”).
-    // X nie przyjmuje obrazka z linku, więc obrazek trafia najpierw do schowka (w poście wystarczy Ctrl+V),
-    // a gdy przeglądarka nie pozwala na schowek, zapisuje się jako plik do dołączenia.
-    button(labels.x, false, () => {
-        const copied = navigator.clipboard?.write && window.ClipboardItem
-            ? navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(() => true, () => false)
-            : Promise.resolve(false);
+    // X (główny kanał gry): najpierw obrazek do schowka (zanim nowa karta zabierze stronie fokus, inaczej
+    // przeglądarka odmawia zapisu), potem okno nowego posta z tekstem. Gdy schowek nie działa, obrazek
+    // zapisuje się jako plik do dołączenia. Wynik widać w instrukcji pod obrazkiem i w dymku.
+    button(labels.x, true, async () => {
+        let ok = false;
+        if (navigator.clipboard?.write && window.ClipboardItem) {
+            try {
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                ok = true;
+            } catch (e) {
+                console.warn(e);
+            }
+        }
         const text = fullText + (labels.via ? ' ' + labels.via : '');
         window.open('https://x.com/intent/post?text=' + encodeURIComponent(text), '_blank', 'noopener');
-        copied.then((ok) => {
-            if (!ok) {
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = file.name;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            }
-            toast(ok ? labels.xPaste : labels.xHint, 'success');
-        });
+        if (!ok) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+        note.textContent = ok ? labels.xPaste : labels.xHint;
+        note.style.background = 'rgba(22,163,74,.12)';
+        note.style.fontWeight = '600';
+        toast(ok ? labels.xPaste : labels.xHint, 'success');
     });
-    // Schowek: obrazek i tekst naraz; przeglądarka bez obsługi dwóch typów dostaje sam obrazek, a tekst pokazuje się w dymku.
-    if (navigator.clipboard?.write && window.ClipboardItem) {
-        button(labels.copy, false, async () => {
-            try {
-                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob, 'text/plain': new Blob([fullText], { type: 'text/plain' }) })]);
-                toast(labels.copied, 'success');
-            } catch (e) {
-                try {
-                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                    toast(labels.copiedImage.replace(':text', fullText), 'success');
-                } catch (e2) {
-                    console.error(e2);
-                    toast(labels.error);
-                }
-            }
-        });
-    }
     // Systemowe „Udostępnij” tylko na telefonie i tablecie: na komputerze z Windows okno udostępniania często
     // kończy się komunikatem „Spróbuj ponownie” (18.11.2026), tam lepsze są „Kopiuj obraz i tekst” i X.
     const touch = window.matchMedia?.('(pointer: coarse)').matches;
     if (touch && navigator.canShare?.({ files: [file] })) {
-        button(labels.share, true, async () => {
+        button(labels.share, false, async () => {
             try {
                 await navigator.share({ files: [file], title: labels.title, text: fullText });
             } catch (e) {
@@ -137,7 +132,7 @@ const showPreview = (blob, file, labels) => {
 
     overlay.addEventListener('click', (e) => e.target === overlay && close());
     document.addEventListener('keydown', onKey);
-    box.append(heading, img, buttons);
+    box.append(heading, img, note, buttons);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
     buttons.lastChild.focus();
