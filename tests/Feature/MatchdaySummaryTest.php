@@ -41,7 +41,7 @@ test('wet rags are the human teams beaten by a bot', function () {
     $human = summaryEntry($league, ['position' => 1, 'user_id' => User::factory()->create(['team_name' => 'Ada FC'])->id]);
     $robot = summaryEntry($league, ['position' => 2, 'bot_id' => $bot->id]);
     $winner = summaryEntry($league, ['position' => 3, 'user_id' => User::factory()->create(['team_name' => 'Bob United'])->id]);
-    $robot2 = summaryEntry($league, ['position' => 4, 'bot_id' => $bot->id]);
+    $robot2 = summaryEntry($league, ['position' => 4, 'bot_id' => Bot::create(['name' => 'Robo Kolejorz', 'sort_order' => 2, 'is_active' => true])->id]);
     Fixture::create(['competition_id' => $league->id, 'round' => 1, 'home_entry_id' => $human->id, 'away_entry_id' => $robot->id, 'home_goals' => 1, 'away_goals' => 3]);
     Fixture::create(['competition_id' => $league->id, 'round' => 1, 'home_entry_id' => $winner->id, 'away_entry_id' => $robot2->id, 'home_goals' => 2, 'away_goals' => 0]);
 
