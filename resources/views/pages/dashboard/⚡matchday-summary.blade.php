@@ -70,7 +70,7 @@ new class extends Component {
         }
 
         $news = News::create(['user_id' => auth()->id(), 'title' => $article['title'], 'body' => $article['body'], 'published_at' => null]);
-        Audit::log('news.created', null, null, $news->only(['title', 'published_at']), $news->title);
+        Audit::log('news.created', null, [], $news->only(['title', 'published_at']), $news->title);
 
         $this->redirectRoute('dashboard.news', ['status' => 'draft'], navigate: true);
     }

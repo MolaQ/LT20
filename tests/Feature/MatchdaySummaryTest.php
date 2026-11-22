@@ -31,7 +31,7 @@ function summaryEntry(Competition $competition, array $team): CompetitionEntry
 {
     $seasonTeam = SeasonTeam::create($team + ['season_id' => $competition->season_id]);
 
-    return CompetitionEntry::create(['competition_id' => $competition->id, 'season_team_id' => $seasonTeam->id]);
+    return CompetitionEntry::create(['competition_id' => $competition->id, 'season_team_id' => $seasonTeam->id, 'seed' => $seasonTeam->position]);
 }
 
 test('wet rags are the human teams beaten by a bot', function () {
