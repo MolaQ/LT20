@@ -47,6 +47,7 @@
         ]],
         [__('Marketing'), $canNews || $canSeasons || $canRoles, [
             $item('photo', 'dashboard.matchday-graphics', __('Matchday graphics'), show: $canSeasons),
+            $item('newspaper', 'dashboard.matchday-summary', __('Matchday summary'), show: $canSeasons),
             $item('newspaper', 'dashboard.news', __('News'), show: $canNews),
             $item('megaphone', 'dashboard.sponsors', __('Sponsors'), show: $canSeasons),
             $item('photo', 'dashboard.banners', __('Partner banners'), show: $canSeasons),
