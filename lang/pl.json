@@ -2867,5 +2867,8 @@
     "Two defeats in one matchday and the adventure is over for: :names.": "Dwie porażki w jednej kolejce i przygoda dobiegła końca dla: :names.",
     "Wet rags": "Mokre szmaty",
     "Wet rags of matchday :n: :list. Beaten by a bot!": "Mokre szmaty :n. kolejki: :list. Pokonani przez bota!",
-    "vs :bot": "z :bot"
+    "vs :bot": "z :bot",
+    "Waiting for the answer": "Czeka na odpowiedź",
+    "A miss in attack wiped out the offensive bonus.": "Pudło w ataku wyzerowało bonus ofensywny.",
+    "A miss in defence wiped out the defensive bonus.": "Pudło w obronie wyzerowało bonus defensywny."
 }

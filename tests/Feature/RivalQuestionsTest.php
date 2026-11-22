@@ -64,3 +64,22 @@ test('the icons hide the side without premium and sort swords before shields wit
         ->and(strpos($premium, 'var(--q-attack)'))->toBeLessThan(strpos($premium, 'var(--q-defense)'))
         ->and(substr_count($premium, 'border-dashed'))->toBe(1);
 });
+
+test('after the results every answer shows whether it hit and which bonus a miss wiped out', function () {
+    [$matchday, $rival] = rqSetup();
+    // Pytanie 1 (atak) trafione, 2 (obrona) trafione, 3 (obrona) pudło, 4 bez odpowiedzi.
+    MatchdayQuestion::where('matchday_id', $matchday->id)->orderBy('position')->get()
+        ->each(fn (MatchdayQuestion $q) => $q->update(['correct' => $q->position !== 3]));
+
+    $info = rqQuestions($rival->id, $matchday, 'league', Rivals::PLAYED, false);
+
+    expect(array_column($info['items'], 'result'))->toBe(['hit', 'hit', 'miss', 'none'])
+        ->and($info['items'][2])->toMatchArray(['answer' => true, 'side' => 'defense', 'correct' => false])
+        ->and($info['attack_missed'])->toBeFalse()
+        ->and($info['defense_missed'])->toBeTrue();
+
+    $list = (string) $this->blade('<x-question-results :info="$info" />', ['info' => $info]);
+    expect($list)->toContain('Pytanie 3')
+        ->and($list)->toContain(__('A miss in defence wiped out the defensive bonus.'))
+        ->and($list)->not->toContain(__('A miss in attack wiped out the offensive bonus.'));
+});
