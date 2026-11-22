@@ -61,7 +61,11 @@
                 <section data-share-target class="overflow-hidden rounded-2xl p-1 shadow-md" wire:key="group-{{ $group }}"
                     style="{{ $colorStyle }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-end gap-2.5 px-3 pb-1.5 pt-2">
-                        <x-share-image :title="__('Group').' '.$group" class="me-auto" />
+                        {{-- Nazwa rozgrywek po lewej, żeby udostępniona grafika nie zależała od kolorów --}}
+                        <span class="me-auto flex min-w-0 items-center gap-1.5">
+                            <x-share-image :title="($this->competition->name ?: $this->competition->type->label()).' · '.__('Group').' '.$group" />
+                            <span class="truncate font-display text-sm font-bold">{{ $this->competition->name ?: $this->competition->type->label() }}</span>
+                        </span>
                         <h3 class="text-sm font-semibold uppercase tracking-wider">{{ __('Group') }}</h3>
                         <span class="comp-badge flex size-9 shrink-0 items-center justify-center rounded-full text-base font-black shadow">{{ $group }}</span>
                     </header>
@@ -126,6 +130,7 @@
                         @empty
                             <div class="px-1 text-sm opacity-80">{{ __('No matches yet.') }}</div>
                         @endforelse
+                        <x-table-criteria-button class="px-1 pt-1 text-xs" />
                     </footer>
                 </section>
             @endforeach
