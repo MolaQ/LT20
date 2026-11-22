@@ -96,9 +96,10 @@ export function registerImageCropper() {
 
                 this.cropper = new Cropper(this.$refs.image, {
                     aspectRatio: this.aspect > 0 ? this.aspect : (this.shape === 'free' ? NaN : 1),
-                    // Logo o dowolnych proporcjach: kadr może wyjść poza obrazek (np. całe kwadratowe logo w kole),
-                    // zdjęcia i banery trzymają kadr w obrazku.
-                    viewMode: this.format === 'png' && ! (this.aspect > 0) ? 0 : 1,
+                    // PNG (logo, ikony, trofea): kadr może wyjść poza obrazek, a brzegi zostają przezroczyste. Dzięki temu
+                    // wysokie trofeum mieści się całe w kwadracie, a ＋ i － działają w obie strony.
+                    // Zdjęcia i banery (JPEG) trzymają kadr w obrazku.
+                    viewMode: this.format === 'png' ? 0 : 1,
                     autoCropArea: 1,
                     dragMode: this.aspect > 0 ? 'move' : 'crop',
                     // Kółko myszy przewija okno (np. formularz w oknie dialogowym); powiększanie przyciskami ＋ i －.
@@ -133,15 +134,50 @@ export function registerImageCropper() {
                     return;
                 }
 
+                const wasFresh = this.freshFit;
+
                 if (Math.abs(container.offsetWidth - box.offsetWidth) > 1 || Math.abs(container.offsetHeight - box.offsetHeight) > 1) {
                     this.cropper.resize();
 
-                    if (this.freshFit) {
+                    if (wasFresh) {
                         this.cropper.reset();
                     }
                 }
 
                 this.freshFit = false;
+
+                // PNG o stałych proporcjach: na start cały obrazek w kadrze (wysokie trofeum w kwadracie).
+                if (wasFresh && this.format === 'png' && this.aspect > 0) {
+                    this.fitWhole();
+                }
+            },
+
+            /** Cały obrazek w kadrze o zadanych proporcjach: pomniejsza go do pola i obejmuje kadrem z przezroczystym marginesem. */
+            fitWhole() {
+                if (! this.cropper || ! this.ready) {
+                    return;
+                }
+
+                const container = this.cropper.getContainerData();
+                const image = this.cropper.getImageData();
+                const rotated = Math.abs(image.rotate || 0) % 180 === 90;
+                const w = rotated ? image.naturalHeight : image.naturalWidth;
+                const h = rotated ? image.naturalWidth : image.naturalHeight;
+                const aspect = this.aspect > 0 ? this.aspect : 1;
+                // Kadr w proporcjach aspect, który obejmuje cały obrazek.
+                const boxW = Math.max(w, h * aspect);
+                const boxH = boxW / aspect;
+                const ratio = 0.92 * Math.min(container.width / boxW, container.height / boxH);
+
+                this.cropper.zoomTo(ratio);
+                const canvas = this.cropper.getCanvasData();
+                this.cropper.setCanvasData({ left: (container.width - canvas.width) / 2, top: (container.height - canvas.height) / 2 });
+                this.cropper.setCropBoxData({
+                    left: (container.width - boxW * ratio) / 2,
+                    top: (container.height - boxH * ratio) / 2,
+                    width: boxW * ratio,
+                    height: boxH * ratio,
+                });
             },
 
             /**
