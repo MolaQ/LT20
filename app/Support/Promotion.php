@@ -180,11 +180,14 @@ final class Promotion
         $bots = array_values(array_filter($order, fn ($t) => ! $t['human']));
         usort($bots, fn ($a, $b) => $index[$a['id']] <=> $index[$b['id']]);
         $order = array_merge(array_values(array_filter($order, fn ($t) => $t['human'])), $bots);
+        $finalAt = array_flip(array_column($order, 'id'));
 
         $result = [];
         foreach ($keys as $key) {
             $members = array_splice($order, 0, $sizes[$key]);
-            $sortKey = fn ($t) => [! $t['human'], $t['human'] && $leagueAfterStep2[$t['id']] !== $key, $index[$t['id']]];
+            // Ludzie, którzy wskoczyli za boty, w kolejności wypychania (najlepszy ze wspólnej tabeli pierwszy).
+            $jumped = fn ($t) => $t['human'] && $leagueAfterStep2[$t['id']] !== $key;
+            $sortKey = fn ($t) => [! $t['human'], $jumped($t), $jumped($t) ? $finalAt[$t['id']] : $index[$t['id']]];
             usort($members, fn ($a, $b) => $sortKey($a) <=> $sortKey($b));
             $result[$key] = array_column($members, 'id');
         }
