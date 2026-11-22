@@ -2,7 +2,7 @@
     Pytania kolejki rywala (App\Support\Rivals::questions): ikona na każde pytanie z odpowiedzią.
     Bez premium skrzyżowane miecze na tarczy (ile pytań, bez strony bonusu), premium najpierw miecze (ataki),
     potem tarcze (obrony), bez kolejności pytań. Pytania bez odpowiedzi to blade kółka.
-    Po wynikach (items) każda ikona pokazuje rozstrzygnięcie: zielony znaczek = weszło, czerwony kafel z krzyżykiem = pudło,
+    Po wynikach (items) każda ikona pokazuje rozstrzygnięcie: zielony znaczek = weszło, krzyżyk w kolorze strony (atak albo obrona) = pudło,
     a pozostałe trafienia strony, którą pudło wyzerowało, są przygaszone i przekreślone.
     Użycie: <x-question-sides :info="$rival['questions']" />
 --}}
@@ -34,10 +34,10 @@
             $miss = $icon['result'] === 'miss';
             $faded = $icon['zeroed'] || in_array($icon['result'], ['void', 'pending'], true);
         @endphp
-        <span @class(['relative grid size-5 place-items-center rounded text-white', 'bg-club text-club-ink' => $icon['side'] === null && !$miss, 'bg-red-600' => $miss, 'opacity-40' => $faded])
-            @if ($icon['side'] !== null && !$miss) style="background: var(--q-{{ $icon['side'] }})" @endif>
+        <span @class(['relative grid size-5 place-items-center rounded text-white', 'bg-club text-club-ink' => $icon['side'] === null, 'opacity-40' => $faded])
+            @if ($icon['side'] !== null) style="background: var(--q-{{ $icon['side'] }})" @endif>
             @if ($miss)
-                <x-ui.icon name="x-mark" variant="micro" class="size-3.5" />
+                <x-ui.icon name="x-mark" variant="micro" class="size-4" />
             @elseif ($icon['side'] === 'attack')
                 <x-ui.icon name="swords" variant="micro" class="size-3" />
             @elseif ($icon['side'] === 'defense')
