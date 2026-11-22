@@ -10,7 +10,6 @@ use App\Models\CompetitionEntry;
 use App\Models\DesignatedPlayer;
 use App\Models\Fixture;
 use App\Models\Matchday;
-use App\Models\MatchdayQuestion;
 use App\Models\QuestionAnswer;
 use App\Models\Season;
 use App\Models\SeasonTeam;
@@ -266,9 +265,11 @@ final class Rivals
     /**
      * Pytania kolejki rywala w zestawie rozgrywek: wszyscy widzą, na ile pytań odpowiedział, premium (i wszyscy
      * po wynikach) także ile wybrał ataków (miecze) i obron (tarcze), ale nie przy których pytaniach.
+     * Po wynikach dochodzi pełna lista (items): pytanie, odpowiedź gracza, strona bonusu i rozstrzygnięcie
+     * (hit, miss, void, pending, none), a attack_missed / defense_missed mówią, że pudło wyzerowało bonus tej strony.
      * Brak pytań w zestawie albo brak gracza (bot, wolny los) = null.
      *
-     * @return array{total: int, answered: int, attack: int|null, defense: int|null}|null
+     * @return array{total: int, answered: int, attack: int|null, defense: int|null, items?: list<array{text: string, answer: bool|null, side: string|null, correct: bool|null, result: string}>, attack_missed?: bool, defense_missed?: bool}|null
      */
     private static function questions(?int $userId, Matchday $matchday, string $set, string $phase, bool $premium): ?array
     {
@@ -276,21 +277,49 @@ final class Rivals
             return null;
         }
 
-        $ids = MatchdayQuestion::where('matchday_id', $matchday->id)->where('score_set', $set)->pluck('id');
+        $questions = Questions::for($matchday, $set);
 
-        if ($ids->isEmpty()) {
+        if ($questions->isEmpty()) {
             return null;
         }
 
-        $sides = QuestionAnswer::whereIn('matchday_question_id', $ids)->where('user_id', $userId)->pluck('side');
+        $answers = QuestionAnswer::whereIn('matchday_question_id', $questions->pluck('id'))->where('user_id', $userId)->get()->keyBy('matchday_question_id');
+        $sides = $answers->pluck('side');
         $split = $premium || $phase === self::PLAYED;
 
-        return [
-            'total' => $ids->count(),
-            'answered' => $sides->count(),
+        $info = [
+            'total' => $questions->count(),
+            'answered' => $answers->count(),
             'attack' => $split ? $sides->filter(fn ($side) => $side === 'attack')->count() : null,
             'defense' => $split ? $sides->filter(fn ($side) => $side === 'defense')->count() : null,
         ];
+
+        if ($phase !== self::PLAYED) {
+            return $info;
+        }
+
+        // Po wynikach: odpowiedzi przy pytaniach i to, czy weszły (te same zasady co Questions::bonus).
+        $bonus = Questions::bonus($questions, $answers);
+        $items = [];
+        foreach ($questions as $question) {
+            $answer = $answers->get($question->id);
+            $result = match (true) {
+                $answer === null => 'none',
+                $question->voided => 'void',
+                $question->correct === null => 'pending',
+                $answer->answer === $question->correct => 'hit',
+                default => 'miss',
+            };
+            $items[] = [
+                'text' => $question->text,
+                'answer' => $answer?->answer,
+                'side' => $answer ? ($answer->side === 'defense' ? 'defense' : 'attack') : null,
+                'correct' => $question->voided ? null : $question->correct,
+                'result' => $result,
+            ];
+        }
+
+        return $info + ['items' => $items, 'attack_missed' => $bonus['attack_missed'], 'defense_missed' => $bonus['defense_missed']];
     }
 
     /**
