@@ -889,8 +889,9 @@ new #[Layout('layouts::public')] class extends Component {
                     style="{{ $tableStyle }} background-image: linear-gradient(140deg, var(--c-bg1), var(--c-bg2)); color: var(--c-ink); border: 2px solid var(--c-accent);">
                     <header class="flex items-center justify-between gap-2.5 px-3 pb-1.5 pt-2">
                         <div>
-                            <h3 class="text-sm font-semibold uppercase tracking-wider">{{ __('Table') }}</h3>
-                            <p class="text-[11px] opacity-80">{{ __('After matchday :number', ['number' => max(1, $round)]) }}</p>
+                            {{-- Nazwa rozgrywek w nagłówku, żeby na udostępnionej grafice było jasne, której tabeli dotyczy --}}
+                            <h3 class="font-display text-base font-bold leading-tight">{{ $this->competition->name ?: $this->competition->type->label() }}</h3>
+                            <p class="text-[11px] uppercase tracking-wider opacity-80">{{ __('Table') }} · {{ __('After matchday :number', ['number' => max(1, $round)]) }}</p>
                         </div>
                         <x-share-image :title="__('Table').' · '.($this->competition->name ?: $this->competition->type->label()).' · '.$this->season->title.' · '.__('After matchday :number', ['number' => max(1, $round)])" class="ms-auto" />
                         <span class="comp-badge {{ $dashed }} flex size-9 shrink-0 items-center justify-center rounded-full shadow">
@@ -1026,9 +1027,9 @@ new #[Layout('layouts::public')] class extends Component {
                         </div>
                     @endif
 
-                    {{-- Stopka w barwach rozgrywek: objaśnienia i legenda stref --}}
+                    {{-- Stopka w barwach rozgrywek: objaśnienia, legenda stref i „i” z kolejnością w tabeli --}}
+                    <footer class="space-y-1.5 px-2 pb-1.5 pt-2.5 text-xs">
                     @if ($this->isLegends || in_array($this->competition->type, [\App\Enums\CompetitionType::League, \App\Enums\CompetitionType::Swiss], true))
-                        <footer class="space-y-1.5 px-2 pb-1.5 pt-2.5 text-xs">
                             @if ($this->isLegends)
                                 @php
                                     $outCount = count($this->legendsOut);
@@ -1062,8 +1063,9 @@ new #[Layout('layouts::public')] class extends Component {
                                     @endif
                                 </p>
                             @endif
-                        </footer>
                     @endif
+                        <x-table-criteria-button />
+                    </footer>
                 </section>
             @endif
 
@@ -1309,4 +1311,5 @@ new #[Layout('layouts::public')] class extends Component {
     @endif
 
     @include('partials.results-modals')
+    <x-table-criteria />
 </div>
