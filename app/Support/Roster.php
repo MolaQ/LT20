@@ -125,17 +125,23 @@ class Roster
             $divisions[$division][$team->user_id === null ? 'bots' : 'humans']++;
         }
 
-        $open = array_filter($divisions, fn (array $d) => $d['bots'] > 0);
-        if ($open === []) {
+        // Najwyższy poziom z botami, w nim najmniej ludzi; remis: parzyście od początku, nieparzyście od końca.
+        $best = null;
+        foreach ($divisions as $division => $counts) {
+            if ($counts['bots'] === 0) {
+                continue;
+            }
+            $key = [Backyard::level($division), $counts['humans'], $counts['humans'] % 2 === 0 ? $division : -$division];
+            if ($best === null || $key < $best['key']) {
+                $best = ['key' => $key, 'division' => $division];
+            }
+        }
+
+        if ($best === null) {
             return null;
         }
 
-        $level = min(array_map(fn (int $division) => Backyard::level($division), array_keys($open)));
-        $open = array_filter($open, fn (int $division) => Backyard::level($division) === $level, ARRAY_FILTER_USE_KEY);
-        $fewest = min(array_column($open, 'humans'));
-        $candidates = array_keys(array_filter($open, fn (array $d) => $d['humans'] === $fewest));
-        $division = $fewest % 2 === 0 ? min($candidates) : max($candidates);
-
+        $division = $best['division'];
         $first = Backyard::firstPosition($division);
 
         return SeasonTeam::where('season_id', $seasonId)
