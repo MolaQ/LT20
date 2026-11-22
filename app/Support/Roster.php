@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  * Wspólna logika dla strony "Lista zespołów" i dla automatu po zmianie ról użytkownika.
  *
  * Zasada: gracz zajmuje miejsce najwyżej sklasyfikowanego bota w lidze (bot przechodzi na koniec listy,
- * czyli do Ligi podwórkowej),
+ * czyli do Ligi podwórkowej); w Lidze podwórkowej ligi poziomu zapełniają się wężykiem (backyardBot),
  * a zwalniane miejsce gracza zajmuje wolny bot, więc ligi i terminarz zawsze mają komplet zespołów.
  */
 class Roster
@@ -53,12 +53,14 @@ class Roster
         PageCache::flush();
         self::lockSeason($seasonId);
 
-        $bot = SeasonTeam::where('season_id', $seasonId)
-            ->whereNull('user_id')
-            ->inLeague($league)
-            ->orderBy('position')
-            ->lockForUpdate()
-            ->first();
+        $bot = $league === League::Podworkowa
+            ? self::backyardBot($seasonId)
+            : SeasonTeam::where('season_id', $seasonId)
+                ->whereNull('user_id')
+                ->inLeague($league)
+                ->orderBy('position')
+                ->lockForUpdate()
+                ->first();
 
         if ($bot) {
             $botId = $bot->bot_id;
@@ -102,6 +104,46 @@ class Roster
         }
 
         return false;
+    }
+
+    /**
+     * Bot Ligi podwórkowej, którego miejsce zajmie nowy gracz (wężyk, decyzja z 22.11.2026): najwyższy poziom lig, który ma
+     * jeszcze boty, w nim liga z najmniejszą liczbą ludzi. Przy remisie parzysta liczba ludzi wybiera ligę od początku
+     * (1.1, 1.2 …), nieparzysta od końca (1.4, 1.3 …), więc przy równych ligach kolejność to 1.1 → 1.4 → 1.4 → 1.1 → 1.1 …
+     * W lidze gracz bierze najwyżej położonego bota.
+     */
+    private static function backyardBot(int $seasonId): ?SeasonTeam
+    {
+        $teams = SeasonTeam::where('season_id', $seasonId)->inLeague(League::Podworkowa)->get(['position', 'user_id']);
+        $divisions = [];
+        foreach ($teams as $team) {
+            $division = Backyard::forPosition((int) $team->position);
+            if ($division === null) {
+                continue;
+            }
+            $divisions[$division] ??= ['humans' => 0, 'bots' => 0];
+            $divisions[$division][$team->user_id === null ? 'bots' : 'humans']++;
+        }
+
+        $open = array_filter($divisions, fn (array $d) => $d['bots'] > 0);
+        if ($open === []) {
+            return null;
+        }
+
+        $level = min(array_map(fn (int $division) => Backyard::level($division), array_keys($open)));
+        $open = array_filter($open, fn (int $division) => Backyard::level($division) === $level, ARRAY_FILTER_USE_KEY);
+        $fewest = min(array_column($open, 'humans'));
+        $candidates = array_keys(array_filter($open, fn (array $d) => $d['humans'] === $fewest));
+        $division = $fewest % 2 === 0 ? min($candidates) : max($candidates);
+
+        $first = Backyard::firstPosition($division);
+
+        return SeasonTeam::where('season_id', $seasonId)
+            ->whereNull('user_id')
+            ->whereBetween('position', [$first, $first + League::SIZE - 1])
+            ->orderBy('position')
+            ->lockForUpdate()
+            ->first();
     }
 
     /**

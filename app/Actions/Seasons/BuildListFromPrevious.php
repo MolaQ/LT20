@@ -63,13 +63,17 @@ class BuildListFromPrevious
         $eligible = Players::eligible()->pluck('id')->flip();
         $leagues = self::leagueTree($competitions->all());
         $old = [];
-        /** @var array<array-key, list<array{id: int, human: bool}>> $teams klucz ligi (treeKey) => tabela końcowa */
+        /** @var array<array-key, list<array{id: int, human: bool, rank: list<int>}>> $teams klucz ligi (treeKey) => tabela końcowa */
         $teams = [];
 
         foreach ($standings as $row) {
             $team = $row->seasonTeam;
             $old[$team->id] = $team;
-            $teams[self::treeKey($competitions[$row->competition_id])][] = ['id' => (int) $team->id, 'human' => $team->user_id !== null && isset($eligible[$team->user_id])];
+            $teams[self::treeKey($competitions[$row->competition_id])][] = [
+                'id' => (int) $team->id,
+                'human' => $team->user_id !== null && isset($eligible[$team->user_id]),
+                'rank' => self::rank($row->stats ?? []),
+            ];
         }
 
         foreach (array_keys($leagues) as $key) {
@@ -154,7 +158,7 @@ class BuildListFromPrevious
      * stara podwórkowa w jednej tabeli (4 w górę) albo nowe ligi podwórkowe (zwycięzca w górę, Backyard::parent).
      *
      * @param  array<int, Competition>  $competitions
-     * @return array<array-key, array{parent: string|null, up: int, teams: array<int, array{id: int, human: bool}>}>
+     * @return array<array-key, array{parent: string|null, up: int, group?: string, teams: array<int, array{id: int, human: bool, rank?: list<int>}>}>
      */
     public static function leagueTree(array $competitions): array
     {
@@ -169,6 +173,8 @@ class BuildListFromPrevious
                 $leagues[self::treeKey($competition)] = [
                     'parent' => $parent !== null ? 'p'.$parent : (string) League::CKlasa->value,
                     'up' => Backyard::PROMOTED,
+                    // Ligi jednego poziomu (1.1–1.4, 2.1–2.16 …) tworzą wspólną tabelę przy wypychaniu botów.
+                    'group' => 'backyard-'.Backyard::level($competition->division),
                     'teams' => [],
                 ];
             } else {
@@ -197,6 +203,22 @@ class BuildListFromPrevious
         }
 
         return array_merge($result, $rest);
+    }
+
+    /**
+     * Kryteria tabeli (Standings) jako porównywalna lista, mniej = wyżej: do wspólnej tabeli lig jednego poziomu.
+     *
+     * @param  array<string, mixed>  $stats
+     * @return list<int>
+     */
+    public static function rank(array $stats): array
+    {
+        $value = fn (string $key): int => is_numeric($stats[$key] ?? null) ? (int) $stats[$key] : 0;
+
+        return [
+            -$value('points'), -$value('diff'), -$value('for'), -$value('won'), -$value('drawn'), -$value('exact'),
+            -$value('diff_hits'), -$value('outcome_hits'), -$value('bonus'), $value('red'), $value('yellow'), -$value('hof'),
+        ];
     }
 
     /** Klucz ligi w drzewie: '1'..'10' (ligi), '11' (stara podwórkowa), 'p1', 'p2' … (nowe ligi podwórkowe). */
