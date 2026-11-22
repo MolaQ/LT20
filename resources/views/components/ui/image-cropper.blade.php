@@ -74,6 +74,10 @@
             <button type="button" @click="zoom(0.1)" class="{{ $btn }}" aria-label="{{ __('Zoom in') }}" title="{{ __('Zoom in') }}">＋</button>
             <button type="button" @click="zoom(-0.1)" class="{{ $btn }}" aria-label="{{ __('Zoom out') }}" title="{{ __('Zoom out') }}">－</button>
             <button type="button" @click="rotate(90)" class="{{ $btn }}">{{ __('Rotate') }} ↻</button>
+            @if ($format === 'png' && $aspect !== 'free')
+                {{-- Cały obrazek w kadrze (np. wysokie trofeum w kwadracie), z przezroczystym marginesem --}}
+                <button type="button" @click="fitWhole()" class="{{ $btn }}">{{ __('Fit whole image') }}</button>
+            @endif
 
             @if ($format === 'png' && $aspect === 'free')
                 <span class="inline-flex overflow-hidden rounded-lg ring-1 ring-ui-line" role="group" aria-label="{{ __('Crop shape') }}">
