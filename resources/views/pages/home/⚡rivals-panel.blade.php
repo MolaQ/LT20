@@ -153,7 +153,18 @@ new class extends Component {
                                 </div>
 
                                 {{-- Pytania: ile z odpowiedzią, premium też ile ataków i obron --}}
-                                @if ($rival['questions'])
+                                @if (isset($rival['questions']['items']))
+                                    <details class="group">
+                                        <summary class="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+                                            <span class="inline-flex items-center gap-1 text-ui-muted">
+                                                {{ __('Questions') }}
+                                                <x-ui.icon name="chevron-down" variant="micro" class="size-3 transition group-open:rotate-180" />
+                                            </span>
+                                            <x-question-sides :info="$rival['questions']" class="justify-end" />
+                                        </summary>
+                                        <x-question-results :info="$rival['questions']" class="mt-2 text-xs" />
+                                    </details>
+                                @elseif ($rival['questions'])
                                     <div class="flex items-center justify-between gap-2">
                                         <span class="text-ui-muted">{{ __('Questions') }}</span>
                                         <x-question-sides :info="$rival['questions']" class="justify-end" />

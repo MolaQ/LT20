@@ -256,7 +256,19 @@
                 @endif
 
                 {{-- Pytania kolejki: ile z odpowiedzią (premium i po wynikach: ile ataków i obron), Rivals::questions --}}
-                @if ($side['questions'] ?? null)
+                @if (isset($side['questions']['items']))
+                    {{-- Po wynikach: rozwijana lista odpowiedzi gracza, co weszło, a co wyzerowało bonus --}}
+                    <details class="group border-t border-lech-200/70 pt-2 text-xs dark:border-lech-800">
+                        <summary class="{{ $mirror }} flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+                            <span class="{{ $labelClass }} inline-flex items-center gap-1">
+                                {{ __('Questions') }}
+                                <x-ui.icon name="chevron-down" variant="micro" class="size-3 transition group-open:rotate-180" />
+                            </span>
+                            <x-question-sides :info="$side['questions']" @class(['justify-end' => $left]) />
+                        </summary>
+                        <x-question-results :info="$side['questions']" class="mt-2" />
+                    </details>
+                @elseif ($side['questions'] ?? null)
                     <div class="{{ $mirror }} flex items-center justify-between gap-2 border-t border-lech-200/70 pt-2 text-xs dark:border-lech-800">
                         <span class="{{ $labelClass }}">{{ __('Questions') }}</span>
                         <x-question-sides :info="$side['questions']" @class(['justify-end' => $left]) />
