@@ -485,8 +485,12 @@ new #[Layout('layouts::public')] class extends Component {
                         </span>
                     </div>
                     @if ($lastProtocol->isNotEmpty())
-                        <div class="mx-auto max-w-md px-5 py-2">
+                        {{-- Telefon: lista; szerszy ekran: kolumny (gole, kartki, zmiany), żeby protokół nie był wąskim paskiem pośrodku --}}
+                        <div class="px-5 py-2 sm:hidden">
                             @include('partials.match-protocol', ['events' => $lastProtocol])
+                        </div>
+                        <div class="hidden px-5 py-4 sm:block">
+                            @include('partials.match-protocol-columns', ['events' => $lastProtocol])
                         </div>
                     @endif
                 </section>
