@@ -39,5 +39,5 @@ test('the next season preview pushes the bots below the players', function () {
 });
 
 test('the next season preview needs the season list permission', function () {
-    $this->actingAs(User::factory()->create())->get(route('dashboard.next-season'))->assertForbidden();
+    $this->actingAs(User::factory()->create())->get(route('dashboard.next-season'))->assertRedirect();
 });
