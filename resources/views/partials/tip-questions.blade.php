@@ -3,6 +3,8 @@
     Gracz odpowiada Tak albo Nie (ponowny klik cofa odpowiedź, czyli pominięcie) i przy każdej odpowiedzi wybiera
     miecze (atak) albo tarczę (obrona). Kolory obu stron: Kolory strony → Pytania (--q-attack, --q-defense).
     Zwarte wiersze: na szerszym ekranie treść i przyciski w jednej linii, na telefonie przyciski pod treścią.
+    Po zamknięciu typowania pod każdym pytaniem pasek „jak odpowiadali kibice” (Questions::crowd), a całość
+    z odpowiedziami gracza można udostępnić jako obrazek (x-share-image).
 --}}
 @php
     $active = $this->activeQuestionSet();
@@ -13,15 +15,27 @@
     $defense = $answers->where('side', 'defense')->count();
     $settled = $questions->contains(fn ($q) => $q->correct !== null || $q->voided);
     $bonus = $settled ? \App\Support\Questions::bonus($questions, $answers) : null;
+    // Odpowiedzi kibiców pokazujemy dopiero po zamknięciu typowania, żeby nikt nie typował pod tłum.
+    $crowd = $open ? [] : \App\Support\Questions::crowd($questions->pluck('id'));
+    $md = $this->matchday;
 @endphp
 
-<section class="flex flex-col gap-2.5 rounded-2xl border border-ui-line bg-ui-surface p-4">
+<section data-share-target class="flex flex-col gap-2.5 rounded-2xl border border-ui-line bg-ui-surface p-4">
     <div class="flex items-baseline justify-between gap-2">
         <x-ui.heading>{{ __('Questions') }} <span class="font-normal text-ui-muted">· {{ $this->questionSets[$active]['label'] ?? '' }}</span></x-ui.heading>
-        @if ($questions->isNotEmpty())
-            <span class="shrink-0 text-xs font-semibold tabular-nums text-ui-muted">{{ $answers->count() }}/{{ $questions->count() }}</span>
-        @endif
+        <span class="flex shrink-0 items-center gap-2">
+            @if ($questions->isNotEmpty())
+                <span class="text-xs font-semibold tabular-nums text-ui-muted">{{ $answers->count() }}/{{ $questions->count() }}</span>
+            @endif
+            @if (!$open && $questions->isNotEmpty())
+                <x-share-image :title="__('Questions') . ($md ? ' · ' . __('Matchday :number', ['number' => $md->number]) : '')" class="text-ui-muted" />
+            @endif
+        </span>
     </div>
+    @if (!$open && $md)
+        {{-- Na obrazku widać, której kolejki dotyczą odpowiedzi --}}
+        <div class="-mt-1.5 text-xs text-ui-muted">{{ __('Matchday :number', ['number' => $md->number]) }} · {{ $md->opponent }}</div>
+    @endif
 
     @if ($questions->isEmpty())
         <x-ui.text class="text-sm">{{ __('No questions for this competition in this matchday.') }}</x-ui.text>
@@ -64,7 +78,7 @@
             @php $sideColor = $mine ? ($mine->side === 'defense' ? 'var(--q-defense)' : 'var(--q-attack)') : null; @endphp
             <div wire:key="q-{{ $active }}-{{ $question->id }}" @if ($sideColor) style="border-inline-start-color: {{ $sideColor }}; background: color-mix(in srgb, {{ $sideColor }} 6%, transparent)" @endif
                 @class([
-                    'flex flex-col gap-1.5 rounded-lg border border-s-[3px] px-2.5 py-1 transition duration-200 hover:shadow-sm sm:flex-row sm:items-center sm:gap-2',
+                    'flex flex-col gap-1.5 rounded-lg border border-s-[3px] px-2.5 py-1 transition duration-200 hover:shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-2',
                     'border-ui-line' => true,
                 ])>
                 <div class="flex min-w-0 flex-1 items-start gap-1.5 text-[13px]">
@@ -98,6 +112,20 @@
                         @endforeach
                     </div>
                 </div>
+                @php $fans = $crowd[$question->id] ?? null; @endphp
+                @if ($fans && $fans['yes'] !== null)
+                    {{-- Jak odpowiadali kibice: zielone TAK, czerwone NIE; „Ty” przy odpowiedzi gracza --}}
+                    <div class="w-full basis-full ps-5 pb-0.5 sm:order-last">
+                        <div class="flex h-1.5 overflow-hidden rounded-full bg-bad/70" role="img" aria-label="{{ __('Fans') }}: {{ __('Yes') }} {{ $fans['yes'] }}%, {{ __('No') }} {{ 100 - $fans['yes'] }}%">
+                            <i class="block h-full bg-good" style="width: {{ $fans['yes'] }}%"></i>
+                        </div>
+                        <div class="mt-0.5 flex justify-between text-[11px] tabular-nums text-ui-muted">
+                            <span @class(['font-bold text-ui-ink' => $value === 'yes'])>{{ __('Yes') }} {{ $fans['yes'] }}%@if ($value === 'yes') · {{ __('You') }}@endif</span>
+                            <span>{{ trans_choice(':n answer|:n answers', $fans['answers'], ['n' => $fans['answers']]) }}</span>
+                            <span @class(['font-bold text-ui-ink' => $value === 'no'])>@if ($value === 'no'){{ __('You') }} · @endif{{ __('No') }} {{ 100 - $fans['yes'] }}%</span>
+                        </div>
+                    </div>
+                @endif
             </div>
         @endforeach
     @endif

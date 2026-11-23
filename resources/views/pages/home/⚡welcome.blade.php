@@ -595,7 +595,8 @@ new #[Layout('layouts::public')] class extends Component {
                     @endif
 
                     <div class="mt-auto flex items-center justify-between gap-3 border-t border-ui-line px-5 py-3">
-                        <span class="flex items-center gap-3 text-xs text-ui-muted">
+                        <span class="flex flex-wrap items-center gap-3 text-xs text-ui-muted">
+                            <x-table-criteria-button />
                             @if (collect($league['rows'])->contains('zone', 'up'))
                                 <span class="inline-flex items-center gap-1"><span class="h-[3px] w-3 rounded-full bg-green-500"></span>{{ __('Promotion') }}</span>
                             @endif
@@ -786,4 +787,5 @@ new #[Layout('layouts::public')] class extends Component {
         @endforeach
     </section>
 
+    <x-table-criteria />
 </div>

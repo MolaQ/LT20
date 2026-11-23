@@ -33,6 +33,7 @@
             $item('calendar-days', 'dashboard.seasons', __('Seasons')),
             $item('list-bullet', 'dashboard.season-teams', __('Team list')),
             $item('trophy', 'dashboard.competitions', __('Competitions')),
+            $item('arrows-up-down', 'dashboard.next-season', __('Next season list')),
             $item('table-cells', 'dashboard.fixtures', __('Fixtures')),
             $item('globe-europe-africa', 'dashboard.european-qualification', __('European qualification')),
             $item('users', 'dashboard.lech-squad', __('Lech squad')),
