@@ -114,6 +114,20 @@ new class extends Component {
         $this->dispatch('ui-toast', variant: $progress['status'] === 'done' ? 'success' : 'danger', text: $progress['message']);
     }
 
+    /** Publikacja szkicu kolejki: gracze ją widzą i mogą typować. */
+    public function publish(): void
+    {
+        abort_unless(auth()->user()?->can(Permission::SeasonEdit->value), 403);
+
+        if (!$this->matchday || !$this->matchday->isFilled() || $this->matchday->status === \App\Enums\MatchdayStatus::Played) {
+            return;
+        }
+
+        $this->matchday->publish();
+        unset($this->matchdays, $this->matchday, $this->steps);
+        $this->dispatch('ui-toast', variant: 'success', text: __('Matchday :number is published, tipping is open.', ['number' => $this->number]));
+    }
+
     /** Opis i przycisk kroku. */
     public function stepInfo(string $key): array
     {
@@ -122,6 +136,7 @@ new class extends Component {
         return match ($key) {
             'match' => [__('Opponent and kick-off'), __('Assign a Lech match to the matchday.'), __('Open matchdays'), route('dashboard.matchdays')],
             'questions' => [__('Questions'), __('Click up to 5 questions from the bank. You can skip this step.'), __('Pick questions'), route('dashboard.questions', ['kolejka' => $md?->number])],
+            'publish' => [__('Publication'), __('Until you publish it, the matchday is a draft: players do not see it and cannot tip. Publish once the questions are ready.'), null, null],
             'tips' => [__('Tipping'), __('Players tip until kick-off. Here you see how many have tipped.'), __('Tips overview'), route('dashboard.tips', ['season' => $md?->season_id, 'matchday' => $md?->number])],
             'result' => [__('Result and match report'), __('Enter the score, the line-up and the events of the match.'), __('Open the report'), route('dashboard.results', ['season' => $md?->season_id, 'matchday' => $md?->number])],
             'answers' => [__('Question answers'), __('Mark the right answer to each question after the match.'), __('Settle questions'), route('dashboard.questions', ['kolejka' => $md?->number])],
@@ -146,7 +161,7 @@ new class extends Component {
                     {{ $option->number }}
                     @if ($option->status === \App\Enums\MatchdayStatus::Played)
                         <span class="ms-0.5 text-green-500">✓</span>
-                    @elseif ($option->isOpenForTips())
+                    @elseif ($option->isUpcoming())
                         <span class="ms-1 inline-block size-2 rounded-full bg-green-500"></span>
                     @endif
                 </button>
@@ -201,6 +216,13 @@ new class extends Component {
                                     <x-ui.btn wire:click="recalculate" variant="{{ $step['state'] === 'current' ? 'primary' : 'filled' }}" icon="arrow-path">
                                         {{ $step['state'] === 'done' ? __('Recalculate again') : __('Recalculate now') }}
                                     </x-ui.btn>
+                                @endcan
+                            @endif
+                        @elseif ($step['key'] === 'publish')
+                            @if ($this->matchday?->is_draft && $this->matchday->isFilled() && $step['state'] !== 'done')
+                                @can(\App\Enums\Permission::SeasonEdit->value)
+                                    <x-ui.btn wire:click="publish" wire:confirm="{{ __('Publish matchday :number? Players will see it and tipping opens.', ['number' => $number]) }}"
+                                        variant="{{ $step['state'] === 'current' ? 'primary' : 'filled' }}" size="sm" icon="megaphone">{{ __('Publish') }}</x-ui.btn>
                                 @endcan
                             @endif
                         @elseif ($href)

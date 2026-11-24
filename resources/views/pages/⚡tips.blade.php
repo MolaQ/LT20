@@ -123,7 +123,7 @@ new #[Layout('layouts::public')] class extends Component {
      */
     private function ensureTip(): void
     {
-        if ($this->tab !== 'tip' || !$this->canPlay || !$this->isOpen || $this->tip !== null || !$this->matchday?->isFilled()) {
+        if ($this->tab !== 'tip' || !$this->canPlay || !$this->isOpen || $this->tip !== null || !$this->matchday?->isReady()) {
             return;
         }
 
@@ -794,8 +794,8 @@ new #[Layout('layouts::public')] class extends Component {
                 <x-ui.chip :variant="$statusChip[0]">{{ $statusChip[1] }}</x-ui.chip>
             </div>
 
-            @if (!$md->isFilled())
-                <p class="relative py-8 text-center opacity-85">{{ __('The opponent and date are not set yet, so tipping is not open.') }}</p>
+            @if (!$md->isReady())
+                <p class="relative py-8 text-center opacity-85">{{ $md->is_draft && $md->isFilled() ? __('The matchday is being prepared. Tipping opens once the admin publishes it.') : __('The opponent and date are not set yet, so tipping is not open.') }}</p>
             @else
                 <div class="relative my-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
                     @foreach ($tipSides as $index => $side)
@@ -845,7 +845,7 @@ new #[Layout('layouts::public')] class extends Component {
             @endif
         </section>
 
-        @if ($md->isFilled())
+        @if ($md->isReady())
             <x-ui.button class="lg:hidden" wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => $steps['players']]) }}</x-ui.button>
         @endif
         </div>
@@ -856,7 +856,7 @@ new #[Layout('layouts::public')] class extends Component {
     </div>
 
     {{-- Skład i pytania wybranych rozgrywek --}}
-    @if ($md->isFilled() && count($this->questionSets) > 0)
+    @if ($md->isReady() && count($this->questionSets) > 0)
     <div @class(['flex flex-col gap-4', 'hidden lg:flex' => $step !== 'players'])>
         <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
             <div class="min-w-0">
@@ -870,7 +870,7 @@ new #[Layout('layouts::public')] class extends Component {
     </div>
     @endif
 
-    @if ($md->isFilled())
+    @if ($md->isReady())
     <div @class(['flex flex-col gap-6', 'hidden lg:flex' => $step !== 'score'])>
         {{-- Premium: jak typują inni gracze (na żywo, także przed pierwszym gwizdkiem) --}}
         @if ($this->premium && $this->crowd)

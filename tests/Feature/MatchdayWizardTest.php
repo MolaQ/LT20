@@ -16,7 +16,7 @@ test('an empty matchday starts at the opponent step', function () {
     $states = mwStates(new Matchday(['number' => 1, 'status' => MatchdayStatus::Planned]));
 
     expect($states)->toBe([
-        'match' => 'current', 'questions' => 'optional', 'tips' => 'todo',
+        'match' => 'current', 'questions' => 'optional', 'publish' => 'todo', 'tips' => 'todo',
         'result' => 'todo', 'answers' => 'optional', 'recalc' => 'todo',
     ]);
 });
@@ -29,6 +29,16 @@ test('an open matchday with questions waits for tips', function () {
         ->and($states['questions'])->toBe('done')
         ->and($states['tips'])->toBe('current')
         ->and($states['answers'])->toBe('todo');
+});
+
+test('a draft waits for publishing before tips', function () {
+    $matchday = new Matchday(['number' => 2, 'opponent' => 'Legia', 'kickoff_at' => now()->addDay(), 'status' => MatchdayStatus::Planned, 'is_draft' => true]);
+    $states = mwStates($matchday, [new MatchdayQuestion(['correct' => null])]);
+
+    expect($states['match'])->toBe('done')
+        ->and($states['questions'])->toBe('done')
+        ->and($states['publish'])->toBe('current')
+        ->and($states['tips'])->toBe('todo');
 });
 
 test('a played matchday with settled questions is complete', function () {

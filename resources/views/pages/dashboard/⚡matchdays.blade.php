@@ -120,7 +120,7 @@ new class extends Component {
     #[Computed]
     public function stats(): array
     {
-        $next = $this->matchdays->filter(fn(Matchday $m) => $m->isOpenForTips())->sortBy('kickoff_at')->first();
+        $next = $this->matchdays->filter(fn(Matchday $m) => $m->isUpcoming())->sortBy('kickoff_at')->first();
 
         return [
             'filled' => $this->matchdays->filter(fn(Matchday $m) => $m->isFilled())->count(),
@@ -264,7 +264,8 @@ new class extends Component {
             Audit::log('matchday.updated', null, $before, $after, $this->season->title . ', ' . __('matchday :n', ['n' => $matchday->number]));
 
             // Informacje systemowe: nowy albo przełożony mecz (rywal lub godzina), tylko dla kompletnych kolejek.
-            if ($matchday->isFilled() && ($before['opponent'] !== $after['opponent'] || $before['kickoff_at'] !== $after['kickoff_at'])) {
+            // Szkic trafia do informacji dopiero przy publikacji (Matchday::publish).
+            if ($matchday->isReady() && ($before['opponent'] !== $after['opponent'] || $before['kickoff_at'] !== $after['kickoff_at'])) {
                 \App\Support\SystemFeed::record(
                     'matches',
                     filled($before['opponent']) ? 'Match updated: :fixture (matchday :number, :date)' : 'Match added: :fixture (matchday :number, :date)',
@@ -359,6 +360,22 @@ new class extends Component {
      * ================================================================*/
 
     /** Kolejka musi należeć do wybranego sezonu (zabezpieczenie przed podmianą ID). */
+    /** Publikacja szkicu: kolejka trafia do graczy i otwiera się typowanie. */
+    public function publish(int $id): void
+    {
+        $this->authorizeAbility(Permission::SeasonEdit);
+
+        $matchday = $this->findMatchday($id);
+
+        if (!$this->canChange($matchday) || !$matchday->isFilled()) {
+            return;
+        }
+
+        $matchday->publish();
+        unset($this->matchdays);
+        $this->dispatch('ui-toast', variant: 'success', text: __('Matchday :number is published, tipping is open.', ['number' => $matchday->number]));
+    }
+
     private function findMatchday(int $id): Matchday
     {
         return Matchday::where('season_id', $this->seasonId)->findOrFail($id);
@@ -512,10 +529,13 @@ new class extends Component {
                                 ? $matchday->fixture . ' · ' . $matchday->kickoff_at->format('d.m.Y H:i')
                                 : ($matchday->lech_match_id ? __('Unnamed match: add the opponent and the kickoff.') : __('No match yet.')),
                         ];
+                        $draft = $matchday->is_draft && $matchday->isFilled() && !$played;
                         $steps[] = [
-                            $started || $played ? 'done' : ($matchday->isOpenForTips() ? 'wait' : 'todo'),
+                            $started || $played ? 'done' : ($draft ? 'urgent' : ($matchday->isOpenForTips() ? 'wait' : 'todo')),
                             __('Tipping'),
-                            ($matchday->isOpenForTips() ? __('Tips open') : __('Tips closed')) . ' · ' . __('Tips: :count', ['count' => $tips]),
+                            $draft
+                                ? __('Draft: players do not see it yet. Add the questions and publish.')
+                                : ($matchday->isOpenForTips() ? __('Tips open') : __('Tips closed')) . ' · ' . __('Tips: :count', ['count' => $tips]),
                         ];
                         $steps[] = [
                             $played ? 'done' : ($started && $matchday->status !== \App\Enums\MatchdayStatus::Postponed ? 'urgent' : 'todo'),
@@ -533,7 +553,12 @@ new class extends Component {
                                 <x-ui.heading size="lg">{{ __('Matchday :number', ['number' => $matchday->number]) }}</x-ui.heading>
                                 <x-ui.text size="sm">{{ $matchday->competitionLabel() ?? '—' }}@if (filled($matchday->opponent)) · {{ $matchday->is_home ? __('Home') : __('Away') }}@endif</x-ui.text>
                             </div>
-                            <x-ui.badge size="sm" :color="$matchday->status->color()">{{ $matchday->status->label() }}</x-ui.badge>
+                            <div class="flex shrink-0 flex-col items-end gap-1">
+                                <x-ui.badge size="sm" :color="$matchday->status->color()">{{ $matchday->status->label() }}</x-ui.badge>
+                                @if ($draft)
+                                    <x-ui.badge size="sm" color="amber">{{ __('Draft') }}</x-ui.badge>
+                                @endif
+                            </div>
                         </div>
 
                         <ol class="space-y-3">
@@ -550,9 +575,15 @@ new class extends Component {
 
                         {{-- Akcje kolejki: najważniejsza (pierwszy niezałatwiony krok) jako główny przycisk --}}
                         <div class="mt-auto flex flex-wrap gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-700">
+                            @if ($canEdit && $draft)
+                                <x-ui.btn size="sm" variant="primary" icon="megaphone" wire:click="publish({{ $matchday->id }})"
+                                    wire:confirm="{{ __('Publish matchday :number? Players will see it and tipping opens.', ['number' => $matchday->number]) }}">
+                                    {{ __('Publish') }}
+                                </x-ui.btn>
+                            @endif
                             @if ($canEdit && !$played)
                                 <x-ui.btn size="sm" icon="pencil-square" wire:click="edit({{ $matchday->id }})"
-                                    :variant="$matchday->isFilled() ? 'filled' : 'primary'">
+                                    :variant="$matchday->isFilled() || $draft ? 'filled' : 'primary'">
                                     {{ $matchday->isFilled() ? __('Edit match') : __('Fill in') }}
                                 </x-ui.btn>
                             @endif

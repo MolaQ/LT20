@@ -172,7 +172,7 @@ new class extends Component
                 @foreach (MatchdayGraphics::questions($md) as $set => $questions)
                     @php
                         $setLabel = CompetitionType::tryFrom($set)?->label() ?? $set;
-                        $closed = !$md->isOpenForTips();
+                        $closed = !$md->isUpcoming();
                     @endphp
                     <x-graphic-card :title="__('Questions') . ': ' . $setLabel" :when="__('Before the match')"
                         :text="__('Matchday :n questions (:set): yes or no? Answer at :site.', ['n' => $md->number, 'set' => $setLabel, 'site' => $site]) . $hashtag"
@@ -257,7 +257,7 @@ new class extends Component
                 {{-- Ostatnia prosta: czas do końca typowania i liczba typów --}}
                 @php
                     $progress = MatchdayGraphics::progress($md);
-                    $left = $md->isOpenForTips() ? now()->diff($md->kickoff_at) : null;
+                    $left = $md->isUpcoming() ? now()->diff($md->kickoff_at) : null;
                     $hours = $left ? $left->days * 24 + $left->h : 0;
                 @endphp
                 <x-graphic-card :title="__('Final stretch')" :when="__('Match day')"

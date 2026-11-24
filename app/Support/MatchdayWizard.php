@@ -29,6 +29,8 @@ final class MatchdayWizard
                 ? ($matchday->opponent.' · '.$matchday->kickoff_at?->format('d.m H:i'))
                 : __('Opponent and kick-off missing')],
             'questions' => [$questions->isNotEmpty() ? true : null, __(':count of :max', ['count' => $questions->count(), 'max' => Questions::PER_SET * count(Questions::sets())])],
+            // Szkic: gracze nie widzą kolejki, dopóki admin jej nie opublikuje (zwykle po ułożeniu pytań).
+            'publish' => [$matchday->isReady() || $played, $matchday->isReady() || $played ? __('Visible to players') : __('Draft')],
             'tips' => [$kickoffPassed || $played, trans_choice(':count tip|:count tips', $tips, ['count' => $tips])],
             'result' => [$hasScore, $hasScore ? $matchday->lech_goals.':'.$matchday->opponent_goals : __('No result yet')],
             'answers' => [$questions->isEmpty() ? null : $unsettled === 0, $questions->isEmpty()
