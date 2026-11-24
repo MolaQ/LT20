@@ -75,6 +75,32 @@ final class Questions
     }
 
     /**
+     * Jak odpowiadali kibice: id pytania => odsetek odpowiedzi TAK (null, gdy nikt nie odpowiedział) i liczba odpowiedzi.
+     *
+     * @param  iterable<int, int>  $questionIds
+     * @return array<int, array{yes: ?int, answers: int}>
+     */
+    public static function crowd(iterable $questionIds): array
+    {
+        $ids = collect($questionIds)->values();
+        $counts = $ids->isEmpty() ? collect() : QuestionAnswer::whereIn('matchday_question_id', $ids)
+            ->selectRaw('matchday_question_id, COUNT(*) as total, SUM(CASE WHEN answer THEN 1 ELSE 0 END) as yes')
+            ->groupBy('matchday_question_id')
+            ->toBase()
+            ->get()
+            ->keyBy('matchday_question_id');
+
+        $crowd = [];
+        foreach ($ids as $id) {
+            $row = $counts->get($id);
+            $total = (int) ($row->total ?? 0);
+            $crowd[(int) $id] = ['yes' => $total > 0 ? (int) round((int) $row->yes * 100 / $total) : null, 'answers' => $total];
+        }
+
+        return $crowd;
+    }
+
+    /**
      * Krótkie podsumowanie odpowiedzi gracza w jednym zestawie.
      *
      * @param  Collection<int, QuestionAnswer>  $answers

@@ -99,6 +99,9 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('panel/competitions', 'pages::dashboard.competitions')
         ->middleware('permission:season-list')
         ->name('dashboard.competitions');
+    Route::livewire('panel/next-season', 'pages::dashboard.next-season')
+        ->middleware('permission:season-list')
+        ->name('dashboard.next-season');
     Route::livewire('panel/european-qualification', 'pages::dashboard.european-qualification')
         ->middleware('permission:season-list')
         ->name('dashboard.european-qualification');

@@ -199,13 +199,32 @@ final class Standings
             return [];
         }
 
+        $leagues = self::projectedTree($competitions->all());
+
+        return $leagues === [] ? [] : Promotion::movesTree($leagues);
+    }
+
+    /**
+     * Drzewo lig sezonu do awansów (Promotion::applyTree) z aktualnych tabel: zespoły w kolejności tabeli,
+     * człowiek = gracz, który może grać dalej (Players::eligible), rank = kryteria tabeli do wspólnej tabeli poziomu.
+     * Po ostatniej kolejce to wynik końcowy, w trakcie sezonu prognoza (podgląd listy na nowy sezon w panelu).
+     *
+     * @param  array<int, Competition>  $competitions  ligi 1-10 i podwórkowe sezonu
+     * @return array<array-key, array{parent: string|null, up: int, group?: string, teams: array<int, array{id: int, human: bool, rank?: list<int>}>}>
+     */
+    public static function projectedTree(array $competitions): array
+    {
         $eligible = Players::eligible()->pluck('id')->flip();
-        $leagues = BuildListFromPrevious::leagueTree($competitions->all());
+        $leagues = BuildListFromPrevious::leagueTree($competitions);
         foreach ($competitions as $competition) {
             $teams = [];
             foreach (self::for($competition) as $row) {
                 $userId = $row['team']->user_id;
-                $teams[] = ['id' => (int) $row['team']->id, 'human' => $userId !== null && isset($eligible[$userId])];
+                $teams[] = [
+                    'id' => (int) $row['team']->id,
+                    'human' => $userId !== null && isset($eligible[$userId]),
+                    'rank' => BuildListFromPrevious::rank($row),
+                ];
             }
             $key = BuildListFromPrevious::treeKey($competition);
             if (isset($leagues[$key])) {
@@ -213,7 +232,7 @@ final class Standings
             }
         }
 
-        return $leagues === [] ? [] : Promotion::movesTree($leagues);
+        return $leagues;
     }
 
     /**
