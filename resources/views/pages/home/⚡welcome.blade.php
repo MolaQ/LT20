@@ -485,8 +485,12 @@ new #[Layout('layouts::public')] class extends Component {
                         </span>
                     </div>
                     @if ($lastProtocol->isNotEmpty())
-                        <div class="mx-auto max-w-md px-5 py-2">
+                        {{-- Telefon: lista; szerszy ekran: kolumny (gole, kartki, zmiany), żeby protokół nie był wąskim paskiem pośrodku --}}
+                        <div class="px-5 py-2 sm:hidden">
                             @include('partials.match-protocol', ['events' => $lastProtocol])
+                        </div>
+                        <div class="hidden px-5 py-4 sm:block">
+                            @include('partials.match-protocol-columns', ['events' => $lastProtocol])
                         </div>
                     @endif
                 </section>
@@ -595,7 +599,8 @@ new #[Layout('layouts::public')] class extends Component {
                     @endif
 
                     <div class="mt-auto flex items-center justify-between gap-3 border-t border-ui-line px-5 py-3">
-                        <span class="flex items-center gap-3 text-xs text-ui-muted">
+                        <span class="flex flex-wrap items-center gap-3 text-xs text-ui-muted">
+                            <x-table-criteria-button />
                             @if (collect($league['rows'])->contains('zone', 'up'))
                                 <span class="inline-flex items-center gap-1"><span class="h-[3px] w-3 rounded-full bg-green-500"></span>{{ __('Promotion') }}</span>
                             @endif
@@ -786,4 +791,5 @@ new #[Layout('layouts::public')] class extends Component {
         @endforeach
     </section>
 
+    <x-table-criteria />
 </div>

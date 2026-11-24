@@ -8,7 +8,6 @@ use App\Models\CompetitionEntry;
 use App\Models\Fixture;
 use App\Models\Matchday;
 use App\Models\MatchdayQuestion;
-use App\Models\QuestionAnswer;
 use App\Models\Rival;
 use App\Models\Season;
 use App\Models\SeasonTeam;
@@ -85,21 +84,14 @@ final class MatchdayGraphics
         $questions = MatchdayQuestion::where('matchday_id', $matchday->id)->where('voided', false)
             ->orderBy('score_set')->orderBy('position')->get(['id', 'score_set', 'text', 'correct']);
 
-        $counts = QuestionAnswer::whereIn('matchday_question_id', $questions->pluck('id'))
-            ->selectRaw('matchday_question_id, COUNT(*) as total, SUM(CASE WHEN answer THEN 1 ELSE 0 END) as yes')
-            ->groupBy('matchday_question_id')
-            ->toBase()
-            ->get()
-            ->keyBy('matchday_question_id');
+        $crowd = Questions::crowd($questions->pluck('id'));
 
         $sets = [];
         foreach ($questions as $question) {
-            $row = $counts[$question->id] ?? null;
-            $total = (int) ($row->total ?? 0);
             $sets[$question->score_set][] = [
                 'text' => $question->text,
-                'yes' => $total > 0 ? (int) round((int) $row->yes * 100 / $total) : null,
-                'answers' => $total,
+                'yes' => $crowd[$question->id]['yes'],
+                'answers' => $crowd[$question->id]['answers'],
                 'correct' => $question->correct,
             ];
         }
