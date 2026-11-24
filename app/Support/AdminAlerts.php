@@ -101,6 +101,11 @@ final class AdminAlerts
                 continue;
             }
 
+            // Szkic przed pierwszym gwizdkiem: gracze go nie widzą, trzeba ułożyć pytania i opublikować.
+            if ($matchday->is_draft && ! $played && ! $started) {
+                $alerts[] = self::alert(self::WARNING, 'megaphone', __(':matchday: publish the draft', ['matchday' => $label]), __('Players do not see the matchday and cannot tip until you publish it.'), 'dashboard.matchday-wizard');
+            }
+
             if ($started && ! $played && $matchday->status !== MatchdayStatus::Postponed) {
                 $hasScore = $matchday->lech_goals !== null && $matchday->opponent_goals !== null;
                 $alerts[] = self::alert(

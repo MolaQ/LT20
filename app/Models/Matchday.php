@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\MatchCompetition;
 use App\Enums\MatchdayStatus;
+use App\Support\Audit;
+use App\Support\SystemFeed;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,12 +41,14 @@ class Matchday extends Model
         'competition',
         'kickoff_at',
         'status',
+        'is_draft',
         'lech_goals',
         'opponent_goals',
     ];
 
     protected $attributes = [
         'status' => 'planned',
+        'is_draft' => false,
         'is_home' => true,
     ];
 
@@ -58,6 +62,7 @@ class Matchday extends Model
             'push_reminder_at' => 'datetime',
             'push_results_at' => 'datetime',
             'status' => MatchdayStatus::class,
+            'is_draft' => 'boolean',
             'lech_goals' => 'integer',
             'opponent_goals' => 'integer',
         ];
@@ -79,6 +84,7 @@ class Matchday extends Model
     public function assignMatch(LechMatch $match): void
     {
         $previous = $this->lech_match_id;
+        $wasFilled = $this->isFilled();
 
         $this->fill([
             'lech_match_id' => $match->id,
@@ -87,7 +93,15 @@ class Matchday extends Model
             'competition' => $match->competition,
             'kickoff_at' => $match->kickoff_at,
             'status' => $match->postponed ? MatchdayStatus::Postponed : MatchdayStatus::Planned,
-        ])->save();
+        ]);
+
+        // Nowy mecz w pustej kolejce: szkic, dopóki admin nie ułoży pytań i nie opublikuje kolejki.
+        // Zmiana meczu w już uzupełnionej kolejce (np. nowa godzina) nie cofa publikacji.
+        if (! $wasFilled && $this->isFilled() && ! $this->hasTips()) {
+            $this->is_draft = true;
+        }
+
+        $this->save();
 
         if ($previous !== null && $previous !== $match->id) {
             LechMatch::placeholders()->whereKey($previous)->whereDoesntHave('matchday')->delete();
@@ -134,9 +148,51 @@ class Matchday extends Model
      */
     public function isOpenForTips(): bool
     {
+        return ! $this->is_draft && $this->isUpcoming();
+    }
+
+    /** Zaplanowana i przed pierwszym gwizdkiem, także jako szkic (panel admina: pytania, grafiki, kreator). */
+    public function isUpcoming(): bool
+    {
         return $this->status === MatchdayStatus::Planned
             && $this->kickoff_at !== null
             && now()->lt($this->kickoff_at);
+    }
+
+    /** Kolejka gotowa dla graczy: uzupełniona (rywal i termin) i opublikowana. */
+    public function isReady(): bool
+    {
+        return $this->isFilled() && ! $this->is_draft;
+    }
+
+    /**
+     * Publikacja szkicu: kolejka trafia do graczy i otwiera się typowanie (do pierwszego gwizdka).
+     * Wpis w informacjach systemowych „Dodano mecz” pojawia się dopiero teraz, nie przy szkicu.
+     */
+    public function publish(): void
+    {
+        if (! $this->is_draft) {
+            return;
+        }
+
+        $this->update(['is_draft' => false]);
+        Audit::log('matchday.published', null, [], ['number' => $this->number], $this->fixture);
+
+        if ($this->isFilled()) {
+            SystemFeed::record(
+                'matches',
+                'Match added: :fixture (matchday :number, :date)',
+                ['fixture' => $this->fixture, 'number' => $this->number, 'date' => $this->kickoff_at?->format('d.m.Y H:i')],
+                'results',
+                ['round' => $this->number],
+            );
+        }
+    }
+
+    /** Czy ktoś już typował tę kolejkę (wtedy nie robimy z niej szkicu). */
+    private function hasTips(): bool
+    {
+        return $this->exists && Tip::where('matchday_id', $this->id)->exists();
     }
 
     /**

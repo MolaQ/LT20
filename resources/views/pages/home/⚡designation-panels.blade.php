@@ -52,7 +52,7 @@ new class extends Component {
     #[Computed]
     public function isOpen(): bool
     {
-        return (bool) $this->matchday?->isOpenForTips() && $this->matchday->isFilled();
+        return (bool) $this->matchday?->isOpenForTips() && $this->matchday->isReady();
     }
 
     /** @return array<int, CompetitionType> */

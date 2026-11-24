@@ -269,6 +269,8 @@ class SimulateSeason extends Command
                 'competition' => $competition->value,
                 'kickoff_at' => $start->copy()->addDays($index * self::DAYS_BETWEEN),
             ]));
+            // Symulacja od razu publikuje kolejki (bez szkicu).
+            $matchday->forceFill(['is_draft' => false])->save();
         }
 
         return $season;

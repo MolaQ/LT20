@@ -2907,5 +2907,16 @@
     "players": "graczy",
     "rests a season": "pauzuje sezon",
     "Fans": "Kibice",
-    ":n answer|:n answers": "{1} :n odpowiedź|[2,*] :n odpowiedzi"
+    ":n answer|:n answers": "{1} :n odpowiedź|[2,*] :n odpowiedzi",
+    "Matchday published": "Opublikowano kolejkę",
+    "The matchday is being prepared. Tipping opens once the admin publishes it.": "Kolejka jest w przygotowaniu. Typowanie otworzy się, gdy admin ją opublikuje.",
+    "Matchday :number is published, tipping is open.": "Kolejka :number jest opublikowana, typowanie otwarte.",
+    "Draft: players do not see it yet. Add the questions and publish.": "Szkic: gracze jeszcze jej nie widzą. Dodaj pytania i opublikuj.",
+    "Publish matchday :number? Players will see it and tipping opens.": "Opublikować kolejkę :number? Gracze ją zobaczą i otworzy się typowanie.",
+    "Publish": "Opublikuj",
+    "Publication": "Publikacja",
+    "Until you publish it, the matchday is a draft: players do not see it and cannot tip. Publish once the questions are ready.": "Dopóki jej nie opublikujesz, kolejka jest szkicem: gracze jej nie widzą i nie mogą typować. Opublikuj, gdy pytania będą gotowe.",
+    ":matchday: publish the draft": ":matchday: opublikuj szkic",
+    "Players do not see the matchday and cannot tip until you publish it.": "Gracze nie widzą kolejki i nie mogą typować, dopóki jej nie opublikujesz.",
+    "Visible to players": "Widoczna dla graczy"
 }

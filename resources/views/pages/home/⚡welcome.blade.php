@@ -47,7 +47,7 @@ new #[Layout('layouts::public')] class extends Component {
 
         $matchdays = Matchday::where('season_id', $this->season->id)->orderBy('number')->get();
 
-        return $matchdays->first(fn($m) => $m->status !== MatchdayStatus::Played && $m->isFilled())
+        return $matchdays->first(fn($m) => $m->status !== MatchdayStatus::Played && $m->isReady())
             ?? $matchdays->last(fn($m) => $m->status === MatchdayStatus::Played);
     }
 

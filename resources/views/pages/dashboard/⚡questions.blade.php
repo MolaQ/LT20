@@ -83,7 +83,7 @@ new class extends Component {
     private function pickMatchday(): void
     {
         if (!$this->matchdays->firstWhere('number', $this->number)) {
-            $this->number = $this->matchdays->first(fn ($m) => $m->isOpenForTips())?->number
+            $this->number = $this->matchdays->first(fn ($m) => $m->isUpcoming())?->number
                 ?? $this->matchdays->first()?->number ?? 0;
         }
     }
@@ -359,7 +359,7 @@ new class extends Component {
                 <button type="button" wire:click="$set('number', {{ $option->number }})" wire:key="qmd-{{ $option->id }}"
                     class="{{ $option->number === $number ? 'bg-club text-club-ink' : 'bg-ui-raised' }} shrink-0 rounded-xl px-3 py-2 text-sm font-semibold">
                     {{ __('Matchday :number', ['number' => $option->number]) }}
-                    @if ($option->isOpenForTips())<span class="ms-1 inline-block size-2 rounded-full bg-green-500"></span>@endif
+                    @if ($option->isUpcoming())<span class="ms-1 inline-block size-2 rounded-full bg-green-500"></span>@endif
                 </button>
             @endforeach
         </div>

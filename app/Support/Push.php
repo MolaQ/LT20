@@ -46,6 +46,7 @@ final class Push
 
         $next = Matchday::where('season_id', $season->id)
             ->where('status', MatchdayStatus::Planned->value)
+            ->where('is_draft', false)
             ->whereNotNull('kickoff_at')
             ->where('kickoff_at', '>', now())
             ->orderBy('kickoff_at')
