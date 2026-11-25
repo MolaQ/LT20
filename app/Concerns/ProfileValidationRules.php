@@ -3,6 +3,7 @@
 namespace App\Concerns;
 
 use App\Models\User;
+use App\Rules\RealEmailDomain;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
@@ -46,6 +47,8 @@ trait ProfileValidationRules
             'string',
             'email',
             'max:255',
+            // Przy zmianie profilu DNS sprawdzamy tylko dla nowego adresu (np. sama zmiana imienia nie zależy od DNS).
+            new RealEmailDomain($userId === null ? null : User::whereKey($userId)->value('email')),
             $userId === null
                 ? Rule::unique(User::class)
                 : Rule::unique(User::class)->ignore($userId),

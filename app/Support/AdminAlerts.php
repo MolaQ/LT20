@@ -65,7 +65,7 @@ final class AdminAlerts
 
         $unverified = User::whereNull('email_verified_at')->where('created_at', '<', now()->subDay())->count();
         if ($unverified > 0) {
-            $alerts[] = self::alert(self::INFO, 'envelope', trans_choice(':count user has not confirmed the email for a day|:count users have not confirmed the email for a day', $unverified, ['count' => $unverified]), __('You can see their codes on the Users page.'), 'dashboard.users', ['roleFilter' => '__unverified']);
+            $alerts[] = self::alert(self::INFO, 'envelope', trans_choice(':count user has not confirmed the email for a day|:count users have not confirmed the email for a day', $unverified, ['count' => $unverified]), __('A reminder with a new code goes out after a day, abandoned sign-ups are deleted after :days days. Codes are on the Users page.', ['days' => Unverified::DELETE_AFTER_DAYS]), 'dashboard.users', ['roleFilter' => '__unverified']);
         }
 
         // Najpierw pilne, potem ostrzeżenia i informacje.
