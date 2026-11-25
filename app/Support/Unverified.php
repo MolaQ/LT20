@@ -73,17 +73,22 @@ final class Unverified
      */
     public static function delete(iterable $users, string $reason): int
     {
-        $allowed = self::deletable()->pluck('id')->flip();
         $deleted = 0;
 
         foreach ($users as $user) {
-            if (! isset($allowed[$user->id])) {
-                continue;
-            }
+            // Sprawdzenie i kasowanie w jednej transakcji z blokadą wiersza: konto, które w międzyczasie potwierdziło mail,
+            // dostało rolę albo typ, zostaje. Wpis w dzienniku zapisuje się tylko razem z udanym skasowaniem.
+            $deleted += DB::transaction(function () use ($user, $reason): int {
+                $fresh = self::deletable()->whereKey($user->id)->lockForUpdate()->first();
+                if (! $fresh) {
+                    return 0;
+                }
 
-            Audit::log('user.deleted', null, ['name' => $user->name, 'email' => $user->email, 'created_at' => $user->created_at?->format('Y-m-d H:i')], [], $reason);
-            $user->delete();
-            $deleted++;
+                Audit::log('user.deleted', null, ['name' => $fresh->name, 'email' => $fresh->email, 'created_at' => $fresh->created_at?->format('Y-m-d H:i')], [], $reason);
+                $fresh->delete();
+
+                return 1;
+            });
         }
 
         return $deleted;

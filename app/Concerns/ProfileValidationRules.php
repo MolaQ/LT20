@@ -47,7 +47,8 @@ trait ProfileValidationRules
             'string',
             'email',
             'max:255',
-            new RealEmailDomain,
+            // Przy zmianie profilu DNS sprawdzamy tylko dla nowego adresu (np. sama zmiana imienia nie zależy od DNS).
+            new RealEmailDomain($userId === null ? null : User::whereKey($userId)->value('email')),
             $userId === null
                 ? Rule::unique(User::class)
                 : Rule::unique(User::class)->ignore($userId),

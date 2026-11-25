@@ -70,3 +70,10 @@ test('a common typo in the email domain gets a hint', function () {
         ->and($validator->errors()->first('email'))->toContain('gmail.com');
     expect(Validator::make(['email' => 'kibic@gmail.com'], ['email' => [new RealEmailDomain]])->fails())->toBeFalse();
 });
+
+test('the domain check skips non-string values and an unchanged address', function () {
+    expect(Validator::make(['email' => ['kibic@gmail.com']], ['email' => [new RealEmailDomain]])->fails())->toBeFalse()
+        ->and(Validator::make(['email' => 'kibic@gmial.com'], ['email' => [new RealEmailDomain('kibic@gmial.com')]])->fails())->toBeFalse()
+        ->and(Validator::make(['email' => 'nowy@gmial.com'], ['email' => [new RealEmailDomain('kibic@gmial.com')]])->fails())->toBeTrue()
+        ->and(Validator::make(['email' => 'kibic@interia.com'], ['email' => [new RealEmailDomain]])->fails())->toBeFalse();
+});
