@@ -2930,5 +2930,9 @@
     "Delete the selected accounts without a confirmed email? Accounts with a role, a list place, tips or payments are kept. This cannot be undone.": "Usunąć zaznaczone konta bez potwierdzonego e-maila? Konta z rolą, miejscem na liście, typami albo wpłatami zostaną. Tego nie da się cofnąć.",
     "Delete unconfirmed": "Usuń niepotwierdzone",
     "Reminder sent :date": "Przypomnienie wysłane :date",
-    "A reminder with a new code goes out after a day, abandoned sign-ups are deleted after :days days. Codes are on the Users page.": "Po dobie idzie przypomnienie z nowym kodem, porzucone rejestracje znikają po :days dniach. Kody są na stronie Użytkownicy."
+    "A reminder with a new code goes out after a day, abandoned sign-ups are deleted after :days days. Codes are on the Users page.": "Po dobie idzie przypomnienie z nowym kodem, porzucone rejestracje znikają po :days dniach. Kody są na stronie Użytkownicy.",
+    "Your email is confirmed. Log in to play.": "Adres e-mail potwierdzony. Zaloguj się i graj.",
+    "Click the button to confirm your email address:": "Kliknij przycisk, aby potwierdzić adres e-mail:",
+    "Confirm my email": "Potwierdź mój e-mail",
+    "Or enter this code on the confirmation page (:url):": "Albo wpisz ten kod na stronie potwierdzenia (:url):"
 }
