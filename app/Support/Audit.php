@@ -116,6 +116,7 @@ class Audit
 
             // Gracze, premium i wpłaty
             'user.role_removed' => __('Role removed'),
+            'user.deleted' => __('Account deleted'),
             'premium.manual' => __('Premium granted manually'),
             'premium.expired' => __('Premium expired'),
             'premium.welcome' => __('Premium on the start'),

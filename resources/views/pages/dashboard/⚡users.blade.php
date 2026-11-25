@@ -291,6 +291,23 @@ new class extends Component {
         $this->dispatch('ui-toast', text: __('New code for :name: :code', ['name' => $user->name, 'code' => $code]), variant: 'success');
     }
 
+    /**
+     * Kasuje zaznaczone konta bez potwierdzonego maila (np. mail z kodem wrócił jako zły adres).
+     * Konta z rolą, miejscem na liście, typami albo wpłatami zostają (App\Support\Unverified::deletable).
+     */
+    public function deleteUnverified(): void
+    {
+        $this->authorizeAdmin();
+
+        $users = User::whereIn('id', array_map('intval', $this->checked))->get();
+        $deleted = \App\Support\Unverified::delete($users, __('Deleted by the admin: email not confirmed'));
+
+        $this->checked = [];
+        unset($this->users, $this->stats, $this->filteredCount);
+
+        $this->dispatch('ui-toast', text: __('Deleted accounts: :count. Accounts with a role, a list place, tips or payments are kept.', ['count' => $deleted]), variant: $deleted > 0 ? 'success' : 'warning');
+    }
+
     /** Potwierdza adres bez kodu. */
     public function confirmEmail(int $id): void
     {
@@ -389,6 +406,8 @@ new class extends Component {
             {{-- Js::from zamiast dyrektywy js w atrybucie komponentu: Livewire brał wtedy resztę szablonu za jej wyrażenie i przekraczał limit wyrażeń regularnych --}}
             <x-ui.btn size="sm" icon="lock-open" x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Remove the ban from the selected accounts?')) }}, run: () => $wire.releaseRole({{ \Illuminate\Support\Js::from(\App\Enums\RoleName::Banned->value) }}) })">{{ __('Remove ban') }}</x-ui.btn>
             <x-ui.btn size="sm" icon="arrow-uturn-left" x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Remove Inactive from the selected accounts?')) }}, run: () => $wire.releaseRole({{ \Illuminate\Support\Js::from(\App\Enums\RoleName::Inactive->value) }}) })">{{ __('Remove Inactive') }}</x-ui.btn>
+            {{-- Porzucone rejestracje i złe adresy: kasujemy tylko konta bez potwierdzenia, roli, listy, typów i wpłat --}}
+            <x-ui.btn size="sm" variant="danger" icon="trash" x-on:click="$dispatch('confirm-action', { message: {{ \Illuminate\Support\Js::from(__('Delete the selected accounts without a confirmed email? Accounts with a role, a list place, tips or payments are kept. This cannot be undone.')) }}, run: () => $wire.deleteUnverified() })">{{ __('Delete unconfirmed') }}</x-ui.btn>
         @endif
     </div>
 
@@ -466,6 +485,9 @@ new class extends Component {
                                 <x-ui.btn variant="ghost" size="xs" icon="check-badge" wire:click="confirmEmail({{ $user->id }})" wire:confirm="{{ __('Confirm this email without a code?') }}" :aria-label="__('Confirm without a code')"
                                     :tooltip="__('Confirm without a code')" />
                             </div>
+                            @if ($user->verification_reminded_at)
+                                <div class="mt-0.5 text-xs text-ui-muted">{{ __('Reminder sent :date', ['date' => $user->verification_reminded_at->format('d.m H:i')]) }}</div>
+                            @endif
                         @endif
                     </x-ui.table.cell>
                     <x-ui.table.cell>

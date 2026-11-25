@@ -3,6 +3,7 @@
 use App\Support\Automats;
 use App\Support\Premium;
 use App\Support\Push;
+use App\Support\Unverified;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -45,3 +46,11 @@ Artisan::command('automats:run', function () {
 })->purpose('Let the automat teams tip, pick a squad and answer questions before kickoff');
 
 Schedule::command('automats:run')->everyMinute()->withoutOverlapping();
+
+// Konta bez potwierdzonego maila (App\Support\Unverified): przypomnienie po dobie, porzucone konta znikają po tygodniu.
+Artisan::command('users:unverified', function () {
+    $this->info('Reminders sent: '.Unverified::remind());
+    $this->info('Abandoned accounts deleted: '.Unverified::cleanup());
+})->purpose('Remind about the email confirmation and delete abandoned sign-ups');
+
+Schedule::command('users:unverified')->hourly()->withoutOverlapping();

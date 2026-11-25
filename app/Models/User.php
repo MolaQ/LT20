@@ -35,6 +35,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $premium_until
  * @property string|null $verification_code
  * @property Carbon|null $verification_code_expires_at
+ * @property Carbon|null $verification_reminded_at
  * @property string|null $locale
  * @property array<string, bool>|null $push_prefs
  * @property int $profile_views
@@ -76,6 +77,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'inactivity_reset_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'verification_code_expires_at' => 'datetime',
+            'verification_reminded_at' => 'datetime',
             'push_prefs' => 'array',
             'show_as_supporter' => 'boolean',
         ];
@@ -121,11 +123,11 @@ class User extends Authenticatable implements MustVerifyEmail
      * Zamiast linku wysyłamy 6-cyfrowy kod (Fortify woła tę metodę po rejestracji i przy „Wyślij ponownie”).
      * Kod zapisujemy jawnie, bo admin pokazuje go na stronie Użytkownicy.
      */
-    public function sendEmailVerificationNotification(): void
+    public function sendEmailVerificationNotification(bool $reminder = false): void
     {
         $code = $this->newVerificationCode();
 
-        $this->notify(new VerificationCode($code, self::VERIFICATION_CODE_MINUTES));
+        $this->notify(new VerificationCode($code, self::VERIFICATION_CODE_MINUTES, $reminder));
     }
 
     /** Nowy kod potwierdzający (bez wysyłki), ważny VERIFICATION_CODE_MINUTES minut. */

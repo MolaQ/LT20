@@ -2918,5 +2918,17 @@
     "Until you publish it, the matchday is a draft: players do not see it and cannot tip. Publish once the questions are ready.": "Dopóki jej nie opublikujesz, kolejka jest szkicem: gracze jej nie widzą i nie mogą typować. Opublikuj, gdy pytania będą gotowe.",
     ":matchday: publish the draft": ":matchday: opublikuj szkic",
     "Players do not see the matchday and cannot tip until you publish it.": "Gracze nie widzą kolejki i nie mogą typować, dopóki jej nie opublikujesz.",
-    "Visible to players": "Widoczna dla graczy"
+    "Visible to players": "Widoczna dla graczy",
+    "Reminder: confirm your LechTYPER account (code :code)": "Przypomnienie: potwierdź konto w LechTYPER (kod :code)",
+    "Your account is still waiting for the email confirmation. Without it you cannot tip, and after :days days from the sign-up the account is deleted.": "Twoje konto wciąż czeka na potwierdzenie adresu e-mail. Bez tego nie możesz typować, a po :days dniach od rejestracji konto zostanie usunięte.",
+    "Abandoned sign-up": "Porzucona rejestracja",
+    "Account deleted": "Usunięto konto",
+    "Check the address: did you mean :domain?": "Sprawdź adres: czy chodziło o :domain?",
+    "The domain :domain does not receive email. Check the address.": "Domena :domain nie odbiera poczty. Sprawdź adres.",
+    "Deleted by the admin: email not confirmed": "Usunięte przez admina: e-mail niepotwierdzony",
+    "Deleted accounts: :count. Accounts with a role, a list place, tips or payments are kept.": "Usunięte konta: :count. Konta z rolą, miejscem na liście, typami albo wpłatami zostały.",
+    "Delete the selected accounts without a confirmed email? Accounts with a role, a list place, tips or payments are kept. This cannot be undone.": "Usunąć zaznaczone konta bez potwierdzonego e-maila? Konta z rolą, miejscem na liście, typami albo wpłatami zostaną. Tego nie da się cofnąć.",
+    "Delete unconfirmed": "Usuń niepotwierdzone",
+    "Reminder sent :date": "Przypomnienie wysłane :date",
+    "A reminder with a new code goes out after a day, abandoned sign-ups are deleted after :days days. Codes are on the Users page.": "Po dobie idzie przypomnienie z nowym kodem, porzucone rejestracje znikają po :days dniach. Kody są na stronie Użytkownicy."
 }

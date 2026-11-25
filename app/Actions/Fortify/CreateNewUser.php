@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Rules\RealEmailDomain;
 use App\Support\Referrals;
 use App\Support\TeamRules;
 use Illuminate\Support\Facades\Hash;
@@ -27,7 +28,7 @@ class CreateNewUser implements CreatesNewUsers
 
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
+            'email' => ['required', 'string', 'email', 'max:255', new RealEmailDomain, Rule::unique(User::class)],
             'password' => ['required', 'string', Password::default(), 'confirmed'],
             'team_name' => TeamRules::name(),
         ], [], [

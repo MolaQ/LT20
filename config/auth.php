@@ -114,4 +114,7 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    // Czy domena adresu e-mail musi istnieć w DNS (App\Rules\RealEmailDomain). W testach wyłączone.
+    'email_dns_check' => (bool) env('EMAIL_DNS_CHECK', true),
+
 ];

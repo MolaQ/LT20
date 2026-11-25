@@ -3,6 +3,7 @@
 namespace App\Concerns;
 
 use App\Models\User;
+use App\Rules\RealEmailDomain;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
@@ -46,6 +47,7 @@ trait ProfileValidationRules
             'string',
             'email',
             'max:255',
+            new RealEmailDomain,
             $userId === null
                 ? Rule::unique(User::class)
                 : Rule::unique(User::class)->ignore($userId),
