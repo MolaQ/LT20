@@ -8,6 +8,7 @@ use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\Przelewy24Controller;
 use App\Http\Controllers\SiteUpdateChunkController;
 use App\Http\Controllers\SponsorController;
+use App\Http\Controllers\VerifyLinkController;
 use App\Support\Sitemap;
 use Illuminate\Support\Facades\Route;
 
@@ -58,6 +59,12 @@ Route::view('offline', 'offline')->name('offline');
 Route::get('b/{campaign}', [BannerController::class, 'click'])->whereNumber('campaign')->name('banner.click');
 Route::post('b/views', [BannerController::class, 'views'])->middleware('throttle:60,1')->name('banner.views');
 // Blok partnera rozgrywek: kliknięcie liczone i przekierowane na stronę partnera.
+// Potwierdzenie e-maila przyciskiem z maila (podpisany link, bez logowania).
+Route::get('email/potwierdz/{id}/{hash}', VerifyLinkController::class)
+    ->whereNumber('id')
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.link');
+
 Route::get('p/{sponsor}', [SponsorController::class, 'click'])->whereNumber('sponsor')->name('sponsor.click');
 Route::livewire('partner/{token}', 'pages::partner-stats')->name('partner.stats');
 
