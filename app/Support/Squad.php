@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\CompetitionType;
+use App\Enums\MatchdayStatus;
 use App\Enums\PlayerPosition;
 use App\Enums\PlayerStatus;
 use App\Models\DesignatedPlayer;
@@ -42,6 +43,62 @@ class Squad
         return LechPlayer::where('status', '!=', PlayerStatus::Excluded->value)->get()
             ->sortBy(fn (LechPlayer $p) => [$order[$p->position->value], $p->number ?? 999, $p->name])
             ->values();
+    }
+
+    /**
+     * Zdejmuje ze składów zawodników niedostępnych (status „Niedostępny”) w kolejkach przed gwizdkiem: na pewno nie zagrają,
+     * więc zwalniają miejsce w składzie. Rozegranych kolejek nie rusza. Zwraca liczbę zdjętych wyborów.
+     */
+    public static function dropUnavailable(?int $playerId = null): int
+    {
+        $players = LechPlayer::where('status', PlayerStatus::Excluded->value)
+            ->when($playerId !== null, fn ($q) => $q->whereKey($playerId))
+            ->pluck('id');
+
+        if ($players->isEmpty()) {
+            return 0;
+        }
+
+        $matchdays = Matchday::where('status', MatchdayStatus::Planned->value)
+            ->where(fn ($q) => $q->whereNull('kickoff_at')->orWhere('kickoff_at', '>', now()))
+            ->pluck('id');
+
+        return (int) DesignatedPlayer::whereIn('matchday_id', $matchdays)->whereIn('lech_player_id', $players)->delete();
+    }
+
+    /**
+     * Zdejmuje ze składów kolejek przed gwizdkiem zawodników, którzy w chwili gwizdka jeszcze odpoczywają (bez zmęczonych,
+     * tych z plastrem można wystawić): wybór i tak by się nie liczył, a gracz nie widzi ich na liście do wyboru.
+     * Wołane po zapisaniu raportu meczu, bo dopiero raport wyznacza odpoczynek. Zwraca liczbę zdjętych wyborów.
+     */
+    public static function dropResting(): int
+    {
+        $dropped = 0;
+        $matchdays = Matchday::where('status', MatchdayStatus::Planned->value)->where('kickoff_at', '>', now())->get();
+
+        foreach ($matchdays as $matchday) {
+            $picks = DesignatedPlayer::where('matchday_id', $matchday->id)->get(['id', 'user_id', 'bot_id', 'lech_player_id']);
+
+            if ($picks->isEmpty()) {
+                continue;
+            }
+
+            $userIds = $picks->pluck('user_id')->filter()->unique()->values()->all();
+            $botIds = $picks->pluck('bot_id')->filter()->unique()->values()->all();
+            $locks = self::locksForClubs($matchday, $userIds, $botIds);
+
+            $resting = $picks->filter(function (DesignatedPlayer $pick) use ($locks, $matchday) {
+                $freeAt = $locks[self::clubKey($pick->user_id, $pick->bot_id)][$pick->lech_player_id] ?? null;
+
+                return $freeAt !== null && ! self::isTired($freeAt, $matchday);
+            });
+
+            if ($resting->isNotEmpty()) {
+                $dropped += (int) DesignatedPlayer::whereIn('id', $resting->pluck('id'))->delete();
+            }
+        }
+
+        return $dropped;
     }
 
     public static function clubKey(?int $userId, ?int $botId): string

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PlayerPosition;
 use App\Enums\PlayerStatus;
+use App\Support\Squad;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -21,6 +22,16 @@ class LechPlayer extends Model
     protected $fillable = ['name', 'number', 'position', 'is_academy', 'status'];
 
     protected $attributes = ['status' => 'regular', 'is_academy' => false];
+
+    protected static function booted(): void
+    {
+        // Zawodnik oznaczony jako niedostępny znika ze składów kolejek przed gwizdkiem.
+        static::saved(function (LechPlayer $player) {
+            if ($player->wasChanged('status') && $player->status === PlayerStatus::Excluded) {
+                Squad::dropUnavailable($player->id);
+            }
+        });
+    }
 
     protected function casts(): array
     {
