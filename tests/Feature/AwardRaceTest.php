@@ -9,6 +9,7 @@ use App\Models\SeasonTeam;
 use App\Models\TeamScore;
 use App\Models\User;
 use App\Support\AwardRace;
+use Livewire\Livewire;
 
 // Wyścig o nagrody (/nagrody): klasyfikacje na żywo, zmiana miejsca po ostatniej kolejce, moje miejsca i zakładka na profilu.
 
@@ -92,4 +93,16 @@ test('the awards page waits for the first settled matchday', function () {
     Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
 
     $this->get(route('awards'))->assertOk()->assertSee(__('The race starts after the first settled matchday of the season.'));
+});
+
+test('the awards table shows 10, 20 or 50 rows per page', function () {
+    [, , $ada] = raceSeason();
+
+    Livewire::actingAs($ada)->test('pages::awards')
+        ->assertSet('perPage', 20)
+        ->set('perPage', 10)
+        ->assertSet('perPage', 10)
+        ->assertSee(__('Rows per page'))
+        ->set('perPage', 7)
+        ->assertSet('perPage', 20);
 });

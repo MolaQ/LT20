@@ -2956,5 +2956,7 @@
     "You get 0 points for that matchday. Opening the page does not save any tip: click „Tip the score” (it starts from 0:0) and set your score before kick-off.": "Dostajesz 0 punktów za tę kolejkę. Samo wejście na stronę nie zapisuje typu: kliknij „Wytypuj wynik” (zaczyna od 0:0) i ustaw swój wynik przed pierwszym gwizdkiem.",
     "Make your tip": "Wytypuj wynik",
     "available from :date": "dostępny od :date",
-    "Plaster: the player has not fully recovered yet. You can field him, but he risks an injury: after this match his return to full fitness takes :factor times longer.": "Plaster: zawodnik nie jest jeszcze w pełni zregenerowany. Możesz go wystawić, ale grozi mu kontuzja: po tym meczu powrót do pełnej sprawności potrwa :factor razy dłużej."
+    "Plaster: the player has not fully recovered yet. You can field him, but he risks an injury: after this match his return to full fitness takes :factor times longer.": "Plaster: zawodnik nie jest jeszcze w pełni zregenerowany. Możesz go wystawić, ale grozi mu kontuzja: po tym meczu powrót do pełnej sprawności potrwa :factor razy dłużej.",
+    "Rows per page": "Wierszy na stronę",
+    "Top": "Top"
 }
