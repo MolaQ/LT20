@@ -96,11 +96,11 @@ class SetUpSeason
         $position = 0;
         $rows = [];
         foreach ($playerIds as $userId) {
-            $rows[] = ['season_id' => $season->id, 'position' => ++$position, 'user_id' => $userId, 'bot_id' => null, 'created_at' => $now, 'updated_at' => $now];
+            $rows[] = ['season_id' => $season->id, 'position' => ++$position, 'user_id' => $userId, 'joined_at' => $now, 'bot_id' => null, 'created_at' => $now, 'updated_at' => $now];
         }
 
         foreach ($bots as $botId) {
-            $rows[] = ['season_id' => $season->id, 'position' => ++$position, 'user_id' => null, 'bot_id' => $botId, 'created_at' => $now, 'updated_at' => $now];
+            $rows[] = ['season_id' => $season->id, 'position' => ++$position, 'user_id' => null, 'joined_at' => null, 'bot_id' => $botId, 'created_at' => $now, 'updated_at' => $now];
         }
 
         foreach (array_chunk($rows, 500) as $chunk) {

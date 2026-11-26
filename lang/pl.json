@@ -2937,5 +2937,11 @@
     "exact hit|exact hits": "dokładne trafienie|dokładne trafienia|dokładnych trafień",
     "player|players": "gracz|graczy|graczy",
     "bot|bots": "bot|boty|botów",
-    ":fixture ended :score. :tips player tipped this match: :exact hit the exact score and :outcome% got the outcome right.|:fixture ended :score. :tips players tipped this match: :exact hit the exact score and :outcome% got the outcome right.": "Mecz :fixture zakończył się wynikiem :score. Typował :tips gracz: dokładny wynik trafiło :exact, a rozstrzygnięcie :outcome%.|Mecz :fixture zakończył się wynikiem :score. Typowało :tips graczy: dokładny wynik trafiło :exact, a rozstrzygnięcie :outcome%.|Mecz :fixture zakończył się wynikiem :score. Typowało :tips graczy: dokładny wynik trafiło :exact, a rozstrzygnięcie :outcome%."
+    ":fixture ended :score. :tips player tipped this match: :exact hit the exact score and :outcome% got the outcome right.|:fixture ended :score. :tips players tipped this match: :exact hit the exact score and :outcome% got the outcome right.": "Mecz :fixture zakończył się wynikiem :score. Typował :tips gracz: dokładny wynik trafiło :exact, a rozstrzygnięcie :outcome%.|Mecz :fixture zakończył się wynikiem :score. Typowało :tips graczy: dokładny wynik trafiło :exact, a rozstrzygnięcie :outcome%.|Mecz :fixture zakończył się wynikiem :score. Typowało :tips graczy: dokładny wynik trafiło :exact, a rozstrzygnięcie :outcome%.",
+    "New players": "Nowi gracze",
+    "Between matchdays": "Między kolejkami",
+    "New in the game after matchday :n: :list. Welcome! Join at :site.": "Nowi w grze po :n. kolejce: :list. Witamy! Dołącz na :site.",
+    "Nobody has joined since the previous matchday.": "Od poprzedniej kolejki nikt nie dołączył.",
+    "Welcome to the game!": "Witamy w grze!",
+    ":count new player after matchday :n|:count new players after matchday :n": ":count nowy gracz po :n. kolejce|:count nowych graczy po :n. kolejce|:count nowych graczy po :n. kolejce"
 }

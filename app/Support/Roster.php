@@ -92,6 +92,7 @@ class Roster
                 'season_id' => $seasonId,
                 'position' => $end,
                 'user_id' => $userId,
+                'joined_at' => $now,
                 'bot_id' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -334,11 +335,12 @@ class Roster
 
         $userId = $player->user_id;
         $botId = $bot->bot_id;
+        $joinedAt = $player->joined_at;
 
         // Kolejność zapisów pilnuje unikalności (sezon, gracz) i (sezon, bot).
         $bot->update(['bot_id' => null]);
         $player->update(['user_id' => null, 'bot_id' => $botId]);
-        $bot->update(['user_id' => $userId]);
+        $bot->update(['user_id' => $userId, 'joined_at' => $joinedAt]);
 
         $legends = Competition::where('season_id', $player->season_id)->where('type', CompetitionType::Legends->value)->value('id');
         if ($legends) {

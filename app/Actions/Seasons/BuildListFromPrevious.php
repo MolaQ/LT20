@@ -127,6 +127,7 @@ class BuildListFromPrevious
                         'season_id' => $season->id,
                         'position' => ++$position,
                         'user_id' => $human ? $team->user_id : null,
+                        'joined_at' => $human ? $now : null,
                         'bot_id' => $human ? null : ($team->bot_id ?? array_shift($freeBots)),
                         'previous_id' => $team->id,
                         'created_at' => $now,

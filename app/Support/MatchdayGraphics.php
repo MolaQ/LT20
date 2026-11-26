@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\CompetitionType;
+use App\Enums\League;
 use App\Models\Competition;
 use App\Models\CompetitionEntry;
 use App\Models\Fixture;
@@ -100,6 +101,49 @@ final class MatchdayGraphics
     }
 
     /**
+     * Nowi gracze między kolejkami: kto dołączył po pierwszym gwizdku poprzedniej kolejki (tamtej już nie typował),
+     * do pierwszego gwizdka tej kolejki albo do teraz. Z nazwą drużyny i ligą, do której trafił.
+     * Pierwsza kolejka sezonu nie ma poprzedniej, więc lista jest pusta.
+     *
+     * @return list<array{team: string, league: string}>
+     */
+    public static function newcomers(Matchday $matchday): array
+    {
+        $previous = Matchday::where('season_id', $matchday->season_id)
+            ->where('number', '<', $matchday->number)
+            ->whereNotNull('kickoff_at')
+            ->orderByDesc('number')
+            ->value('kickoff_at');
+
+        if ($previous === null) {
+            return [];
+        }
+
+        $until = $matchday->kickoff_at !== null && $matchday->kickoff_at->isPast() ? $matchday->kickoff_at : now();
+
+        return SeasonTeam::query()
+            ->with('user:id,name,team_name')
+            ->where('season_id', $matchday->season_id)
+            ->whereNotNull('user_id')
+            ->whereIn('user_id', Players::eligible()->select('id'))
+            ->where('joined_at', '>', $previous)
+            ->where('joined_at', '<=', $until)
+            ->orderBy('joined_at')
+            ->get()
+            ->map(function (SeasonTeam $team): array {
+                $position = (int) $team->position;
+                $division = League::forPosition($position) === League::Podworkowa ? Backyard::forPosition($position) : null;
+
+                return [
+                    'team' => (string) $team->name,
+                    'league' => $division !== null ? Backyard::name($division) : League::forPosition($position)->label(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
      * Ostatnia prosta: liczba typów, liczba graczy i odsetek tych, którzy już typowali.
      *
      * @return array{tips: int, players: int, percent: int, missing: int}
@@ -107,7 +151,7 @@ final class MatchdayGraphics
     public static function progress(Matchday $matchday): array
     {
         $tips = Tip::where('matchday_id', $matchday->id)->count();
-        $players = Players::eligible()->count();
+        $players = Players::expected($matchday)->count();
 
         return [
             'tips' => $tips,
