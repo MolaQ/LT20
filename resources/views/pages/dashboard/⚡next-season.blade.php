@@ -105,8 +105,8 @@ new class extends Component
         <x-ui.callout icon="information-circle">{{ __('No league tables in the current season yet.') }}</x-ui.callout>
     @else
         <div class="flex flex-wrap gap-4 text-sm">
-            <span class="rounded-lg bg-ui-raised px-3 py-1.5"><span class="font-semibold tabular-nums">{{ $preview['humans'] }}</span> {{ __('players') }}</span>
-            <span class="rounded-lg bg-ui-raised px-3 py-1.5"><span class="font-semibold tabular-nums">{{ $preview['bots'] }}</span> {{ __('bots') }}</span>
+            <span class="rounded-lg bg-ui-raised px-3 py-1.5"><span class="font-semibold tabular-nums">{{ $preview['humans'] }}</span> {{ trans_choice('player|players', (int) $preview['humans']) }}</span>
+            <span class="rounded-lg bg-ui-raised px-3 py-1.5"><span class="font-semibold tabular-nums">{{ $preview['bots'] }}</span> {{ trans_choice('bot|bots', (int) $preview['bots']) }}</span>
             <span class="rounded-lg bg-ui-raised px-3 py-1.5">{{ __('List size') }}: <span class="font-semibold tabular-nums">{{ $preview['size'] }}</span></span>
             <span class="flex items-center gap-3 text-xs text-ui-muted">
                 <span class="inline-flex items-center gap-1"><x-ui.icon name="chevron-up" variant="micro" class="size-3.5 text-green-600" />{{ __('Promotion') }}</span>

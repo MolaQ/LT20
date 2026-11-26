@@ -131,7 +131,7 @@ final class MatchdaySummary
         $html = [];
 
         // Wynik i trafienia.
-        $html[] = '<p>'.$e(__(':fixture ended :score. :tips players tipped this match: :exact hit the exact score and :outcome% got the outcome right.', [
+        $html[] = '<p>'.$e(trans_choice(':fixture ended :score. :tips player tipped this match: :exact hit the exact score and :outcome% got the outcome right.|:fixture ended :score. :tips players tipped this match: :exact hit the exact score and :outcome% got the outcome right.', (int) $tips['count'], [
             'fixture' => $fixture, 'score' => $score, 'tips' => $tips['count'], 'exact' => (int) $tips['exact_count'], 'outcome' => (int) $tips['outcome'],
         ])).'</p>';
 

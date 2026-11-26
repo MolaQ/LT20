@@ -176,7 +176,7 @@ new class extends Component {
         $this->checked = [];
         unset($this->users, $this->stats, $this->filteredCount);
 
-        $this->dispatch('ui-toast', text: __(':role removed from :count accounts.', ['role' => $role, 'count' => $users->count()]), variant: 'success');
+        $this->dispatch('ui-toast', text: trans_choice(':role removed from :count account.|:role removed from :count accounts.', $users->count(), ['role' => $role]), variant: 'success');
         if ($added > 0) {
             $this->dispatch('ui-toast', text: __('Added to the season list: :count.', ['count' => $added]), variant: 'success');
         }

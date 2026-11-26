@@ -626,7 +626,7 @@ new #[Layout('layouts::public')] class extends Component {
                         <x-share-image :title="__('Season facts')" class="text-ui-muted" />
                     </div>
                     <div class="grid grid-cols-3 divide-x divide-ui-line border-b border-ui-line text-center">
-                        @foreach ([[$stats['outcome'] . '%', __('right outcomes')], [$stats['exact'] . '%', __('exact scores')], [$stats['exact_count'], __('exact hits')]] as [$value, $label])
+                        @foreach ([[$stats['outcome'] . '%', __('right outcomes')], [$stats['exact'] . '%', __('exact scores')], [$stats['exact_count'], trans_choice('exact hit|exact hits', (int) $stats['exact_count'])]] as [$value, $label])
                             <div class="px-2 py-4">
                                 <div class="font-display text-2xl font-bold tabular-nums text-club">{{ $value }}</div>
                                 <div class="text-[11px] font-semibold uppercase leading-tight tracking-wide text-ui-muted">{{ $label }}</div>

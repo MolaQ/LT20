@@ -535,9 +535,9 @@ new class extends Component {
         $this->clearCaches();
 
         $this->dispatch('ui-toast',
-            text: __('Season approved. :leagues leagues and :fixtures fixtures were generated.', [
-                'leagues' => $result['leagues'],
-                'fixtures' => $result['fixtures'],
+            text: __('Season approved. Generated :leagues and :fixtures.', [
+                'leagues' => trans_choice('generated :count league|generated :count leagues', $result['leagues']),
+                'fixtures' => trans_choice(':count match|:count matches', $result['fixtures']),
             ]),
             variant: 'success',
         );

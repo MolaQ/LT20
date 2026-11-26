@@ -148,7 +148,7 @@ new class extends Component {
                         $scorers = MatchdayGraphics::scorers($md);
                     @endphp
                     <x-graphic-card :title="__('After the matchday')" :when="__('After the match')"
-                        :text="__(':fixture :score. The exact score was hit by :exact players. Full results at :site.', ['fixture' => $fixture, 'score' => $score, 'exact' => (int) $tips['exact_count'], 'site' => $site]) . $hashtag">
+                        :text="trans_choice(':fixture :score. The exact score was hit by :exact player. Full results at :site.|:fixture :score. The exact score was hit by :exact players. Full results at :site.', (int) $tips['exact_count'], ['fixture' => $fixture, 'score' => $score, 'exact' => (int) $tips['exact_count'], 'site' => $site]) . $hashtag">
                         <div class="flex h-full flex-col p-4">
                             {!! $top !!}
                             <div class="mt-2 text-center text-[11px] uppercase tracking-widest text-lech-200">{{ $fixture }}</div>

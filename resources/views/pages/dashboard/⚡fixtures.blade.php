@@ -231,7 +231,7 @@ new class extends Component {
 
         $this->round = $next;
         unset($this->drawnRounds, $this->roundFixtures);
-        $this->dispatch('ui-toast', text: __('Round :round drawn: :matches matches.', ['round' => $next, 'matches' => $matches]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Round :round drawn: :matches.', ['round' => $next, 'matches' => trans_choice(':count match|:count matches', $matches)]), variant: 'success');
     }
 
     /** Tworzy ligi, puchar i ligę podwórkową, których jeszcze brakuje (np. po aktualizacji aplikacji). */
@@ -434,7 +434,7 @@ new class extends Component {
 
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <x-ui.text>
-                    {{ __(':count teams', ['count' => $this->entryCount]) }}
+                    {{ trans_choice(':count team|:count teams', $this->entryCount) }}
                     @if ($isCup)
                         &middot; {{ __('Round :number', ['number' => $round]) }}:
                         {{ \App\Support\CupBracket::seatsInRound($round) }} {{ __('teams') }}

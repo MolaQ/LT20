@@ -107,7 +107,7 @@ new #[Layout('layouts::shell')] class extends Component {
                     · {{ $campaign->starts_on?->format('d.m.Y') ?? '…' }} – {{ $campaign->ends_on?->format('d.m.Y') ?? '…' }}
                 @endif
             </div>
-            <div class="text-xs text-ui-muted">{{ __('All time: :views views, :clicks clicks', ['views' => $fmt($this->total['views']), 'clicks' => $fmt($this->total['clicks'])]) }}</div>
+            <div class="text-xs text-ui-muted">{{ __('All time: :views, :clicks', ['views' => trans_choice(':count view|:count views', $this->total['views'], ['count' => $fmt($this->total['views'])]), 'clicks' => trans_choice(':count click|:count clicks', $this->total['clicks'], ['count' => $fmt($this->total['clicks'])])]) }}</div>
         </x-ui.card>
     </div>
 </div>
