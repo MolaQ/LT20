@@ -115,6 +115,9 @@ new #[Layout('layouts::public')] class extends Component {
         $this->syncUrl();
     }
 
+    /** Tablica typu właśnie odkryta kafelkiem „Wytypuj wynik” (jednorazowy efekt odkrycia). */
+    public bool $revealed = false;
+
     /**
      * Kafelek „Wytypuj wynik” (decyzja z 26.11.2026): samo wejście na stronę niczego nie zapisuje, gracz bez typu
      * widzi kafelek, a dopiero jego kliknięcie zapisuje 0:0 do dalszej zmiany przyciskami.
@@ -128,10 +131,16 @@ new #[Layout('layouts::public')] class extends Component {
         $this->lech = '0';
         $this->opponent = '0';
         $this->autosave();
+
+        if ($this->tip !== null) {
+            $this->revealed = true;
+            $this->dispatch('tip-revealed');
+        }
     }
 
     public function updatedNumber(): void
     {
+        $this->revealed = false;
         $this->syncUrl();
 
         unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->setStatus, $this->questions, $this->allQuestions, $this->myAnswers, $this->questionSets);
@@ -779,7 +788,12 @@ new #[Layout('layouts::public')] class extends Component {
                 $tipSides = array_reverse($tipSides);
             }
         @endphp
-        <section class="relative flex flex-1 flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-linear-to-br from-lech-900 via-lech-800 to-lech-600 px-5 py-5 text-white shadow-md sm:px-7">
+        <section @class(['relative flex flex-1 flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-linear-to-br from-lech-900 via-lech-800 to-lech-600 px-5 py-5 text-white shadow-md sm:px-7', 'tip-revealed' => $revealed])
+            x-data x-on:tip-revealed.window="window.ui.confetti(70); window.ui.vibrate()">
+            @if ($revealed)
+                {{-- Błysk przez tablicę przy odkryciu (element wstawiany raz, więc animacja gra tylko raz) --}}
+                <div class="tip-sweep" aria-hidden="true"></div>
+            @endif
             <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgb(255_255_255/0.12),transparent_60%)]"></div>
             <div class="relative flex items-start justify-between gap-2 text-xs font-bold uppercase tracking-wider text-lech-100">
                 <span>
@@ -806,7 +820,7 @@ new #[Layout('layouts::public')] class extends Component {
                             @endif
                             <span class="{{ $side['lech'] ? 'drop-shadow-[0_0_14px_rgb(96_165_250/0.8)]' : '' }} max-w-full font-display text-lg font-bold leading-tight sm:text-2xl xl:text-3xl">{{ $side['name'] }}</span>
                             @unless ($needsTip)
-                                <x-ui.counter inline class="mt-1" wire:model.live="{{ $side['model'] }}" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
+                                <x-ui.counter inline class="tip-counter mt-1" wire:model.live="{{ $side['model'] }}" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
                             @endunless
                         </div>
                     @endforeach
@@ -814,8 +828,8 @@ new #[Layout('layouts::public')] class extends Component {
 
                 {{-- Bez typu: zamiast liczników kafelek, dopiero kliknięcie zapisuje 0:0 (wejście na stronę niczego nie ustawia) --}}
                 @if ($needsTip && $this->canPlay)
-                    <button type="button" wire:click="startTip"
-                        class="relative mx-auto flex w-full max-w-sm flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-white/40 bg-white/10 px-6 py-5 text-center transition hover:border-white hover:bg-white/20 active:scale-[0.98]">
+                    <button type="button" wire:click="startTip" x-on:click="$el.classList.add('tip-tile-out')"
+                        class="tip-tile relative mx-auto flex w-full max-w-sm flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-white/40 bg-white/10 px-6 py-5 text-center transition hover:border-white hover:bg-white/20 active:scale-[0.98]">
                         <x-ui.icon name="pencil-square" class="size-7 text-amber-300" />
                         <span class="font-display text-xl font-bold">{{ __('Make your tip') }}</span>
                         <span class="text-xs text-lech-100">{{ __('Tap to start from 0:0, then set your score.') }}</span>

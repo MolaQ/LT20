@@ -609,3 +609,52 @@
 .cropper-round .cropper-view-box {
     background: var(--circle-fill, transparent);
 }
+
+/*
+ * Strona typowania: odkrycie tablicy po kliknięciu kafelka „Wytypuj wynik” (26.11.2026).
+ * Kafelek odlatuje i się obraca, przez tablicę przechodzi błysk, liczniki wyskakują, a cyfry obracają się jak klapki.
+ */
+.tip-tile {
+    animation: tip-breathe 2.4s ease-in-out infinite;
+}
+.tip-tile-out {
+    animation: tip-tile-out 0.45s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    pointer-events: none;
+}
+.tip-sweep {
+    position: absolute;
+    inset: -20% -60%;
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent 40%, rgb(255 255 255 / 0.35) 50%, transparent 60%);
+    transform: translateX(-100%);
+    animation: tip-sweep 0.9s 0.1s ease-out forwards;
+}
+.tip-revealed .tip-counter {
+    animation: tip-rise 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.tip-revealed .tip-counter .ui-num {
+    animation: tip-flap 0.7s ease-out both;
+}
+@keyframes tip-breathe {
+    50% { box-shadow: 0 0 0 8px rgb(252 211 77 / 0.14); }
+}
+@keyframes tip-tile-out {
+    to { transform: translateY(-30px) rotateX(70deg) scale(0.85); opacity: 0; filter: blur(4px); }
+}
+@keyframes tip-sweep {
+    to { transform: translateX(100%); }
+}
+@keyframes tip-rise {
+    from { transform: translateY(16px) scale(0.6); opacity: 0; }
+}
+@keyframes tip-flap {
+    0% { transform: rotateX(-90deg); }
+    60% { transform: rotateX(15deg); }
+    100% { transform: rotateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tip-tile, .tip-tile-out, .tip-sweep, .tip-revealed .tip-counter, .tip-revealed .tip-counter .ui-num {
+        animation: none;
+    }
+    .tip-sweep { display: none; }
+}

@@ -26,7 +26,7 @@ test('opening the tips page saves no tip until the player clicks the tile', func
     $this->actingAs($me)->get(route('tips', ['matchday_slug' => 'kolejka-1']))->assertOk()->assertSee(__('Make your tip'));
     expect(Tip::where('matchday_id', $next->id)->exists())->toBeFalse();
 
-    Livewire::actingAs($me)->test('pages::tips', ['matchday_slug' => 'kolejka-1'])->call('startTip');
+    Livewire::actingAs($me)->test('pages::tips', ['matchday_slug' => 'kolejka-1'])->call('startTip')->assertSet('revealed', true)->assertDispatched('tip-revealed');
 
     expect(Tip::where('matchday_id', $next->id)->where('user_id', $me->id)->first()?->score())->toBe('0:0');
 });
