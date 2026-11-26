@@ -324,13 +324,18 @@ new #[Layout('layouts::public')] class extends Component {
             @foreach ($this->podiums as $key => $podium)
                 <button type="button" wire:click="show('{{ $key }}')" wire:key="podium-{{ $key }}"
                     class="relative overflow-hidden rounded-2xl bg-gradient-to-br {{ $meta[$key]['grad'] }} p-4 text-left text-white shadow-md transition hover:-translate-y-0.5">
-                    @if (isset($this->icons[$key]))
-                        <img src="{{ $this->icons[$key] }}" alt="" class="pointer-events-none absolute -right-2 -top-1 size-24 object-contain opacity-90 drop-shadow-lg">
-                    @else
-                        <x-ui.icon name="trophy" class="pointer-events-none absolute -right-3 -top-2 size-28 text-white/15" />
-                    @endif
-                    <span class="relative block pe-16 text-[11px] font-semibold uppercase tracking-wider text-white/85">{{ $meta[$key]['label'] }}</span>
-                    <span class="relative block pe-16 text-[11px] text-white/75">{{ $meta[$key]['short'] }}</span>
+                    {{-- Nagłówek: opis z lewej, puchar z prawej we własnej kolumnie, żeby nie nachodził na tekst (26.11.2026) --}}
+                    <span class="relative flex items-start gap-2">
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-[11px] font-semibold uppercase tracking-wider text-white/85">{{ $meta[$key]['label'] }}</span>
+                            <span class="block text-[11px] text-white/75">{{ $meta[$key]['short'] }}</span>
+                        </span>
+                        @if (isset($this->icons[$key]))
+                            <img src="{{ $this->icons[$key] }}" alt="" class="pointer-events-none -mt-1 size-14 shrink-0 object-contain drop-shadow-lg">
+                        @else
+                            <x-ui.icon name="trophy" class="pointer-events-none -mt-1 size-12 shrink-0 text-white/25" />
+                        @endif
+                    </span>
                     <span class="relative mt-3 block space-y-1.5">
                         @forelse ($podium as $i => $row)
                             <span class="{{ $i === 0 ? 'text-base font-bold' : 'text-sm opacity-90' }} flex items-center gap-2">

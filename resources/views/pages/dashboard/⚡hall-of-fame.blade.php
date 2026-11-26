@@ -229,9 +229,12 @@ new class extends Component {
 
     {{-- Ikony trofeów --}}
     <x-ui.card class="space-y-4">
-        <div class="space-y-1">
-            <x-ui.heading size="lg">{{ __('Trophy icons') }}</x-ui.heading>
-            <x-ui.text>{{ __('Square PNG, JPG or WebP up to 2 MB. Without an icon the cabinet shows a default trophy.') }}</x-ui.text>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="space-y-1">
+                <x-ui.heading size="lg">{{ __('Trophy icons') }}</x-ui.heading>
+                <x-ui.text>{{ __('Square PNG, JPG or WebP up to 2 MB. Without an icon the cabinet shows a default trophy.') }}</x-ui.text>
+            </div>
+            <x-ui.btn icon="eye" x-on:click="$dispatch('ui-sheet', { name: 'cabinet-preview' })">{{ __('Cabinet preview') }}</x-ui.btn>
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -246,7 +249,10 @@ new class extends Component {
                         </div>
                     @endif
 
-                    <span class="min-w-0 flex-1 text-sm">{{ $label }}</span>
+                    <span class="min-w-0 flex-1 text-sm">
+                        {{ $label }}
+                        <span class="block text-xs text-ui-muted">{{ __('Size in the cabinet: :percent%', ['percent' => \App\Support\HallOfFame::trophyScale($key)]) }}</span>
+                    </span>
 
                     @can(\App\Enums\Permission::SeasonEdit->value)
                         <x-ui.btn size="xs" variant="ghost" icon="arrow-up-tray" wire:click="openIcon('{{ $key }}')"
@@ -260,6 +266,18 @@ new class extends Component {
             @endforeach
         </div>
     </x-ui.card>
+
+    {{-- Podgląd pełnej gabloty: wszystkie trofea w kolejności ważności, w wielkościach z hierarchii --}}
+    <x-ui.modal name="cabinet-preview" class="w-full md:w-[56rem]">
+        <div class="space-y-4">
+            <x-ui.heading size="lg">{{ __('Cabinet preview') }}</x-ui.heading>
+            <x-ui.text>{{ __('A team cabinet with every trophy, in the order and sizes used on team pages.') }}</x-ui.text>
+            <div class="max-h-[70vh] overflow-y-auto">
+                <x-trophy-cabinet :icons="$this->icons"
+                    :items="collect(\App\Support\HallOfFame::trophies())->map(fn ($label, $key) => ['key' => $key, 'label' => $label, 'count' => 1, 'seasons' => ['I']])->values()->all()" />
+            </div>
+        </div>
+    </x-ui.modal>
 
     <x-ui.modal name="confirm-recalculate" class="w-full md:w-[28rem]">
         <div class="space-y-4">
