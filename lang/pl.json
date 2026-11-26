@@ -1478,7 +1478,6 @@
     "Rest: :count h": "Regeneracja: :count h",
     "Rules for fielding Lech players: line-up size, bots, clean sheets, rest and experience.": "Zasady wystawiania zawodników Lecha: liczba w składzie, boty, czyste konta, regeneracja i doświadczenie.",
     "This player rests until :date.": "Ten zawodnik regeneruje się do :date.",
-    "free from :date": "wolny od :date",
     "up to :count h": "do :count h",
     "Clean sheet: takes a point from the rival": "Czyste konto: zabiera rywalowi punkt",
     "Experience in your club": "Doświadczenie w Twoim klubie",
@@ -2955,5 +2954,7 @@
     "To fill in": "Do uzupełnienia",
     "Tap to start from 0:0, then set your score.": "Kliknij, żeby zacząć od 0:0, a potem ustaw swój wynik.",
     "You get 0 points for that matchday. Opening the page does not save any tip: click „Tip the score” (it starts from 0:0) and set your score before kick-off.": "Dostajesz 0 punktów za tę kolejkę. Samo wejście na stronę nie zapisuje typu: kliknij „Wytypuj wynik” (zaczyna od 0:0) i ustaw swój wynik przed pierwszym gwizdkiem.",
-    "Make your tip": "Wytypuj wynik"
+    "Make your tip": "Wytypuj wynik",
+    "available from :date": "dostępny od :date",
+    "Plaster: the player has not fully recovered yet. You can field him, but he risks an injury: after this match his return to full fitness takes :factor times longer.": "Plaster: zawodnik nie jest jeszcze w pełni zregenerowany. Możesz go wystawić, ale grozi mu kontuzja: po tym meczu powrót do pełnej sprawności potrwa :factor razy dłużej."
 }

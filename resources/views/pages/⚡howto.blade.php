@@ -238,7 +238,7 @@ new #[Layout('layouts::public')] class extends Component {
                 {{-- Zmęczony („na żółto”): może grać, ale po meczu regeneruje się dłużej --}}
                 @if ($tiredHours > 0)
                     <div class="flex items-start gap-3 rounded-xl border border-amber-400/60 bg-amber-50 p-3 text-sm dark:border-amber-400/40 dark:bg-amber-500/10">
-                        <span class="mt-0.5 inline-flex shrink-0 items-center rounded-md bg-amber-400 px-1.5 py-0.5 text-xs font-bold text-amber-950">×{{ $tiredFactor }}</span>
+                        <x-plaster class="mt-0.5 size-5" />
                         <span><b>{{ __('Almost recovered (yellow):') }}</b> {{ __('if at the kickoff at most :hours h of his recovery are left, he can play and counts normally, but after this match he needs :factor times longer to recover. Handy before a break in the season.', ['hours' => $tiredHours, 'factor' => $tiredFactor]) }}</span>
                     </div>
                 @endif
@@ -281,7 +281,7 @@ new #[Layout('layouts::public')] class extends Component {
                         ])>
                             <p class="flex items-center gap-2 font-semibold">{{ $when }}
                                 @if ($isTired($after))
-                                    <span class="rounded bg-amber-400 px-1 text-[10px] font-bold text-amber-950">×{{ $tiredFactor }}</span>
+                                    <x-plaster />
                                 @endif
                             </p>
                             <p class="mt-0.5 text-ui-muted">

@@ -2,7 +2,7 @@
     Zawodnicy klubu (Support\ClubStats::players) jako tabela do porównań (15.10.2026, wcześniej karty): numer w kolorze pozycji (legenda pod tabelą),
     zawodnik (biret = wychowanek), doświadczenie w klubie łącznie (pasek względem najlepszego) i dorobek w bieżącym sezonie albo w całej karierze (przełącznik).
     Czyste konta tylko przy bramkarzach i obrońcach. Kolumny włączane przyciskami (Alpine `cols`, zapamiętane w localStorage); domyślnie ukryte:
-    doświadczenie z sezonu i status (gotowy / wolny od). Sortowanie kliknięciem w nagłówek (atrybuty data-*), filtr pozycji B/O/P/N.
+    doświadczenie z sezonu i status (gotowy / dostępny od). Sortowanie kliknięciem w nagłówek (atrybuty data-*), filtr pozycji B/O/P/N.
     Klik w wiersz otwiera okno: suma wszystkich sezonów, a pod nią sezony od ostatniego, każdy rozwijany z meczami od pierwszej kolejki.
     Używane w zakładce „Moja kadra” na /tips i na profilu bota. Zmienne: $clubPlayers, opcjonalnie $clubTitle.
 --}}
@@ -179,7 +179,7 @@
                             <td x-show="cols.status" x-cloak class="px-4 py-2 text-right text-xs">
                                 @if ($club['free_at'])
                                     <span class="{{ \App\Support\Squad::lockColor(\App\Support\Squad::hoursLeft($club['free_at'])) }} whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold">
-                                        {{ __('free from :date', ['date' => \Illuminate\Support\Carbon::createFromTimestamp($club['free_at'], config('app.timezone'))->format('d.m, H:i')]) }}
+                                        {{ __('available from :date', ['date' => \Illuminate\Support\Carbon::createFromTimestamp($club['free_at'], config('app.timezone'))->format('d.m, H:i')]) }}
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-green-600 dark:text-green-400"><span class="size-1.5 rounded-full bg-green-500"></span>{{ __('Ready to play') }}</span>
