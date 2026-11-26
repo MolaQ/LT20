@@ -614,8 +614,37 @@
  * Strona typowania: odkrycie tablicy po kliknięciu kafelka „Wytypuj wynik” (26.11.2026).
  * Kafelek odlatuje i się obraca, przez tablicę przechodzi błysk, liczniki wyskakują, a cyfry obracają się jak klapki.
  */
+/* Ramka kafelka: złoty obrys z jasnym refleksem, który obiega kafelek, na szklanym tle. */
+@property --tip-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+}
 .tip-tile {
+    isolation: isolate;
+    background: linear-gradient(140deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.04));
+    box-shadow: 0 14px 30px -16px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.15);
+    backdrop-filter: blur(6px);
     animation: tip-breathe 2.4s ease-in-out infinite;
+}
+.tip-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: 2px;
+    border-radius: inherit;
+    background: conic-gradient(from var(--tip-angle), #fcd34d, rgb(252 211 77 / 0.25) 25%, #ffffff 45%, rgb(252 211 77 / 0.25) 65%, #fcd34d);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: tip-spin 3.5s linear infinite;
+}
+.tip-tile:hover {
+    background: linear-gradient(140deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0.08));
+}
+@keyframes tip-spin {
+    to { --tip-angle: 360deg; }
 }
 .tip-tile-out {
     animation: tip-tile-out 0.45s cubic-bezier(0.5, 0, 0.75, 0) forwards;
@@ -653,7 +682,7 @@
     100% { transform: rotateX(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .tip-tile, .tip-tile-out, .tip-sweep, .tip-revealed .tip-counter, .tip-revealed .tip-counter .ui-num {
+    .tip-tile, .tip-tile::before, .tip-tile-out, .tip-sweep, .tip-revealed .tip-counter, .tip-revealed .tip-counter .ui-num {
         animation: none;
     }
     .tip-sweep { display: none; }

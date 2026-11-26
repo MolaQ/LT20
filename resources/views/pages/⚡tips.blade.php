@@ -829,7 +829,7 @@ new #[Layout('layouts::public')] class extends Component {
                 {{-- Bez typu: zamiast liczników kafelek, dopiero kliknięcie zapisuje 0:0 (wejście na stronę niczego nie ustawia) --}}
                 @if ($needsTip && $this->canPlay)
                     <button type="button" wire:click="startTip" x-on:click="$el.classList.add('tip-tile-out')"
-                        class="tip-tile relative mx-auto flex w-full max-w-sm flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-white/40 bg-white/10 px-6 py-5 text-center transition hover:border-white hover:bg-white/20 active:scale-[0.98]">
+                        class="tip-tile relative mx-auto flex w-full max-w-sm flex-col items-center gap-1 rounded-2xl px-6 py-5 text-center transition active:scale-[0.98]">
                         <x-ui.icon name="pencil-square" class="size-7 text-amber-300" />
                         <span class="font-display text-xl font-bold">{{ __('Make your tip') }}</span>
                         <span class="text-xs text-lech-100">{{ __('Tap to start from 0:0, then set your score.') }}</span>
