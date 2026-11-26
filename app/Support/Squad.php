@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\CompetitionType;
+use App\Enums\MatchdayStatus;
 use App\Enums\PlayerPosition;
 use App\Enums\PlayerStatus;
 use App\Models\DesignatedPlayer;
@@ -42,6 +43,27 @@ class Squad
         return LechPlayer::where('status', '!=', PlayerStatus::Excluded->value)->get()
             ->sortBy(fn (LechPlayer $p) => [$order[$p->position->value], $p->number ?? 999, $p->name])
             ->values();
+    }
+
+    /**
+     * Zdejmuje ze składów zawodników niedostępnych (status „Niedostępny”) w kolejkach przed gwizdkiem: na pewno nie zagrają,
+     * więc zwalniają miejsce w składzie. Rozegranych kolejek nie rusza. Zwraca liczbę zdjętych wyborów.
+     */
+    public static function dropUnavailable(?int $playerId = null): int
+    {
+        $players = LechPlayer::where('status', PlayerStatus::Excluded->value)
+            ->when($playerId !== null, fn ($q) => $q->whereKey($playerId))
+            ->pluck('id');
+
+        if ($players->isEmpty()) {
+            return 0;
+        }
+
+        $matchdays = Matchday::where('status', MatchdayStatus::Planned->value)
+            ->where(fn ($q) => $q->whereNull('kickoff_at')->orWhere('kickoff_at', '>', now()))
+            ->pluck('id');
+
+        return (int) DesignatedPlayer::whereIn('matchday_id', $matchdays)->whereIn('lech_player_id', $players)->delete();
     }
 
     public static function clubKey(?int $userId, ?int $botId): string
