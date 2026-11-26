@@ -2951,7 +2951,9 @@
     ":done/:all q.": ":done/:all pyt.",
     "Players who tipped": "Wytypowali",
     "Played matchdays": "Rozegrane kolejki",
-    "You get 0 points for that matchday. When you open the nearest matchday after it is published, the tip 0:0 is saved for you, so change it before kick-off. Later matchdays get no automatic tip.": "Dostajesz 0 punktów za tę kolejkę. Gdy po publikacji meczu otworzysz najbliższą kolejkę, zapisujemy Ci typ 0:0, więc zmień go przed pierwszym gwizdkiem. Dalsze kolejki nie dostają automatycznego typu.",
     "Upcoming matches": "Nadchodzące mecze",
-    "To fill in": "Do uzupełnienia"
+    "To fill in": "Do uzupełnienia",
+    "Tap to start from 0:0, then set your score.": "Kliknij, żeby zacząć od 0:0, a potem ustaw swój wynik.",
+    "You get 0 points for that matchday. Opening the page does not save any tip: click „Tip the score” (it starts from 0:0) and set your score before kick-off.": "Dostajesz 0 punktów za tę kolejkę. Samo wejście na stronę nie zapisuje typu: kliknij „Wytypuj wynik” (zaczyna od 0:0) i ustaw swój wynik przed pierwszym gwizdkiem.",
+    "Make your tip": "Wytypuj wynik"
 }

@@ -136,7 +136,7 @@ class Guide
         return [
             [__('Is tipping free?'), __('Yes. Tipping is always free, premium only adds extras.')],
             [__('Can I change my tip?'), __('Yes, as many times as you like until kick-off. The time of the last save decides drawn cup ties.')],
-            [__('What if I forget to tip?'), __('You get 0 points for that matchday. When you open the nearest matchday after it is published, the tip 0:0 is saved for you, so change it before kick-off. Later matchdays get no automatic tip.')],
+            [__('What if I forget to tip?'), __('You get 0 points for that matchday. Opening the page does not save any tip: click „Tip the score” (it starts from 0:0) and set your score before kick-off.')],
             [__('When are the points counted?'), __('After the match the admin enters the result and settles the matchday. The tables update at that moment.')],
             [__('What does premium give?'), __('A preview of your rivals’ tips, statistics from the other players’ tips while you tip, your exact place among the players, team name changes without approval and more statistics. Plans start at 5 zł a week.')],
             [__('What is a Koziołek?'), __('An exact score tip, worth the full 3 points for the tip.')],

@@ -61,7 +61,6 @@ new #[Layout('layouts::public')] class extends Component {
         }
 
         $this->loadTip();
-        $this->ensureTip();
     }
 
     public function render(): View
@@ -114,36 +113,21 @@ new #[Layout('layouts::public')] class extends Component {
     public function updatedTab(): void
     {
         $this->syncUrl();
-        $this->ensureTip();
     }
 
     /**
-     * Pierwsze otwarcie zakładki Typowanie zapisuje typ 0:0, ale tylko na najbliższą kolejkę otwartą do typowania
-     * (decyzja z 26.11.2026): kto zajrzał po publikacji meczu, ma 0:0, kto nie zajrzał, nie ma typu. Dalsze
-     * opublikowane kolejki zostają bez typu, dopóki gracz sam go nie wpisze. Typ jest oznaczony jako automatyczny
-     * (bez powiadomienia rywala), a numer zapisu (remisy w pucharach) liczy się od ostatniej zmiany.
+     * Kafelek „Wytypuj wynik” (decyzja z 26.11.2026): samo wejście na stronę niczego nie zapisuje, gracz bez typu
+     * widzi kafelek, a dopiero jego kliknięcie zapisuje 0:0 do dalszej zmiany przyciskami.
      */
-    private function ensureTip(): void
+    public function startTip(): void
     {
-        if ($this->tab !== 'tip' || !$this->canPlay || !$this->isOpen || $this->tip !== null || !$this->matchday?->isReady()) {
-            return;
-        }
-
-        $nearest = $this->matchdays->filter(fn ($m) => $m->isOpenForTips())->sortBy('kickoff_at')->first();
-        if (!$nearest || $nearest->id !== $this->matchday->id) {
-            return;
-        }
-
-        try {
-            app(SaveTip::class)->handle(auth()->user(), $this->matchday, 0, 0, auto: true);
-        } catch (DomainException) {
+        if (!$this->canPlay || !$this->isOpen || $this->tip !== null || !$this->matchday?->isReady()) {
             return;
         }
 
         $this->lech = '0';
         $this->opponent = '0';
-        unset($this->tip, $this->crowd);
-        $this->savedTime = now()->format('H:i:s');
+        $this->autosave();
     }
 
     public function updatedNumber(): void
@@ -152,7 +136,6 @@ new #[Layout('layouts::public')] class extends Component {
 
         unset($this->matchday, $this->tip, $this->isOpen, $this->scores, $this->crowd, $this->setStatus, $this->questions, $this->allQuestions, $this->myAnswers, $this->questionSets);
         $this->loadTip();
-        $this->ensureTip();
 
         // Panel rywali po prawej pokazuje tę samą kolejkę.
         $this->dispatch('matchday-selected', number: $this->number);
@@ -811,6 +794,7 @@ new #[Layout('layouts::public')] class extends Component {
             @if (!$md->isReady())
                 <p class="relative py-8 text-center opacity-85">{{ $md->is_draft && $md->isFilled() ? __('The matchday is being prepared. Tipping opens once the admin publishes it.') : __('The opponent and date are not set yet, so tipping is not open.') }}</p>
             @else
+                @php $needsTip = $this->isOpen && !$this->tip; @endphp
                 <div class="relative my-auto grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
                     @foreach ($tipSides as $index => $side)
                         @if ($index === 1)
@@ -821,10 +805,22 @@ new #[Layout('layouts::public')] class extends Component {
                                 <span class="h-2 w-20 rounded-full shadow-sm ring-1 ring-black/10 sm:w-28" style="{{ $stripe }}"></span>
                             @endif
                             <span class="{{ $side['lech'] ? 'drop-shadow-[0_0_14px_rgb(96_165_250/0.8)]' : '' }} max-w-full font-display text-lg font-bold leading-tight sm:text-2xl xl:text-3xl">{{ $side['name'] }}</span>
-                            <x-ui.counter inline class="mt-1" wire:model.live="{{ $side['model'] }}" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
+                            @unless ($needsTip)
+                                <x-ui.counter inline class="mt-1" wire:model.live="{{ $side['model'] }}" :max="\App\Support\TipRules::MAX_GOALS" :disabled="!$this->isOpen" />
+                            @endunless
                         </div>
                     @endforeach
                 </div>
+
+                {{-- Bez typu: zamiast liczników kafelek, dopiero kliknięcie zapisuje 0:0 (wejście na stronę niczego nie ustawia) --}}
+                @if ($needsTip && $this->canPlay)
+                    <button type="button" wire:click="startTip"
+                        class="relative mx-auto flex w-full max-w-sm flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-white/40 bg-white/10 px-6 py-5 text-center transition hover:border-white hover:bg-white/20 active:scale-[0.98]">
+                        <x-ui.icon name="pencil-square" class="size-7 text-amber-300" />
+                        <span class="font-display text-xl font-bold">{{ __('Make your tip') }}</span>
+                        <span class="text-xs text-lech-100">{{ __('Tap to start from 0:0, then set your score.') }}</span>
+                    </button>
+                @endif
 
                 @if ($played)
                     <div class="relative flex flex-wrap justify-center gap-2">

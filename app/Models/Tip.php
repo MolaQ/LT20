@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
  */
 class Tip extends Model
 {
-    protected $fillable = ['matchday_id', 'user_id', 'lech_goals', 'opponent_goals', 'saved_at', 'save_order', 'is_auto'];
+    protected $fillable = ['matchday_id', 'user_id', 'lech_goals', 'opponent_goals', 'saved_at', 'save_order'];
 
     /**
      * Zapis dat z mikrosekundami: bez tego Eloquent obcina saved_at do pełnych sekund, a w pucharze remis
@@ -32,7 +32,6 @@ class Tip extends Model
             'lech_goals' => 'integer',
             'opponent_goals' => 'integer',
             'save_order' => 'integer',
-            'is_auto' => 'boolean',
             'saved_at' => 'datetime:Y-m-d H:i:s.u',
         ];
     }
