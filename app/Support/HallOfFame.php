@@ -198,6 +198,20 @@ final class HallOfFame
         return $index === false ? PHP_INT_MAX : $index;
     }
 
+    /**
+     * Wielkość pucharu w gablocie w procentach (hierarchia trofeów): najważniejsze trofea drużynowe są największe,
+     * nagrody indywidualne i królowie strzelców najmniejsze.
+     */
+    public static function trophyScale(string $key): int
+    {
+        return match (true) {
+            in_array($key, [CompetitionType::Legends->value, 'league_1', CompetitionType::Champions->value], true) => 100,
+            in_array($key, [CompetitionType::Cup->value, CompetitionType::Europa->value, 'mvp'], true) => 85,
+            $key === CompetitionType::Conference->value, str_starts_with($key, 'league_') => 75,
+            default => 62,
+        };
+    }
+
     /** @return array<string, string> klucz trofeum => adres ikony */
     public static function iconUrls(): array
     {

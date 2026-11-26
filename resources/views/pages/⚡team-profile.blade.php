@@ -469,25 +469,7 @@ new #[Layout('layouts::public')] class extends Component {
         @if (count($this->cabinet) === 0)
             <x-ui.text>{{ __('No trophies yet.') }}</x-ui.text>
         @else
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                @foreach ($this->cabinet as $item)
-                    <div class="flex flex-col items-center gap-2 rounded-xl border border-ui-line p-4 text-center"
-                        wire:key="cab-{{ $item['key'] }}">
-                        <div class="relative">
-                            @if (isset($this->icons[$item['key']]))
-                                <img src="{{ $this->icons[$item['key']] }}" alt="" class="size-16 object-contain">
-                            @else
-                                <x-ui.icon name="trophy" class="size-16 text-amber-500" />
-                            @endif
-                            @if ($item['count'] > 1)
-                                <span class="absolute -right-2 -top-1 rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">×{{ $item['count'] }}</span>
-                            @endif
-                        </div>
-                        <span class="text-sm font-medium">{{ $item['label'] }}</span>
-                        <span class="text-xs text-ui-muted">{{ implode(', ', $item['seasons']) }}</span>
-                    </div>
-                @endforeach
-            </div>
+            <x-trophy-cabinet :items="$this->cabinet" :icons="$this->icons" />
         @endif
     </x-ui.card>
 
