@@ -304,7 +304,7 @@ new class extends Component {
                 @if ($tired !== [])
                     <div class="flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
                         <x-plaster class="mt-px size-4" />
-                        <span>{{ __('Plaster: the player has not fully recovered yet. You can field him, but he risks an injury: after this match his recovery takes :factor times longer.', ['factor' => $tiredFactor]) }}</span>
+                        <span>{{ __('Plaster: the player has not fully recovered yet. You can field him, but he risks an injury: after this match his return to full fitness takes :factor times longer.', ['factor' => $tiredFactor]) }}</span>
                     </div>
                 @endif
                 <x-ui.text class="text-xs">{{ __('Under a player: the flame shows his form (experience from the last :count Lech matches), the star his experience in your club. A player can be in only one competition type per matchday: clicking him with another type selected moves him there.', ['count' => \App\Support\MatchReport::FORM_MATCHES]) }}</x-ui.text>
@@ -396,15 +396,15 @@ new class extends Component {
                                     $in = $pickedIn[$player->id] ?? null;
                                 @endphp
                                 <div class="flex max-w-full items-center gap-1.5 rounded-md border border-ui-line bg-ui-surface px-2 py-1 text-xs text-ui-muted" wire:key="rest-{{ $player->id }}">
-                                    @unless (isset($tired[$player->id]))
+                                    {{-- Z lewej, przed pozycją: plaster (zmęczony, do wyboru) albo czerwony krzyż (niedostępny) --}}
+                                    @if (isset($tired[$player->id]))
+                                        <x-plaster :title="$tiredTitle" class="size-3.5" />
+                                    @else
                                         <x-injury :title="__('Unavailable')" />
-                                    @endunless
+                                    @endif
                                     <span class="w-4 shrink-0 text-[10px] font-semibold uppercase">{{ $player->position->short() }}</span>
                                     <span class="min-w-0 truncate">{{ $player->name }}</span>
-                                    @if (isset($tired[$player->id]))
-                                        {{-- Zmęczony: można wystawić, regeneracja po meczu dłuższa --}}
-                                        <span class="flex shrink-0 items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-900 dark:bg-amber-400/20 dark:text-amber-200" title="{{ $tiredTitle }}"><x-plaster class="size-3.5" />{{ __('Can play') }}</span>
-                                    @elseif ($in && $open)
+                                    @if ($in && $open && !isset($tired[$player->id]))
                                         {{-- Wystawiony, a potem odpoczywający (raport wpisany później): wybór przepada, można zdjąć. --}}
                                         <button type="button" wire:click="toggle({{ $player->id }}, '{{ $in }}')" class="shrink-0 rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white"
                                             title="{{ __('This player rests now: the pick does not count.') }}">{{ __('Remove') }}</button>
