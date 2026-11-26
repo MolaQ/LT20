@@ -2943,5 +2943,13 @@
     "New in the game after matchday :n: :list. Welcome! Join at :site.": "Nowi w grze po :n. kolejce: :list. Witamy! Dołącz na :site.",
     "Nobody has joined since the previous matchday.": "Od poprzedniej kolejki nikt nie dołączył.",
     "Welcome to the game!": "Witamy w grze!",
-    ":count new player after matchday :n|:count new players after matchday :n": ":count nowy gracz po :n. kolejce|:count nowych graczy po :n. kolejce|:count nowych graczy po :n. kolejce"
+    ":count new player after matchday :n|:count new players after matchday :n": ":count nowy gracz po :n. kolejce|:count nowych graczy po :n. kolejce|:count nowych graczy po :n. kolejce",
+    "Still missing": "Jeszcze brakuje",
+    "Squads set": "Ustawione składy",
+    "Answered the questions": "Odpowiedzieli na pytania",
+    "Kickoff: :date": "Pierwszy gwizdek: :date",
+    "Counted: players who were in the game before the kickoff.": "Liczeni są gracze, którzy byli w grze przed pierwszym gwizdkiem.",
+    ":done/:all q.": ":done/:all pyt.",
+    "Players who tipped": "Wytypowali",
+    "Played matchdays": "Rozegrane kolejki"
 }

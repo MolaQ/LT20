@@ -1,15 +1,22 @@
 <?php
 
 use App\Enums\MatchdayStatus;
+use App\Enums\Permission;
 use App\Enums\RoleName;
 use App\Enums\SeasonStatus;
+use App\Models\Competition;
+use App\Models\CompetitionEntry;
 use App\Models\Matchday;
+use App\Models\MatchdayQuestion;
+use App\Models\QuestionAnswer;
 use App\Models\Season;
 use App\Models\SeasonTeam;
 use App\Models\Tip;
 use App\Models\User;
 use App\Support\MatchdayGraphics;
 use App\Support\Players;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Permission as PermissionModel;
 use Spatie\Permission\Models\Role;
 
 // Gracze dołączający w trakcie sezonu: liczą się do „z ilu” dopiero od kolejki po dołączeniu, a grafika „Nowi gracze”
@@ -74,4 +81,23 @@ test('new players list the teams that joined since the previous matchday with th
         ->and($newcomers[0]['league'])->toBe('I liga')
         ->and($newcomers[1]['league'])->toStartWith('Liga podwórkowa')
         ->and(MatchdayGraphics::newcomers($first))->toBe([]);
+});
+
+test('the tips overview shows attack and defence answers for each competition the player is in', function () {
+    [$season, , $second] = newPlayersSeason();
+    $team = newPlayersTeam($season, 1, 'Kolejorz Kaczory', now()->subWeek());
+    $league = Competition::create(['season_id' => $season->id, 'type' => 'league', 'tier' => 1, 'name' => 'Ekstraklasa']);
+    CompetitionEntry::create(['competition_id' => $league->id, 'season_team_id' => $team->id, 'seed' => 1]);
+    foreach ([1 => 'attack', 2 => 'attack', 3 => 'defense'] as $position => $side) {
+        $question = MatchdayQuestion::create(['matchday_id' => $second->id, 'score_set' => 'league', 'position' => $position, 'text' => 'Pytanie '.$position]);
+        QuestionAnswer::create(['matchday_question_id' => $question->id, 'user_id' => $team->user_id, 'score_set' => 'league', 'answer' => true, 'side' => $side]);
+    }
+    PermissionModel::findOrCreate(Permission::SeasonList->value, 'web');
+    $admin = User::factory()->create();
+    $admin->givePermissionTo(Permission::SeasonList->value);
+
+    $page = Livewire::actingAs($admin)->test('pages::dashboard.tips-overview')->set('seasonId', $season->id)->set('number', 2);
+
+    expect($page->instance()->details[$team->user_id]['sets'])->toBe(['league' => ['attack' => 2, 'defense' => 1, 'answered' => 3, 'players' => 0]]);
+    $page->assertOk()->assertSee('Kolejorz Kaczory')->assertSee(__('European cups'));
 });
