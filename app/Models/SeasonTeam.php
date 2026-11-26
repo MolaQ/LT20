@@ -36,13 +36,24 @@ class SeasonTeam extends Model
         return max(self::LIST_MIN, (int) ceil($teams / League::SIZE) * League::SIZE);
     }
 
-    protected $fillable = ['season_id', 'position', 'user_id', 'bot_id', 'previous_id'];
+    protected $fillable = ['season_id', 'position', 'user_id', 'joined_at', 'bot_id', 'previous_id'];
 
     protected function casts(): array
     {
         return [
             'position' => 'integer',
+            'joined_at' => 'datetime',
         ];
+    }
+
+    /** Nowy właściciel miejsca: zapamiętujemy, od kiedy jest w grze (bot = brak daty). */
+    protected static function booted(): void
+    {
+        static::saving(function (SeasonTeam $team) {
+            if ($team->isDirty('user_id') && ! $team->isDirty('joined_at')) {
+                $team->joined_at = $team->user_id ? now() : null;
+            }
+        });
     }
 
     public function season(): BelongsTo

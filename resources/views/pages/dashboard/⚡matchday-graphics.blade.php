@@ -14,7 +14,7 @@ use Livewire\Component;
 /**
  * Grafiki kolejki do mediów społecznościowych (Promocja → Grafiki kolejki). Przed meczem: zapowiedź w barwach
  * drużyn, pytania (jedna grafika na zestaw), typy kibiców, hity kolejki w grze i ostatnia prosta. Po meczu: wynik
- * z najlepszymi strzelcami, „pod prąd” i wyścig o nagrody. Tylko odczyt; obrazki robi przycisk udostępniania.
+ * z najlepszymi strzelcami, „pod prąd” i wyścig o nagrody. Między kolejkami: nowi gracze i ich ligi. Tylko odczyt; obrazki robi przycisk udostępniania.
  */
 new class extends Component
 {
@@ -251,6 +251,33 @@ new class extends Component
                                 </div>
                             @endforeach
                         </div>
+                    </div>
+                </x-graphic-card>
+
+                {{-- Nowi gracze: kto dołączył po poprzedniej kolejce i do której ligi trafił --}}
+                @php
+                    $newcomers = MatchdayGraphics::newcomers($md);
+                    $after = max(1, $md->number - 1);
+                @endphp
+                <x-graphic-card :title="__('New players')" :when="__('Between matchdays')"
+                    :text="$newcomers === [] ? '' : __('New in the game after matchday :n: :list. Welcome! Join at :site.', ['n' => $after, 'list' => collect($newcomers)->map(fn ($n) => $n['team'] . ' (' . $n['league'] . ')')->implode(', '), 'site' => $site]) . $hashtag"
+                    :badge="$newcomers === [] ? __('Nobody has joined since the previous matchday.') : (count($newcomers) > 8 ? __('The image shows 8 of :n teams.', ['n' => count($newcomers)]) : '')">
+                    <div class="flex h-full flex-col p-4">
+                        {!! $top !!}
+                        <div class="mt-3 text-lg font-black leading-tight">{{ __('Welcome to the game!') }}</div>
+                        <div class="text-xs text-lech-200">{{ trans_choice(':count new player after matchday :n|:count new players after matchday :n', count($newcomers), ['n' => $after]) }}</div>
+                        <div class="my-auto space-y-1.5">
+                            @foreach (array_slice($newcomers, 0, 8) as $newcomer)
+                                <div class="flex items-center justify-between gap-2 rounded-lg bg-white/10 px-2 py-1.5 text-xs">
+                                    <span class="truncate font-semibold">{{ $newcomer['team'] }}</span>
+                                    <span class="shrink-0 text-[10px] uppercase tracking-wider text-amber-300">{{ $newcomer['league'] }}</span>
+                                </div>
+                            @endforeach
+                            @if (count($newcomers) > 8)
+                                <div class="text-center text-xs text-lech-200">{{ __('and :n more', ['n' => count($newcomers) - 8]) }}</div>
+                            @endif
+                        </div>
+                        {!! $cta !!}
                     </div>
                 </x-graphic-card>
 

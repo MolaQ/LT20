@@ -74,9 +74,16 @@ new class extends Component {
         return $this->matchdays->firstWhere('number', $this->number) ?? $this->matchdays->first();
     }
 
-    /** Gracze sezonu (na liście, z rolą i bez bana) – boty nie typują. */
+    /**
+     * Gracze sezonu (na liście, z rolą i bez bana) – boty nie typują. Przy wybranej kolejce tylko ci, którzy byli
+     * w grze przed jej pierwszym gwizdkiem (Players::expected).
+     */
     private function playersQuery()
     {
+        if ($this->matchday) {
+            return Players::expected($this->matchday);
+        }
+
         return SeasonTeam::query()
             ->where('season_id', $this->seasonId)
             ->whereNotNull('user_id')
