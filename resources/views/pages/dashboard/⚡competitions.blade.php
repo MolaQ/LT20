@@ -422,7 +422,7 @@ new class extends Component {
         $team = SeasonTeam::where('season_id', $this->seasonId)->findOrFail($seasonTeamId);
 
         if ($competition->type->size() !== null && $competition->entries_count >= $competition->type->size()) {
-            $this->dispatch('ui-toast', text: __('This competition already has :count teams.', ['count' => $competition->type->size()]), variant: 'warning');
+            $this->dispatch('ui-toast', text: __('This competition already has :teams.', ['teams' => trans_choice(':count team|:count teams', $competition->type->size())]), variant: 'warning');
 
             return;
         }
@@ -673,9 +673,9 @@ new class extends Component {
                         class="w-full rounded-lg border p-3 text-left transition {{ $this->selected?->id === $competition->id ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' : 'border-ui-line hover:bg-zinc-50 dark:hover:bg-zinc-800' }}">
                         <div class="font-medium">{{ $competition->name }}</div>
                         <div class="text-xs text-ui-muted">
-                            {{ __(':count teams', ['count' => $competition->entries_count]) }}
+                            {{ trans_choice(':count team|:count teams', $competition->entries_count) }}
                             @if ($competition->fixtures_count > 0)
-                                &middot; {{ __(':count matches', ['count' => $competition->fixtures_count]) }}
+                                &middot; {{ trans_choice(':count match|:count matches', $competition->fixtures_count) }}
                             @endif
                         </div>
                     </button>

@@ -127,7 +127,7 @@ final class CompetitionHistory
 
             $extra = [];
             if ($scorer = $scorers->get($competition->id)) {
-                $extra[] = ['label' => __('Top scorer'), 'team' => self::owner($scorer->user_id, $scorer->bot_id), 'line' => __(':count goals', ['count' => $scorer->meta['goals'] ?? 0])];
+                $extra[] = ['label' => __('Top scorer'), 'team' => self::owner($scorer->user_id, $scorer->bot_id), 'line' => trans_choice(':count goal|:count goals', (int) ($scorer->meta['goals'] ?? 0))];
             }
 
             $out[] = ['season' => $seasons[$competition->season_id], 'podium' => $podium, 'extra' => $extra];
@@ -319,7 +319,7 @@ final class CompetitionHistory
     private static function awardLine(string $key, array $meta): string
     {
         return match ($key) {
-            'golden_ball' => __(':count goals', ['count' => $meta['goals'] ?? 0]),
+            'golden_ball' => trans_choice(':count goal|:count goals', (int) ($meta['goals'] ?? 0)),
             'golden_boot' => __('Attack points: :count', ['count' => $meta['boot'] ?? 0]),
             'golden_gloves' => __('Clean sheets: :count', ['count' => $meta['gloves'] ?? 0]),
             default => __(':count pts (outcomes :outcomes, attack :attack, defence :defense)', [

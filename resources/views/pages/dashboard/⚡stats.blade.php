@@ -142,7 +142,7 @@ new class extends Component {
         }
 
         unset($this->alerts, $this->nextStep, $this->seasonProgress);
-        $this->dispatch('ui-toast', text: __('Round :round drawn: :matches matches.', ['round' => $round, 'matches' => $matches]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Round :round drawn: :matches.', ['round' => $round, 'matches' => trans_choice(':count match|:count matches', $matches)]), variant: 'success');
     }
 }; ?>
 

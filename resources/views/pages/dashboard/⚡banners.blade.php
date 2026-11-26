@@ -262,7 +262,7 @@ new class extends Component {
                     <div class="rounded-xl bg-ui-raised p-2"><b class="ui-num block text-lg leading-tight">{{ number_format($t['views30'], 0, ',', ' ') }}</b>{{ __('views (30 days)') }}</div>
                     <div class="rounded-xl bg-ui-raised p-2"><b class="ui-num block text-lg leading-tight">{{ number_format($t['clicks30'], 0, ',', ' ') }}</b>{{ __('clicks (30 days)') }}</div>
                     <div class="rounded-xl bg-ui-raised p-2"><b class="ui-num block text-lg leading-tight">{{ $ctr($t['views30'], $t['clicks30']) }}</b>CTR</div>
-                    <div class="col-span-3 text-ui-muted">{{ __('All time: :views views, :clicks clicks', ['views' => number_format($t['views'], 0, ',', ' '), 'clicks' => number_format($t['clicks'], 0, ',', ' ')]) }}</div>
+                    <div class="col-span-3 text-ui-muted">{{ __('All time: :views, :clicks', ['views' => trans_choice(':count view|:count views', $t['views'], ['count' => number_format($t['views'], 0, ',', ' ')]), 'clicks' => trans_choice(':count click|:count clicks', $t['clicks'], ['count' => number_format($t['clicks'], 0, ',', ' ')])]) }}</div>
                 </div>
             </div>
             <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-ui-line pt-3" x-data="{ copied: false, link: @js($statsUrl) }">

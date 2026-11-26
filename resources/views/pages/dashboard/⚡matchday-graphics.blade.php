@@ -261,7 +261,7 @@ new class extends Component
                     $hours = $left ? $left->days * 24 + $left->h : 0;
                 @endphp
                 <x-graphic-card :title="__('Final stretch')" :when="__('Match day')"
-                    :text="__('The clock is ticking: :tips tips are in, :missing players are still missing. Tip :fixture at :site.', ['tips' => $progress['tips'], 'missing' => $progress['missing'], 'fixture' => $fixture, 'site' => $site]) . $hashtag">
+                    :text="__('The clock is ticking: :tips are in, :missing are still missing. Tip :fixture at :site.', ['tips' => trans_choice(':count tip|:count tips', $progress['tips']), 'missing' => trans_choice(':count missing player|:count missing players', $progress['missing']), 'fixture' => $fixture, 'site' => $site]) . $hashtag">
                     <div class="flex h-full flex-col p-4">
                         {!! $top !!}
                         <div class="my-auto text-center">
@@ -275,7 +275,7 @@ new class extends Component
                             @else
                                 <div class="text-sm font-bold">{{ __('Tipping is closed') }}</div>
                             @endif
-                            <div class="mt-4 text-sm">{{ __(':n tips are already in', ['n' => number_format($progress['tips'], 0, ',', ' ')]) }}</div>
+                            <div class="mt-4 text-sm">{{ trans_choice(':n tip is already in|:n tips are already in', $progress['tips'], ['n' => number_format($progress['tips'], 0, ',', ' ')]) }}</div>
                             <div class="mx-auto mt-1 h-2 w-4/5 rounded-full bg-white/10"><div class="h-2 rounded-full bg-amber-400" style="width: {{ $progress['percent'] }}%"></div></div>
                             <div class="mt-1 text-[11px] text-lech-200">{{ __(':percent% of players · :missing still missing', ['percent' => $progress['percent'], 'missing' => $progress['missing']]) }}</div>
                         </div>

@@ -263,7 +263,7 @@ new class extends Component {
         }
 
         $this->clearCaches();
-        $this->dispatch('ui-toast', text: __('Team list built from :season: :players players, :bots bots.', ['season' => $this->previousSeason?->title, 'players' => $stats['players'], 'bots' => $stats['bots']]), variant: 'success');
+        $this->dispatch('ui-toast', text: __('Team list built from :season: :players, :bots.', ['season' => $this->previousSeason?->title, 'players' => trans_choice(':count player|:count players', $stats['players']), 'bots' => trans_choice(':count bot|:count bots', $stats['bots'])]), variant: 'success');
     }
 
     /**
@@ -322,7 +322,7 @@ new class extends Component {
         Audit::log('season_list.bots_added', null, [], ['bots' => $added], $this->season->title);
 
         $this->clearCaches();
-        $this->dispatch('ui-toast', text: __(':count bots added to the list.', ['count' => $added]), variant: 'success');
+        $this->dispatch('ui-toast', text: trans_choice(':count bot added to the list.|:count bots added to the list.', $added), variant: 'success');
     }
 
     /* ==================================================================
@@ -984,7 +984,7 @@ new class extends Component {
         @if ($this->stats['noRole'] > 0 && $this->isOpen)
             <x-ui.card class="flex flex-wrap items-center justify-between gap-4">
                 <x-ui.text>
-                    {{ __(':count users have no role yet. They are not on the list until an administrator gives them a role.', ['count' => $this->stats['noRole']]) }}
+                    {{ trans_choice(':count user has no role yet. They are not on the list until an administrator gives them a role.|:count users have no role yet. They are not on the list until an administrator gives them a role.', $this->stats['noRole']) }}
                 </x-ui.text>
 
                 @if (auth()->user()->hasRole('Admin'))
@@ -1038,7 +1038,7 @@ new class extends Component {
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
                             <x-ui.heading>
-                                {{ __(':count players with a role have no league yet.', ['count' => $this->stats['unlisted']]) }}
+                                {{ trans_choice(':count player with a role has no league yet.|:count players with a role have no league yet.', $this->stats['unlisted']) }}
                             </x-ui.heading>
                             <x-ui.text class="text-sm">
                                 {{ $this->isEditable ? __('Assign them to a league before approving the season.') : __('Assign each of them to a league.') }}
@@ -1086,7 +1086,7 @@ new class extends Component {
                 @can(\App\Enums\Permission::SeasonEdit->value)
                     <x-ui.card class="flex flex-wrap items-center justify-between gap-4">
                         <x-ui.text>
-                            {{ __(':count bots are missing to fill the list up to 512 teams. Add them now (this also happens when the season is approved).', ['count' => $this->stats['freeBots']]) }}
+                            {{ trans_choice(':count bot is missing to fill the list up to 512 teams. Add it now (this also happens when the season is approved).|:count bots are missing to fill the list up to 512 teams. Add them now (this also happens when the season is approved).', $this->stats['freeBots']) }}
                         </x-ui.text>
                         <x-ui.btn size="sm" icon="cpu-chip" wire:click="fillWithBots">
                             <span wire:loading.remove wire:target="fillWithBots">{{ __('Fill with bots') }}</span>
