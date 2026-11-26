@@ -121,7 +121,7 @@ final class MatchdayGraphics
 
         $until = $matchday->kickoff_at !== null && $matchday->kickoff_at->isPast() ? $matchday->kickoff_at : now();
 
-        return SeasonTeam::query()
+        return array_values(SeasonTeam::query()
             ->with('user:id,name,team_name')
             ->where('season_id', $matchday->season_id)
             ->whereNotNull('user_id')
@@ -139,8 +139,7 @@ final class MatchdayGraphics
                     'league' => $division !== null ? Backyard::name($division) : League::forPosition($position)->label(),
                 ];
             })
-            ->values()
-            ->all();
+            ->all());
     }
 
     /**
