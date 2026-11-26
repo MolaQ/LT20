@@ -354,6 +354,8 @@ class MatchReport
         }
 
         Squad::forget();
+        // Nowy odpoczynek: odpoczywający znikają ze składów najbliższych kolejek.
+        Squad::dropResting();
     }
 
     /**
