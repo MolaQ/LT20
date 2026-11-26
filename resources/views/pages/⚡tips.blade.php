@@ -118,8 +118,10 @@ new #[Layout('layouts::public')] class extends Component {
     }
 
     /**
-     * Pierwsze otwarcie zakładki Typowanie dla otwartej kolejki zapisuje typ 0:0.
-     * Gracz zmienia go przyciskami, a numer zapisu (remisy w pucharach) liczy się od ostatniej zmiany.
+     * Pierwsze otwarcie zakładki Typowanie zapisuje typ 0:0, ale tylko na najbliższą kolejkę otwartą do typowania
+     * (decyzja z 26.11.2026): kto zajrzał po publikacji meczu, ma 0:0, kto nie zajrzał, nie ma typu. Dalsze
+     * opublikowane kolejki zostają bez typu, dopóki gracz sam go nie wpisze. Typ jest oznaczony jako automatyczny
+     * (bez powiadomienia rywala), a numer zapisu (remisy w pucharach) liczy się od ostatniej zmiany.
      */
     private function ensureTip(): void
     {
@@ -127,9 +129,21 @@ new #[Layout('layouts::public')] class extends Component {
             return;
         }
 
+        $nearest = $this->matchdays->filter(fn ($m) => $m->isOpenForTips())->sortBy('kickoff_at')->first();
+        if (!$nearest || $nearest->id !== $this->matchday->id) {
+            return;
+        }
+
+        try {
+            app(SaveTip::class)->handle(auth()->user(), $this->matchday, 0, 0, auto: true);
+        } catch (DomainException) {
+            return;
+        }
+
         $this->lech = '0';
         $this->opponent = '0';
-        $this->autosave();
+        unset($this->tip, $this->crowd);
+        $this->savedTime = now()->format('H:i:s');
     }
 
     public function updatedNumber(): void

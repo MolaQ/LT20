@@ -22,14 +22,16 @@ use Illuminate\Support\Facades\DB;
  *  - saved_at zmienia się wyłącznie, gdy typ faktycznie się zmienił
  *    (ponowne zapisanie tych samych danych nie psuje pierwszeństwa w remisie pucharu),
  *  - każdy zapis zmiany dostaje kolejny numer z dziennika tip_saves (save_order): liczy się ostatni zapis,
- *    a mniejszy numer wygrywa remisy tam, gdzie rozstrzyga czas typu (puchary, Liga Legend).
+ *    a mniejszy numer wygrywa remisy tam, gdzie rozstrzyga czas typu (puchary, Liga Legend),
+ *  - $auto: 0:0 zapisane samo przy otwarciu strony typowania (tylko najbliższa kolejka). Nie nadpisuje typu gracza,
+ *    nie wysyła rywalowi powiadomienia, a pierwszy zapis gracza zdejmuje flagę is_auto.
  */
 class SaveTip
 {
     /**
      * @throws DomainException gdy typowanie jest niedozwolone lub dane są błędne
      */
-    public function handle(User $user, Matchday $matchday, mixed $lechGoals, mixed $opponentGoals): Tip
+    public function handle(User $user, Matchday $matchday, mixed $lechGoals, mixed $opponentGoals, bool $auto = false): Tip
     {
         if (! Players::canPlay($user)) {
             throw new DomainException(__('Your account cannot take part in the game.'));
@@ -58,17 +60,28 @@ class SaveTip
             throw new DomainException(__('Enter the score as numbers from 0 to :max.', ['max' => TipRules::MAX_GOALS]));
         }
 
-        $first = false;
+        $notify = false;
 
-        $saved = DB::transaction(function () use ($user, $matchday, $lech, $opponent, &$first) {
+        $saved = DB::transaction(function () use ($user, $matchday, $lech, $opponent, $auto, &$notify) {
             $tip = Tip::where('matchday_id', $matchday->id)->where('user_id', $user->id)->lockForUpdate()->first();
-            $first = ! $tip;
+            // Pierwszy własny typ gracza (nowy albo zamiast automatycznego 0:0): rywal dostaje powiadomienie.
+            $notify = ! $auto && (! $tip || $tip->is_auto);
+
+            // Automat nie rusza istniejącego typu.
+            if ($tip && $auto) {
+                return $tip;
+            }
 
             $changed = ! $tip
                 || $tip->lech_goals !== $lech
                 || $tip->opponent_goals !== $opponent;
 
             if (! $changed) {
+                // Gracz sam potwierdził automatyczne 0:0: od teraz to jego typ.
+                if ($tip->is_auto) {
+                    $tip->update(['is_auto' => false]);
+                }
+
                 return $tip;
             }
 
@@ -80,13 +93,13 @@ class SaveTip
                 'created_at' => $savedAt->format('Y-m-d H:i:s.u'),
             ]);
 
-            $tip->fill(['lech_goals' => $lech, 'opponent_goals' => $opponent, 'saved_at' => $savedAt, 'save_order' => $order])->save();
+            $tip->fill(['lech_goals' => $lech, 'opponent_goals' => $opponent, 'saved_at' => $savedAt, 'save_order' => $order, 'is_auto' => $auto])->save();
 
             return $tip;
         });
 
-        // Pierwszy typ w kolejce: rywal w lidze dostaje powiadomienie, że już typowaliśmy (App\Support\Push).
-        if ($first) {
+        // Pierwszy własny typ w kolejce: rywal w lidze dostaje powiadomienie, że już typowaliśmy (App\Support\Push).
+        if ($notify) {
             Push::rivalTipped($user, $matchday);
         }
 
