@@ -17,7 +17,7 @@ use Livewire\WithPagination;
  * Wyścig o nagrody (/nagrody, 20.11.2026): klasyfikacje nagród indywidualnych bieżącego sezonu na żywo
  * (Support\AwardRace): MVP, Złota Piłka, Złoty But, Złote Rękawice i królowie strzelców lig.
  * Zalogowany widzi u góry swoje miejsca we wszystkich nagrodach, a tabela otwiera się na stronie z jego zespołem.
- * Tabela: 50 wierszy na stronę, wyszukiwarka, filtry „Moja liga” i „Bez botów”, strzałki zmiany miejsca po ostatniej kolejce.
+ * Tabela: 10, 20 albo 50 wierszy na stronę (?ile=, domyślnie 20), wyszukiwarka, filtry „Moja liga” i „Bez botów”, strzałki zmiany miejsca po ostatniej kolejce.
  */
 new #[Layout('layouts::public')] class extends Component {
     use WithPagination;
@@ -25,7 +25,11 @@ new #[Layout('layouts::public')] class extends Component {
     /** Parametr strony w adresie (?strona=3). */
     private const PAGE = 'strona';
 
-    private const PER_PAGE = 50;
+    /** Do wyboru: ile wierszy tabeli na stronę. */
+    private const PER_PAGE = [10, 20, 50];
+
+    #[Url(as: 'ile', except: 20)]
+    public int $perPage = 20;
 
     /** mvp, golden_ball, golden_boot, golden_gloves albo scorers (królowie strzelców lig). */
     #[Url(as: 'nagroda', except: 'mvp')]
@@ -48,6 +52,9 @@ new #[Layout('layouts::public')] class extends Component {
         if (! isset($this->leagues[$this->league])) {
             $this->league = $this->defaultLeague();
         }
+        if (! in_array($this->perPage, self::PER_PAGE, true)) {
+            $this->perPage = 20;
+        }
         if (request()->query(self::PAGE) === null) {
             $this->jumpToMe();
         }
@@ -60,6 +67,16 @@ new #[Layout('layouts::public')] class extends Component {
 
     public function updated(string $property): void
     {
+        if ($property === 'perPage') {
+            // Zmiana liczby wierszy: od pierwszej strony, wyszukiwarka i filtry zostają.
+            if (! in_array($this->perPage, self::PER_PAGE, true)) {
+                $this->perPage = 20;
+            }
+            $this->resetPage(self::PAGE);
+            unset($this->pageItems);
+
+            return;
+        }
         if (in_array($property, ['award', 'league', 'search', 'filter'], true)) {
             if (! in_array($this->filter, ['all', 'league', 'humans'], true)) {
                 $this->filter = 'all';
@@ -86,7 +103,7 @@ new #[Layout('layouts::public')] class extends Component {
 
         $me = $this->myTeamId();
         $index = $me ? $this->filtered->search(fn ($row) => $row['team_id'] === $me) : false;
-        $this->setPage($index === false ? 1 : (int) floor($index / self::PER_PAGE) + 1, self::PAGE);
+        $this->setPage($index === false ? 1 : (int) floor($index / $this->perPage) + 1, self::PAGE);
         unset($this->pageItems);
     }
 
@@ -172,7 +189,7 @@ new #[Layout('layouts::public')] class extends Component {
     {
         $current = max(1, (int) $this->getPage(self::PAGE));
 
-        return new LengthAwarePaginator($this->filtered->forPage($current, self::PER_PAGE)->values(), $this->filtered->count(), self::PER_PAGE, $current, ['pageName' => self::PAGE]);
+        return new LengthAwarePaginator($this->filtered->forPage($current, $this->perPage)->values(), $this->filtered->count(), $this->perPage, $current, ['pageName' => self::PAGE]);
     }
 
     /**
@@ -380,6 +397,14 @@ new #[Layout('layouts::public')] class extends Component {
                     @foreach (array_filter(['all' => __('Everyone'), 'league' => ($myTeam && $award !== 'scorers') ? __('My league') : null, 'humans' => __('Without bots')]) as $value => $label)
                         <button type="button" wire:click="$set('filter', '{{ $value }}')"
                             class="{{ $filter === $value ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-ui-ink' }} rounded-full px-3 py-1 transition">{{ $label }}</button>
+                    @endforeach
+                </div>
+                {{-- Ile wierszy na stronę: Top 10 / 20 / 50 --}}
+                <div class="flex items-center gap-1 rounded-full bg-ui-raised p-1 text-xs font-bold" role="group" aria-label="{{ __('Rows per page') }}">
+                    <span class="ps-2 pe-1 text-ui-muted">{{ __('Top') }}</span>
+                    @foreach ([10, 20, 50] as $size)
+                        <button type="button" wire:click="$set('perPage', {{ $size }})" aria-pressed="{{ $perPage === $size ? 'true' : 'false' }}"
+                            class="{{ $perPage === $size ? 'bg-club text-club-ink shadow' : 'text-ui-muted hover:text-ui-ink' }} rounded-full px-2.5 py-1 tabular-nums transition">{{ $size }}</button>
                     @endforeach
                 </div>
                 @if ($myRow)
