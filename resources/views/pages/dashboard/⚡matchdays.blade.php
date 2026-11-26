@@ -423,27 +423,35 @@ new class extends Component {
     @include('partials.matchday-tabs', ['tab' => 'matchdays'])
 
 
-    {{-- Nagłówek i wybór sezonu --}}
-    <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-            <x-ui.heading size="xl" level="1">{{ __('Matchdays') }}</x-ui.heading>
-            <x-ui.subheading>
-                {{ __('One real Lech match per matchday. Every competition of the season tips the same match.') }}
-            </x-ui.subheading>
-        </div>
-
-        @if ($this->seasons->isNotEmpty())
-            <div class="w-full sm:w-56">
-                <x-ui.select wire:model.live="seasonId" :label="__('Season')">
-                    @foreach ($this->seasons as $option)
-                        <x-ui.select.option :value="$option->id">
-                            {{ $option->title }} ({{ $option->status->label() }})
-                        </x-ui.select.option>
-                    @endforeach
-                </x-ui.select>
+    {{-- Baner: sezon, postęp kolejek i najbliższy mecz; wybór sezonu pod spodem --}}
+    @php
+        $playedCount = $this->matchdays->where('status', \App\Enums\MatchdayStatus::Played)->count();
+        $next = $this->season ? $this->stats['next'] : null;
+    @endphp
+    <x-admin-hero :title="__('Matchdays')" icon="calendar"
+        :subtitle="__('One real Lech match per matchday. Every competition of the season tips the same match.')"
+        :eyebrow="$this->season ? $this->season->title . ' · ' . $this->season->status->label() : null">
+        @if ($this->season)
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <x-admin-hero-stat :label="__('Filled matchdays')" :value="$this->stats['filled'] . ' / ' . \App\Models\Matchday::PER_SEASON"
+                    :percent="$this->stats['filled'] * 100 / \App\Models\Matchday::PER_SEASON" />
+                <x-admin-hero-stat :label="__('Played matchdays')" :value="$playedCount . ' / ' . \App\Models\Matchday::PER_SEASON"
+                    :percent="$playedCount * 100 / \App\Models\Matchday::PER_SEASON" />
+                <x-admin-hero-stat :label="__('Next kickoff')" :value="$next?->kickoff_at?->translatedFormat('j M, H:i') ?? '—'" />
+                <x-admin-hero-stat :label="__('Next match')" :value="$next ? ($next->opponent ?: '—') : '—'" class="[&_b]:truncate [&_b]:text-xl sm:[&_b]:text-2xl" />
             </div>
         @endif
-    </div>
+    </x-admin-hero>
+
+    @if ($this->seasons->count() > 1)
+        <div class="w-full sm:w-64">
+            <x-ui.select wire:model.live="seasonId" :label="__('Season')">
+                @foreach ($this->seasons as $option)
+                    <x-ui.select.option :value="$option->id">{{ $option->title }} ({{ $option->status->label() }})</x-ui.select.option>
+                @endforeach
+            </x-ui.select>
+        </div>
+    @endif
 
     @if (!$this->season)
         {{-- Brak sezonów --}}
@@ -456,40 +464,6 @@ new class extends Component {
             </div>
         </x-ui.card>
     @else
-        {{-- Statystyki --}}
-        <div class="grid gap-4 md:grid-cols-3">
-            <x-ui.card class="flex items-center gap-4">
-                <x-ui.icon name="calendar-days" class="size-8 text-zinc-400" />
-                <div>
-                    <x-ui.text>{{ __('Season') }}</x-ui.text>
-                    <div class="flex items-center gap-2">
-                        <x-ui.heading size="xl">{{ $this->season->title }}</x-ui.heading>
-                        <x-ui.badge size="sm" :color="$this->season->status->color()">
-                            {{ $this->season->status->label() }}</x-ui.badge>
-                    </div>
-                </div>
-            </x-ui.card>
-
-            <x-ui.card class="flex items-center gap-4">
-                <x-ui.icon name="check-circle" class="size-8 text-zinc-400" />
-                <div>
-                    <x-ui.text>{{ __('Filled matchdays') }}</x-ui.text>
-                    <x-ui.heading size="xl">{{ $this->stats['filled'] }} / {{ \App\Models\Matchday::PER_SEASON }}
-                    </x-ui.heading>
-                </div>
-            </x-ui.card>
-
-            <x-ui.card class="flex items-center gap-4">
-                <x-ui.icon name="clock" class="size-8 text-zinc-400" />
-                <div>
-                    <x-ui.text>{{ __('Next kickoff') }}</x-ui.text>
-                    <x-ui.heading size="xl">
-                        {{ $this->stats['next']?->kickoff_at?->format('d.m.Y H:i') ?? '—' }}
-                    </x-ui.heading>
-                </div>
-            </x-ui.card>
-        </div>
-
         @if ($this->matchdays->isEmpty())
             {{-- Sezon bez kolejek: jeden przycisk tworzy wszystkie 9 --}}
             <x-ui.card class="space-y-4">
@@ -506,7 +480,7 @@ new class extends Component {
                 @endif
             </x-ui.card>
         @else
-            {{-- Karty kolejek: każda prowadzi przez kroki kolejki (mecz, typowanie, wynik) z szybkimi akcjami --}}
+            {{-- Karty kolejek: pasek barw rywala, mecz, trzy kroki (mecz, typowanie, wynik) i szybkie akcje --}}
             @php
                 $progress = $this->progress;
                 $canEdit = auth()->user()->can(\App\Enums\Permission::SeasonEdit->value) && !$this->isLocked;
@@ -519,54 +493,79 @@ new class extends Component {
                         $hasScore = $matchday->lech_goals !== null && $matchday->opponent_goals !== null;
                         $tips = $progress['tips'][$matchday->id] ?? 0;
                         $routeParams = ['season' => $this->season->id, 'matchday' => $matchday->number];
-
-                        // Kroki: [ikona stanu, kolor, tytuł, opis, akcja]; stan: done / todo / urgent / wait
-                        $steps = [];
-                        $steps[] = [
-                            $matchday->isFilled() ? 'done' : 'todo',
-                            __('Match'),
-                            $matchday->isFilled()
-                                ? $matchday->fixture . ' · ' . $matchday->kickoff_at->format('d.m.Y H:i')
-                                : ($matchday->lech_match_id ? __('Unnamed match: add the opponent and the kickoff.') : __('No match yet.')),
-                        ];
                         $draft = $matchday->is_draft && $matchday->isFilled() && !$played;
-                        $steps[] = [
-                            $started || $played ? 'done' : ($draft ? 'urgent' : ($matchday->isOpenForTips() ? 'wait' : 'todo')),
-                            __('Tipping'),
-                            $draft
-                                ? __('Draft: players do not see it yet. Add the questions and publish.')
-                                : ($matchday->isOpenForTips() ? __('Tips open') : __('Tips closed')) . ' · ' . __('Tips: :count', ['count' => $tips]),
-                        ];
-                        $steps[] = [
-                            $played ? 'done' : ($started && $matchday->status !== \App\Enums\MatchdayStatus::Postponed ? 'urgent' : 'todo'),
-                            __('Result and points'),
-                            $played
-                                ? $matchday->lech_goals . ':' . $matchday->opponent_goals . (isset($this->accuracy[$matchday->id]) ? ' · ' . __('Outcome :outcome%, exact :exact%', $this->accuracy[$matchday->id]) : '')
-                                : ($hasScore ? __('The score is saved, but the points are not counted yet.') : __('After the final whistle.')),
+                        $isNext = $next && $next->id === $matchday->id;
+
+                        // Kroki: [stan, tytuł, opis]; stan: done / todo / urgent / wait
+                        $steps = [
+                            [
+                                $matchday->isFilled() ? 'done' : 'todo',
+                                __('Match'),
+                                $matchday->isFilled()
+                                    ? $matchday->kickoff_at->translatedFormat('l, j F, H:i')
+                                    : ($matchday->lech_match_id ? __('Unnamed match: add the opponent and the kickoff.') : __('No match yet.')),
+                            ],
+                            [
+                                $started || $played ? 'done' : ($draft ? 'urgent' : ($matchday->isOpenForTips() ? 'wait' : 'todo')),
+                                __('Tipping'),
+                                $draft
+                                    ? __('Draft: players do not see it yet. Add the questions and publish.')
+                                    : ($matchday->isOpenForTips() ? __('Tips open') : __('Tips closed')) . ' · ' . __('Tips: :count', ['count' => $tips]),
+                            ],
+                            [
+                                $played ? 'done' : ($started && $matchday->status !== \App\Enums\MatchdayStatus::Postponed ? 'urgent' : 'todo'),
+                                __('Result and points'),
+                                $played
+                                    ? (isset($this->accuracy[$matchday->id]) ? __('Outcome :outcome%, exact :exact%', $this->accuracy[$matchday->id]) : __('Points counted'))
+                                    : ($hasScore ? __('The score is saved, but the points are not counted yet.') : __('After the final whistle.')),
+                            ],
                         ];
                         $stateIcons = ['done' => 'check-circle', 'todo' => 'minus-circle', 'urgent' => 'exclamation-circle', 'wait' => 'clock'];
-                        $stateColors = ['done' => 'text-green-600', 'todo' => 'text-zinc-400', 'urgent' => 'text-red-600', 'wait' => 'text-lech-600'];
+                        $stateColors = ['done' => 'text-good', 'todo' => 'text-ui-muted', 'urgent' => 'text-bad', 'wait' => 'text-club'];
+                        $barColors = ['done' => 'bg-good', 'todo' => 'bg-ui-line', 'urgent' => 'bg-bad', 'wait' => 'bg-club'];
+                        $stripe = filled($matchday->opponent) ? \App\Models\Rival::stripe(\App\Models\Rival::colorsFor($matchday->opponent)) : '';
                     @endphp
-                    <x-ui.card class="flex flex-col gap-4" wire:key="matchday-card-{{ $matchday->id }}">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <x-ui.heading size="lg">{{ __('Matchday :number', ['number' => $matchday->number]) }}</x-ui.heading>
-                                <x-ui.text size="sm">{{ $matchday->competitionLabel() ?? '—' }}@if (filled($matchday->opponent)) · {{ $matchday->is_home ? __('Home') : __('Away') }}@endif</x-ui.text>
+                    <article wire:key="matchday-card-{{ $matchday->id }}" @class([
+                        'flex flex-col overflow-hidden rounded-2xl border bg-ui-surface transition hover:shadow-lg',
+                        'border-club ring-2 ring-club/30' => $isNext,
+                        'border-ui-line' => !$isNext,
+                    ])>
+                        {{-- Głowa karty: granat jak na stronie głównej, numer kolejki, rywal i wynik --}}
+                        <div class="lech-bar relative flex items-center gap-4 px-4 py-4">
+                            <div class="grid size-12 shrink-0 place-items-center rounded-xl bg-white/10 font-display text-2xl font-black ring-1 ring-white/15">{{ $matchday->number }}</div>
+                            <div class="min-w-0 flex-1">
+                                <div class="truncate text-[11px] font-bold uppercase tracking-widest text-white/60">
+                                    {{ $matchday->competitionLabel() ?? __('Matchday :number', ['number' => $matchday->number]) }}@if (filled($matchday->opponent)) · {{ $matchday->is_home ? __('Home') : __('Away') }}@endif
+                                </div>
+                                <div class="truncate font-display text-lg font-bold leading-tight">{{ filled($matchday->opponent) ? $matchday->opponent : __('No match yet.') }}</div>
                             </div>
                             <div class="flex shrink-0 flex-col items-end gap-1">
+                                @if ($hasScore)
+                                    <span class="rounded-lg bg-white/15 px-2.5 py-1 font-display text-xl font-bold tabular-nums">{{ $matchday->lech_goals }}:{{ $matchday->opponent_goals }}</span>
+                                @endif
                                 <x-ui.badge size="sm" :color="$matchday->status->color()">{{ $matchday->status->label() }}</x-ui.badge>
                                 @if ($draft)
                                     <x-ui.badge size="sm" color="amber">{{ __('Draft') }}</x-ui.badge>
                                 @endif
                             </div>
+                            @if ($stripe)
+                                <span class="absolute inset-x-0 bottom-0 h-1" style="{{ $stripe }}"></span>
+                            @endif
                         </div>
 
-                        <ol class="space-y-3">
+                        {{-- Postęp kolejki: trzy odcinki w kolorach stanu --}}
+                        <div class="grid grid-cols-3 gap-1 px-4 pt-4">
+                            @foreach ($steps as [$state])
+                                <span class="{{ $barColors[$state] }} h-1.5 rounded-full"></span>
+                            @endforeach
+                        </div>
+
+                        <ol class="space-y-3 px-4 py-4">
                             @foreach ($steps as [$state, $title, $detail])
                                 <li class="flex items-start gap-3">
                                     <x-ui.icon :name="$stateIcons[$state]" class="{{ $stateColors[$state] }} mt-0.5 size-5 shrink-0" />
                                     <div class="min-w-0">
-                                        <div class="text-sm font-medium">{{ $title }}</div>
+                                        <div class="text-sm font-semibold">{{ $title }}</div>
                                         <div class="truncate text-sm text-ui-muted" title="{{ $detail }}">{{ $detail }}</div>
                                     </div>
                                 </li>
@@ -574,7 +573,7 @@ new class extends Component {
                         </ol>
 
                         {{-- Akcje kolejki: najważniejsza (pierwszy niezałatwiony krok) jako główny przycisk --}}
-                        <div class="mt-auto flex flex-wrap gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-700">
+                        <div class="mt-auto flex flex-wrap gap-2 border-t border-ui-line bg-ui-raised/40 px-4 py-3">
                             @if ($canEdit && $draft)
                                 <x-ui.btn size="sm" variant="primary" icon="megaphone" wire:click="publish({{ $matchday->id }})"
                                     wire:confirm="{{ __('Publish matchday :number? Players will see it and tipping opens.', ['number' => $matchday->number]) }}">
@@ -603,7 +602,7 @@ new class extends Component {
                                 </x-ui.btn>
                             @endif
                         </div>
-                    </x-ui.card>
+                    </article>
                 @endforeach
             </div>
 
