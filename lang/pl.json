@@ -1223,7 +1223,6 @@
     "One goal less": "Jeden gol mniej",
     "One goal more": "Jeden gol więcej",
     "Premium: statistics from the other players’ tips while you tip, a rival preview, a team name change without approval and a badge. A new payment extends it.": "Premium: statystyki typów innych graczy podczas typowania, podgląd rywali, zmiana nazwy zespołu bez akceptacji i plakietka. Nowa wpłata przedłuża premium.",
-    "You get 0 points for that matchday. The first time you open a matchday, the tip 0:0 is saved for you, so change it before kick-off.": "Dostajesz 0 punktów za tę kolejkę. Przy pierwszym otwarciu kolejki zapisujemy Ci typ 0:0, więc zmień go przed pierwszym gwizdkiem.",
     "yes :percent%": "tak :percent%",
     ":won% wins, :drawn% draws, :lost% losses": ":won% zwycięstw, :drawn% remisów, :lost% porażek",
     "Wins where your defensive bonus beat the rival's tip points and offensive bonus": "Wygrane, w których Twój bonus defensywny przewyższył punkty za typ i bonus ofensywny rywala",
@@ -2951,5 +2950,10 @@
     "Counted: players who were in the game before the kickoff.": "Liczeni są gracze, którzy byli w grze przed pierwszym gwizdkiem.",
     ":done/:all q.": ":done/:all pyt.",
     "Players who tipped": "Wytypowali",
-    "Played matchdays": "Rozegrane kolejki"
+    "Played matchdays": "Rozegrane kolejki",
+    "Upcoming matches": "Nadchodzące mecze",
+    "To fill in": "Do uzupełnienia",
+    "Tap to start from 0:0, then set your score.": "Kliknij, żeby zacząć od 0:0, a potem ustaw swój wynik.",
+    "You get 0 points for that matchday. Opening the page does not save any tip: click „Tip the score” (it starts from 0:0) and set your score before kick-off.": "Dostajesz 0 punktów za tę kolejkę. Samo wejście na stronę nie zapisuje typu: kliknij „Wytypuj wynik” (zaczyna od 0:0) i ustaw swój wynik przed pierwszym gwizdkiem.",
+    "Make your tip": "Wytypuj wynik"
 }
