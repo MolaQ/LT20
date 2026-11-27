@@ -15,7 +15,10 @@
 @endphp
 <div id="tip-competitions" data-share-target class="flex flex-1 scroll-mt-24 flex-col gap-3">
     @php
-        $playingCount = collect($this->myEntries)->filter(fn ($e) => isset($this->questionSets[$e['type']->scoreSet()->value]))->count();
+        // Sparing (27.11.2026) zajmuje wolny typ rozgrywek: kafelek rozgrywek, z których gracz odpadł, zostaje wyszarzony.
+        $friendlySet = $this->friendlySet();
+        $isPlaying = fn ($e) => isset($this->questionSets[$e['type']->scoreSet()->value]) && (($e['friendly'] ?? false) || $e['type']->scoreSet()->value !== $friendlySet);
+        $playingCount = collect($this->competitionTiles)->filter($isPlaying)->count();
     @endphp
     <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
@@ -28,10 +31,10 @@
         <x-share-image :title="__('Your competitions').' · '.__('Matchday :number', ['number' => $this->matchday?->number])" class="text-ui-muted" />
     </div>
     <div class="grid flex-1 auto-rows-fr grid-cols-1 gap-2.5 min-[480px]:grid-cols-2">
-        @foreach ($this->myEntries as $entry)
+        @foreach ($this->competitionTiles as $entry)
             @php
                 $setValue = $entry['type']->scoreSet()->value;
-                $playing = isset($this->questionSets[$setValue]);
+                $playing = $isPlaying($entry);
                 $isActive = $playing && $setValue === $active;
                 $line = $lines->get($setValue);
                 $questions = count($line['questions'] ?? []);

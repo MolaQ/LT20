@@ -182,6 +182,17 @@ new #[Layout('layouts::public')] class extends Component {
         return $allowed && $this->currentSeason ? \App\Support\PlayerStats::season($this->user, $this->currentSeason) : null;
     }
 
+    /**
+     * Bilans sparingów (mecze towarzyskie, tylko prestiż).
+     *
+     * @return array{played: int, won: int, drawn: int, lost: int}
+     */
+    #[Computed]
+    public function friendlyRecord(): array
+    {
+        return \App\Support\Friendlies::record($this->user->id);
+    }
+
     #[Computed]
     public function awards()
     {
@@ -407,6 +418,16 @@ new #[Layout('layouts::public')] class extends Component {
             <x-premium-lock :title="__('Team squad')" :text="__('Your own squad is always free here. With premium you also see the squads of other teams: their players, form and statistics season by season.')" />
         @endif
     @else
+
+    {{-- Bilans sparingów (gdy zespół jakiś rozegrał) --}}
+    @if ($this->friendlyRecord['played'] > 0)
+        <x-ui.card class="flex items-center justify-between gap-3">
+            <span class="font-semibold">{{ __('Friendlies') }}</span>
+            <span class="text-sm text-ui-muted">
+                {{ __(':won W · :drawn D · :lost L', $this->friendlyRecord) }}
+            </span>
+        </x-ui.card>
+    @endif
 
     {{-- Rozgrywki w bieżącym sezonie: miejsce albo odpadnięcie, kliknięcie otwiera wyniki z wyróżnionym zespołem --}}
     @if (count($this->seasonCompetitions) > 0)

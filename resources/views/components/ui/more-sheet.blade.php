@@ -9,6 +9,7 @@
     $links = [
         [route('my-stats'), 'chart-bar', __('My stats')],
         [route('awards'), 'sparkles', __('Race for the awards')],
+        [route('friendlies'), 'hand-raised', __('Friendlies')],
         [route('hall-of-fame'), 'trophy', __('Hall of Fame')],
         [route('history'), 'clock', __('History')],
         [route('stars'), 'star', __('Stars')],
