@@ -103,6 +103,8 @@ test('the day-before reminder goes once to players without a tip', function () {
 
 test('the home page invites logged-in players to turn notifications on', function () {
     config(['webpush.vapid.public_key' => 'public', 'webpush.vapid.private_key' => 'private']);
+    // Baner stoi na stronie trwającego sezonu.
+    Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
 
     $this->actingAs(User::factory()->create())->get(route('home'))->assertOk()->assertSee(__('Never miss a matchday'));
     auth()->logout();
