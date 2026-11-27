@@ -20,7 +20,7 @@
             </div>
 
             <label class="flex items-center gap-2 text-sm font-medium">
-                <input type="checkbox" name="remember" value="1" @checked(old('remember')) class="size-4 rounded border-ui-line accent-[var(--ui-club)]">
+                <input type="checkbox" name="remember" value="1" @checked(old('remember', true)) class="size-4 rounded border-ui-line accent-[var(--ui-club)]">
                 {{ __('Remember me') }}
             </label>
 
