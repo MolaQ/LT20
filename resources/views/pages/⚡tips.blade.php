@@ -865,9 +865,28 @@ new #[Layout('layouts::public')] class extends Component {
                             {{ __('You have not tipped this matchday yet.') }}
                         @endif
                     </p>
+                    {{-- „Mój typ” jako grafika do relacji: zaprasza znajomych do gry --}}
+                    @if ($this->tip)
+                        <div class="flex justify-center">
+                            <button type="button" x-on:click="$dispatch('ui-sheet', { name: 'my-tip-story' })"
+                                class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-sm font-bold ring-1 ring-white/25 transition hover:bg-white/25">
+                                <x-ui.icon name="share" variant="micro" /> {{ __('Show off your tip') }}
+                            </button>
+                        </div>
+                    @endif
                 </div>
             @endif
         </section>
+
+        @if ($this->tip && $md->isReady())
+            <x-ui.modal name="my-tip-story" class="w-full md:w-[26rem]">
+                <div class="space-y-4">
+                    <x-ui.heading size="lg">{{ __('Show off your tip') }}</x-ui.heading>
+                    <x-ui.text>{{ __('Tap the share icon on the graphic to post it in a story or send it to friends.') }}</x-ui.text>
+                    <x-my-tip-story :matchday="$md" :tip="$this->tip" :sides="$tipSides" :team="auth()->user()->team_name ?: auth()->user()->name" wire:key="story-{{ $this->tip->score() }}" />
+                </div>
+            </x-ui.modal>
+        @endif
 
         @if ($md->isReady())
             <x-ui.button class="lg:hidden" wire:click="$set('step', 'players')">{{ __('Next: :step', ['step' => $steps['players']]) }}</x-ui.button>

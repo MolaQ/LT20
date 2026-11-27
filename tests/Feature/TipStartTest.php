@@ -30,3 +30,20 @@ test('opening the tips page saves no tip until the player clicks the tile', func
 
     expect(Tip::where('matchday_id', $next->id)->where('user_id', $me->id)->first()?->score())->toBe('0:0');
 });
+
+test('a saved tip can be shared as a story graphic by every player', function () {
+    config(['premium.free' => false]);
+    Role::findOrCreate(RoleName::User->value, 'web');
+    $season = Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
+    $me = User::factory()->create(['team_name' => 'Kolejorz Kaczory']);
+    $me->assignRole(RoleName::User->value);
+    SeasonTeam::create(['season_id' => $season->id, 'position' => 1, 'user_id' => $me->id]);
+    $next = Matchday::create(['season_id' => $season->id, 'number' => 1, 'opponent' => 'GKS Katowice', 'is_home' => false,
+        'kickoff_at' => now()->addDays(2), 'status' => MatchdayStatus::Planned->value]);
+    Tip::create(['matchday_id' => $next->id, 'user_id' => $me->id, 'lech_goals' => 2, 'opponent_goals' => 1, 'saved_at' => now()]);
+
+    $this->actingAs($me)->get(route('tips', ['matchday_slug' => 'kolejka-1']))->assertOk()
+        ->assertSee(__('Show off your tip'))
+        ->assertSee(__('Can you beat my tip?'))
+        ->assertSee(__('Tipped by :team', ['team' => 'Kolejorz Kaczory']));
+});
