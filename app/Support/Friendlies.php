@@ -218,7 +218,7 @@ final class Friendlies
      * Wyniki sparingów kolejki (z ScoreMatchday): jak pojedynek ligowy, każdy w swoim typie rozgrywek.
      *
      * @param  array<string, array<string, array<string, mixed>>>  $lineups  klub => typ => dorobek zawodników (Squad::settle)
-     * @param  array<int, array<string, array<string, mixed>>>  $questionBonus  user_id => typ => bonus z pytań
+     * @param  array<int, array<int|string, array<string, bool|int>>>  $questionBonus  user_id => typ => bonus z pytań
      * @param  Collection<int, Tip>  $tips  typy graczy według user_id
      */
     public static function settle(Matchday $matchday, array $lineups, array $questionBonus, Collection $tips): int

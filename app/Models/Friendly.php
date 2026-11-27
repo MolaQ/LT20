@@ -101,7 +101,11 @@ class Friendly extends Model
         return $userId === $this->challenger_id ? $this->opponent : $this->challenger;
     }
 
-    /** Wynik z punktu widzenia gracza: [jego bramki, rywala] albo null przed rozliczeniem. */
+    /**
+     * Wynik z punktu widzenia gracza: [jego bramki, rywala] albo null przed rozliczeniem.
+     *
+     * @return array{0: int, 1: int}|null
+     */
     public function scoreFor(int $userId): ?array
     {
         if (! $this->isSettled()) {
