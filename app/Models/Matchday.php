@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $kickoff_at
  * @property MatchdayStatus $status
  * @property Carbon|null $push_open_at powiadomienie „typowanie otwarte” wysłane
+ * @property Carbon|null $push_eve_at przypomnienie dzień przed meczem wysłane
  * @property Carbon|null $push_reminder_at przypomnienie przed końcem typowania wysłane
  * @property Carbon|null $push_results_at powiadomienie z wynikiem i punktami wysłane
  * @property-read string $fixture "Lech Poznań – rywal" albo "rywal – Lech Poznań" (akcesor fixture)
@@ -59,6 +60,7 @@ class Matchday extends Model
             'is_home' => 'boolean',
             'kickoff_at' => 'datetime',
             'push_open_at' => 'datetime',
+            'push_eve_at' => 'datetime',
             'push_reminder_at' => 'datetime',
             'push_results_at' => 'datetime',
             'status' => MatchdayStatus::class,

@@ -265,6 +265,10 @@ new #[Layout('layouts::public')] class extends Component {
         {{-- Ostrzeżenie „kartki” po kolejkach bez typu (App\Support\Inactivity). --}}
         @auth
             <x-inactivity-warning />
+            {{-- Zachęta do powiadomień i instalacji aplikacji (sama się chowa, gdy są włączone) --}}
+            @if (\App\Support\Push::enabled())
+                <livewire:pages::home.push-nudge />
+            @endif
         @endauth
 
         {{-- Najbliższa kolejka (albo ostatnia, gdy wszystkie rozegrane): tablica wyników z odliczaniem do pierwszego gwizdka --}}

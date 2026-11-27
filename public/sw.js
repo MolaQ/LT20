@@ -80,6 +80,8 @@ self.addEventListener('push', (event) => {
             badge: data.badge || '/images/lechtyper-logo.png',
             tag: data.tag,
             renotify: Boolean(data.tag),
+            // Wibracja na Androidzie (iPhone i komputery ją pomijają).
+            vibrate: [120, 60, 120],
             data: data.data || {},
         }),
     );

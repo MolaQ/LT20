@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
 use Throwable;
 
 /**
- * Powiadomienia push o kolejkach: typowanie otwarte, przypomnienie przed pierwszym gwizdkiem (tylko kto nie typował),
+ * Powiadomienia push o kolejkach: typowanie otwarte, przypomnienie dzień przed meczem i przed pierwszym gwizdkiem (tylko kto nie typował),
  * wynik z punktami gracza i „rywal już typował”. Każde idzie raz (znaczniki push_*_at na kolejce), tylko do graczy
  * z listy sezonu, którzy włączyli powiadomienia w przeglądarce i nie wyłączyli tego rodzaju (users.push_prefs).
  * Bez kluczy VAPID (config/webpush.php) nic nie jest wysyłane.
@@ -23,10 +23,13 @@ use Throwable;
 final class Push
 {
     /** Rodzaje powiadomień (klucze users.push_prefs). */
-    public const KINDS = ['open', 'reminder', 'results', 'rival'];
+    public const KINDS = ['open', 'eve', 'reminder', 'results', 'rival'];
 
     /** „Typowanie otwarte” najwyżej tyle dni przed meczem (dalsze kolejki czekają). */
     public const OPEN_DAYS = 7;
+
+    /** Przypomnienie dzień przed meczem: tyle godzin przed pierwszym gwizdkiem. */
+    public const EVE_HOURS = 24;
 
     /** Przypomnienie tyle minut przed pierwszym gwizdkiem. */
     public const REMINDER_MINUTES = 120;
@@ -65,6 +68,14 @@ final class Push
             $sent += self::open($next);
         }
 
+        // Dzień przed meczem. Gdy kolejka ruszyła później i do gwizdka jest mniej niż do ostatniego wezwania, wystarczy to drugie.
+        if ($next->push_eve_at === null && $kickoff->lte(now()->addHours(self::EVE_HOURS))) {
+            $next->forceFill(['push_eve_at' => now()])->save();
+            if ($kickoff->gt(now()->addMinutes(self::REMINDER_MINUTES))) {
+                $sent += self::eve($next);
+            }
+        }
+
         if ($next->push_reminder_at === null && $kickoff->lte(now()->addMinutes(self::REMINDER_MINUTES))) {
             $next->forceFill(['push_reminder_at' => now()])->save();
             $sent += self::reminder($next);
@@ -78,6 +89,23 @@ final class Push
         return self::send(self::wanting(self::recipients($matchday)->get(), 'open'), fn () => new PushMessage(
             'Matchday :number: tipping is open',
             ':fixture, :date. Make your tip!',
+            route('tips'),
+            'matchday-'.$matchday->id,
+            ['number' => $matchday->number],
+            ['fixture' => $matchday->fixture, 'date' => $matchday->kickoff_at?->translatedFormat('D j.m, H:i') ?? ''],
+        ));
+    }
+
+    /** Dzień przed meczem, tylko do graczy bez typu. */
+    public static function eve(Matchday $matchday): int
+    {
+        $users = self::wanting(self::recipients($matchday)
+            ->whereNotIn('id', Tip::where('matchday_id', $matchday->id)->select('user_id'))
+            ->get(), 'eve');
+
+        return self::send($users, fn () => new PushMessage(
+            'Matchday :number tomorrow',
+            ':fixture, :date. You have not tipped yet: it takes a minute.',
             route('tips'),
             'matchday-'.$matchday->id,
             ['number' => $matchday->number],

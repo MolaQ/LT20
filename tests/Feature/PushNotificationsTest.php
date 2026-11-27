@@ -85,3 +85,28 @@ test('a player can choose the kinds of notifications', function () {
     expect($user->fresh()->wantsPush('results'))->toBeFalse()
         ->and($user->fresh()->wantsPush('open'))->toBeTrue();
 });
+
+test('the day-before reminder goes once to players without a tip', function () {
+    [$matchday, $users] = pushSetup(hoursToKickoff: 20);
+    Tip::create(['matchday_id' => $matchday->id, 'user_id' => $users[0]->id, 'lech_goals' => 1, 'opponent_goals' => 0, 'saved_at' => now()]);
+    $users[1]->forceFill(['push_prefs' => ['eve' => false]])->save();
+
+    // Otwarcie dla trzech, przypomnienie dzień wcześniej tylko dla trzeciego; drugi raz nic.
+    expect(Push::tick())->toBe(4)
+        ->and(Push::tick())->toBe(0)
+        ->and($matchday->fresh()->push_eve_at)->not->toBeNull();
+
+    Notification::assertSentToTimes($users[0], PushMessage::class, 1);
+    Notification::assertSentToTimes($users[1], PushMessage::class, 1);
+    Notification::assertSentToTimes($users[2], PushMessage::class, 2);
+});
+
+test('the home page invites logged-in players to turn notifications on', function () {
+    config(['webpush.vapid.public_key' => 'public', 'webpush.vapid.private_key' => 'private']);
+    // Baner stoi na stronie trwającego sezonu.
+    Season::create(['number' => 1, 'status' => SeasonStatus::Active->value]);
+
+    $this->actingAs(User::factory()->create())->get(route('home'))->assertOk()->assertSee(__('Never miss a matchday'));
+    auth()->logout();
+    $this->get(route('home'))->assertOk()->assertDontSee(__('Never miss a matchday'));
+});
