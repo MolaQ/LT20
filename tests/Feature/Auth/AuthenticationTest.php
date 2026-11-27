@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
@@ -65,4 +66,15 @@ test('users can logout', function () {
     $response->assertRedirect(route('home'));
 
     $this->assertGuest();
+});
+
+test('remember me is ticked by default and keeps the login', function () {
+    $this->get(route('login'))->assertOk()->assertSee('name="remember" value="1" checked', false);
+
+    $user = User::factory()->create();
+
+    $this->post(route('login.store'), ['email' => $user->email, 'password' => 'password', 'remember' => '1'])
+        ->assertCookie(Auth::guard()->getRecallerName());
+
+    expect($user->fresh()->remember_token)->not->toBeNull();
 });
