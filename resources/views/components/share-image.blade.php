@@ -2,13 +2,14 @@
     Przycisk „Obrazek na sociale” (resources/js/share-image.js). Zdjęcie obejmuje najbliższy element nadrzędny
     z atrybutem data-share-target. Tylko dla premium (Admin zawsze); zalogowany bez premium widzi kłódkę
     z linkiem do strony wsparcia, gość nie widzi nic. Kolor bierze z otoczenia, więc pasuje też na kolorowych belkach.
-    Użycie: <section data-share-target> ... <x-share-image :title="__('Table')" /> ... </section>
+    free: bez blokady premium. Użycie: <section data-share-target> ... <x-share-image :title="__('Table')" /> ... </section>
 --}}
-@props(['title'])
+@props(['title', 'free' => false])
 
 @auth
     @php
-        $premium = \App\Support\Premium::isActive(auth()->user());
+        // free: grafika dla każdego zalogowanego (np. „Mój typ”, który zaprasza znajomych do gry).
+        $premium = $free || \App\Support\Premium::isActive(auth()->user());
         $brand = parse_url((string) config('app.url'), PHP_URL_HOST) ?: config('app.name');
         // Sam znaczek w kółku (napis „Udostępnij” w podpowiedzi i dla czytników ekranu).
         $base = 'inline-flex size-8 shrink-0 items-center justify-center gap-1 rounded-full border border-current/30 text-xs transition hover:bg-current/10';
