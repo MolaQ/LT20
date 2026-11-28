@@ -38,6 +38,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $verification_reminded_at
  * @property string|null $locale
  * @property array<string, bool>|null $push_prefs
+ * @property bool $email_recap mail z podsumowaniem po kolejce (App\Support\RecapMail)
  * @property int $email_reminder_hours mail przed kolejką tyle godzin przed meczem, 0 = wyłączony (App\Support\EveMail)
  * @property int $profile_views
  * @property Carbon|null $inactivity_reset_at
@@ -81,6 +82,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'verification_reminded_at' => 'datetime',
             'push_prefs' => 'array',
             'email_reminder_hours' => 'integer',
+            'email_recap' => 'boolean',
             'show_as_supporter' => 'boolean',
         ];
     }

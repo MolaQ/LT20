@@ -3039,5 +3039,21 @@
     "Modules": "Moduły",
     "Turn whole game features on or off for all players.": "Włączaj i wyłączaj całe funkcje gry dla wszystkich graczy.",
     "Players challenge each other to friendlies in a free competition type. Turned off: the page, the links, the tiles on the tips page and the notifications disappear and friendlies are not scored. Results and records stay and come back when you turn it on again.": "Gracze wyzywają się na sparingi w wolnym typie rozgrywek. Po wyłączeniu znikają strona, linki, kafelki na stronie typowania i powiadomienia, a sparingi nie są rozliczane. Wyniki i bilanse zostają i wracają po ponownym włączeniu.",
-    "Friendlies are turned off.": "Sparingi są wyłączone."
+    "Friendlies are turned off.": "Sparingi są wyłączone.",
+    "Matchday summaries are off": "Podsumowania kolejek wyłączone",
+    "We will not email you matchday summaries any more. You can turn them back on in the notification settings.": "Nie będziemy już wysyłać podsumowań kolejek. Możesz je włączyć z powrotem w ustawieniach powiadomień.",
+    "The morning after the match: the score, your points, your league match, your place in the table and the next matchday.": "Rano po meczu: wynik, Twoje punkty, mecz w lidze, miejsce w tabeli i następna kolejka.",
+    "Matchday :number of LechTYPER: :score": ":number. kolejka LechTYPER: :score",
+    "Matchday :number is settled!": ":number. kolejka rozliczona!",
+    "Your tip :tip: :points pts for the tip and :bonus bonus.": "Twój typ :tip: :points pkt za typ i :bonus bonusu.",
+    "You did not tip this matchday.": "Tym razem nie było Twojego typu.",
+    "League: you beat :team :score.": "Liga: wygrana z :team :score.",
+    "League: you lost to :team :score.": "Liga: porażka z :team :score.",
+    "League: draw with :team :score.": "Liga: remis z :team :score.",
+    "Friendly with :team: :score.": "Sparing z :team: :score.",
+    "Next: matchday :number, :fixture, :date.": "Następna: :number. kolejka, :fixture, :date.",
+    "Tip the next matchday": "Typuj następną kolejkę",
+    "See the results": "Zobacz wyniki",
+    "Matchday summary by email": "Podsumowanie kolejki e-mailem",
+    ":league: :place. place of :teams.": ":league: :place. miejsce na :teams."
 }
