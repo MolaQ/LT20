@@ -3047,5 +3047,21 @@
     "With the last call, if you have tipped but left a squad empty or questions unanswered.": "Razem z ostatnim wezwaniem, jeśli masz typ, ale zostawiłeś pusty skład albo pytania bez odpowiedzi.",
     "Matchday :number of LechTYPER: your squad or questions are missing": ":number. kolejka LechTYPER: brakuje Twojego składu albo odpowiedzi",
     "Your tip is saved, but without players and answers you lose attack and defence goals:": "Twój typ jest zapisany, ale bez zawodników i odpowiedzi tracisz bramki ataku i obrony:",
-    "Finish my matchday": "Dokończ kolejkę"
+    "Finish my matchday": "Dokończ kolejkę",
+    "Matchday summaries are off": "Podsumowania kolejek wyłączone",
+    "We will not email you matchday summaries any more. You can turn them back on in the notification settings.": "Nie będziemy już wysyłać podsumowań kolejek. Możesz je włączyć z powrotem w ustawieniach powiadomień.",
+    "The morning after the match: the score, your points, your league match, your place in the table and the next matchday.": "Rano po meczu: wynik, Twoje punkty, mecz w lidze, miejsce w tabeli i następna kolejka.",
+    "Matchday :number of LechTYPER: :score": ":number. kolejka LechTYPER: :score",
+    "Matchday :number is settled!": ":number. kolejka rozliczona!",
+    "Your tip :tip: :points pts for the tip and :bonus bonus.": "Twój typ :tip: :points pkt za typ i :bonus bonusu.",
+    "You did not tip this matchday.": "Tym razem nie było Twojego typu.",
+    "League: you beat :team :score.": "Liga: wygrana z :team :score.",
+    "League: you lost to :team :score.": "Liga: porażka z :team :score.",
+    "League: draw with :team :score.": "Liga: remis z :team :score.",
+    "Friendly with :team: :score.": "Sparing z :team: :score.",
+    "Next: matchday :number, :fixture, :date.": "Następna: :number. kolejka, :fixture, :date.",
+    "Tip the next matchday": "Typuj następną kolejkę",
+    "See the results": "Zobacz wyniki",
+    "Matchday summary by email": "Podsumowanie kolejki e-mailem",
+    ":league: :place. place of :teams.": ":league: :place. miejsce na :teams."
 }
