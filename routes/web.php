@@ -152,6 +152,9 @@ Route::middleware(['auth', 'verified', 'permission:'.Permission::DashboardAccess
     Route::livewire('panel/hall-of-fame', 'pages::dashboard.hall-of-fame')
         ->middleware('permission:season-list')
         ->name('dashboard.hall-of-fame');
+    Route::livewire('panel/modules', 'pages::dashboard.modules')
+        ->middleware('permission:season-list')
+        ->name('dashboard.modules');
     Route::livewire('panel/designation-settings', 'pages::dashboard.designation-settings')
         ->middleware('permission:season-list')
         ->name('dashboard.designation-settings');

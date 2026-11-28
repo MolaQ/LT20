@@ -9,7 +9,6 @@
     $links = [
         [route('my-stats'), 'chart-bar', __('My stats')],
         [route('awards'), 'sparkles', __('Race for the awards')],
-        [route('friendlies'), 'hand-raised', __('Friendlies')],
         [route('hall-of-fame'), 'trophy', __('Hall of Fame')],
         [route('history'), 'clock', __('History')],
         [route('stars'), 'star', __('Stars')],
@@ -19,6 +18,9 @@
         [route('faq'), 'question-mark-circle', __('FAQ')],
         [route('office'), 'inbox', __('Complaints and requests office')],
     ];
+    if (\App\Support\Friendlies::on()) {
+        array_splice($links, 2, 0, [[route('friendlies'), 'hand-raised', __('Friendlies')]]);
+    }
     if (auth()->user()?->roles->isNotEmpty()) {
         $links[] = [route('support').'#zapros', 'user-plus', __('Invite fans')];
     }
