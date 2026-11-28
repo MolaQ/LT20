@@ -1,6 +1,7 @@
 <?php
 
 use App\Notifications\PushMessage;
+use App\Support\EveMail;
 use App\Support\Push;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -20,11 +21,23 @@ new class extends Component {
     /** @var array<string, bool> */
     public array $prefs = [];
 
+    /** Mail przed kolejką: ile godzin przed meczem (0 = wyłączony, App\Support\EveMail). */
+    public int $emailHours = EveMail::DEFAULT_HOURS;
+
     public function mount(): void
     {
         foreach (Push::KINDS as $kind) {
             $this->prefs[$kind] = auth()->user()->wantsPush($kind);
         }
+        $this->emailHours = (int) auth()->user()->email_reminder_hours;
+    }
+
+    public function updatedEmailHours(): void
+    {
+        $hours = in_array($this->emailHours, EveMail::HOURS, true) ? $this->emailHours : 0;
+        auth()->user()->forceFill(['email_reminder_hours' => $hours])->save();
+        $this->emailHours = $hours;
+        $this->dispatch('ui-toast', text: __('Saved.'));
     }
 
     public function updatedPrefs(): void
@@ -115,5 +128,16 @@ new class extends Component {
                 </div>
             </div>
         @endif
+
+        {{-- Mail przed kolejką, gdy push nie dociera (App\Support\EveMail) --}}
+        <div class="mt-6 space-y-2 border-t border-ui-line pt-5">
+            <x-ui.select wire:model.live="emailHours" :label="__('Email reminder')">
+                @foreach (\App\Support\EveMail::HOURS as $hours)
+                    <x-ui.select.option value="{{ $hours }}">{{ trans_choice(':count hour before the match|:count hours before the match', $hours) }}</x-ui.select.option>
+                @endforeach
+                <x-ui.select.option value="0">{{ __('Do not send') }}</x-ui.select.option>
+            </x-ui.select>
+            <p class="text-sm text-ui-muted">{{ __('An email to :email if you have not tipped the matchday yet. When push notifications reach you before the match, we do not send it.', ['email' => auth()->user()->email]) }}</p>
+        </div>
     </x-pages::settings.layout>
 </section>
