@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Enums\CompetitionType;
 use App\Enums\MatchdayStatus;
+use App\Models\Competition;
 use App\Models\CompetitionEntry;
 use App\Models\Fixture;
 use App\Models\Friendly;
@@ -84,6 +85,7 @@ final class RecapMail
             ->where('kickoff_at', '>', now())
             ->orderBy('kickoff_at')
             ->first();
+        /** @var array<int, array<int, int>> $ranks */
         $ranks = [];
 
         foreach ($users as $user) {
@@ -102,6 +104,9 @@ final class RecapMail
      * Dorobek gracza w kolejce. $ranks to pamięć tabel (id rozgrywek => id wpisów od najlepszego), wspólna dla całej wysyłki.
      *
      * @param  array<int, array<int, int>>  $ranks
+     *
+     * @param-out array<int, array<int, int>>  $ranks
+     *
      * @return array{tip: array{0: int, 1: int}|null, points: int, bonus: int, duel: array{mine: int, theirs: int, rival: string}|null, place: int|null, teams: int, league: string|null, friendly: array{mine: int, theirs: int, rival: string}|null}
      */
     public static function for(User $user, Matchday $matchday, array &$ranks = []): array
@@ -118,8 +123,8 @@ final class RecapMail
             ->whereHas('competition', fn ($q) => $q->whereIn('type', [CompetitionType::League->value, CompetitionType::Swiss->value]))
             ->first() : null;
 
-        if ($entry && $entry->competition) {
-            $competition = $entry->competition;
+        $competition = $entry?->competition;
+        if ($entry && $competition instanceof Competition) {
             $score = TeamScore::where('matchday_id', $matchday->id)->where('season_team_id', $team->id)
                 ->where('score_set', CompetitionType::League->value)->first();
             if ($score) {
@@ -135,6 +140,7 @@ final class RecapMail
                 $home = $fixture->home_entry_id === $entry->id;
                 $rival = CompetitionEntry::with('seasonTeam.user:id,name,team_name', 'seasonTeam.bot:id,name')
                     ->find($home ? $fixture->away_entry_id : $fixture->home_entry_id)?->seasonTeam;
+                $rival = $rival instanceof SeasonTeam ? $rival : null;
                 $out['duel'] = [
                     'mine' => (int) ($home ? $fixture->home_goals : $fixture->away_goals),
                     'theirs' => (int) ($home ? $fixture->away_goals : $fixture->home_goals),
