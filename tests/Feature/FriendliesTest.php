@@ -13,6 +13,7 @@ use App\Models\Tip;
 use App\Models\User;
 use App\Support\Friendlies;
 use App\Support\PlayerCompetitions;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -146,4 +147,19 @@ test('a played friendly can be shown off as a story graphic', function () {
         ->assertSet('story', $friendly->id)
         ->assertDispatched('ui-sheet')
         ->assertSee('Drużyna 2');
+});
+
+test('the season ranking gives 3 points for a win and 1 for a draw', function () {
+    $matchday = friendlyMatchday();
+    $ada = friendlyPlayer($matchday, 1);
+    $bob = friendlyPlayer($matchday, 2);
+    $cid = friendlyPlayer($matchday, 3);
+    foreach ([[$ada, $bob, 2, 0], [$cid, $bob, 1, 1]] as [$home, $away, $h, $a]) {
+        Friendly::create(['matchday_id' => $matchday->id, 'challenger_id' => $home->id, 'opponent_id' => $away->id, 'token' => Str::random(32),
+            'challenger_set' => 'cup', 'opponent_set' => 'cup', 'status' => Friendly::ACCEPTED, 'challenger_goals' => $h, 'opponent_goals' => $a, 'settled_at' => now()]);
+    }
+
+    $ranking = Friendlies::ranking($matchday->season_id);
+
+    expect(array_map(fn ($row) => [$row['user']->id, $row['points']], $ranking))->toBe([[$ada->id, 3], [$cid->id, 1], [$bob->id, 1]]);
 });

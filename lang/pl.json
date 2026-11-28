@@ -2991,7 +2991,7 @@
     ":team challenges you to a friendly": ":team wyzywa Cię na sparing",
     ":team challenges you to a friendly in matchday :number. Accept it before kick-off!": ":team wyzywa Cię na sparing w :number. kolejce. Przyjmij przed pierwszym gwizdkiem!",
     ":team invites you to a friendly": ":team zaprasza Cię na sparing",
-    ":won W · :drawn D · :lost L": ":won W · :drawn R · :lost P",
+    ":won W · :drawn D · :lost L": ":won Z · :drawn R · :lost P",
     "Accept the friendly": "Przyjmuję sparing",
     "Challenge": "Wyzwij",
     "Challenge another team or a friend to a friendly in the next matchday. It is scored like a league duel (tip, players and questions), only for prestige: no table or Hall of Fame points.": "Wyzwij inną drużynę albo znajomego na sparing w najbliższej kolejce. Liczy się jak pojedynek ligowy (typ, zawodnicy i pytania), ale tylko dla prestiżu: bez punktów do tabel i Hall of Fame.",
@@ -3029,5 +3029,7 @@
     "Win!": "Wygrana!",
     "Fancy a rematch?": "Rewanż? Wyzwij mnie!",
     "Show off the result": "Pochwal się wynikiem",
-    "It is a draw": "Remis"
+    "It is a draw": "Remis",
+    "Friendlies ranking": "Ranking sparingów sezonu",
+    "Pl": "M"
 }

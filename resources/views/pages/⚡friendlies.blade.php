@@ -97,6 +97,19 @@ new #[Layout('layouts::shell')] class extends Component {
         return Friendly::of($this->me()->id)->with(['challenger', 'opponent', 'matchday'])->whereNotNull('settled_at')->latest('settled_at')->limit(20)->get();
     }
 
+    /**
+     * Ranking sparingów bieżącego sezonu (pierwsza dziesiątka).
+     *
+     * @return list<array{user: User, played: int, won: int, drawn: int, lost: int, for: int, against: int, points: int}>
+     */
+    #[Computed]
+    public function ranking(): array
+    {
+        $season = \App\Models\Season::current();
+
+        return $season ? Friendlies::ranking($season->id) : [];
+    }
+
     /** @return array{played: int, won: int, drawn: int, lost: int} */
     #[Computed]
     public function record(): array
@@ -289,6 +302,39 @@ new #[Layout('layouts::shell')] class extends Component {
             @endforeach
             <x-ui.separator />
             <x-ui.button size="sm" variant="ghost" wire:click="challenge">{{ __('Create a link for a friend') }}</x-ui.button>
+        </x-ui.card>
+    @endif
+
+    {{-- Ranking sezonu: 3 pkt za wygraną, 1 za remis --}}
+    @if ($this->ranking !== [])
+        <x-ui.section-title>{{ __('Friendlies ranking') }}</x-ui.section-title>
+        <x-ui.card class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="text-xs uppercase tracking-wider text-ui-muted">
+                    <tr>
+                        <th class="py-1.5 pe-2 text-start">#</th>
+                        <th class="py-1.5 pe-2 text-start">{{ __('Team') }}</th>
+                        <th class="px-1.5 py-1.5 text-end">{{ __('Pl') }}</th>
+                        <th class="px-1.5 py-1.5 text-end">{{ __('W–D–L') }}</th>
+                        <th class="px-1.5 py-1.5 text-end">{{ __('Goals') }}</th>
+                        <th class="ps-1.5 py-1.5 text-end">{{ __('Pts') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-ui-line">
+                    @foreach ($this->ranking as $i => $row)
+                        <tr wire:key="rank-{{ $row['user']->id }}" @class(['font-bold text-club' => $row['user']->id === $me->id])>
+                            <td class="py-2 pe-2 tabular-nums">{{ $i + 1 }}.</td>
+                            <td class="max-w-[10rem] truncate py-2 pe-2">
+                                <a href="{{ route('team.show', $row['user']) }}" wire:navigate class="hover:underline">{{ Friendlies::teamName($row['user']) }}</a>
+                            </td>
+                            <td class="px-1.5 py-2 text-end tabular-nums">{{ $row['played'] }}</td>
+                            <td class="whitespace-nowrap px-1.5 py-2 text-end tabular-nums">{{ $row['won'] }}–{{ $row['drawn'] }}–{{ $row['lost'] }}</td>
+                            <td class="whitespace-nowrap px-1.5 py-2 text-end tabular-nums">{{ $row['for'] }}:{{ $row['against'] }}</td>
+                            <td class="ps-1.5 py-2 text-end font-bold tabular-nums">{{ $row['points'] }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </x-ui.card>
     @endif
 

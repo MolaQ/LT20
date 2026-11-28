@@ -251,6 +251,47 @@ final class Friendlies
     }
 
     /**
+     * Ranking sparingów sezonu: 3 punkty za wygraną, 1 za remis; przy równej liczbie punktów lepsza różnica bramek,
+     * potem więcej rozegranych. Tylko gracze, którzy rozegrali w sezonie choć jeden sparing.
+     *
+     * @return list<array{user: User, played: int, won: int, drawn: int, lost: int, for: int, against: int, points: int}>
+     */
+    public static function ranking(int $seasonId, int $limit = 10): array
+    {
+        $rows = [];
+        $friendlies = Friendly::whereNotNull('settled_at')->whereNotNull('opponent_id')
+            ->whereHas('matchday', fn ($q) => $q->where('season_id', $seasonId))
+            ->get();
+
+        foreach ($friendlies as $friendly) {
+            foreach ([$friendly->challenger_id, (int) $friendly->opponent_id] as $userId) {
+                [$mine, $theirs] = $friendly->scoreFor($userId) ?? [0, 0];
+                $row = $rows[$userId] ?? ['played' => 0, 'won' => 0, 'drawn' => 0, 'lost' => 0, 'for' => 0, 'against' => 0, 'points' => 0];
+                $row['played']++;
+                $row['for'] += $mine;
+                $row['against'] += $theirs;
+                $result = $mine > $theirs ? 'won' : ($mine < $theirs ? 'lost' : 'drawn');
+                $row[$result]++;
+                $row['points'] += ['won' => 3, 'drawn' => 1, 'lost' => 0][$result];
+                $rows[$userId] = $row;
+            }
+        }
+
+        uasort($rows, fn (array $a, array $b) => [$b['points'], $b['for'] - $b['against'], $b['played']] <=> [$a['points'], $a['for'] - $a['against'], $a['played']]);
+        $users = User::whereIn('id', array_keys($rows))->get(['id', 'name', 'team_name'])->keyBy('id');
+
+        $out = [];
+        foreach (array_slice($rows, 0, $limit, true) as $userId => $row) {
+            $user = $users->get($userId);
+            if ($user instanceof User) {
+                $out[] = ['user' => $user] + $row;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Bilans sparingów gracza.
      *
      * @return array{played: int, won: int, drawn: int, lost: int}
