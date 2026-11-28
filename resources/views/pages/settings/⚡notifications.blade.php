@@ -24,12 +24,22 @@ new class extends Component {
     /** Mail przed kolejką: ile godzin przed meczem (0 = wyłączony, App\Support\EveMail). */
     public int $emailHours = EveMail::DEFAULT_HOURS;
 
+    /** Mail z podsumowaniem po kolejce (App\Support\RecapMail). */
+    public bool $emailRecap = true;
+
     public function mount(): void
     {
         foreach (Push::KINDS as $kind) {
             $this->prefs[$kind] = auth()->user()->wantsPush($kind);
         }
         $this->emailHours = (int) auth()->user()->email_reminder_hours;
+        $this->emailRecap = (bool) auth()->user()->email_recap;
+    }
+
+    public function updatedEmailRecap(): void
+    {
+        auth()->user()->forceFill(['email_recap' => $this->emailRecap])->save();
+        $this->dispatch('ui-toast', text: __('Saved.'));
     }
 
     public function updatedEmailHours(): void
@@ -139,6 +149,8 @@ new class extends Component {
                 <x-ui.select.option value="0">{{ __('Do not send') }}</x-ui.select.option>
             </x-ui.select>
             <p class="text-sm text-ui-muted">{{ __('An email to :email if you have not tipped the matchday yet. When push notifications reach you before the match, we do not send it.', ['email' => auth()->user()->email]) }}</p>
+            <div class="pt-3"></div>
+            <x-ui.switch wire:model.live="emailRecap" :label="__('Matchday summary by email')" :description="__('The morning after the match: the score, your points, your league match, your place in the table and the next matchday.')" />
         </div>
     </x-pages::settings.layout>
 </section>

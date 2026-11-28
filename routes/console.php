@@ -4,6 +4,7 @@ use App\Support\Automats;
 use App\Support\EveMail;
 use App\Support\Premium;
 use App\Support\Push;
+use App\Support\RecapMail;
 use App\Support\Unverified;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -44,6 +45,13 @@ Artisan::command('mail:matchdays', function () {
 })->purpose('Email players who have not tipped the next matchday yet');
 
 Schedule::command('mail:matchdays')->everyFiveMinutes()->withoutOverlapping();
+
+// Podsumowanie kolejki e-mailem rano po meczu (App\Support\RecapMail).
+Artisan::command('mail:recaps', function () {
+    $this->info('Recap emails sent: '.RecapMail::tick());
+})->purpose('Email players the summary of the last settled matchday');
+
+Schedule::command('mail:recaps')->everyFiveMinutes()->withoutOverlapping();
 
 // Stare odsłony stron (App\Models\PageView, ok. 13 miesięcy) i inne modele z Prunable.
 Schedule::command('model:prune')->daily();

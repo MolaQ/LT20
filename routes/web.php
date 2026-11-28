@@ -61,6 +61,8 @@ Route::view('offline', 'offline')->name('offline');
 // Wypisanie z maili przypominających o kolejce (podpisany link z maila, bez logowania).
 Route::match(['get', 'post'], 'email/przypomnienia/{user}/wypisz', EmailRemindersController::class)
     ->middleware('signed')->name('email.reminders.off');
+Route::match(['get', 'post'], 'email/podsumowania/{user}/wypisz', EmailRemindersController::class)
+    ->middleware('signed')->name('email.recap.off');
 
 // Rotator banerów partnerów: kliknięcie z przekierowaniem, wyświetlenia z rotatora i statystyki partnera.
 Route::get('b/{campaign}', [BannerController::class, 'click'])->whereNumber('campaign')->name('banner.click');
