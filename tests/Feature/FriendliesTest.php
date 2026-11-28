@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\MatchdayStatus;
+use App\Enums\Permission;
 use App\Enums\RoleName;
 use App\Enums\SeasonStatus;
 use App\Models\Competition;
@@ -12,6 +13,7 @@ use App\Models\SeasonTeam;
 use App\Models\Tip;
 use App\Models\User;
 use App\Support\Friendlies;
+use App\Support\Modules;
 use App\Support\PlayerCompetitions;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -162,4 +164,35 @@ test('the season ranking gives 3 points for a win and 1 for a draw', function ()
     $ranking = Friendlies::ranking($matchday->season_id);
 
     expect(array_map(fn ($row) => [$row['user']->id, $row['points']], $ranking))->toBe([[$ada->id, 3], [$cid->id, 1], [$bob->id, 1]]);
+});
+
+test('turned off friendlies disappear and are not scored, then come back', function () {
+    $matchday = friendlyMatchday();
+    $me = friendlyPlayer($matchday, 1);
+    $rival = friendlyPlayer($matchday, 2);
+    $friendly = Friendlies::challenge($me, $matchday, $rival);
+    Friendlies::accept($friendly, $rival);
+
+    Modules::set(Modules::FRIENDLIES, false);
+
+    expect(array_map(fn ($t) => $t->value, PlayerCompetitions::types($me->id, $matchday->season_id, 1)))->toBe(['league'])
+        ->and(Friendlies::matchesOf($matchday))->toBe([])
+        ->and(fn () => Friendlies::challenge($me, $matchday))->toThrow(DomainException::class);
+    $this->actingAs($me)->get(route('friendlies'))->assertNotFound();
+
+    Modules::set(Modules::FRIENDLIES, true);
+
+    expect(array_map(fn ($t) => $t->value, PlayerCompetitions::types($me->id, $matchday->season_id, 1)))->toBe(['league', 'cup']);
+});
+
+test('the admin turns modules on and off in the panel', function () {
+    Spatie\Permission\Models\Permission::findOrCreate(Permission::DashboardAccess->value, 'web');
+    Spatie\Permission\Models\Permission::findOrCreate(Permission::SeasonList->value, 'web');
+    Spatie\Permission\Models\Permission::findOrCreate(Permission::SeasonEdit->value, 'web');
+    $admin = User::factory()->create();
+    $admin->givePermissionTo([Permission::DashboardAccess->value, Permission::SeasonList->value, Permission::SeasonEdit->value]);
+
+    Livewire::actingAs($admin)->test('pages::dashboard.modules')->set('enabled.friendlies', false);
+
+    expect(Friendlies::on())->toBeFalse();
 });

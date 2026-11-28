@@ -3031,5 +3031,9 @@
     "Show off the result": "Pochwal się wynikiem",
     "It is a draw": "Remis",
     "Friendlies ranking": "Ranking sparingów sezonu",
-    "Pl": "M"
+    "Pl": "M",
+    "Modules": "Moduły",
+    "Turn whole game features on or off for all players.": "Włączaj i wyłączaj całe funkcje gry dla wszystkich graczy.",
+    "Players challenge each other to friendlies in a free competition type. Turned off: the page, the links, the tiles on the tips page and the notifications disappear and friendlies are not scored. Results and records stay and come back when you turn it on again.": "Gracze wyzywają się na sparingi w wolnym typie rozgrywek. Po wyłączeniu znikają strona, linki, kafelki na stronie typowania i powiadomienia, a sparingi nie są rozliczane. Wyniki i bilanse zostają i wracają po ponownym włączeniu.",
+    "Friendlies are turned off.": "Sparingi są wyłączone."
 }

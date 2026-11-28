@@ -420,7 +420,7 @@ new #[Layout('layouts::public')] class extends Component {
     @else
 
     {{-- Bilans sparingów (gdy zespół jakiś rozegrał) --}}
-    @if ($this->friendlyRecord['played'] > 0)
+    @if (\App\Support\Friendlies::on() && $this->friendlyRecord['played'] > 0)
         <x-ui.card class="flex items-center justify-between gap-3">
             <span class="font-semibold">{{ __('Friendlies') }}</span>
             <span class="text-sm text-ui-muted">

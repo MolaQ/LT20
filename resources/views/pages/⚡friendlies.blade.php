@@ -23,6 +23,11 @@ new #[Layout('layouts::shell')] class extends Component {
     /** Sparing, którego grafika wyniku jest otwarta (okno „Pochwal się wynikiem”). */
     public ?int $story = null;
 
+    public function mount(): void
+    {
+        abort_unless(Friendlies::on(), 404);
+    }
+
     public function render(): View
     {
         return $this->view()->title(__('Friendlies'));

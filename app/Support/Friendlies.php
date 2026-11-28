@@ -27,6 +27,12 @@ final class Friendlies
     /** Barwy kafelka sparingu (klucz CompetitionColors): stonowany grafit, żeby nie udawał rozgrywek. */
     public const COLORS = 'league_8';
 
+    /** Czy moduł sparingów jest włączony (panel: Moduły). Wyłączony: bez stron, kafelków i rozliczania. */
+    public static function on(): bool
+    {
+        return Modules::enabled(Modules::FRIENDLIES);
+    }
+
     /** Najbliższa kolejka, na którą można umówić sparing (otwarta do typowania). */
     public static function nextMatchday(): ?Matchday
     {
@@ -63,12 +69,20 @@ final class Friendlies
     /** Przyjęty sparing gracza w kolejce (z rywalami). */
     public static function acceptedFor(int $userId, Matchday $matchday): ?Friendly
     {
+        if (! self::on()) {
+            return null;
+        }
+
         return Friendly::of($userId)->with(['challenger', 'opponent'])->where('matchday_id', $matchday->id)->where('status', Friendly::ACCEPTED)->first();
     }
 
     /** Typ rozgrywek przyjętego sparingu gracza w kolejce sezonu (numer kolejki = runda). */
     public static function setInRound(int $userId, int $seasonId, int $round): ?string
     {
+        if (! self::on()) {
+            return null;
+        }
+
         $friendly = Friendly::of($userId)->where('status', Friendly::ACCEPTED)
             ->whereHas('matchday', fn ($q) => $q->where('season_id', $seasonId)->where('number', $round))
             ->first();
@@ -79,6 +93,9 @@ final class Friendlies
     /** Dlaczego gracz nie może teraz umówić sparingu w kolejce (null: może). */
     public static function blocker(User $user, Matchday $matchday, ?Friendly $except = null): ?string
     {
+        if (! self::on()) {
+            return __('Friendlies are turned off.');
+        }
         if (! Players::canPlay($user)) {
             return __('You cannot play now.');
         }
@@ -146,6 +163,10 @@ final class Friendlies
      */
     public static function accept(Friendly $friendly, User $me): void
     {
+        if (! self::on()) {
+            throw new DomainException(__('Friendlies are turned off.'));
+        }
+
         $matchday = $friendly->matchday;
 
         if ($friendly->status !== Friendly::PENDING || ! $matchday) {
@@ -203,6 +224,10 @@ final class Friendlies
      */
     public static function matchesOf(Matchday $matchday): array
     {
+        if (! self::on()) {
+            return [];
+        }
+
         $out = [];
         foreach (Friendly::where('matchday_id', $matchday->id)->where('status', Friendly::ACCEPTED)->get() as $friendly) {
             $out[Squad::clubKey($friendly->challenger_id, null)][$friendly->challenger_set] = 1;
@@ -223,6 +248,10 @@ final class Friendlies
      */
     public static function settle(Matchday $matchday, array $lineups, array $questionBonus, Collection $tips): int
     {
+        if (! self::on()) {
+            return 0;
+        }
+
         $friendlies = Friendly::where('matchday_id', $matchday->id)->where('status', Friendly::ACCEPTED)->whereNotNull('opponent_id')->get();
 
         foreach ($friendlies as $friendly) {
