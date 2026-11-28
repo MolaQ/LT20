@@ -4,6 +4,7 @@ use App\Enums\CompetitionType;
 use App\Models\CompetitionEntry;
 use App\Models\Matchday;
 use App\Models\SeasonTeam;
+use App\Support\Friendlies;
 use App\Support\MatchSheet;
 use App\Support\PlayerCompetitions;
 use App\Support\Squad;
@@ -116,7 +117,13 @@ new class extends Component {
     #[Computed]
     public function setColors(): array
     {
-        return $this->matchday ? PlayerCompetitions::colors(auth()->id(), $this->matchday->season_id) : PlayerCompetitions::colors(0, 0);
+        $colors = $this->matchday ? PlayerCompetitions::colors(auth()->id(), $this->matchday->season_id) : PlayerCompetitions::colors(0, 0);
+        // Sparing gra w wolnym typie rozgrywek: jego karta ma własne, stonowane barwy.
+        if ($this->matchday && ($set = Friendlies::setInRound(auth()->id(), $this->matchday->season_id, $this->matchday->number))) {
+            $colors[$set] = Friendlies::COLORS;
+        }
+
+        return $colors;
     }
 
     /**
@@ -136,6 +143,11 @@ new class extends Component {
                     $names[$entry->competition->type->scoreSet()->value] = $entry->competition->name ?: $entry->competition->type->label();
                 }
             }
+        }
+
+        // Sparing: karta nazywa się od rywala („Sparing z FC Arka”).
+        if ($this->matchday && ($friendly = Friendlies::acceptedFor(auth()->id(), $this->matchday))) {
+            $names[(string) $friendly->setFor(auth()->id())] = Friendlies::label($friendly, auth()->id());
         }
 
         return $names;

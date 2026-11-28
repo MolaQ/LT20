@@ -13,6 +13,7 @@ use App\Models\TeamScore;
 use App\Models\Tip;
 use App\Support\Badges;
 use App\Support\EuropeanCup;
+use App\Support\Friendlies;
 use App\Support\GameStars;
 use App\Support\LegendsLeague;
 use App\Support\PageCache;
@@ -33,6 +34,7 @@ use Illuminate\Support\Facades\DB;
  *     w meczu następnej rundy, a remis rozstrzyga wcześniej zapisany typ (mniejszy numer zapisu),
  *  5. w Lidze Legend odpadają zespoły z dwiema porażkami w tej kolejce (LegendsLeague),
  *  6. po ostatniej kolejce grupowej pucharów europejskich powstaje drabinka 1/8 finału (EuropeanCup::drawKnockout),
+ *  (sparingi, Support\Friendlies: rozliczane tu tak samo, ale bez wpływu na tabele),
  *  7. kto odpadł z pucharu, pucharu europejskiego albo Ligi Legend, nie dostaje dorobku w zestawie tych rozgrywek
  *     w kolejnych kolejkach. Czy gra, wynika zawsze z eliminated_round, więc przeliczenie kolejki,
  *     które zmieni awans, zmienia też to. Złota Piłka i Złote Rękawice liczą się z team_scores, więc też tego nie widzą.
@@ -133,6 +135,13 @@ class ScoreMatchday
                         $club = Squad::clubKey($team->user_id, $team->bot_id);
                         $matchesOf[$club][$set] = ($matchesOf[$club][$set] ?? 0) + 1;
                     }
+                }
+            }
+
+            // Sparingi: każdy gracz rozgrywa w swoim wolnym typie rozgrywek jeden mecz (Support\Friendlies).
+            foreach (Friendlies::matchesOf($matchday) as $club => $sets) {
+                foreach ($sets as $set => $count) {
+                    $matchesOf[$club][$set] = ($matchesOf[$club][$set] ?? 0) + $count;
                 }
             }
 
@@ -266,6 +275,9 @@ class ScoreMatchday
 
                 $scored++;
             }
+
+            // Sparingi kolejki: wynik jak pojedynek ligowy, bez wpływu na tabele.
+            Friendlies::settle($matchday, $lineups, $questionBonus, $humanTips);
 
             $eliminated = $legends ? LegendsLeague::eliminate($legends, $matchday->number) : 0;
 

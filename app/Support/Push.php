@@ -23,7 +23,7 @@ use Throwable;
 final class Push
 {
     /** Rodzaje powiadomień (klucze users.push_prefs). */
-    public const KINDS = ['open', 'eve', 'reminder', 'results', 'rival'];
+    public const KINDS = ['open', 'eve', 'reminder', 'results', 'rival', 'friendly'];
 
     /** „Typowanie otwarte” najwyżej tyle dni przed meczem (dalsze kolejki czekają). */
     public const OPEN_DAYS = 7;

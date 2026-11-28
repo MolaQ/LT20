@@ -15,8 +15,28 @@ use App\Models\SeasonTeam;
  */
 class PlayerCompetitions
 {
-    /** @return array<int, CompetitionType> w kolejności z enuma */
+    /**
+     * Typy rozgrywek gracza w kolejce razem z jego przyjętym sparingiem (App\Support\Friendlies): sparing zajmuje
+     * wolny typ, więc na stronie typowania ma swoje pytania i skład jak zwykłe rozgrywki.
+     *
+     * @return array<int, CompetitionType> w kolejności z enuma
+     */
     public static function types(int $userId, int $seasonId, ?int $round = null): array
+    {
+        $types = self::entryTypes($userId, $seasonId, $round);
+        $friendly = $round !== null ? Friendlies::setInRound($userId, $seasonId, $round) : null;
+
+        if ($friendly === null) {
+            return $types;
+        }
+
+        $values = [...array_map(fn (CompetitionType $t) => $t->value, $types), $friendly];
+
+        return array_values(array_filter(CompetitionType::cases(), fn ($t) => in_array($t->value, $values, true)));
+    }
+
+    /** @return array<int, CompetitionType> w kolejności z enuma, tylko rozgrywki sezonu (bez sparingu) */
+    public static function entryTypes(int $userId, int $seasonId, ?int $round = null): array
     {
         $alive = fn ($q) => $round === null
             ? $q->whereNull('eliminated_round')

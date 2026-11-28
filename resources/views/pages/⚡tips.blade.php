@@ -458,12 +458,59 @@ new #[Layout('layouts::public')] class extends Component {
         }
 
         $colors = \App\Support\PlayerCompetitions::colors(auth()->id(), $this->matchday->season_id);
+        $friendlySet = $this->friendlySet();
 
         return collect(\App\Support\PlayerCompetitions::types(auth()->id(), $this->matchday->season_id, $this->matchday->number))
-            ->mapWithKeys(fn ($set) => [$set->value => [
+            ->mapWithKeys(fn ($set) => [$set->value => $set->value === $friendlySet ? [
+                // Sparing w wolnym typie rozgrywek: własna nazwa i stonowane barwy.
+                'label' => \App\Support\Friendlies::label($this->friendly, (int) auth()->id()),
+                'style' => \App\Support\CompetitionColors::style(\App\Support\Friendlies::COLORS),
+            ] : [
                 'label' => $set->scoreSetLabel(),
                 'style' => \App\Support\CompetitionColors::style($colors[$set->value] ?? 'league_1'),
             ]])->all();
+    }
+
+    /** Przyjęty sparing gracza w tej kolejce (App\Support\Friendlies). */
+    #[Computed]
+    public function friendly(): ?\App\Models\Friendly
+    {
+        return $this->matchday && auth()->check()
+            ? \App\Support\Friendlies::acceptedFor((int) auth()->id(), $this->matchday)
+            : null;
+    }
+
+    /** Typ rozgrywek, w którym gracz gra sparing w tej kolejce. */
+    public function friendlySet(): ?string
+    {
+        return $this->friendly?->setFor((int) auth()->id());
+    }
+
+    /**
+     * Kafelki „Twoje rozgrywki”: rozgrywki sezonu i sparing (osobny kafelek w swoim wolnym typie).
+     *
+     * @return list<array<string, mixed>>
+     */
+    #[Computed]
+    public function competitionTiles(): array
+    {
+        $tiles = $this->myEntries;
+        $friendly = $this->friendly;
+        $set = $this->friendlySet();
+
+        if ($friendly && $set !== null) {
+            $rival = $friendly->rivalOf((int) auth()->id());
+            $tiles[] = [
+                'name' => \App\Support\Friendlies::label($friendly, (int) auth()->id()),
+                'type' => \App\Enums\CompetitionType::from($set),
+                'competition_id' => 'friendly',
+                'trophy' => \App\Support\Friendlies::COLORS,
+                'status' => __('Friendly: only for the record, no table points'),
+                'friendly' => true,
+            ];
+        }
+
+        return $tiles;
     }
 
     /** Wybrane rozgrywki w kroku „Rozgrywki” (albo pierwsze z rozgrywek gracza). */

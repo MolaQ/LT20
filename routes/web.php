@@ -28,6 +28,8 @@ Route::livewire('results/{season_slug?}/{competition_slug?}/{round_slug?}', 'pag
     ->name('results');
 // Statystyki premium (przebudowa 2.0): forma, serie, odznaki, „co jeśli” i mapa typów.
 Route::livewire('my-stats', 'pages::my-stats')->middleware(['auth', 'verified'])->name('my-stats');
+Route::livewire('sparingi', 'pages::friendlies')->middleware(['auth', 'verified'])->name('friendlies');
+Route::livewire('sparing/{token}', 'pages::friendly-invite')->name('friendly.invite');
 Route::livewire('hall-of-fame', 'pages::hall-of-fame')->name('hall-of-fame');
 Route::livewire('history/{key_slug?}', 'pages::history')->name('history');
 Route::livewire('stars', 'pages::stars')->name('stars');

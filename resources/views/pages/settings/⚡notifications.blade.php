@@ -90,6 +90,7 @@ new class extends Component {
             'reminder' => [__('Last call'), __(':minutes minutes before kick-off, only if you have not tipped yet.', ['minutes' => Push::REMINDER_MINUTES])],
             'results' => [__('Results and points'), __('The score and your points after the matchday is settled.')],
             'rival' => [__('Your rival has tipped'), __('Your league rival has tipped and you have not yet.')],
+            'friendly' => [__('Friendlies'), __('Someone challenges you to a friendly or accepts your challenge.')],
         ];
     }
 }; ?>
