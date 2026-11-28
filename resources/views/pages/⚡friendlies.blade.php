@@ -20,6 +20,14 @@ new #[Layout('layouts::shell')] class extends Component {
     /** Szukana drużyna do wyzwania. */
     public string $search = '';
 
+    /** Sparing, którego grafika wyniku jest otwarta (okno „Pochwal się wynikiem”). */
+    public ?int $story = null;
+
+    public function mount(): void
+    {
+        abort_unless(Friendlies::on(), 404);
+    }
+
     public function render(): View
     {
         return $this->view()->title(__('Friendlies'));
@@ -94,6 +102,19 @@ new #[Layout('layouts::shell')] class extends Component {
         return Friendly::of($this->me()->id)->with(['challenger', 'opponent', 'matchday'])->whereNotNull('settled_at')->latest('settled_at')->limit(20)->get();
     }
 
+    /**
+     * Ranking sparingów bieżącego sezonu (pierwsza dziesiątka).
+     *
+     * @return list<array{user: User, played: int, won: int, drawn: int, lost: int, for: int, against: int, points: int}>
+     */
+    #[Computed]
+    public function ranking(): array
+    {
+        $season = \App\Models\Season::current();
+
+        return $season ? Friendlies::ranking($season->id) : [];
+    }
+
     /** @return array{played: int, won: int, drawn: int, lost: int} */
     #[Computed]
     public function record(): array
@@ -145,6 +166,21 @@ new #[Layout('layouts::shell')] class extends Component {
         if ($rival) {
             $this->challenge($rival->id);
         }
+    }
+
+    /** Grafika wyniku rozegranego sparingu w oknie. */
+    public function showStory(int $friendlyId): void
+    {
+        $this->story = Friendly::of($this->me()->id)->whereNotNull('settled_at')->whereKey($friendlyId)->exists() ? $friendlyId : null;
+        if ($this->story) {
+            $this->dispatch('ui-sheet', name: 'friendly-story');
+        }
+    }
+
+    #[Computed]
+    public function storyFriendly(): ?Friendly
+    {
+        return $this->story ? $this->played->firstWhere('id', $this->story) : null;
     }
 
     public function accept(int $friendlyId): void
@@ -274,6 +310,39 @@ new #[Layout('layouts::shell')] class extends Component {
         </x-ui.card>
     @endif
 
+    {{-- Ranking sezonu: 3 pkt za wygraną, 1 za remis --}}
+    @if ($this->ranking !== [])
+        <x-ui.section-title>{{ __('Friendlies ranking') }}</x-ui.section-title>
+        <x-ui.card class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="text-xs uppercase tracking-wider text-ui-muted">
+                    <tr>
+                        <th class="py-1.5 pe-2 text-start">#</th>
+                        <th class="py-1.5 pe-2 text-start">{{ __('Team') }}</th>
+                        <th class="px-1.5 py-1.5 text-end">{{ __('Pl') }}</th>
+                        <th class="px-1.5 py-1.5 text-end">{{ __('W–D–L') }}</th>
+                        <th class="px-1.5 py-1.5 text-end">{{ __('Goals') }}</th>
+                        <th class="ps-1.5 py-1.5 text-end">{{ __('Pts') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-ui-line">
+                    @foreach ($this->ranking as $i => $row)
+                        <tr wire:key="rank-{{ $row['user']->id }}" @class(['font-bold text-club' => $row['user']->id === $me->id])>
+                            <td class="py-2 pe-2 tabular-nums">{{ $i + 1 }}.</td>
+                            <td class="max-w-[10rem] truncate py-2 pe-2">
+                                <a href="{{ route('team.show', $row['user']) }}" wire:navigate class="hover:underline">{{ Friendlies::teamName($row['user']) }}</a>
+                            </td>
+                            <td class="px-1.5 py-2 text-end tabular-nums">{{ $row['played'] }}</td>
+                            <td class="whitespace-nowrap px-1.5 py-2 text-end tabular-nums">{{ $row['won'] }}–{{ $row['drawn'] }}–{{ $row['lost'] }}</td>
+                            <td class="whitespace-nowrap px-1.5 py-2 text-end tabular-nums">{{ $row['for'] }}:{{ $row['against'] }}</td>
+                            <td class="ps-1.5 py-2 text-end font-bold tabular-nums">{{ $row['points'] }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </x-ui.card>
+    @endif
+
     {{-- Wyniki i rewanże --}}
     @if ($this->played->isNotEmpty())
         <x-ui.section-title>{{ __('Results') }}</x-ui.section-title>
@@ -289,6 +358,9 @@ new #[Layout('layouts::shell')] class extends Component {
                         <p class="truncate font-semibold">{{ Friendlies::teamName($rival) }}</p>
                         <p class="text-xs text-ui-muted">{{ __('Matchday :number', ['number' => $friendly->matchday?->number]) }}</p>
                     </div>
+                    <button type="button" wire:click="showStory({{ $friendly->id }})" class="grid size-9 place-items-center rounded-xl text-ui-muted hover:bg-ui-raised hover:text-ui-ink" aria-label="{{ __('Show off the result') }}">
+                        <x-ui.icon name="share" variant="mini" class="size-5" />
+                    </button>
                     @if ($rival && ! $this->blocker && ! $active)
                         <x-ui.button size="sm" variant="ghost" class="w-auto" wire:click="rematch({{ $friendly->id }})">{{ __('Rematch') }}</x-ui.button>
                     @endif
@@ -296,4 +368,15 @@ new #[Layout('layouts::shell')] class extends Component {
             @endforeach
         </x-ui.card>
     @endif
+
+    {{-- Grafika wyniku sparingu do relacji --}}
+    <x-ui.modal name="friendly-story" class="w-full md:w-[26rem]">
+        <div class="space-y-4">
+            <x-ui.heading size="lg">{{ __('Show off the result') }}</x-ui.heading>
+            <x-ui.text>{{ __('Tap the share icon on the graphic to post it in a story or send it to friends.') }}</x-ui.text>
+            @if ($storyFriendly = $this->storyFriendly)
+                <x-friendly-story :friendly="$storyFriendly" :user-id="$me->id" wire:key="fstory-{{ $storyFriendly->id }}" />
+            @endif
+        </div>
+    </x-ui.modal>
 </div>

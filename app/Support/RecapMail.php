@@ -155,7 +155,7 @@ final class RecapMail
             $out['league'] = $competition->name ?: $competition->type->label();
         }
 
-        $friendly = Friendly::of($user->id)->with(['challenger', 'opponent'])->where('matchday_id', $matchday->id)->whereNotNull('settled_at')->first();
+        $friendly = Friendlies::on() ? Friendly::of($user->id)->with(['challenger', 'opponent'])->where('matchday_id', $matchday->id)->whereNotNull('settled_at')->first() : null;
         if ($friendly && ($score = $friendly->scoreFor($user->id))) {
             $out['friendly'] = ['mine' => $score[0], 'theirs' => $score[1], 'rival' => Friendlies::teamName($friendly->rivalOf($user->id))];
         }

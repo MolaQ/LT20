@@ -57,6 +57,7 @@
         [__('Game settings'), $canSeasons || $canNews, [
             $item('star', 'dashboard.hall-of-fame', __('Hall of Fame'), show: $canSeasons),
             $item('user-group', 'dashboard.designation-settings', __('Line-ups'), show: $canSeasons),
+            $item('squares-2x2', 'dashboard.modules', __('Modules'), show: $canSeasons),
             $item('cpu-chip', 'dashboard.bots', __('Bots'), show: $canSeasons),
             $item('book-open', 'dashboard.guide', __('Rules, FAQ and coffee'), show: $canNews),
         ]],

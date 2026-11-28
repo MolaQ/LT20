@@ -17,6 +17,7 @@ new #[Layout('layouts::public')] class extends Component {
 
     public function mount(string $token): void
     {
+        abort_unless(Friendlies::on(), 404);
         $friendly = Friendly::where('token', $token)->firstOrFail();
         $this->friendlyId = $friendly->id;
 
