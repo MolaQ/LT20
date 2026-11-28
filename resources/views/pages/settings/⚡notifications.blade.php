@@ -98,6 +98,7 @@ new class extends Component {
             'open' => [__('Tipping is open'), __('A new matchday is ready to tip (up to a week before the match).')],
             'eve' => [__('Day before the match'), __('About :hours hours before kick-off, only if you have not tipped yet.', ['hours' => Push::EVE_HOURS])],
             'reminder' => [__('Last call'), __(':minutes minutes before kick-off, only if you have not tipped yet.', ['minutes' => Push::REMINDER_MINUTES])],
+            'lineup' => [__('Squad and questions'), __('With the last call, if you have tipped but left a squad empty or questions unanswered.')],
             'results' => [__('Results and points'), __('The score and your points after the matchday is settled.')],
             'rival' => [__('Your rival has tipped'), __('Your league rival has tipped and you have not yet.')],
             'friendly' => [__('Friendlies'), __('Someone challenges you to a friendly or accepts your challenge.')],
