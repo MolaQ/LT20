@@ -132,3 +132,18 @@ test('the invite link remembers the token for a guest', function () {
     $this->get(route('friendly.invite', $friendly->token))->assertOk()->assertSee('Drużyna 1');
     expect(session('friendly_token'))->toBe($friendly->token);
 });
+
+test('a played friendly can be shown off as a story graphic', function () {
+    $matchday = friendlyMatchday();
+    $me = friendlyPlayer($matchday, 1);
+    $rival = friendlyPlayer($matchday, 2);
+    $friendly = Friendlies::challenge($me, $matchday, $rival);
+    Friendlies::accept($friendly, $rival);
+    $friendly->refresh()->update(['challenger_goals' => 3, 'opponent_goals' => 1, 'settled_at' => now()]);
+
+    Livewire::actingAs($me)->test('pages::friendlies')
+        ->call('showStory', $friendly->id)
+        ->assertSet('story', $friendly->id)
+        ->assertDispatched('ui-sheet')
+        ->assertSee('Drużyna 2');
+});

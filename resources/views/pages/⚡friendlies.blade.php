@@ -20,6 +20,9 @@ new #[Layout('layouts::shell')] class extends Component {
     /** Szukana drużyna do wyzwania. */
     public string $search = '';
 
+    /** Sparing, którego grafika wyniku jest otwarta (okno „Pochwal się wynikiem”). */
+    public ?int $story = null;
+
     public function render(): View
     {
         return $this->view()->title(__('Friendlies'));
@@ -145,6 +148,21 @@ new #[Layout('layouts::shell')] class extends Component {
         if ($rival) {
             $this->challenge($rival->id);
         }
+    }
+
+    /** Grafika wyniku rozegranego sparingu w oknie. */
+    public function showStory(int $friendlyId): void
+    {
+        $this->story = Friendly::of($this->me()->id)->whereNotNull('settled_at')->whereKey($friendlyId)->exists() ? $friendlyId : null;
+        if ($this->story) {
+            $this->dispatch('ui-sheet', name: 'friendly-story');
+        }
+    }
+
+    #[Computed]
+    public function storyFriendly(): ?Friendly
+    {
+        return $this->story ? $this->played->firstWhere('id', $this->story) : null;
     }
 
     public function accept(int $friendlyId): void
@@ -289,6 +307,9 @@ new #[Layout('layouts::shell')] class extends Component {
                         <p class="truncate font-semibold">{{ Friendlies::teamName($rival) }}</p>
                         <p class="text-xs text-ui-muted">{{ __('Matchday :number', ['number' => $friendly->matchday?->number]) }}</p>
                     </div>
+                    <button type="button" wire:click="showStory({{ $friendly->id }})" class="grid size-9 place-items-center rounded-xl text-ui-muted hover:bg-ui-raised hover:text-ui-ink" aria-label="{{ __('Show off the result') }}">
+                        <x-ui.icon name="share" variant="mini" class="size-5" />
+                    </button>
                     @if ($rival && ! $this->blocker && ! $active)
                         <x-ui.button size="sm" variant="ghost" class="w-auto" wire:click="rematch({{ $friendly->id }})">{{ __('Rematch') }}</x-ui.button>
                     @endif
@@ -296,4 +317,15 @@ new #[Layout('layouts::shell')] class extends Component {
             @endforeach
         </x-ui.card>
     @endif
+
+    {{-- Grafika wyniku sparingu do relacji --}}
+    <x-ui.modal name="friendly-story" class="w-full md:w-[26rem]">
+        <div class="space-y-4">
+            <x-ui.heading size="lg">{{ __('Show off the result') }}</x-ui.heading>
+            <x-ui.text>{{ __('Tap the share icon on the graphic to post it in a story or send it to friends.') }}</x-ui.text>
+            @if ($storyFriendly = $this->storyFriendly)
+                <x-friendly-story :friendly="$storyFriendly" :user-id="$me->id" wire:key="fstory-{{ $storyFriendly->id }}" />
+            @endif
+        </div>
+    </x-ui.modal>
 </div>
