@@ -3039,5 +3039,13 @@
     "Modules": "Moduły",
     "Turn whole game features on or off for all players.": "Włączaj i wyłączaj całe funkcje gry dla wszystkich graczy.",
     "Players challenge each other to friendlies in a free competition type. Turned off: the page, the links, the tiles on the tips page and the notifications disappear and friendlies are not scored. Results and records stay and come back when you turn it on again.": "Gracze wyzywają się na sparingi w wolnym typie rozgrywek. Po wyłączeniu znikają strona, linki, kafelki na stronie typowania i powiadomienia, a sparingi nie są rozliczane. Wyniki i bilanse zostają i wracają po ponownym włączeniu.",
-    "Friendlies are turned off.": "Sparingi są wyłączone."
+    "Friendlies are turned off.": "Sparingi są wyłączone.",
+    "no squad": "bez składu",
+    ":count question unanswered|:count questions unanswered": ":count pytanie bez odpowiedzi|:count pytania bez odpowiedzi|:count pytań bez odpowiedzi",
+    "You have a tip, but something is missing": "Masz typ, ale czegoś brakuje",
+    ":missing. Tipping closes at :time.": ":missing. Typowanie zamyka się o :time.",
+    "With the last call, if you have tipped but left a squad empty or questions unanswered.": "Razem z ostatnim wezwaniem, jeśli masz typ, ale zostawiłeś pusty skład albo pytania bez odpowiedzi.",
+    "Matchday :number of LechTYPER: your squad or questions are missing": ":number. kolejka LechTYPER: brakuje Twojego składu albo odpowiedzi",
+    "Your tip is saved, but without players and answers you lose attack and defence goals:": "Twój typ jest zapisany, ale bez zawodników i odpowiedzi tracisz bramki ataku i obrony:",
+    "Finish my matchday": "Dokończ kolejkę"
 }

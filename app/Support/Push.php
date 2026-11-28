@@ -23,7 +23,7 @@ use Throwable;
 final class Push
 {
     /** Rodzaje powiadomień (klucze users.push_prefs). */
-    public const KINDS = ['open', 'eve', 'reminder', 'results', 'rival', 'friendly'];
+    public const KINDS = ['open', 'eve', 'reminder', 'lineup', 'results', 'rival', 'friendly'];
 
     /** „Typowanie otwarte” najwyżej tyle dni przed meczem (dalsze kolejki czekają). */
     public const OPEN_DAYS = 7;
@@ -79,6 +79,7 @@ final class Push
         if ($next->push_reminder_at === null && $kickoff->lte(now()->addMinutes(self::REMINDER_MINUTES))) {
             $next->forceFill(['push_reminder_at' => now()])->save();
             $sent += self::reminder($next);
+            $sent += self::lineup($next);
         }
 
         return $sent;
@@ -126,6 +127,28 @@ final class Push
             'matchday-'.$matchday->id,
             ['number' => $matchday->number],
             ['time' => $matchday->kickoff_at?->format('H:i') ?? '', 'fixture' => $matchday->fixture],
+        ));
+    }
+
+    /** Razem z ostatnim wezwaniem: gracze z typem, którym brakuje składu albo odpowiedzi na pytania (App\Support\Unfinished). */
+    public static function lineup(Matchday $matchday): int
+    {
+        $users = self::wanting(self::recipients($matchday)
+            ->whereIn('id', Tip::where('matchday_id', $matchday->id)->select('user_id'))
+            ->get(), 'lineup');
+        $missing = [];
+        foreach ($users as $user) {
+            $missing[$user->id] = Unfinished::for($user->id, $matchday);
+        }
+        $users = $users->filter(fn (User $user) => $missing[$user->id] !== [])->values();
+
+        return self::send($users, fn (User $user) => new PushMessage(
+            'You have a tip, but something is missing',
+            ':missing. Tipping closes at :time.',
+            route('tips'),
+            'lineup-'.$matchday->id,
+            [],
+            ['missing' => Unfinished::sentence($missing[$user->id]), 'time' => $matchday->kickoff_at?->format('H:i') ?? ''],
         ));
     }
 
