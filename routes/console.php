@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\Automats;
+use App\Support\EveMail;
 use App\Support\Premium;
 use App\Support\Push;
 use App\Support\Unverified;
@@ -36,6 +37,13 @@ Artisan::command('push:matchdays', function () {
 })->purpose('Send matchday push notifications (tipping open, last call)');
 
 Schedule::command('push:matchdays')->everyFiveMinutes()->withoutOverlapping();
+
+// Przypomnienie e-mailem przed meczem (App\Support\EveMail): termin wybiera gracz, tylko gdy nie dociera do niego push.
+Artisan::command('mail:matchdays', function () {
+    $this->info('Reminder emails sent: '.EveMail::tick());
+})->purpose('Email players who have not tipped the next matchday yet');
+
+Schedule::command('mail:matchdays')->everyFiveMinutes()->withoutOverlapping();
 
 // Stare odsłony stron (App\Models\PageView, ok. 13 miesięcy) i inne modele z Prunable.
 Schedule::command('model:prune')->daily();

@@ -2,6 +2,7 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\EmailRemindersController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\OgImageController;
@@ -56,6 +57,10 @@ Route::get('manifest.webmanifest', ManifestController::class)->name('manifest');
 Route::get('og/tabela/{competition}/{round}.png', [OgImageController::class, 'table'])->whereNumber('round')->name('og.table');
 Route::get('og/druzyna/{user}.png', [OgImageController::class, 'team'])->name('og.team');
 Route::view('offline', 'offline')->name('offline');
+
+// Wypisanie z maili przypominających o kolejce (podpisany link z maila, bez logowania).
+Route::match(['get', 'post'], 'email/przypomnienia/{user}/wypisz', EmailRemindersController::class)
+    ->middleware('signed')->name('email.reminders.off');
 
 // Rotator banerów partnerów: kliknięcie z przekierowaniem, wyświetlenia z rotatora i statystyki partnera.
 Route::get('b/{campaign}', [BannerController::class, 'click'])->whereNumber('campaign')->name('banner.click');
