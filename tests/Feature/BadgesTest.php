@@ -2,6 +2,7 @@
 
 use App\Enums\MatchdayStatus;
 use App\Enums\SeasonStatus;
+use App\Models\Friendly;
 use App\Models\Matchday;
 use App\Models\Season;
 use App\Models\TeamLike;
@@ -96,4 +97,29 @@ test('the team profile shows the badges tab', function () {
         ->set('tab', 'odznaki')
         ->assertSee(__('Prophet'))
         ->assertSee(__('Ambassador'));
+});
+
+test('tips in consecutive matchdays earn the regular badge and won friendlies the sparring badge', function () {
+    $old = Season::create(['number' => 1, 'status' => SeasonStatus::Finished->value]);
+    $new = Season::create(['number' => 2, 'status' => SeasonStatus::Active->value]);
+    $ada = User::factory()->create();
+    $bob = User::factory()->create();
+    $order = 0;
+    foreach ([[$old, 1], [$old, 2], [$old, 3], [$new, 1], [$new, 2]] as [$season, $number]) {
+        $matchday = badgeMatchday($season, $number, 1, 0);
+        badgeTip($matchday, $ada, 0, 0, ++$order);
+        if ($number !== 2) {
+            badgeTip($matchday, $bob, 0, 0, ++$order);
+        }
+    }
+    Friendly::create(['matchday_id' => $matchday->id, 'challenger_id' => $ada->id, 'opponent_id' => $bob->id, 'token' => 'abc',
+        'challenger_set' => 'cup', 'opponent_set' => 'cup', 'status' => 'accepted', 'challenger_goals' => 2, 'opponent_goals' => 1, 'settled_at' => now()]);
+
+    Badges::rebuild($matchday);
+
+    expect(Badges::forUser($ada->id)['regular']['tier'])->toBe(1)
+        ->and(Badges::forUser($ada->id)['regular']['progress'])->toBe(5)
+        ->and(Badges::forUser($bob->id)['regular']['progress'])->toBe(2)
+        ->and(Badges::forUser($ada->id)['sparring']['tier'])->toBe(1)
+        ->and(Badges::forUser($bob->id)['sparring']['progress'])->toBe(0);
 });

@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Schema;
  * Odznaki za osiągnięcia (20.11.2026): czysty prestiż, bez punktów do Hall of Fame i tabel. Tylko gracze (bez botów).
  * Liczymy je od zera z danych gry (typy, pytania, mecze w grze, kartki, zawodnicy, trofea, zaproszenia, polubienia)
  * po każdej rozliczonej kolejce i po zakończeniu sezonu. Odznaki z licznikiem mają trzy stopnie (brąz, srebro, złoto),
- * jednorazowe jeden. Lista do akceptacji: notes/odznaki (propozycja z 20.11.2026).
+ * jednorazowe jeden. Lista do akceptacji: notes/odznaki (propozycja z 20.11.2026). Bywalec i Sparingowicz od 28.11.2026.
  */
 final class Badges
 {
@@ -46,6 +46,7 @@ final class Badges
             'streak' => ['group' => 'tips', 'icon' => 'link', 'label' => __('Streak'), 'rule' => __('Correct outcomes in consecutive matchdays'), 'tiers' => [3, 5, 9]],
             'full_house' => ['group' => 'tips', 'icon' => 'check-badge', 'label' => __('Full house'), 'rule' => __('The exact score and every question of a set right in one matchday'), 'tiers' => [1, 3, 5]],
             'know_it_all' => ['group' => 'tips', 'icon' => 'academic-cap', 'label' => __('Know-it-all'), 'rule' => __('Every question of a set right, matchdays in one season'), 'tiers' => [3, 6, 9]],
+            'regular' => ['group' => 'tips', 'icon' => 'calendar', 'label' => __('Regular'), 'rule' => __('A tip in consecutive matchdays, also across seasons'), 'tiers' => [5, 10, 20]],
             'iron_fan' => ['group' => 'tips', 'icon' => 'calendar-days', 'label' => __('Iron fan'), 'rule' => __('A tip in every matchday of a season'), 'tiers' => [1, 3, 5]],
             'early_bird' => ['group' => 'tips', 'icon' => 'sun', 'label' => __('Early bird'), 'rule' => __('The first tip of the whole matchday'), 'tiers' => [1, 3, 5]],
 
@@ -54,6 +55,7 @@ final class Badges
             'unbeaten' => ['group' => 'matches', 'icon' => 'shield-check', 'label' => __('Unbeaten'), 'rule' => __('A league season without a defeat'), 'tiers' => [1]],
             'perfect' => ['group' => 'matches', 'icon' => 'star', 'label' => __('Perfect season'), 'rule' => __('Every league game of a season won'), 'tiers' => [1]],
             'fair_play' => ['group' => 'matches', 'icon' => 'hand-raised', 'label' => __('Fair play'), 'rule' => __('A season without a red card of your players'), 'tiers' => [1, 3, 5]],
+            'sparring' => ['group' => 'matches', 'icon' => 'arrows-right-left', 'label' => __('Sparring partner'), 'rule' => __('Friendlies won'), 'tiers' => [1, 5, 15]],
             'scout' => ['group' => 'matches', 'icon' => 'users', 'label' => __('Talent scout'), 'rule' => __('Goals of the Lech players you fielded'), 'tiers' => [3, 10, 25]],
 
             'first_trophy' => ['group' => 'seasons', 'icon' => 'trophy', 'label' => __('First trophy'), 'rule' => __('The first trophy in your cabinet'), 'tiers' => [1]],
@@ -199,6 +201,7 @@ final class Badges
         self::matches($put);
         self::seasons($put);
         self::community($put);
+        self::friendlies($put);
 
         return $out;
     }
@@ -223,6 +226,25 @@ final class Badges
         }
 
         return $out;
+    }
+
+    /** Sparingi (App\Support\Friendlies): wygrane mecze towarzyskie. */
+    private static function friendlies(callable $put): void
+    {
+        if (! Schema::hasTable('friendlies')) {
+            return;
+        }
+
+        $wins = [];
+        foreach (DB::table('friendlies')->whereNotNull('settled_at')->whereNotNull('opponent_id')->get(['challenger_id', 'opponent_id', 'challenger_goals', 'opponent_goals']) as $row) {
+            if ((int) $row->challenger_goals !== (int) $row->opponent_goals) {
+                $winner = (int) $row->challenger_goals > (int) $row->opponent_goals ? (int) $row->challenger_id : (int) $row->opponent_id;
+                $wins[$winner] = ($wins[$winner] ?? 0) + 1;
+            }
+        }
+        foreach ($wins as $userId => $value) {
+            $put($userId, 'sparring', $value);
+        }
     }
 
     /** @return list<int> id zakończonych sezonów */
@@ -314,6 +336,15 @@ final class Badges
                 $best = max($best, $streak);
             }
             $put($userId, 'streak', $best);
+
+            // Bywalec: kolejne rozegrane kolejki z typem (także przez granicę sezonów).
+            $run = 0;
+            $longest = 0;
+            foreach (array_keys($played) as $matchdayId) {
+                $run = isset($matchdays[$matchdayId]) ? $run + 1 : 0;
+                $longest = max($longest, $run);
+            }
+            $put($userId, 'regular', $longest);
 
             // Komplet i wszystkowiedzący (pytania z zestawu bez błędu).
             $perfect = $perfectSets[$userId] ?? [];

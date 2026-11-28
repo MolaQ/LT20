@@ -3025,5 +3025,9 @@
     "You play in all four competition types in this matchday, so there is no room for a friendly.": "W tej kolejce grasz we wszystkich czterech typach rozgrywek, więc nie ma miejsca na sparing.",
     "You play it in the :set slot: tip, squad and questions of this type count.": "Grasz go w miejscu typu :set: liczą się typ oraz skład i pytania tego typu.",
     "You would play it in the :set slot (the one you have free in this matchday).": "Zagrasz go w miejscu typu :set (ten masz wolny w tej kolejce).",
-    "Your invite link is ready. The first player to accept it plays you.": "Twój link zaproszenia jest gotowy. Zagrasz z pierwszym graczem, który go przyjmie."
+    "Your invite link is ready. The first player to accept it plays you.": "Twój link zaproszenia jest gotowy. Zagrasz z pierwszym graczem, który go przyjmie.",
+    "Regular": "Bywalec",
+    "A tip in consecutive matchdays, also across seasons": "Typ w kolejnych kolejkach z rzędu, także przez granicę sezonów",
+    "Sparring partner": "Sparingowicz",
+    "Friendlies won": "Wygrane sparingi"
 }
